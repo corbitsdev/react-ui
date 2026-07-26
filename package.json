@@ -1,0 +1,51 @@
+{
+  "name": "@corbits/react-ui",
+  "version": "0.1.0",
+  "private": true,
+  "license": "LGPL-2.1-only",
+  "type": "module",
+  "homepage": "https://github.com/corbitsdev/react-ui",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/corbitsdev/react-ui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/corbitsdev/react-ui/issues"
+  },
+  "scripts": {
+    "dev": "next dev -p 3333",
+    "build": "next build",
+    "start": "next start -p 3333",
+    "registry:build": "shadcn build && node scripts/contrast-test.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "dep-guard": "node scripts/dep-guard.mjs",
+    "contrast-test": "node scripts/contrast-test.mjs"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@tanstack/react-query": "^5.90.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.545.0",
+    "next": "^16.2.12",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^24.9.1",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.1",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.2.12",
+    "shadcn": "^4.15.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2"
+  }
+}
