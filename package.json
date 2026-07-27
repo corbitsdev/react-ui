@@ -22,7 +22,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "npm run clean && npm run generate && npm run build:js && npm run build:types && npm run build:css && npm run contrast-test",
+    "build": "bun run clean && bun run generate && bun run build:js && bun run build:types && bun run build:css && bun run contrast-test",
     "clean": "rm -rf dist",
     "generate": "node scripts/generate-exports.mjs",
     "build:js": "swc src -d dist --strip-leading-paths --extensions .ts,.tsx",
@@ -32,7 +32,7 @@
     "lint": "eslint .",
     "dep-guard": "node scripts/dep-guard.mjs",
     "contrast-test": "node scripts/contrast-test.mjs",
-    "prepack": "npm run build"
+    "prepack": "bun run build"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

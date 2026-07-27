@@ -58,8 +58,5 @@ Defects in the components this package ships:
 - **A patched or vendored copy.** A vulnerability introduced by an edit to the
   installed files is not a defect here, though we would still like to hear if our
   structure invited it.
-- **The backend cores.** `@corbits/mailbox-core`, `@corbits/artifact-core` and
-  `@corbits/analytics-core` have their own security policies in their own
-  repositories. Nothing in this package imports them.
 - Vulnerabilities in dependencies should be reported upstream, though we are glad to
   hear about them.

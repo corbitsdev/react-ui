@@ -1,6 +1,6 @@
 // WCAG contrast gate for the Corbits theme. Reads dist/styles.css — the
 // stylesheet we actually publish — so it checks the shipped tokens rather than
-// a copy of them. Runs as the last step of `npm run build`.
+// a copy of them. Runs as the last step of `bun run build`.
 //
 // The pairs are derived from token *names*, never listed by hex — add
 // `--warning` / `--warning-foreground` to the theme and rule 1 covers it on the

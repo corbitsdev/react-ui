@@ -78,7 +78,7 @@ function reachableFrom(entry) {
 
 const barrel = join(ROOT, "index.ts");
 if (!sources.includes(barrel)) {
-  console.error("dep-guard: src/index.ts is missing — run `npm run generate` first");
+  console.error("dep-guard: src/index.ts is missing — run `bun run generate` first");
   process.exit(1);
 }
 

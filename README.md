@@ -1,8 +1,7 @@
 # @corbits/react-ui
 
 React components for agent and workflow surfaces — chat, runs, schedules, artifacts,
-analytics, collections. Generic naming throughout; no product-brand names in the public
-API.
+analytics, collections. 106 modules, importable one at a time.
 
 Licensed LGPL-2.1-only (see `LICENSE`).
 
@@ -10,16 +9,11 @@ Licensed LGPL-2.1-only (see `LICENSE`).
 
 ```bash
 npm install @corbits/react-ui
-```
-
-Peer dependencies:
-
-```bash
 npm install react react-dom lucide-react sonner \
   @radix-ui/react-dialog @radix-ui/react-slot
 ```
 
-`@tanstack/react-query` is an **optional** peer. It is only needed if you use
+React 18 or 19. `@tanstack/react-query` is an **optional** peer, needed only if you use
 `createTanstackDataPort()`; components take their data through a `DataPort` and work with
 any data layer, or none.
 
@@ -32,24 +26,22 @@ build configuration:
 import "@corbits/react-ui/styles.css";
 ```
 
-**This sheet is not inert — it restyles your page.** It carries Tailwind's preflight and
-a base layer, so importing it will reset margins and list styles across your app, set
-every element's default border color, and set the page background, text color and font
-from the Corbits tokens. That is what makes the components look right with no build
-configuration, and it is a global change. Import it at the root of an app you are willing
-to hand over to it.
+**This sheet is not inert — it restyles your page.** It carries Tailwind's preflight and a
+base layer, so importing it resets margins and list styles across your app, sets every
+element's default border color, and sets the page background, text color and font. That is
+what makes the components look right with no build configuration, and it is a global
+change. Import it at the root of an app you are willing to hand over to it.
 
 If you already use Tailwind v4 — or you need the components styled without the reset —
-import the theme instead and let your own build generate the utilities. One directive; the
-package tells Tailwind where its own class names live:
+import the theme instead and let your own build generate the utilities:
 
 ```css
 @import "tailwindcss";
 @import "@corbits/react-ui/theme.css";
 ```
 
-This path gives you the tokens, the keyframes and the base layer without a second copy of
-preflight, and you control what else is in the sheet.
+That one directive gives you the tokens, the keyframes and the base layer without a second
+copy of preflight, and points Tailwind at the package's own class names.
 
 Dark mode is a `dark` class on an ancestor. The library reads it; it does not manage it.
 
@@ -57,9 +49,9 @@ Dark mode is a `dark` class on an ancestor. The library reads it; it does not ma
 <html className="dark">
 ```
 
-The brand faces (Red Hat Display, Space Mono) are named by the theme but not bundled.
-Load them yourself, or the stack falls through to system fonts. To use a face loaded under
-a generated name, override `--font-sans` / `--font-mono`.
+The brand faces (Red Hat Display, Space Mono) are named by the theme but not bundled. Load
+them yourself, or the stack falls through to system fonts. To use a face loaded under a
+generated name, override `--font-sans` / `--font-mono`.
 
 ## Usage
 
@@ -96,17 +88,15 @@ Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from
 and the package is side-effect free, so either way you bundle just what you used.
 
 **One module is subpath-only: `@corbits/react-ui/lib/tanstack-data-port`.** It is fully
-public, it is just deliberately absent from the root entry, because it statically imports
-the optional `@tanstack/react-query` peer. The root entry is a single module — anything it
-re-exported would load for every root import, which would make that peer mandatory for
-consumers who never asked for it. Import the adapter by its subpath, as the example above
-does.
+public, just deliberately absent from the root entry, because it statically imports the
+optional `@tanstack/react-query` peer — re-exporting it from the root would make that peer
+mandatory for everyone. Import the adapter by its subpath, as above.
 
 ## Server components
 
 **This package ships no `"use client"` directives.** In a React Server Components app —
-Next.js App Router and similar — components that hold state or take event handlers must
-be imported from a file you mark yourself:
+Next.js App Router and similar — components that hold state or take event handlers must be
+imported from a file you mark yourself:
 
 ```tsx
 "use client";
@@ -114,23 +104,20 @@ export { Button } from "@corbits/react-ui/ui/button";
 export { CommandPalette } from "@corbits/react-ui/ui/command-palette";
 ```
 
-Subpaths rather than the root entry here: a client-boundary file is re-exported into your
-own bundle, and naming the modules you actually mark keeps the boundary — and the bundle
-— to exactly those.
-
-Components that render no state — tiles, badges, layout shells — work directly in a
-server component with no boundary at all. This keeps the boundary where the consumer can
-see it rather than baking one framework's convention into the published files.
+Use subpaths rather than the root entry here: a client-boundary file is re-exported into
+your own bundle, and naming the modules you actually mark keeps the boundary — and the
+bundle — to exactly those. Components that render no state (tiles, badges, layout shells)
+work directly in a server component with no boundary at all.
 
 ## Development
 
 ```bash
-npm run build      # SWC → dist/*.js, tsc → dist/*.d.ts, Tailwind → dist/styles.css,
-                   # then the contrast gate
-npm run typecheck
-npm run lint
-npm run dep-guard
+bun install
+bun run build      # generate → SWC → tsc → Tailwind → contrast gate
+bun run typecheck
+bun run lint
+bun run dep-guard
 ```
 
-See `CONTRIBUTING.md` for the gates and `ARCHITECTURE.md` for the design tokens, the
-`DataPort` seam, and why the public surface is what it is.
+`ARCHITECTURE.md` covers the `DataPort` seam, the theme layer and the known limits.
+`CONTRIBUTING.md` covers the gates and how to add a component.
