@@ -20,7 +20,8 @@ consequences shape the layout:
 2. **Tree-shaking is a requirement, not a hope.** Output is per-file ESM — one
    `.js` and one `.d.ts` per source file, no bundling — and the package declares
    `sideEffects` as CSS-only. The root entry is re-exports only, so importing from
-   the root and importing by subpath produce identical bundles.
+   the root and importing by subpath produce identical bundles — with one
+   deliberate exception, below.
 3. **Abstraction has to earn its place.** A wrapper that only forwards props is dead
    weight. The rule in this repo is "the minimum that works": no config indirection,
    no speculative extension points, no plugin framework. There is no CLI, no
@@ -116,14 +117,35 @@ dependency. A consumer on SWR, on a websocket cache, or on a hand-written fixtur
 port installs neither the adapter's import nor its package, swaps the provider value,
 and changes no component.
 
+### The adapter is subpath-only, and that is load-bearing
+
+`lib/tanstack-data-port` is the one public module **excluded from the root barrel**
+(`BARREL_EXCLUDED` in `scripts/generate-exports.mjs`). The reason is the exception to
+point 2 at the top of this document, and it is not a style preference.
+
+`src/index.ts` is a single module. A bundler can tree-shake *bindings* out of it, but
+the module graph is still walked and every module it re-exports is still resolved. So
+re-exporting the adapter from the barrel makes `import { Button } from
+"@corbits/react-ui"` fail outright for any consumer who did not install the optional
+peer — `ERR_MODULE_NOT_FOUND` under Node, an unresolved-export error under Vite. The
+optional peer becomes mandatory, which is precisely the thing the seam exists to
+prevent.
+
+This is worth stating plainly because it is **bundler-dependent**: Next's Turbopack
+compiles it without complaint. A change verified only against a server-components
+consumer will look fine and ship broken. `dep-guard` therefore walks the relative
+import graph from `src/index.ts` and fails if anything reachable from it imports an
+optional peer — the property that actually matters, checked independently of the
+generator that is supposed to maintain it.
+
 A `DataPort` is a plain record of functions minted by a factory. Not a class, not a
 hierarchy, not a plugin system. That is what makes a fixture port a ten-line object
 rather than a subclass.
 
 **The seam is gated, not just asserted.** `npm run dep-guard` fails if anything
-outside `lib/tanstack-data-port.ts` imports `@tanstack/react-query`. If a component
-ever reaches past the seam — which would silently turn the optional peer into a
-required one — the gate catches it.
+outside `lib/tanstack-data-port.ts` imports `@tanstack/react-query`, and separately
+if anything reachable from the root barrel imports it. Both routes to turning the
+optional peer into a required one are closed.
 
 ## `use-collection-state`
 

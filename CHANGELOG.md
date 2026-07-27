@@ -61,7 +61,8 @@ JSON are gone, and the components are imported from `node_modules` instead of co
   `@tanstack/react-query` outside the adapter that is allowed to have it.
 - **Peer dependencies** — React 18 or 19, `react-dom`, `lucide-react` (0.545 or 1.x),
   `sonner`, `@radix-ui/react-dialog` and `@radix-ui/react-slot`.
-  **`@tanstack/react-query` is optional** — needed only for the TanStack adapter.
+  **`@tanstack/react-query` is optional** — needed only for the TanStack adapter,
+  which is why that adapter is importable by subpath but absent from the root entry.
 
 #### Notes
 
@@ -69,5 +70,8 @@ JSON are gone, and the components are imported from `node_modules` instead of co
   consumer marks its own client boundary; see the README.
 - `lib/chart-geometry` and `lib/chart-palette` are internal and deliberately not
   exported. They are rendering machinery for the chart components.
+- `lib/tanstack-data-port` is public but **subpath-only**. It is not re-exported from
+  the root entry, because doing so would load the optional `@tanstack/react-query`
+  peer on every root import and make it mandatory.
 
 [Unreleased]: https://github.com/corbitsdev/react-ui

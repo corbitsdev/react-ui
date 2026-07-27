@@ -90,7 +90,10 @@ never to import your way around it.
    generated; `npm run build` picks the new file up.
 3. If the module is machinery rather than public API, add it to `INTERNAL` in
    `scripts/generate-exports.mjs`. Keeping something internal is cheap; taking a
-   subpath back after it ships is not.
+   subpath back after it ships is not. If it is public but statically imports an
+   *optional* peer dependency, add it to `BARREL_EXCLUDED` in the same file instead —
+   it keeps its subpath but must stay out of the root barrel, or that peer becomes
+   mandatory for every consumer. `dep-guard` fails if you forget.
 4. Do not add `"use client"`. The package ships no client-boundary directives — see
    ARCHITECTURE.md.
 5. If it needs a new npm package, decide deliberately: a framework-level library the

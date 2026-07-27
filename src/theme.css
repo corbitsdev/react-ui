@@ -116,11 +116,10 @@
 
   /* The brand faces are named directly and are not bundled — the package ships
      no font files. A consumer that loads Red Hat Display / Space Mono gets the
-     brand type; one that does not falls through the stack below. The `var()`
-     hooks let a consumer that loads them under generated names (a framework
-     font loader, say) point the stack at those instead. */
-  --font-sans: var(--font-red-hat-display, "Red Hat Display"), "Open Sans", Roboto, Arial, sans-serif;
-  --font-mono: var(--font-space-mono, "Space Mono"), "Fira Code", Monaco, Consolas, monospace;
+     brand type; one that does not falls through the stack. To point these at a
+     face loaded under a generated name, override --font-sans / --font-mono. */
+  --font-sans: "Red Hat Display", "Open Sans", Roboto, Arial, sans-serif;
+  --font-mono: "Space Mono", "Fira Code", Monaco, Consolas, monospace;
 
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);

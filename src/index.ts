@@ -2,6 +2,12 @@
 //
 // Re-exports only, and the package is sideEffects-free, so importing from
 // the root still tree-shakes down to what you used.
+//
+// Modules that statically import an optional peer dependency are absent here
+// on purpose and must be imported by their subpath. The barrel is a single
+// module: anything it re-exports is loaded by any root import, so one such
+// re-export would make the optional peer mandatory for everyone.
+//   @corbits/react-ui/lib/tanstack-data-port
 
 export * from "./blocks/access-notice/access-notice.js";
 export * from "./blocks/login/auth-layout.js";
@@ -16,7 +22,6 @@ export * from "./lib/data-port.js";
 export * from "./lib/now-item.js";
 export * from "./lib/relative-time.js";
 export * from "./lib/schedule.js";
-export * from "./lib/tanstack-data-port.js";
 export * from "./lib/time-range.js";
 export * from "./lib/utils.js";
 export * from "./lib/workflow-run.js";
