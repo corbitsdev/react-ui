@@ -1,10 +1,12 @@
 import js from "@eslint/js";
-import next from "eslint-config-next";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: [".next/**", "public/r/**", "scratch/**", "node_modules/**"] },
+  { ignores: ["dist/**", "scratch/**", "node_modules/**", "src/index.ts"] },
   js.configs.recommended,
   tseslint.configs.recommended,
-  ...next,
+  {
+    files: ["scripts/**/*.mjs"],
+    languageOptions: { globals: { URL: "readonly", console: "readonly", process: "readonly" } },
+  },
 );

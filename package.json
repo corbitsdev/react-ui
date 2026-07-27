@@ -1,9 +1,12 @@
 {
   "name": "@corbits/react-ui",
   "version": "0.1.0",
-  "private": true,
+  "description": "React components for agent and workflow surfaces.",
   "license": "LGPL-2.1-only",
   "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "homepage": "https://github.com/corbitsdev/react-ui",
   "repository": {
     "type": "git",
@@ -12,40 +15,495 @@
   "bugs": {
     "url": "https://github.com/corbitsdev/react-ui/issues"
   },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "dev": "next dev -p 3333",
-    "build": "next build",
-    "start": "next start -p 3333",
-    "registry:build": "shadcn build && node scripts/contrast-test.mjs",
+    "build": "npm run clean && npm run generate && npm run build:js && npm run build:types && npm run build:css && npm run contrast-test",
+    "clean": "rm -rf dist",
+    "generate": "node scripts/generate-exports.mjs",
+    "build:js": "swc src -d dist --strip-leading-paths --extensions .ts,.tsx",
+    "build:types": "tsc -p tsconfig.build.json",
+    "build:css": "tailwindcss -i src/styles.css -o dist/styles.css && cp src/theme.css dist/theme.css",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "dep-guard": "node scripts/dep-guard.mjs",
-    "contrast-test": "node scripts/contrast-test.mjs"
+    "contrast-test": "node scripts/contrast-test.mjs",
+    "prepack": "npm run build"
   },
   "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.3.1"
+  },
+  "peerDependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.3",
     "@tanstack/react-query": "^5.90.2",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.545.0",
-    "next": "^16.2.12",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.3.1"
+    "lucide-react": "^0.545.0 || ^1.0.0",
+    "react": "^18.2.0 || ^19.0.0",
+    "react-dom": "^18.2.0 || ^19.0.0",
+    "sonner": "^2.0.7"
+  },
+  "peerDependenciesMeta": {
+    "@tanstack/react-query": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@tailwindcss/postcss": "^4.3.3",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@swc/cli": "^0.7.7",
+    "@swc/core": "^1.13.5",
+    "@tailwindcss/cli": "^4.3.3",
+    "@tanstack/react-query": "^5.90.2",
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
     "eslint": "^9.39.1",
-    "eslint-config-next": "^16.2.12",
-    "shadcn": "^4.15.0",
+    "lucide-react": "^1.27.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "sonner": "^2.0.7",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.2"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./theme.css": "./dist/theme.css",
+    "./package.json": "./package.json",
+    "./blocks/access-notice/access-notice": {
+      "types": "./dist/blocks/access-notice/access-notice.d.ts",
+      "default": "./dist/blocks/access-notice/access-notice.js"
+    },
+    "./blocks/login/auth-layout": {
+      "types": "./dist/blocks/login/auth-layout.d.ts",
+      "default": "./dist/blocks/login/auth-layout.js"
+    },
+    "./blocks/login/login-form": {
+      "types": "./dist/blocks/login/login-form.d.ts",
+      "default": "./dist/blocks/login/login-form.js"
+    },
+    "./hooks/use-collection-state": {
+      "types": "./dist/hooks/use-collection-state.d.ts",
+      "default": "./dist/hooks/use-collection-state.js"
+    },
+    "./lib/activity": {
+      "types": "./dist/lib/activity.d.ts",
+      "default": "./dist/lib/activity.js"
+    },
+    "./lib/artifact": {
+      "types": "./dist/lib/artifact.d.ts",
+      "default": "./dist/lib/artifact.js"
+    },
+    "./lib/chat-message": {
+      "types": "./dist/lib/chat-message.d.ts",
+      "default": "./dist/lib/chat-message.js"
+    },
+    "./lib/command-registry": {
+      "types": "./dist/lib/command-registry.d.ts",
+      "default": "./dist/lib/command-registry.js"
+    },
+    "./lib/csv": {
+      "types": "./dist/lib/csv.d.ts",
+      "default": "./dist/lib/csv.js"
+    },
+    "./lib/data-port": {
+      "types": "./dist/lib/data-port.d.ts",
+      "default": "./dist/lib/data-port.js"
+    },
+    "./lib/now-item": {
+      "types": "./dist/lib/now-item.d.ts",
+      "default": "./dist/lib/now-item.js"
+    },
+    "./lib/relative-time": {
+      "types": "./dist/lib/relative-time.d.ts",
+      "default": "./dist/lib/relative-time.js"
+    },
+    "./lib/schedule": {
+      "types": "./dist/lib/schedule.d.ts",
+      "default": "./dist/lib/schedule.js"
+    },
+    "./lib/tanstack-data-port": {
+      "types": "./dist/lib/tanstack-data-port.d.ts",
+      "default": "./dist/lib/tanstack-data-port.js"
+    },
+    "./lib/time-range": {
+      "types": "./dist/lib/time-range.d.ts",
+      "default": "./dist/lib/time-range.js"
+    },
+    "./lib/utils": {
+      "types": "./dist/lib/utils.d.ts",
+      "default": "./dist/lib/utils.js"
+    },
+    "./lib/workflow-run": {
+      "types": "./dist/lib/workflow-run.d.ts",
+      "default": "./dist/lib/workflow-run.js"
+    },
+    "./ui/activity-block": {
+      "types": "./dist/ui/activity-block.d.ts",
+      "default": "./dist/ui/activity-block.js"
+    },
+    "./ui/activity-timeline": {
+      "types": "./dist/ui/activity-timeline.d.ts",
+      "default": "./dist/ui/activity-timeline.js"
+    },
+    "./ui/actor-summary": {
+      "types": "./dist/ui/actor-summary.d.ts",
+      "default": "./dist/ui/actor-summary.js"
+    },
+    "./ui/add-artifact-dialog": {
+      "types": "./dist/ui/add-artifact-dialog.d.ts",
+      "default": "./dist/ui/add-artifact-dialog.js"
+    },
+    "./ui/agent-turn": {
+      "types": "./dist/ui/agent-turn.d.ts",
+      "default": "./dist/ui/agent-turn.js"
+    },
+    "./ui/animated-number": {
+      "types": "./dist/ui/animated-number.d.ts",
+      "default": "./dist/ui/animated-number.js"
+    },
+    "./ui/approval-card": {
+      "types": "./dist/ui/approval-card.d.ts",
+      "default": "./dist/ui/approval-card.js"
+    },
+    "./ui/artifact-body": {
+      "types": "./dist/ui/artifact-body.d.ts",
+      "default": "./dist/ui/artifact-body.js"
+    },
+    "./ui/artifact-detail": {
+      "types": "./dist/ui/artifact-detail.d.ts",
+      "default": "./dist/ui/artifact-detail.js"
+    },
+    "./ui/artifact-gallery": {
+      "types": "./dist/ui/artifact-gallery.d.ts",
+      "default": "./dist/ui/artifact-gallery.js"
+    },
+    "./ui/artifact-notice": {
+      "types": "./dist/ui/artifact-notice.d.ts",
+      "default": "./dist/ui/artifact-notice.js"
+    },
+    "./ui/badge": {
+      "types": "./dist/ui/badge.d.ts",
+      "default": "./dist/ui/badge.js"
+    },
+    "./ui/bar-chart": {
+      "types": "./dist/ui/bar-chart.d.ts",
+      "default": "./dist/ui/bar-chart.js"
+    },
+    "./ui/boot-screen": {
+      "types": "./dist/ui/boot-screen.d.ts",
+      "default": "./dist/ui/boot-screen.js"
+    },
+    "./ui/button": {
+      "types": "./dist/ui/button.d.ts",
+      "default": "./dist/ui/button.js"
+    },
+    "./ui/card": {
+      "types": "./dist/ui/card.d.ts",
+      "default": "./dist/ui/card.js"
+    },
+    "./ui/catalog-glyph": {
+      "types": "./dist/ui/catalog-glyph.d.ts",
+      "default": "./dist/ui/catalog-glyph.js"
+    },
+    "./ui/chart-frame": {
+      "types": "./dist/ui/chart-frame.d.ts",
+      "default": "./dist/ui/chart-frame.js"
+    },
+    "./ui/chat-input": {
+      "types": "./dist/ui/chat-input.d.ts",
+      "default": "./dist/ui/chat-input.js"
+    },
+    "./ui/chat-panel": {
+      "types": "./dist/ui/chat-panel.d.ts",
+      "default": "./dist/ui/chat-panel.js"
+    },
+    "./ui/chat-shell": {
+      "types": "./dist/ui/chat-shell.d.ts",
+      "default": "./dist/ui/chat-shell.js"
+    },
+    "./ui/chat-thread": {
+      "types": "./dist/ui/chat-thread.d.ts",
+      "default": "./dist/ui/chat-thread.js"
+    },
+    "./ui/command": {
+      "types": "./dist/ui/command.d.ts",
+      "default": "./dist/ui/command.js"
+    },
+    "./ui/command-palette": {
+      "types": "./dist/ui/command-palette.d.ts",
+      "default": "./dist/ui/command-palette.js"
+    },
+    "./ui/command-queue": {
+      "types": "./dist/ui/command-queue.d.ts",
+      "default": "./dist/ui/command-queue.js"
+    },
+    "./ui/compare-body": {
+      "types": "./dist/ui/compare-body.d.ts",
+      "default": "./dist/ui/compare-body.js"
+    },
+    "./ui/confirm-button": {
+      "types": "./dist/ui/confirm-button.d.ts",
+      "default": "./dist/ui/confirm-button.js"
+    },
+    "./ui/context-strip": {
+      "types": "./dist/ui/context-strip.d.ts",
+      "default": "./dist/ui/context-strip.js"
+    },
+    "./ui/corbits-mark": {
+      "types": "./dist/ui/corbits-mark.d.ts",
+      "default": "./dist/ui/corbits-mark.js"
+    },
+    "./ui/count-table": {
+      "types": "./dist/ui/count-table.d.ts",
+      "default": "./dist/ui/count-table.js"
+    },
+    "./ui/csv-table": {
+      "types": "./dist/ui/csv-table.d.ts",
+      "default": "./dist/ui/csv-table.js"
+    },
+    "./ui/dashboard": {
+      "types": "./dist/ui/dashboard.d.ts",
+      "default": "./dist/ui/dashboard.js"
+    },
+    "./ui/data-table": {
+      "types": "./dist/ui/data-table.d.ts",
+      "default": "./dist/ui/data-table.js"
+    },
+    "./ui/dial": {
+      "types": "./dist/ui/dial.d.ts",
+      "default": "./dist/ui/dial.js"
+    },
+    "./ui/dialog": {
+      "types": "./dist/ui/dialog.d.ts",
+      "default": "./dist/ui/dialog.js"
+    },
+    "./ui/dither-canvas": {
+      "types": "./dist/ui/dither-canvas.d.ts",
+      "default": "./dist/ui/dither-canvas.js"
+    },
+    "./ui/embed-body": {
+      "types": "./dist/ui/embed-body.d.ts",
+      "default": "./dist/ui/embed-body.js"
+    },
+    "./ui/empty-state": {
+      "types": "./dist/ui/empty-state.d.ts",
+      "default": "./dist/ui/empty-state.js"
+    },
+    "./ui/file-input": {
+      "types": "./dist/ui/file-input.d.ts",
+      "default": "./dist/ui/file-input.js"
+    },
+    "./ui/filter-bar": {
+      "types": "./dist/ui/filter-bar.d.ts",
+      "default": "./dist/ui/filter-bar.js"
+    },
+    "./ui/input": {
+      "types": "./dist/ui/input.d.ts",
+      "default": "./dist/ui/input.js"
+    },
+    "./ui/intake-form": {
+      "types": "./dist/ui/intake-form.d.ts",
+      "default": "./dist/ui/intake-form.js"
+    },
+    "./ui/list-detail": {
+      "types": "./dist/ui/list-detail.d.ts",
+      "default": "./dist/ui/list-detail.js"
+    },
+    "./ui/mail-detail": {
+      "types": "./dist/ui/mail-detail.d.ts",
+      "default": "./dist/ui/mail-detail.js"
+    },
+    "./ui/managed-list": {
+      "types": "./dist/ui/managed-list.d.ts",
+      "default": "./dist/ui/managed-list.js"
+    },
+    "./ui/message-bubble": {
+      "types": "./dist/ui/message-bubble.d.ts",
+      "default": "./dist/ui/message-bubble.js"
+    },
+    "./ui/moment-walker": {
+      "types": "./dist/ui/moment-walker.d.ts",
+      "default": "./dist/ui/moment-walker.js"
+    },
+    "./ui/notifications-bell": {
+      "types": "./dist/ui/notifications-bell.d.ts",
+      "default": "./dist/ui/notifications-bell.js"
+    },
+    "./ui/now-cards": {
+      "types": "./dist/ui/now-cards.d.ts",
+      "default": "./dist/ui/now-cards.js"
+    },
+    "./ui/onboarding-tour": {
+      "types": "./dist/ui/onboarding-tour.d.ts",
+      "default": "./dist/ui/onboarding-tour.js"
+    },
+    "./ui/page-shell": {
+      "types": "./dist/ui/page-shell.d.ts",
+      "default": "./dist/ui/page-shell.js"
+    },
+    "./ui/pagination": {
+      "types": "./dist/ui/pagination.d.ts",
+      "default": "./dist/ui/pagination.js"
+    },
+    "./ui/progress-checklist": {
+      "types": "./dist/ui/progress-checklist.d.ts",
+      "default": "./dist/ui/progress-checklist.js"
+    },
+    "./ui/provider-mark": {
+      "types": "./dist/ui/provider-mark.d.ts",
+      "default": "./dist/ui/provider-mark.js"
+    },
+    "./ui/quick-reply-chips": {
+      "types": "./dist/ui/quick-reply-chips.d.ts",
+      "default": "./dist/ui/quick-reply-chips.js"
+    },
+    "./ui/quote-card": {
+      "types": "./dist/ui/quote-card.d.ts",
+      "default": "./dist/ui/quote-card.js"
+    },
+    "./ui/reconnecting-overlay": {
+      "types": "./dist/ui/reconnecting-overlay.d.ts",
+      "default": "./dist/ui/reconnecting-overlay.js"
+    },
+    "./ui/recurrence-input": {
+      "types": "./dist/ui/recurrence-input.d.ts",
+      "default": "./dist/ui/recurrence-input.js"
+    },
+    "./ui/research-body": {
+      "types": "./dist/ui/research-body.d.ts",
+      "default": "./dist/ui/research-body.js"
+    },
+    "./ui/run-now-button": {
+      "types": "./dist/ui/run-now-button.d.ts",
+      "default": "./dist/ui/run-now-button.js"
+    },
+    "./ui/run-once-flow": {
+      "types": "./dist/ui/run-once-flow.d.ts",
+      "default": "./dist/ui/run-once-flow.js"
+    },
+    "./ui/schedule-flow": {
+      "types": "./dist/ui/schedule-flow.d.ts",
+      "default": "./dist/ui/schedule-flow.js"
+    },
+    "./ui/schedule-list": {
+      "types": "./dist/ui/schedule-list.d.ts",
+      "default": "./dist/ui/schedule-list.js"
+    },
+    "./ui/section": {
+      "types": "./dist/ui/section.d.ts",
+      "default": "./dist/ui/section.js"
+    },
+    "./ui/section-nav": {
+      "types": "./dist/ui/section-nav.d.ts",
+      "default": "./dist/ui/section-nav.js"
+    },
+    "./ui/settings-panel": {
+      "types": "./dist/ui/settings-panel.d.ts",
+      "default": "./dist/ui/settings-panel.js"
+    },
+    "./ui/sidebar": {
+      "types": "./dist/ui/sidebar.d.ts",
+      "default": "./dist/ui/sidebar.js"
+    },
+    "./ui/skeleton": {
+      "types": "./dist/ui/skeleton.d.ts",
+      "default": "./dist/ui/skeleton.js"
+    },
+    "./ui/sortable-table": {
+      "types": "./dist/ui/sortable-table.d.ts",
+      "default": "./dist/ui/sortable-table.js"
+    },
+    "./ui/sparkline": {
+      "types": "./dist/ui/sparkline.d.ts",
+      "default": "./dist/ui/sparkline.js"
+    },
+    "./ui/stat-tile": {
+      "types": "./dist/ui/stat-tile.d.ts",
+      "default": "./dist/ui/stat-tile.js"
+    },
+    "./ui/status-dot": {
+      "types": "./dist/ui/status-dot.d.ts",
+      "default": "./dist/ui/status-dot.js"
+    },
+    "./ui/subagent-dock": {
+      "types": "./dist/ui/subagent-dock.d.ts",
+      "default": "./dist/ui/subagent-dock.js"
+    },
+    "./ui/switch": {
+      "types": "./dist/ui/switch.d.ts",
+      "default": "./dist/ui/switch.js"
+    },
+    "./ui/table": {
+      "types": "./dist/ui/table.d.ts",
+      "default": "./dist/ui/table.js"
+    },
+    "./ui/tabs": {
+      "types": "./dist/ui/tabs.d.ts",
+      "default": "./dist/ui/tabs.js"
+    },
+    "./ui/tenant-selector": {
+      "types": "./dist/ui/tenant-selector.d.ts",
+      "default": "./dist/ui/tenant-selector.js"
+    },
+    "./ui/thread-list": {
+      "types": "./dist/ui/thread-list.d.ts",
+      "default": "./dist/ui/thread-list.js"
+    },
+    "./ui/thread-switcher": {
+      "types": "./dist/ui/thread-switcher.d.ts",
+      "default": "./dist/ui/thread-switcher.js"
+    },
+    "./ui/time-range-control": {
+      "types": "./dist/ui/time-range-control.d.ts",
+      "default": "./dist/ui/time-range-control.js"
+    },
+    "./ui/time-series-chart": {
+      "types": "./dist/ui/time-series-chart.d.ts",
+      "default": "./dist/ui/time-series-chart.js"
+    },
+    "./ui/toast": {
+      "types": "./dist/ui/toast.d.ts",
+      "default": "./dist/ui/toast.js"
+    },
+    "./ui/toggle-list": {
+      "types": "./dist/ui/toggle-list.d.ts",
+      "default": "./dist/ui/toggle-list.js"
+    },
+    "./ui/tool-narrative": {
+      "types": "./dist/ui/tool-narrative.d.ts",
+      "default": "./dist/ui/tool-narrative.js"
+    },
+    "./ui/top-bar": {
+      "types": "./dist/ui/top-bar.d.ts",
+      "default": "./dist/ui/top-bar.js"
+    },
+    "./ui/view-toggle": {
+      "types": "./dist/ui/view-toggle.d.ts",
+      "default": "./dist/ui/view-toggle.js"
+    },
+    "./ui/whats-new": {
+      "types": "./dist/ui/whats-new.d.ts",
+      "default": "./dist/ui/whats-new.js"
+    },
+    "./ui/workflow-catalog": {
+      "types": "./dist/ui/workflow-catalog.d.ts",
+      "default": "./dist/ui/workflow-catalog.js"
+    },
+    "./ui/workflow-dock": {
+      "types": "./dist/ui/workflow-dock.d.ts",
+      "default": "./dist/ui/workflow-dock.js"
+    }
   }
 }

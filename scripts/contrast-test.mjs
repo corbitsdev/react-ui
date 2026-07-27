@@ -1,12 +1,23 @@
-// WCAG contrast gate for the Corbits theme. Runs after `shadcn build` so it
-// checks the tokens we actually ship, not a copy of them.
+// WCAG contrast gate for the Corbits theme. Reads dist/styles.css — the
+// stylesheet we actually publish — so it checks the shipped tokens rather than
+// a copy of them. Runs as the last step of `npm run build`.
 //
 // The pairs are derived from token *names*, never listed by hex — add
 // `--warning` / `--warning-foreground` to the theme and rule 1 covers it on the
 // next run with no edit here. Both modes are checked every time.
 import { readFileSync } from "node:fs";
 
-const THEME = new URL("../public/r/corbits-theme.json", import.meta.url).pathname;
+const STYLESHEET = new URL("../dist/styles.css", import.meta.url).pathname;
+
+/** Hex custom properties declared in the first `selector { ... }` block found. */
+function tokensIn(css, selector) {
+  const start = css.indexOf(`${selector} {`);
+  if (start === -1) throw new Error(`contrast-test: no \`${selector}\` block in dist/styles.css`);
+  const body = css.slice(start, css.indexOf("}", start));
+  return Object.fromEntries(
+    [...body.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\b/g)].map(([, name, hex]) => [name, hex]),
+  );
+}
 
 const AA_TEXT = 4.5; // WCAG 1.4.3, normal-size text
 const AA_UI = 3.0; // WCAG 1.4.11, boundaries of controls
@@ -24,10 +35,15 @@ const ratio = (a, b) => {
   return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
 };
 
-const theme = JSON.parse(readFileSync(THEME, "utf8"));
-const light = theme.cssVars.light;
-// Dark only overrides; anything it does not restate is inherited from light.
-const dark = { ...light, ...theme.cssVars.dark };
+const css = readFileSync(STYLESHEET, "utf8");
+const light = tokensIn(css, ":root");
+// `.dark` only overrides; anything it does not restate is inherited from :root.
+const dark = { ...light, ...tokensIn(css, ".dark") };
+
+if (Object.keys(light).length === 0) {
+  console.error("contrast-test: no tokens found — did the stylesheet build?");
+  process.exit(1);
+}
 
 const SURFACES = ["background", "card", "popover", "muted"];
 

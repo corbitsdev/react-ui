@@ -1,0 +1,6 @@
+/* The standalone stylesheet: Tailwind plus the Corbits theme, prebuilt into
+   dist/styles.css so a consumer needs no Tailwind and no build configuration.
+   Consumers who *do* use Tailwind import dist/theme.css instead and let their
+   own build produce the utilities. */
+@import "tailwindcss";
+@import "./theme.css";

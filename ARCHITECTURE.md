@@ -1,68 +1,78 @@
 # Architecture
 
-`@corbits/react-ui` is a **shadcn registry**. That single fact decides almost
-everything else in this document, so it is worth stating precisely before anything
-about components.
+`@corbits/react-ui` is an **installed npm component library**. It was previously a
+shadcn source registry served by a Next.js app; that app and the registry JSON are
+gone. Everything below describes the package.
 
-## The registry is a source distributor, not a library
+## The package is a library, not a source distributor
 
-A library is installed. Its code lives in `node_modules`, the consumer imports it,
-and the author keeps ownership: a bug is fixed upstream and picked up by a version
-bump.
+The code lives in the consumer's `node_modules`, they import it, and we keep
+ownership: a bug is fixed upstream and picked up by a version bump. Three
+consequences shape the layout:
 
-A registry is different. `npx shadcn add @corbits/data-table` **copies the source
-file into the consumer's repository** — into their `components/ui/`, under their
-lint rules, their formatter, their type configuration and their git history. From
-that moment the consumer owns it. There is no upgrade path back to us, no
-`node_modules` copy to patch, and no way to reach a file after it has been copied.
+1. **The public surface is a semver commitment.** Every subpath in `exports` is
+   something we have promised not to break casually. That is why the map is
+   *generated* from a triage list in `scripts/generate-exports.mjs` rather than
+   hand-written — the cheap direction is to keep a module internal, and only the
+   modules a consumer genuinely needs are exported. `lib/chart-geometry` and
+   `lib/chart-palette` are internal: they are rendering machinery for the chart
+   components and their names appear in no public prop type.
+2. **Tree-shaking is a requirement, not a hope.** Output is per-file ESM — one
+   `.js` and one `.d.ts` per source file, no bundling — and the package declares
+   `sideEffects` as CSS-only. The root entry is re-exports only, so importing from
+   the root and importing by subpath produce identical bundles.
+3. **Abstraction has to earn its place.** A wrapper that only forwards props is dead
+   weight. The rule in this repo is "the minimum that works": no config indirection,
+   no speculative extension points, no plugin framework. There is no CLI, no
+   component generator and no docs site, and that is deliberate.
 
-Four consequences follow, and every design decision here is downstream of one of
-them:
+### The build
 
-1. **A file must stand alone.** An item may depend on npm packages (declared in
-   `registry.json` as `dependencies`) and on other registry items (declared as
-   `registryDependencies`, which the CLI resolves and copies too). It may depend on
-   nothing else. There is no private helper module the consumer does not get.
-2. **A file must be readable.** It is going to be *read and edited* by whoever
-   installs it, on their worst day, with no author to ask. Comments explain the
-   decisions the code cannot; a clever abstraction that saves us ten lines costs
-   every consumer an hour.
-3. **Abstraction has to earn its place twice.** A wrapper that only forwards props
-   is dead weight in a library and a landmine in a registry — the consumer has to
-   read through it to reach the thing that does the work. The rule in this repo is
-   "the minimum that works": no config indirection, no speculative extension
-   points, no plugin framework.
-4. **A breaking change is not a major version, it is a diff.** There is no semver
-   contract that can protect an already-copied file. What we can do is keep the
-   seams small enough that a consumer diffing an old copy against a new one can see
-   the change.
+`npm run build` is four steps and a gate, in order:
 
-`registry.json` is the manifest of record: 108 items, one entry each, naming the
-files, the npm dependencies and the registry dependencies. `npm run registry:build`
-runs `shadcn build`, which emits one JSON per item into `public/r/`. Those files are
-the published surface; the Next.js app in `app/` exists to serve them and to render
-every item in light and dark.
+| Step | Tool | Output |
+| --- | --- | --- |
+| `generate` | `scripts/generate-exports.mjs` | `src/index.ts` and the `exports` map in `package.json` |
+| `build:js` | SWC | `dist/**/*.js`, one per source file |
+| `build:types` | `tsc --emitDeclarationOnly` | `dist/**/*.d.ts` |
+| `build:css` | Tailwind v4 CLI | `dist/styles.css`, plus `dist/theme.css` copied from source |
+| `contrast-test` | `scripts/contrast-test.mjs` | the gate — reads `dist/styles.css` |
+
+SWC does the JavaScript because it is fast and per-file; `tsc` does the declarations
+because SWC does not emit them. Nothing bundles, so nothing can accidentally merge
+two modules into one chunk and defeat point 2 above.
+
+Source imports are **relative and carry `.js` extensions**. There is no path alias
+and therefore no alias-resolution step in the build — the emitted files are valid
+ESM for Node as well as for every bundler.
+
+### No `"use client"`
+
+The package ships no client-boundary directives. A React Server Components consumer
+marks its own boundary by re-exporting the interactive components from a file it
+owns (see README). The alternative — baking one framework's convention into a
+hundred published files — makes the package's correctness depend on a build step no
+plain-React consumer runs, and hides the boundary where the consumer cannot see it.
 
 ## Naming
 
-Items are named for **the job**, never for a product. Agent, workflow, analytics,
-mail, schedule, artifact, activity. A consumer installing `activity-timeline` gets a
-timeline of activity; they should not have to learn a product's vocabulary to guess
-what an item does, and a product name copied into a hundred consumer repositories is
-a name we can never take back.
+Components are named for **the job**, never for a product. Agent, workflow,
+analytics, mail, schedule, artifact, activity. A consumer importing
+`activity-timeline` gets a timeline of activity; they should not have to learn a
+product's vocabulary to guess what something does.
 
 ## The `DataPort` seam
 
-Components in this registry **never fetch**, and never import a `@corbits/*` backend
+Components in this package **never fetch**, and never import a `@corbits/*` backend
 core. This is the hardest boundary in the repo, and it is not stylistic.
 
 A component that fetches is a component that has chosen the consumer's data layer
 for them. A component that imports `@corbits/mailbox-core` is worse: the cores are
 backend packages that pull in `drizzle-orm`, `postgres` and a database handle. An
-`import` of one into a file that gets copied into a browser bundle is not a
-dependency mistake, it is a category error, and it would drag a server-only tree
-into a client build. `npm run dep-guard` exists to make the whole class of leak
-fail loudly rather than quietly (see CONTRIBUTING.md).
+`import` of one into a file that lands in a browser bundle is not a dependency
+mistake, it is a category error, and it would drag a server-only tree into a client
+build. `npm run dep-guard` exists to make the whole class of leak fail loudly rather
+than quietly (see CONTRIBUTING.md).
 
 So data arrives one of two ways: as **props**, or through a `DataPort`.
 
@@ -90,7 +100,7 @@ Three details in `CollectionResult` are load-bearing:
   everything at once reports `nextOffset: null` and never grows a second page. There
   is no paginated variant of any component.
 - **Collections only.** There is deliberately no `useRecord` and no `useMutation`.
-  Nothing in the registry has a caller for them, and a mutation shape invented before
+  Nothing in the package has a caller for them, and a mutation shape invented before
   its first consumer is a shape that will be wrong. They get added when a real
   consumer lands — and adding them then is a smaller change than unpicking a guess.
 
@@ -98,22 +108,22 @@ Three details in `CollectionResult` are load-bearing:
 
 `createTanstackDataPort()` (`lib/tanstack-data-port.ts`) implements `DataPort` over
 TanStack Query's infinite-query API, and it is the default because most consumers
-already have TanStack in the tree. It is a *separate registry item* from `data-port`
-on purpose: the seam is the type, the adapter is one implementation of it.
+already have TanStack in the tree. It is a *separate module* from `data-port` on
+purpose: the seam is the type, the adapter is one implementation of it.
 
-`data-table` declares both as registry dependencies, so the default path works on the
-first `shadcn add` with no separate step to go and find an adapter — but a consumer
-on SWR, on a websocket cache, or on a hand-written fixture port swaps the provider
-value and changes no component.
+That separation is what lets `@tanstack/react-query` be an **optional** peer
+dependency. A consumer on SWR, on a websocket cache, or on a hand-written fixture
+port installs neither the adapter's import nor its package, swaps the provider value,
+and changes no component.
 
 A `DataPort` is a plain record of functions minted by a factory. Not a class, not a
 hierarchy, not a plugin system. That is what makes a fixture port a ten-line object
 rather than a subclass.
 
-**The proof is a page, not a claim.** `app/fixture/page.tsx` renders `DataTable`
-through a hand-written `DataPort` with no TanStack anywhere in it. If a component
-ever reaches past the seam, that page stops compiling or stops rendering — which is
-why it is a gate rather than a demo.
+**The seam is gated, not just asserted.** `npm run dep-guard` fails if anything
+outside `lib/tanstack-data-port.ts` imports `@tanstack/react-query`. If a component
+ever reaches past the seam — which would silently turn the optional peer into a
+required one — the gate catches it.
 
 ## `use-collection-state`
 
@@ -143,16 +153,33 @@ through to the port.
 
 ## The theme layer
 
-`corbits-theme` is a `registry:theme` item: it ships the design tokens **and** a base
-layer — the default border color, the ground, the type, and one `:focus-visible` ring
-for the whole app. Primitives do not declare their own focus ring. One ring, defined
-once, is what makes keyboard focus look like a system rather than like eighty
-independent decisions, and it is what stops a consumer having to override the same
-property in eighty copied files.
+`src/theme.css` ships the design tokens **and** a base layer — the default border
+color, the ground, the type, the reduced-motion opt-out, the component keyframes, and
+one `:focus-visible` ring for the whole app. Primitives do not declare their own focus
+ring. One ring, defined once, is what makes keyboard focus look like a system rather
+than eighty independent decisions.
 
-Dark mode is opt-in through a `.dark` class on an ancestor. The host owns theme
-switching; a registry that shipped its own theme toggle would be shipping an opinion
-about where state lives in someone else's app.
+### One CSS source, two artifacts
+
+`src/theme.css` is the only place any of it is written. The build produces two
+things from it, and neither is maintained by hand:
+
+- **`dist/styles.css`** — Tailwind compiles `src/styles.css` (which is two `@import`
+  lines: Tailwind, then the theme) into a standalone sheet. A consumer imports this
+  and needs no Tailwind and no build configuration.
+- **`dist/theme.css`** — a byte copy of `src/theme.css`, for a consumer who already
+  runs Tailwind v4 and wants the utilities generated by their own build.
+
+The second path costs the consumer a single `@import` because the theme carries its
+own `@source "./"`. Tailwind resolves `@source` relative to the file containing it,
+so that one line means `src/` when we build the standalone sheet and `dist/` when a
+consumer imports it out of `node_modules` — pointing, either way, at the code that
+uses the classes. That is why the keyframes and the tokens cannot drift between the
+two artifacts: there is only one file.
+
+Dark mode is opt-in through a `dark` class on an ancestor. The host owns theme
+switching; a component library that shipped its own theme toggle would be shipping an
+opinion about where state lives in someone else's app.
 
 ### The token derivation
 
@@ -182,13 +209,12 @@ They are kept as two names because shadcn components reference them for differen
 jobs; the right follow-up is to collapse them, not to invent an off-brand hex to tell
 them apart. `--destructive` is derived — the brand palette carries no error color.
 
-### The contrast test gates `registry:build`
+### The contrast test gates the build
 
-`registry:build` is `shadcn build && node scripts/contrast-test.mjs`, in that order
-and joined by `&&`. The test reads `public/r/corbits-theme.json` — the **built**
-artifact, not a copy of the token table — so it checks the tokens that would actually
-ship. A theme that fails does not get published, because the build exits non-zero
-before anything else runs.
+`contrast-test` is the last step of `npm run build`, joined by `&&`, and `prepack`
+runs `build` — so a theme that fails cannot be packed or published. The test parses
+`dist/styles.css` for the `:root` and `.dark` custom properties: the **built**
+artifact a consumer actually receives, not a copy of the token table.
 
 The pairs are derived from token **names**, never listed by hex. Six rules:
 
@@ -228,7 +254,7 @@ the ΔE 8 target outright (worst adjacent pair 10.5). Dark mode lands at 7.2, in
 the 6–8 floor band — which is legal **only** alongside a second, non-colour channel.
 
 That is why `seriesDash()` exists next to `seriesColor()`, and why every chart in
-this registry ships a legend, direct labels and a data table rather than treating
+this package ships a legend, direct labels and a data table rather than treating
 them as polish: the palette is only compliant *because* they are there. Past five
 series, `seriesColor` returns the muted ink rather than a sixth invented hue or slot
 1 again — cycling would give two series the same colour, which is a silent misread,
@@ -242,45 +268,49 @@ re-step these tokens, re-run the standard's validator.
 ## Components must not depend on the backend cores
 
 `@corbits/mailbox-core`, `@corbits/artifact-core` and `@corbits/analytics-core` are
-mountable backend modules. This registry is deliberately **independent of all three**,
+mountable backend modules. This package is deliberately **independent of all three**,
 in both directions:
 
-- A component never imports one. It is a server-side package tree, and a copied file
+- A component never imports one. It is a server-side package tree, and a component
   that imports it does not work in a browser bundle.
 - A component never assumes one is the backend. `DataTable` does not know whether its
   rows came from `@corbits/analytics-core`, from a REST endpoint, from a GraphQL
   gateway or from a fixture — it knows a `DataPort`.
 
-The shared vocabulary between this registry and the cores is *shape*, not code: the
+The shared vocabulary between this package and the cores is *shape*, not code: the
 per-domain `lib/` modules (`workflow-run`, `schedule`, `artifact`, `activity`,
 `chat-message`) declare the types a component renders, hand-written here. A consumer
 whose backend is one of the cores maps its JSON onto those types at their own seam.
 A consumer whose backend is something else does exactly the same work. That is the
-property worth protecting: the registry is usable by a team that has never heard of
+property worth protecting: the package is usable by a team that has never heard of
 the cores.
 
 ## Layout
 
 | | |
 | --- | --- |
-| `registry.json` | The manifest of record. One entry per item: files, npm deps, registry deps. |
-| `registry/corbits/ui/` | Components. Primitives, collection surfaces, shells, and the domain families. |
-| `registry/corbits/lib/` | Non-component source: `utils`, the `DataPort` seam and its adapter, the chart palette and geometry, and the per-domain shapes. |
-| `registry/corbits/hooks/` | `use-collection-state`. |
-| `registry/corbits/blocks/` | Multi-file compositions (`login`, `access-notice`). |
-| `app/page.tsx` | Every item rendered in light and dark. The visual review surface. |
-| `app/fixture/page.tsx` | `DataTable` on a hand-written `DataPort`. The pluggability gate. |
-| `scripts/contrast-test.mjs` | The theme gate, run by `registry:build`. |
-| `scripts/dep-guard.mjs` | The forbidden-scope gate. |
-| `public/r/` | Build output. Generated, not committed. |
+| `src/ui/` | Components. Primitives, collection surfaces, shells, and the domain families. |
+| `src/lib/` | Non-component source: `utils`, the `DataPort` seam and its adapter, the chart palette and geometry, and the per-domain shapes. |
+| `src/hooks/` | `use-collection-state`. |
+| `src/blocks/` | Multi-file compositions (`login`, `access-notice`). |
+| `src/theme.css` | Tokens, keyframes, base layer. The only CSS source. |
+| `src/styles.css` | Two `@import`s. The entry Tailwind compiles into `dist/styles.css`. |
+| `src/index.ts` | The root barrel. **Generated** — do not edit. |
+| `scripts/generate-exports.mjs` | Writes `src/index.ts` and the `exports` map. Holds the internal-module triage list. |
+| `scripts/contrast-test.mjs` | The theme gate. Reads `dist/styles.css`. |
+| `scripts/dep-guard.mjs` | The forbidden-import gates. |
+| `dist/` | Build output. Generated, not committed; the only thing `files` publishes. |
 
 ## Known limits
 
 - **`DataPort` covers collections only.** Single-record reads and mutations are
   absent by decision, not by oversight — see above.
-- **No visual regression testing.** `app/page.tsx` is reviewed by eye. The
-  measurable half of appearance (contrast, in both modes) is gated; layout is not.
-- **The registry is not versioned per item.** A consumer who copied a file cannot ask
-  which revision they have. Git history is the only record.
-- **`corbits-theme` assumes Tailwind v4 CSS variables.** The tokens are emitted as
-  `cssVars`; a consumer on a Tailwind config-object setup has to translate them.
+- **No tests and no visual regression testing.** The measurable half of appearance
+  (contrast, in both modes) is gated; layout and behaviour are not. There is no test
+  runner in the repo.
+- **No rendering gallery.** The Next.js app that rendered every component in light
+  and dark was deleted with the registry, and nothing replaced it. Visual review now
+  means rendering the package in a consumer.
+- **The theme assumes Tailwind v4 CSS variables.** A consumer on a Tailwind
+  config-object setup has to translate them — though such a consumer can simply
+  import `dist/styles.css` and ignore the theme layer entirely.
