@@ -24,9 +24,11 @@ bun run lint           # eslint .
 bun run dep-guard      # forbidden-import checks over src/
 ```
 
-All four must be clean before a change lands, and CI runs the same four. `typecheck` is
-not negotiable and `any` is not a way past it: the escapes that exist each carry a comment
-explaining why the type system leaves no alternative, and a new one needs the same.
+All four must be clean before a change lands. There is no CI in this repository yet, so
+running them locally is the only thing standing between a change and a release.
+`typecheck` is not negotiable and `any` is not a way past it: the escapes that exist each
+carry a comment explaining why the type system leaves no alternative, and a new one needs
+the same.
 
 ## Touching the theme
 
@@ -155,6 +157,6 @@ Check your item in both modes and at 200% zoom before opening a change.
 
 - Keep commits focused, and keep the diff to the change you are describing.
 - Explain *why* in the commit message; the code already says what.
-- CI must be green: `dep-guard`, `typecheck`, `lint`, and `build` including the contrast
-  gate.
+- Run the gates locally and say so in the pull request: `dep-guard`, `typecheck`, `lint`,
+  and `build` including the contrast gate. Nothing runs them for you yet.
 - Contributions are accepted under the repository's LGPL-2.1-only licence.

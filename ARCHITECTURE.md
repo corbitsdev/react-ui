@@ -12,8 +12,10 @@ rendering machinery whose names appear in no public prop type.
 
 **Tree-shaking is a requirement.** Output is per-file ESM — one `.js` and one `.d.ts`
 per source file, no bundling — and `sideEffects` is declared CSS-only. The root entry is
-re-exports only, so importing from the root and importing by subpath produce identical
-bundles, with one deliberate exception below.
+re-exports only, so importing from the root and importing by subpath both bundle just
+what you used. They are not guaranteed byte-for-byte identical — a bundler may order or
+name things differently depending on the entry — but neither drags in a component you did
+not reference. One module is deliberately excluded from the root entry; see below.
 
 **Abstraction has to earn its place.** No config indirection, no speculative extension
 points. There is no CLI, no component generator and no docs site, and that is deliberate.

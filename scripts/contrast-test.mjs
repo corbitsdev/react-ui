@@ -5,9 +5,57 @@
 // The pairs are derived from token *names*, never listed by hex — add
 // `--warning` / `--warning-foreground` to the theme and rule 1 covers it on the
 // next run with no edit here. Both modes are checked every time.
+//
+// `REQUIRED` is the counterweight to that name-derivation. Deriving pairs from
+// whatever names happen to be present means a token that *disappears* takes its
+// own checks with it and the gate goes quiet instead of red — which is exactly
+// how the `--chart-*` tokens were once dropped from the theme while this gate
+// reported a clean run and printed no chart lines at all. A rule that can only
+// be satisfied vacuously is not a gate. So the tokens the components actually
+// reference are named here, and their absence is a failure.
 import { readFileSync } from "node:fs";
 
 const STYLESHEET = new URL("../dist/styles.css", import.meta.url).pathname;
+
+/**
+ * Tokens a component reads by name. Absence is a failure, not a skipped check.
+ *
+ * Presence is all this asserts. Most of these are colours and go on to be
+ * measured below; `radius` is here because the theme layer is built on it, and
+ * it is simply required to exist — there is no contrast ratio for a length.
+ */
+const REQUIRED = [
+  "radius",
+  "background",
+  "foreground",
+  "card",
+  "card-foreground",
+  "popover",
+  "popover-foreground",
+  "primary",
+  "primary-foreground",
+  "primary-active",
+  "primary-emphasis",
+  "secondary",
+  "secondary-foreground",
+  "muted",
+  "muted-foreground",
+  "accent",
+  "accent-foreground",
+  "success",
+  "success-foreground",
+  "destructive",
+  "destructive-foreground",
+  "border",
+  "input",
+  "ring",
+  // Five slots, matching CHART_SERIES_SLOTS in lib/chart-palette.ts.
+  "chart-1",
+  "chart-2",
+  "chart-3",
+  "chart-4",
+  "chart-5",
+];
 
 /** Hex custom properties declared in the first `selector { ... }` block found. */
 function tokensIn(css, selector) {
@@ -17,6 +65,13 @@ function tokensIn(css, selector) {
   return Object.fromEntries(
     [...body.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\b/g)].map(([, name, hex]) => [name, hex]),
   );
+}
+
+/** Every custom property declared in the block, whatever its value. */
+function declaredIn(css, selector) {
+  const start = css.indexOf(`${selector} {`);
+  const body = css.slice(start, css.indexOf("}", start));
+  return new Set([...body.matchAll(/--([a-z0-9-]+):/g)].map(([, name]) => name));
 }
 
 const AA_TEXT = 4.5; // WCAG 1.4.3, normal-size text
@@ -42,6 +97,32 @@ const dark = { ...light, ...tokensIn(css, ".dark") };
 
 if (Object.keys(light).length === 0) {
   console.error("contrast-test: no tokens found — did the stylesheet build?");
+  process.exit(1);
+}
+
+// Presence only. Whether a token is a colour is a separate question — a
+// non-colour token like `--radius` has to exist, but there is no ratio to
+// compute for it, so it is asserted here and never reaches the maths below.
+const declaredLight = declaredIn(css, ":root");
+const declaredDark = new Set([...declaredLight, ...declaredIn(css, ".dark")]);
+
+let missingTokens = 0;
+for (const [mode, declared] of [
+  ["light", declaredLight],
+  ["dark", declaredDark],
+]) {
+  for (const name of REQUIRED) {
+    if (declared.has(name)) continue;
+    console.error(`MISSING  ${mode} --${name} is not defined in dist/styles.css`);
+    missingTokens += 1;
+  }
+}
+if (missingTokens > 0) {
+  console.error(
+    `\ncontrast-test: ${missingTokens} required token(s) missing. A component references ` +
+      `these by name; an undefined custom property makes the whole declaration invalid at ` +
+      `computed-value time, so the declaration is dropped and the element renders unstyled.`,
+  );
   process.exit(1);
 }
 

@@ -8,9 +8,19 @@ Licensed LGPL-2.1-only (see `LICENSE`).
 ## Install
 
 ```bash
-npm install @corbits/react-ui
-npm install react react-dom lucide-react sonner \
-  @radix-ui/react-dialog @radix-ui/react-slot
+npm install @corbits/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-slot
+```
+
+```bash
+pnpm add @corbits/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-slot
+```
+
+```bash
+yarn add @corbits/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-slot
+```
+
+```bash
+bun add @corbits/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-slot
 ```
 
 React 18 or 19. `@tanstack/react-query` is an **optional** peer, needed only if you use

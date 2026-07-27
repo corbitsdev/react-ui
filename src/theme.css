@@ -60,6 +60,17 @@
   --border: #dfe3e6;
   --input: #8a8080;
   --ring: #9a5416;
+
+  /* Chart series, a fixed order rather than a pool — slot 1 is always the first
+     series in the data. See lib/chart-palette.ts for why these steps and this
+     ordering, and do not re-step them by eye: they came out of the
+     data-visualisation standard's palette validator, including the
+     colour-vision half that the contrast gate cannot re-derive from hex. */
+  --chart-1: #1f5fa8;
+  --chart-2: #c05a12;
+  --chart-3: #6b3fa0;
+  --chart-4: #37904a;
+  --chart-5: #9e2b25;
 }
 
 .dark {
@@ -86,6 +97,12 @@
   --border: #423a3b;
   --input: #8a8080;
   --ring: #e98428;
+
+  --chart-1: #5a95d8;
+  --chart-2: #c96f1c;
+  --chart-3: #9d7de0;
+  --chart-4: #63a86a;
+  --chart-5: #cc4f47;
 }
 
 
