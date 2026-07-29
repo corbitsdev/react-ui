@@ -32,7 +32,8 @@
     "lint": "eslint .",
     "dep-guard": "node scripts/dep-guard.mjs",
     "contrast-test": "node scripts/contrast-test.mjs",
-    "prepack": "bun run build"
+    "prepack": "bun run build",
+    "prepare": "bun run build"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
