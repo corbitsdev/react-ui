@@ -23,6 +23,32 @@ yarn add @corbits/react-ui react react-dom lucide-react sonner @radix-ui/react-d
 bun add @corbits/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-slot
 ```
 
+Installing straight from git works too, and is how a consumer picks up an unreleased
+commit:
+
+```bash
+bun add github:corbitsdev/react-ui
+```
+
+The package publishes `dist/` only, so a git install has to build on the way in. That is
+what `prepare` (`scripts/prepare.mjs`) is for: when the package has been installed into a
+`node_modules` tree and carries no `dist/`, it installs the build toolchain and runs the
+build, so the consumer ends up with the same `dist/` a registry tarball would have carried.
+It is a no-op when developing this repository, and a no-op when `dist/` already exists.
+
+Do not remove it without also publishing to a registry — the `exports` map points
+exclusively at `dist/`, so a git install without a build resolves to files that are not
+there, and the error surfaces in the consumer's tree where they cannot fix it.
+
+With **bun**, a git dependency's lifecycle scripts only run if the consumer trusts them:
+
+```json
+{ "trustedDependencies": ["@corbits/react-ui"] }
+```
+
+Without that entry bun skips `prepare` silently and the install looks clean until the first
+import fails.
+
 React 18 or 19. `@tanstack/react-query` is an **optional** peer, needed only if you use
 `createTanstackDataPort()`; components take their data through a `DataPort` and work with
 any data layer, or none.
