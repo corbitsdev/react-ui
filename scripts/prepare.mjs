@@ -10,7 +10,7 @@
  * never generated, and the failure lands in the consumer's tree, where they
  * cannot fix it.
  *
- * Two things make this more than a one-line script:
+ * Three things make this more than a one-line script:
  *
  * 1. `prepare` also runs for the *root* project on a plain `bun install` here
  *    in the repository. Building then would be wasted work at best, and
@@ -20,14 +20,25 @@
  * 2. bun does not install a git dependency's devDependencies, and the whole
  *    toolchain (swc, tsc, tailwind) is a devDependency — as it should be, a
  *    consumer must not inherit them as runtime deps. So the git-install path
- *    installs them here, scoped to this directory, immediately before the
- *    build that needs them.
+ *    installs them itself, immediately before the build that needs them.
+ * 3. That build cannot run inside the consumer's `node_modules`. Declaration
+ *    emit has to name React's types, and installing the toolchain in place
+ *    puts them under a path like
+ *    `<consumer>/node_modules/.bun/@corbits+react-ui@.../node_modules/@types/react`.
+ *    TypeScript refuses to write that into a `.d.ts` (TS2742, "cannot be named
+ *    without a reference to ... This is likely not portable"), so `build:types`
+ *    fails and every later step is skipped — including `build:css`, which is
+ *    why a consumer would otherwise be left with JavaScript but no
+ *    stylesheets. Building in a scratch directory outside any `node_modules`
+ *    tree keeps those paths nameable; it is the same layout the build already
+ *    runs in during development and on CI.
  *
  * Deliberately a no-op when `dist/` is already present: repeat installs of the
  * same commit should not pay for a rebuild.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -46,23 +57,42 @@ if (!installedAsDependency) {
   process.exit(0);
 }
 
-// The toolchain install below is itself a `bun install`, run inside this very
-// package directory — which sits in a `node_modules` tree, so the check above
-// would call it a dependency install too and it would recurse forever. This
-// marker, passed down to the child, is what breaks that cycle.
+// The toolchain install below is itself a `bun install`. It no longer runs in
+// this directory, but the scratch copy carries this same script, and bun runs
+// `prepare` for the root project too — so without a marker the copy would
+// start the whole dance again. This breaks that cycle.
 const RECURSION_GUARD = "CORBITS_REACT_UI_PREPARE";
 if (process.env[RECURSION_GUARD] === "1") {
   process.exit(0);
 }
 
-function run(command, args) {
+function run(command, args, cwd) {
   execFileSync(command, args, {
-    cwd: packageDir,
+    cwd,
     stdio: "inherit",
     env: { ...process.env, [RECURSION_GUARD]: "1" },
   });
 }
 
 console.log("@corbits/react-ui: git install — building dist/");
-run("bun", ["install"]);
-run("bun", ["run", "build"]);
+
+const buildDir = mkdtempSync(join(tmpdir(), "corbits-react-ui-"));
+try {
+  cpSync(packageDir, buildDir, {
+    recursive: true,
+    // `node_modules` is what carries the unnameable layout, so copying it
+    // would defeat the point; `dist` is the thing being built.
+    filter: (source) => {
+      if (source === packageDir) return true;
+      const [top] = source.slice(packageDir.length + 1).split(sep);
+      return top !== "node_modules" && top !== "dist";
+    },
+  });
+
+  run("bun", ["install"], buildDir);
+  run("bun", ["run", "build"], buildDir);
+
+  cpSync(join(buildDir, "dist"), join(packageDir, "dist"), { recursive: true });
+} finally {
+  rmSync(buildDir, { recursive: true, force: true });
+}
