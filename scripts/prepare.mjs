@@ -46,8 +46,21 @@ if (!installedAsDependency) {
   process.exit(0);
 }
 
+// The toolchain install below is itself a `bun install`, run inside this very
+// package directory — which sits in a `node_modules` tree, so the check above
+// would call it a dependency install too and it would recurse forever. This
+// marker, passed down to the child, is what breaks that cycle.
+const RECURSION_GUARD = "CORBITS_REACT_UI_PREPARE";
+if (process.env[RECURSION_GUARD] === "1") {
+  process.exit(0);
+}
+
 function run(command, args) {
-  execFileSync(command, args, { cwd: packageDir, stdio: "inherit" });
+  execFileSync(command, args, {
+    cwd: packageDir,
+    stdio: "inherit",
+    env: { ...process.env, [RECURSION_GUARD]: "1" },
+  });
 }
 
 console.log("@corbits/react-ui: git install — building dist/");
