@@ -27,6 +27,8 @@ export type SidebarPanelSectionProps = {
  * Collapse is a prop, not internal state: `use-sidebar-panel` is the thing
  * that remembers which sections are open, so two sections never end up
  * disagreeing with each other's idea of "collapsed" after a re-render.
+ *
+ * Not `ui/sidebar`'s `SidebarSection` — that's the single-column family's section.
  */
 export function SidebarPanelSection({
   label,

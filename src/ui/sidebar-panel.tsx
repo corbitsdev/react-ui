@@ -24,6 +24,7 @@ export type SidebarPanelHeaderProps = React.ComponentProps<"div"> & {
   readonly action?: React.ReactNode;
 };
 
+/** Not `ui/sidebar`'s `SidebarHeader` — that's the single-column family's header slot. */
 export function SidebarPanelHeader({ title, action, className, ...props }: SidebarPanelHeaderProps) {
   return (
     <div
@@ -51,6 +52,7 @@ export function SidebarPanelBody({ className, ...props }: React.ComponentProps<"
   return <div data-slot="sidebar-panel-body" className={cn("min-h-0 flex-1 overflow-y-auto py-1", className)} {...props} />;
 }
 
+/** Not `ui/sidebar`'s `SidebarFooter` — that's the single-column family's footer slot. */
 export function SidebarPanelFooter({ className, ...props }: React.ComponentProps<"div">) {
   return <div data-slot="sidebar-panel-footer" className={cn("shrink-0 border-t border-border p-2", className)} {...props} />;
 }

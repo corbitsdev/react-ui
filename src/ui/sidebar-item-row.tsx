@@ -40,6 +40,8 @@ export type SidebarItemRowProps = {
  * survive colour-blindness and grayscale screenshots should pass a `meta`
  * that is not colour-only (a `StatusDot`, a count), not rely on this
  * component to supply one.
+ *
+ * Not `ui/sidebar`'s `SidebarItem` — that's the single-column family's row.
  */
 export function SidebarItemRow({
   name,
