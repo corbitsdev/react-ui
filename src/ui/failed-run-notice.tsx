@@ -53,9 +53,9 @@ export function FailedRunNotice({
   const message = rawErrorMessage === null ? fallbackDetails : classifyRunError(rawErrorMessage).userMessage;
 
   return (
-    <div role="alert" className={cn("rounded-lg border border-primary-emphasis/40 bg-primary/10 p-4", className)}>
-      <p className="text-sm font-medium text-primary-emphasis">{heading}</p>
-      <p className="mt-1 text-sm text-primary-emphasis">{message}</p>
+    <div role="alert" className={cn("rounded-lg border border-destructive/40 bg-destructive/10 p-4", className)}>
+      <p className="text-sm font-medium text-destructive">{heading}</p>
+      <p className="mt-1 text-sm text-destructive">{message}</p>
     </div>
   );
 }
