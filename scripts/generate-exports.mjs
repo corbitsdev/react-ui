@@ -23,7 +23,7 @@ import { join, relative } from "node:path";
 const ROOT = new URL("..", import.meta.url).pathname;
 const SRC = join(ROOT, "src");
 
-const INTERNAL = new Set(["lib/chart-geometry", "lib/chart-palette"]);
+const INTERNAL = new Set(["lib/chart-geometry", "lib/chart-palette", "lib/step-graph-layout"]);
 const BARREL_EXCLUDED = new Set(["lib/tanstack-data-port"]);
 
 const walk = (dir) =>

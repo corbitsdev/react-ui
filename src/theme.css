@@ -141,6 +141,10 @@
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
+
+  /* Overrides Tailwind's built-in ease-out with the brand's decelerate curve,
+     so every existing and new `ease-out` usage picks it up in one place. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 /* Dialog motion. Written as real keyframes rather than pulled in from an
