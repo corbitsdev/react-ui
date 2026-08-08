@@ -1,14 +1,7 @@
-import {
-  WORKFLOW_SCOPE_BADGE_TONE,
-  WORKFLOW_STATUS_BADGE_TONE,
-  WORKFLOW_STATUS_DOT_TONE,
-  workflowScopeLabel,
-  workflowStatusLive,
-  type WorkflowListItem,
-} from "../lib/workflow-registry.js";
+import { WORKFLOW_SCOPE_BADGE_TONE, workflowScopeLabel, type WorkflowListItem } from "../lib/workflow-registry.js";
 import { cn } from "../lib/utils.js";
 import { Badge } from "./badge.js";
-import { StatusDot } from "./status-dot.js";
+import { WorkflowStatusBadge } from "./workflow-status-badge.js";
 
 export const WORKFLOW_REGISTRY_GRID = "grid grid-cols-[minmax(0,1.6fr)_110px_72px_88px_100px] gap-2";
 
@@ -43,10 +36,7 @@ export function WorkflowRegistryRow({ item, selected = false, onSelect, classNam
       </span>
       <span className="truncate text-xs text-muted-foreground">{item.when}</span>
       <Badge tone={WORKFLOW_SCOPE_BADGE_TONE[item.scope]}>{workflowScopeLabel(item.scope)}</Badge>
-      <Badge tone={WORKFLOW_STATUS_BADGE_TONE[item.statusTone]}>
-        <StatusDot label="" tone={WORKFLOW_STATUS_DOT_TONE[item.statusTone]} live={workflowStatusLive(item.statusTone)} />
-        {item.statusLabel}
-      </Badge>
+      <WorkflowStatusBadge tone={item.statusTone} label={item.statusLabel} />
       <span className={cn("truncate font-mono text-[11.5px] text-muted-foreground", item.nextSoon === true && "font-semibold text-primary-emphasis")}>
         {item.nextOrElapsed}
       </span>

@@ -613,6 +613,10 @@
     "./ui/workflow-registry-section": {
       "types": "./dist/ui/workflow-registry-section.d.ts",
       "default": "./dist/ui/workflow-registry-section.js"
+    },
+    "./ui/workflow-status-badge": {
+      "types": "./dist/ui/workflow-status-badge.d.ts",
+      "default": "./dist/ui/workflow-status-badge.js"
     }
   }
 }

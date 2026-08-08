@@ -140,3 +140,4 @@ export * from "./ui/workflow-dock.js";
 export * from "./ui/workflow-registry-list.js";
 export * from "./ui/workflow-registry-row.js";
 export * from "./ui/workflow-registry-section.js";
+export * from "./ui/workflow-status-badge.js";
