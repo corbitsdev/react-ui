@@ -260,33 +260,6 @@
   }
 }
 
-/* The two-column sidebar's live rows. A row plays its "in" keyframe simply by
-   mounting — no timer, no state — and its "out" keyframe is driven by the
-   `leaving` prop on ui/sidebar-item-row so a consumer can hold the row
-   mounted for one frame while it animates away before removing it from the
-   list. Only `transform` and `opacity` move. */
-@keyframes corbits-row-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes corbits-row-out {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-}
-
 /* The contextual panel's page-swap. One direction, always: the incoming
    page's content settles upward and fades in, whichever page it came from.
    Ships by ui/sidebar-panel via hooks/use-sidebar-panel, keyed on the active

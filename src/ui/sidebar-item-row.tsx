@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type * as React from "react";
 
 import { cn } from "../lib/utils.js";
@@ -24,14 +25,21 @@ export type SidebarItemRowProps = {
 };
 
 /**
- * The live-updating row: a channel, a thread, a running workflow. Mounting
- * plays `corbits-row-in` for free — no timer, no state, the animation just
- * runs on the frame the element appears, which is why a freshly-arrived row
- * at the top of a list reads as *arriving* rather than popping into place.
+ * The live-updating row: a channel, a thread, a running workflow. Motion is a
+ * CSS transition on `transform`/`opacity` driven by a `data-state` of
+ * `entering` | `visible` | `leaving`, not an enter/exit keyframe pair — a
+ * keyframe animation restarts from its `from` value every time it is
+ * retriggered, so a row that gets un-marked `leaving` mid-exit (the live-
+ * activity list does this) would snap instead of reversing. A transition has
+ * no such restart: toggling the state class mid-flight just continues from
+ * wherever the interrupted transition already got to.
  *
- * `unread` is weight and a dot, never colour alone: the name goes semibold
- * and a `StatusDot`-shaped marker is expected in `meta`, which is how the
- * state survives colour-blindness and grayscale screenshots alike.
+ * `unread` is weight only: the name goes semibold. `meta` carries whatever
+ * the caller wants rendered — a `Badge`, a `StatusDot`, a timestamp — with no
+ * shape enforced by this component; callers who need the unread state to
+ * survive colour-blindness and grayscale screenshots should pass a `meta`
+ * that is not colour-only (a `StatusDot`, a count), not rely on this
+ * component to supply one.
  */
 export function SidebarItemRow({
   name,
@@ -44,14 +52,24 @@ export function SidebarItemRow({
   onSelect,
   className,
 }: SidebarItemRowProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const state = !mounted ? "entering" : leaving ? "leaving" : "visible";
+
   return (
     <li
       data-slot="sidebar-item-row"
+      data-state={state}
       className={cn(
-        "group/row",
-        leaving
-          ? "pointer-events-none animate-[corbits-row-out_150ms_ease-in]"
-          : "animate-[corbits-row-in_180ms_ease-out]",
+        "group/row transition-[transform,opacity] duration-150 ease-out",
+        state === "entering" && "-translate-y-1 opacity-0",
+        state === "leaving" && "pointer-events-none translate-y-1 opacity-0",
+        state === "visible" && "translate-y-0 opacity-100",
         className,
       )}
     >
@@ -68,7 +86,7 @@ export function SidebarItemRow({
           type="button"
           aria-current={selected ? "true" : undefined}
           onClick={onSelect}
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 pl-2 text-left"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 pl-2 text-left active:brightness-95"
         >
           {leading === undefined ? null : (
             <span className="grid size-5 shrink-0 place-items-center [&_svg]:size-4" aria-hidden>
