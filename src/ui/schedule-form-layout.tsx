@@ -41,7 +41,7 @@ export type ScheduleFormSummaryProps = {
 export function ScheduleFormSummary({ title = "Summary", rows, actions, className }: ScheduleFormSummaryProps) {
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">{title}</p>
+      <p className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-muted-foreground">{title}</p>
       <dl className="flex flex-col gap-2">
         {rows.map((row) => (
           <div key={row.label} className="flex flex-col gap-0.5">

@@ -42,7 +42,7 @@ export function InspectorHeader({ eyebrow, title, description, actions, classNam
 
 export function InspectorPanelTitle({ children, className }: { readonly children: ReactNode; readonly className?: string }) {
   return (
-    <div className={cn("mb-2 mt-4 text-[10.5px] font-bold uppercase tracking-[0.06em] text-muted-foreground first:mt-0", className)}>
+    <div className={cn("mb-2 mt-4 text-[10.5px] font-bold uppercase tracking-[0.05em] text-muted-foreground first:mt-0", className)}>
       {children}
     </div>
   );

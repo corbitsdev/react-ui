@@ -47,7 +47,7 @@ export function StepListRow({ step, className }: StepListRowProps) {
         <span className={cn("block truncate text-sm", LABEL_CLASS[step.status])}>{step.name}</span>
         {step.meta === undefined ? null : <span className="block truncate text-xs text-muted-foreground">{step.meta}</span>}
       </span>
-      <span className="shrink-0 text-[10.5px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">
+      <span className="shrink-0 text-[10.5px] font-bold uppercase tracking-[0.05em] text-muted-foreground">
         {STATE_LABEL[step.status]}
       </span>
     </li>

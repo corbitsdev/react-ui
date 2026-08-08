@@ -72,7 +72,7 @@ export function StepGraphNode({ title, kind, status, index, width, minHeight, le
       </span>
       <div className="flex min-w-0 flex-col">
         <span className="truncate text-[12.5px] font-semibold leading-tight">{title}</span>
-        <span className={cn("flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.04em]", BADGE_CLASS[kind])}>
+        <span className={cn("flex items-center gap-1 text-[10.5px] font-bold uppercase tracking-[0.05em]", BADGE_CLASS[kind])}>
           <span aria-hidden>{KIND_GLYPH[kind]}</span>
           {KIND_LABEL[kind]}
         </span>
