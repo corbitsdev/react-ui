@@ -117,6 +117,29 @@ Two things worth asserting while you are there:
   in `dist/styles.css`. Tailwind extracts classes statically, so a utility assembled at
   runtime is missing from the sheet and the component is silently unstyled.
 
+## The component workbench
+
+`bun run stories` starts [Ladle](https://ladle.dev) — a live, hot-reloading canvas over
+every published component, running against `src/theme.css` so what you see is what a
+consumer gets. `bun run stories:build` produces a static build of the same canvas for
+anyone who wants to check it without running the dev server.
+
+Stories live under `stories/`, not next to their component in `src/`. `src/` is walked to
+generate the `exports` map (see [ARCHITECTURE.md](./ARCHITECTURE.md)); a colocated
+`*.stories.tsx` would either leak into that map or need its own entry in `INTERNAL` for
+every single story file. Keeping them in a separate top-level directory keeps the public
+surface exactly the set of files that ship, with nothing to remember to exclude.
+
+The theme toggle in Ladle's own top bar switches the real `.dark` class from
+`src/theme.css` — not a canvas-only colour swap — so a component's dark-mode tokens,
+contrast and all, are what you're actually looking at.
+
+**A new component's story is part of what "done" means for it**, not a follow-up: at
+least one story per meaningful state (loading, empty, error, wherever the component has
+one), with fixture data that reads like something a person would actually see — a name, a
+title, a sentence — never an id-shaped placeholder. A prop the workbench can't exercise is
+a prop nobody has actually looked at rendered.
+
 ## Accessibility
 
 These components end up in other people's products. Accessibility is a merge requirement,
