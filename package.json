@@ -98,6 +98,10 @@
       "types": "./dist/hooks/use-collection-state.d.ts",
       "default": "./dist/hooks/use-collection-state.js"
     },
+    "./hooks/use-scroll-current-into-view": {
+      "types": "./dist/hooks/use-scroll-current-into-view.d.ts",
+      "default": "./dist/hooks/use-scroll-current-into-view.js"
+    },
     "./lib/activity": {
       "types": "./dist/lib/activity.d.ts",
       "default": "./dist/lib/activity.js"
@@ -366,6 +370,10 @@
       "types": "./dist/ui/live-run-banner.d.ts",
       "default": "./dist/ui/live-run-banner.js"
     },
+    "./ui/live-run-header": {
+      "types": "./dist/ui/live-run-header.d.ts",
+      "default": "./dist/ui/live-run-header.js"
+    },
     "./ui/live-run-inspector": {
       "types": "./dist/ui/live-run-inspector.d.ts",
       "default": "./dist/ui/live-run-inspector.js"
@@ -457,6 +465,10 @@
     "./ui/schedule-form-layout": {
       "types": "./dist/ui/schedule-form-layout.d.ts",
       "default": "./dist/ui/schedule-form-layout.js"
+    },
+    "./ui/schedule-header": {
+      "types": "./dist/ui/schedule-header.d.ts",
+      "default": "./dist/ui/schedule-header.js"
     },
     "./ui/schedule-inspector": {
       "types": "./dist/ui/schedule-inspector.d.ts",
