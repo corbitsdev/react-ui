@@ -117,6 +117,7 @@ export * from "./ui/sidebar.js";
 export * from "./ui/skeleton.js";
 export * from "./ui/sortable-table.js";
 export * from "./ui/sparkline.js";
+export * from "./ui/stat-grid.js";
 export * from "./ui/stat-tile.js";
 export * from "./ui/status-dot.js";
 export * from "./ui/step-graph.js";

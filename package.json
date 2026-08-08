@@ -522,6 +522,10 @@
       "types": "./dist/ui/sparkline.d.ts",
       "default": "./dist/ui/sparkline.js"
     },
+    "./ui/stat-grid": {
+      "types": "./dist/ui/stat-grid.d.ts",
+      "default": "./dist/ui/stat-grid.js"
+    },
     "./ui/stat-tile": {
       "types": "./dist/ui/stat-tile.d.ts",
       "default": "./dist/ui/stat-tile.js"
