@@ -44,6 +44,7 @@
   },
   "peerDependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-slot": "^1.2.3",
     "@tanstack/react-query": "^5.90.2",
     "lucide-react": "^0.545.0 || ^1.0.0",
@@ -60,6 +61,7 @@
     "@eslint/js": "^9.39.1",
     "@ladle/react": "^5.1.1",
     "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-slot": "^1.2.3",
     "@swc/cli": "^0.7.7",
     "@swc/core": "^1.13.5",
@@ -114,6 +116,10 @@
       "types": "./dist/lib/artifact.d.ts",
       "default": "./dist/lib/artifact.js"
     },
+    "./lib/chart-palette": {
+      "types": "./dist/lib/chart-palette.d.ts",
+      "default": "./dist/lib/chart-palette.js"
+    },
     "./lib/chat-message": {
       "types": "./dist/lib/chat-message.d.ts",
       "default": "./dist/lib/chat-message.js"
@@ -129,6 +135,10 @@
     "./lib/data-port": {
       "types": "./dist/lib/data-port.d.ts",
       "default": "./dist/lib/data-port.js"
+    },
+    "./lib/metrics": {
+      "types": "./dist/lib/metrics.d.ts",
+      "default": "./dist/lib/metrics.js"
     },
     "./lib/now-item": {
       "types": "./dist/lib/now-item.d.ts",
@@ -302,9 +312,17 @@
       "types": "./dist/ui/dashboard.d.ts",
       "default": "./dist/ui/dashboard.js"
     },
+    "./ui/dashboard-section": {
+      "types": "./dist/ui/dashboard-section.d.ts",
+      "default": "./dist/ui/dashboard-section.js"
+    },
     "./ui/data-table": {
       "types": "./dist/ui/data-table.d.ts",
       "default": "./dist/ui/data-table.js"
+    },
+    "./ui/delta-badge": {
+      "types": "./dist/ui/delta-badge.d.ts",
+      "default": "./dist/ui/delta-badge.js"
     },
     "./ui/dial": {
       "types": "./dist/ui/dial.d.ts",
@@ -346,6 +364,10 @@
       "types": "./dist/ui/gate-block.d.ts",
       "default": "./dist/ui/gate-block.js"
     },
+    "./ui/heatmap": {
+      "types": "./dist/ui/heatmap.d.ts",
+      "default": "./dist/ui/heatmap.js"
+    },
     "./ui/horizontal-stepper": {
       "types": "./dist/ui/horizontal-stepper.d.ts",
       "default": "./dist/ui/horizontal-stepper.js"
@@ -365,6 +387,14 @@
     "./ui/kind-picker": {
       "types": "./dist/ui/kind-picker.d.ts",
       "default": "./dist/ui/kind-picker.js"
+    },
+    "./ui/library-page-header": {
+      "types": "./dist/ui/library-page-header.d.ts",
+      "default": "./dist/ui/library-page-header.js"
+    },
+    "./ui/library-search-input": {
+      "types": "./dist/ui/library-search-input.d.ts",
+      "default": "./dist/ui/library-search-input.js"
     },
     "./ui/list-detail": {
       "types": "./dist/ui/list-detail.d.ts",
@@ -394,6 +424,10 @@
       "types": "./dist/ui/managed-list.d.ts",
       "default": "./dist/ui/managed-list.js"
     },
+    "./ui/menu": {
+      "types": "./dist/ui/menu.d.ts",
+      "default": "./dist/ui/menu.js"
+    },
     "./ui/message-bubble": {
       "types": "./dist/ui/message-bubble.d.ts",
       "default": "./dist/ui/message-bubble.js"
@@ -413,6 +447,10 @@
     "./ui/onboarding-tour": {
       "types": "./dist/ui/onboarding-tour.d.ts",
       "default": "./dist/ui/onboarding-tour.js"
+    },
+    "./ui/page-panel": {
+      "types": "./dist/ui/page-panel.d.ts",
+      "default": "./dist/ui/page-panel.js"
     },
     "./ui/page-shell": {
       "types": "./dist/ui/page-shell.d.ts",
@@ -453,6 +491,10 @@
     "./ui/research-body": {
       "types": "./dist/ui/research-body.d.ts",
       "default": "./dist/ui/research-body.js"
+    },
+    "./ui/rich-empty-state": {
+      "types": "./dist/ui/rich-empty-state.d.ts",
+      "default": "./dist/ui/rich-empty-state.js"
     },
     "./ui/run-now-button": {
       "types": "./dist/ui/run-now-button.d.ts",
@@ -509,6 +551,10 @@
     "./ui/sparkline": {
       "types": "./dist/ui/sparkline.d.ts",
       "default": "./dist/ui/sparkline.js"
+    },
+    "./ui/stat-grid": {
+      "types": "./dist/ui/stat-grid.d.ts",
+      "default": "./dist/ui/stat-grid.js"
     },
     "./ui/stat-tile": {
       "types": "./dist/ui/stat-tile.d.ts",
@@ -577,6 +623,10 @@
     "./ui/toggle-list": {
       "types": "./dist/ui/toggle-list.d.ts",
       "default": "./dist/ui/toggle-list.js"
+    },
+    "./ui/token-mosaic": {
+      "types": "./dist/ui/token-mosaic.d.ts",
+      "default": "./dist/ui/token-mosaic.js"
     },
     "./ui/tool-narrative": {
       "types": "./dist/ui/tool-narrative.d.ts",

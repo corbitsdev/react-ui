@@ -7,8 +7,9 @@ the layout.
 **The public surface is a semver commitment.** Every subpath in `exports` is something
 we have promised not to break casually, so the map is *generated* from a triage list in
 `scripts/generate-exports.mjs` rather than hand-written — keeping a module internal is
-the cheap direction. `lib/chart-geometry` and `lib/chart-palette` are internal: they are
-rendering machinery whose names appear in no public prop type.
+the cheap direction. `lib/chart-geometry` is internal: it is rendering machinery whose
+names appear in no public prop type. `lib/chart-palette` is public — a consumer painting
+its own data marks needs the same ramp, in the same order, under the same rules.
 
 **Tree-shaking is a requirement.** Output is per-file ESM — one `.js` and one `.d.ts`
 per source file, no bundling — and `sideEffects` is declared CSS-only. The root entry is
