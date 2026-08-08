@@ -1,5 +1,4 @@
-import { useEffect, useRef } from "react";
-
+import { useScrollCurrentIntoView } from "../hooks/use-scroll-current-into-view.js";
 import type { WorkflowStep, WorkflowStepStatus } from "../lib/workflow-run-progress.js";
 import { cn } from "../lib/utils.js";
 
@@ -41,12 +40,8 @@ export type HorizontalStepperProps = {
  * active one off to the side unannounced.
  */
 export function HorizontalStepper({ steps, className }: HorizontalStepperProps) {
-  const currentRef = useRef<HTMLLIElement>(null);
+  const currentRef = useScrollCurrentIntoView<HTMLLIElement>([steps]);
   const compress = steps.length > LABEL_VISIBLE_STEP_THRESHOLD;
-
-  useEffect(() => {
-    currentRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
-  }, [steps]);
 
   return (
     <div className={cn("border-b border-border bg-card px-6 py-5", className)}>

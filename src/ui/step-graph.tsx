@@ -1,6 +1,7 @@
 import { useId, useMemo } from "react";
 
-import { buildStepGraphEdgePath, sequentialStepEdges, type StepGraphLayoutAxis } from "../lib/chart-geometry.js";
+import { buildStepGraphEdgePath, sequentialStepEdges } from "../lib/chart-geometry.js";
+import { computeStepGraphLayout, STEP_GRAPH_DENSITY, stepGraphNodeOffset } from "../lib/step-graph-layout.js";
 import { StepGraphNode, type StepGraphNodeKind, type StepGraphNodeStatus } from "./step-graph-node.js";
 
 export type StepGraphStep = {
@@ -11,34 +12,6 @@ export type StepGraphStep = {
 };
 
 export type StepGraphEdge = { readonly from: string; readonly to: string };
-
-type DensitySpec = {
-  readonly nodeWidth: number;
-  readonly nodeHeight: number;
-  readonly gap: number;
-  readonly nodeInset: number;
-  readonly crossCenter: number;
-  readonly padding: number;
-  readonly axis: StepGraphLayoutAxis;
-};
-
-const DENSITY: Record<"compact" | "expanded", DensitySpec> = {
-  compact: { nodeWidth: 172, nodeHeight: 48, gap: 20, nodeInset: 14, crossCenter: 18, padding: 4, axis: "horizontal" },
-  expanded: { nodeWidth: 240, nodeHeight: 56, gap: 28, nodeInset: 18, crossCenter: 120, padding: 8, axis: "vertical" },
-};
-
-function graphSpan(count: number, spec: DensitySpec): number {
-  if (count <= 0) return 0;
-  const size = spec.axis === "horizontal" ? spec.nodeWidth : spec.nodeHeight;
-  return spec.padding * 2 + count * size + Math.max(0, count - 1) * spec.gap;
-}
-
-function nodeOffset(index: number, spec: DensitySpec): { readonly left: number; readonly top: number } {
-  if (spec.axis === "horizontal") {
-    return { left: spec.padding + index * (spec.nodeWidth + spec.gap), top: spec.crossCenter + 10 };
-  }
-  return { left: spec.padding, top: spec.padding + index * (spec.nodeHeight + spec.gap) };
-}
 
 export type StepGraphProps = {
   readonly steps: readonly StepGraphStep[];
@@ -51,8 +24,9 @@ export type StepGraphProps = {
 
 /**
  * A workflow's steps as a small node-and-edge diagram: nodes in run order,
- * connectors drawn between them. `StepGraphNode` renders each node; this
- * component owns only the layout math and the SVG connectors.
+ * connectors drawn between them. `StepGraphNode` renders each node and
+ * `lib/step-graph-layout` computes the geometry; this component only wires
+ * the two together and draws the SVG connectors.
  */
 export function StepGraph({
   steps,
@@ -62,23 +36,14 @@ export function StepGraph({
   className,
 }: StepGraphProps) {
   const labelId = useId();
-  const spec = DENSITY[density];
+  const spec = STEP_GRAPH_DENSITY[density];
 
   const resolvedEdges = useMemo(
     () => (edges !== undefined && edges.length > 0 ? edges : sequentialStepEdges(steps.map((step) => step.id))),
     [edges, steps],
   );
 
-  const layout = useMemo(() => {
-    const span = graphSpan(steps.length, spec);
-    const centers = steps.map((_, index) => {
-      const { left, top } = nodeOffset(index, spec);
-      return spec.axis === "horizontal" ? { x: left + spec.nodeWidth / 2, y: top + 14 } : { x: left + spec.nodeWidth / 2, y: top + spec.nodeHeight / 2 };
-    });
-    const width = spec.axis === "horizontal" ? span : spec.nodeWidth + spec.padding * 2;
-    const height = spec.axis === "horizontal" ? spec.nodeHeight + spec.crossCenter + 24 : span;
-    return { centers, width, height };
-  }, [steps, spec]);
+  const layout = useMemo(() => computeStepGraphLayout(steps.length, spec), [steps.length, spec]);
 
   const idToIndex = useMemo(() => new Map(steps.map((step, index) => [step.id, index])), [steps]);
 
@@ -130,7 +95,7 @@ export function StepGraph({
 
           <ol className="relative m-0 list-none p-0">
             {steps.map((step, index) => {
-              const { left, top } = nodeOffset(index, spec);
+              const { left, top } = stepGraphNodeOffset(index, spec);
               return (
                 <StepGraphNode
                   key={step.id}
