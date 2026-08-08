@@ -175,13 +175,12 @@ export function failedRunErrorMessage(progress: RunProgress | null): string | nu
 }
 
 /**
- * True only for a genuine never-started run: failed, with an empty step map,
- * where that emptiness came from an event log that was actually read.
- * `logRead` distinguishes that from a log-unavailable fallback (a legacy run,
- * or a read error) that can synthesize the same empty-step shape for *any*
- * failed run, including one that progressed far before failing — in that case
- * whether it started is unknown, so this returns `false` rather than making a
- * false "never started" claim.
+ * True only for a genuine never-started run: a non-null progress with an
+ * empty step map, where that emptiness came from an event log that was
+ * actually read. `logRead` distinguishes that from a log-unavailable fallback
+ * (a legacy run, or a read error) that can synthesize the same empty-step
+ * shape regardless of phase — in that case whether it started is unknown, so
+ * this returns `false` rather than making a false "never started" claim.
  */
 export function runNeverStarted(progress: RunProgress | null, logRead: boolean): boolean {
   return progress !== null && logRead && progress.steps.size === 0;
