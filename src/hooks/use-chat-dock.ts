@@ -7,6 +7,43 @@ import { useCallback, useEffect, useRef, useState } from "react";
  */
 export type ChatDockMode = "closed" | "docked" | "fullpage";
 
+/**
+ * Elements whose own Escape handling should win over the dock's step-down —
+ * a `<select>` popup, a Radix Popover/DropdownMenu/Select/Dialog (all of
+ * which mark their content with `role="dialog"`, `role="listbox"`, or
+ * `role="menu"`, and Radix specifically renders its floating content inside
+ * `[data-radix-popper-content-wrapper]`), or any other overlay the composer
+ * hosts. Matched against `composedPath()` so a portal-rendered overlay still
+ * counts, even though it lives outside the dock's own DOM subtree.
+ */
+const NESTED_OVERLAY_SELECTOR = [
+  "select",
+  '[role="dialog"]',
+  '[role="alertdialog"]',
+  '[role="listbox"]',
+  '[role="menu"]',
+  "[data-radix-popper-content-wrapper]",
+].join(",");
+
+/**
+ * True when this Escape keypress belongs to UI nested inside the dock, not
+ * the dock itself — either something already called `preventDefault()` on
+ * it, or `composedPath()` reaches a nested overlay element before it reaches
+ * the dock's own `[data-slot="chat-dock"]` container. Walking the dock's own
+ * container without hitting an overlay first means Escape is the dock's to
+ * handle.
+ */
+function isEscapeConsumedByNestedUI(event: KeyboardEvent): boolean {
+  if (event.defaultPrevented) return true;
+  const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+  for (const node of path) {
+    if (!(node instanceof HTMLElement)) continue;
+    if (node.matches(NESTED_OVERLAY_SELECTOR)) return true;
+    if (node.dataset.slot === "chat-dock") return false;
+  }
+  return false;
+}
+
 export type UseChatDockResult = {
   readonly mode: ChatDockMode;
   readonly isOpen: boolean;
@@ -49,6 +86,7 @@ export function useChatDock(initialMode: ChatDockMode = "closed"): UseChatDockRe
     if (mode === "closed") return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
+      if (isEscapeConsumedByNestedUI(event)) return;
       setMode((current) => (current === "fullpage" ? "docked" : "closed"));
     };
     window.addEventListener("keydown", onKeyDown);
