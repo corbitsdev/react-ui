@@ -82,3 +82,48 @@ export function formatCompact(value: number): string {
   if (magnitude >= 10_000) return `${(value / 1000).toFixed(1)}K`;
   return value.toLocaleString();
 }
+
+/**
+ * The step-graph's node layout runs along one axis at a time — a compact
+ * preview reads left to right, an expanded trace pane reads top to bottom —
+ * so the same edge-drawing and default-ordering helpers serve both instead of
+ * a bespoke path builder per orientation.
+ */
+export type StepGraphLayoutAxis = "horizontal" | "vertical";
+
+export type StepGraphEdgeEndpoint = { readonly from: string; readonly to: string };
+
+/** Every step connects to the next, in array order — the default edge set
+ * when a caller has no real DAG dependency data to draw. */
+export function sequentialStepEdges(stepIds: readonly string[]): readonly StepGraphEdgeEndpoint[] {
+  const edges: StepGraphEdgeEndpoint[] = [];
+  for (let i = 0; i < stepIds.length - 1; i++) {
+    const from = stepIds[i];
+    const to = stepIds[i + 1];
+    if (from !== undefined && to !== undefined) edges.push({ from, to });
+  }
+  return edges;
+}
+
+/**
+ * An SVG path for one node-to-node connector, straight and inset from both
+ * node centers by `inset` so the line meets each node's edge rather than
+ * running through its label. Returns `""` for a degenerate (near-zero-length)
+ * connector — an arrowhead with nothing to point along would be a rendering
+ * artifact, not information.
+ */
+export function buildStepGraphEdgePath(from: Point, to: Point, inset: number, axis: StepGraphLayoutAxis): string {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy);
+  if (length <= inset * 2) return "";
+  const ux = dx / length;
+  const uy = dy / length;
+  const start = { x: from.x + ux * inset, y: from.y + uy * inset };
+  const end = { x: to.x - ux * inset, y: to.y - uy * inset };
+  // The axis only matters for a straight line insofar as it is already
+  // baked into `from`/`to` by the caller's layout; kept as a parameter so a
+  // future curved-edge variant can branch on it without changing callers.
+  void axis;
+  return linePath([start, end]);
+}
