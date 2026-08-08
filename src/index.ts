@@ -81,6 +81,8 @@ export * from "./ui/input.js";
 export * from "./ui/inspector-shell.js";
 export * from "./ui/intake-form.js";
 export * from "./ui/kind-picker.js";
+export * from "./ui/library-page-header.js";
+export * from "./ui/library-search-input.js";
 export * from "./ui/list-detail.js";
 export * from "./ui/live-run-banner.js";
 export * from "./ui/live-run-header.js";

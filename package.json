@@ -378,6 +378,14 @@
       "types": "./dist/ui/kind-picker.d.ts",
       "default": "./dist/ui/kind-picker.js"
     },
+    "./ui/library-page-header": {
+      "types": "./dist/ui/library-page-header.d.ts",
+      "default": "./dist/ui/library-page-header.js"
+    },
+    "./ui/library-search-input": {
+      "types": "./dist/ui/library-search-input.d.ts",
+      "default": "./dist/ui/library-search-input.js"
+    },
     "./ui/list-detail": {
       "types": "./dist/ui/list-detail.d.ts",
       "default": "./dist/ui/list-detail.js"
