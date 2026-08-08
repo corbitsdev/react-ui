@@ -60,7 +60,7 @@ export const Walkthrough = () => {
         Mode: <strong className="text-foreground">{dock.mode}</strong> — open the dock, then expand it to fullpage.
       </div>
 
-      <ChatDockScrim open={dock.isOpen} onClose={dock.close} />
+      <ChatDockScrim mode={dock.mode} onClose={dock.close} />
       <ChatDock mode={dock.mode} shouldAnimateEntrance={dock.shouldAnimateEntrance}>
         {dock.mode === "closed" ? (
           <ChatDockFab onOpen={dock.open} />

@@ -7,6 +7,16 @@ import { useFocusTrap } from "../hooks/use-focus-trap.js";
 import { cn } from "../lib/utils.js";
 import { CHAT_DOCK_ENTRANCE_MS, CHAT_DOCK_SCRIM_MS } from "./chat-dock-timing.js";
 
+/** Only `fullpage` covers the whole viewport and demands modal behavior — `docked` is a corner panel the rest of the page stays usable behind. */
+function isModal(mode: ChatDockMode): boolean {
+  return mode === "fullpage";
+}
+
+/** Caps the badge at "9+" rather than growing unboundedly wide on a fixed-size FAB. */
+function formatUnreadCount(unreadCount: number): string {
+  return unreadCount > 9 ? "9+" : String(unreadCount);
+}
+
 function mergeRefs<T>(...refs: ReadonlyArray<RefObject<T | null>>): (node: T | null) => void {
   return (node) => {
     for (const ref of refs) (ref as MutableRefObject<T | null>).current = node;
@@ -35,12 +45,14 @@ function useBodyScrollLock(locked: boolean): void {
 }
 
 /**
- * The dim-and-blur backdrop behind an open dock. Present in both `docked` and
- * `fullpage` — a docked panel still wants the rest of the page to read as
- * "behind" it — clicking it closes the dock, same as Escape.
+ * The dim-and-blur backdrop behind an open dock. Rendered only for
+ * `fullpage` — that is the one mode that covers the viewport and is modal;
+ * `docked` is a non-modal corner panel and must leave the rest of the page
+ * fully interactive, so it gets no scrim. Clicking the scrim closes the
+ * dock, same as Escape.
  */
-export function ChatDockScrim({ open, onClose, className }: { open: boolean; onClose: () => void; className?: string }) {
-  if (!open) return null;
+export function ChatDockScrim({ mode, onClose, className }: { mode: ChatDockMode; onClose: () => void; className?: string }) {
+  if (!isModal(mode)) return null;
   return (
     <button
       type="button"
@@ -64,8 +76,20 @@ export function ChatDockScrim({ open, onClose, className }: { open: boolean; onC
  * static animation class: a class that's always present can be retriggered
  * by unrelated DOM churn, where a flag that flips once after mount cannot.
  */
-export function ChatDockFab({ onOpen, label = "Ask", className }: { onOpen: () => void; label?: string; className?: string }) {
+export function ChatDockFab({
+  onOpen,
+  label = "Ask",
+  unreadCount = 0,
+  className,
+}: {
+  onOpen: () => void;
+  label?: string;
+  /** Unread message count to surface on the launcher. Non-positive values render no badge. */
+  unreadCount?: number;
+  className?: string;
+}) {
   const [playEntrance, setPlayEntrance] = useState(true);
+  const hasUnread = unreadCount > 0;
 
   useEffect(() => {
     const timer = window.setTimeout(() => setPlayEntrance(false), CHAT_DOCK_ENTRANCE_MS);
@@ -77,15 +101,24 @@ export function ChatDockFab({ onOpen, label = "Ask", className }: { onOpen: () =
       type="button"
       onClick={onOpen}
       aria-expanded={false}
-      aria-label="Open chat"
+      aria-label={hasUnread ? `Open chat, ${unreadCount} unread` : "Open chat"}
       className={cn(
-        "inline-flex h-full w-full items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground shadow-lg transition-colors hover:bg-primary-active",
+        "relative inline-flex h-full w-full items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground shadow-lg transition-colors hover:bg-primary-active",
         playEntrance && "[animation:corbits-fab-in_280ms_var(--ease-out)_both]",
         className,
       )}
     >
       <MessageCircle className="size-4" aria-hidden />
       {label}
+      {hasUnread ? (
+        <span
+          data-slot="chat-dock-fab-badge"
+          aria-hidden="true"
+          className="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-popover bg-destructive px-1 text-[10px] font-bold text-destructive-foreground"
+        >
+          {formatUnreadCount(unreadCount)}
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -123,25 +156,29 @@ export type ChatDockProps = {
  * transition and animation on this element collapses to a single frame there,
  * so this piece carries no reduced-motion logic of its own.
  *
- * Dialog semantics apply in both open modes: `aria-modal` plus a focus trap
- * while open, focus restored to whatever had it on close, and the page's own
- * scroll locked while `fullpage` — `docked` deliberately leaves the page
- * scrollable, since it never covers the whole viewport.
+ * Modality differs by mode, deliberately: `fullpage` covers the viewport and
+ * behaves like a dialog — `aria-modal`, a focus trap, the page's own scroll
+ * locked. `docked` is a corner panel the reader can leave open while working
+ * elsewhere on the page, so it stays non-modal — `role="complementary"`, no
+ * `aria-modal`, no focus trap, no scroll lock, and nothing about the rest of
+ * the page is disabled or made inert. Escape still steps `fullpage` down to
+ * `docked` and `docked` down to `closed` in both cases (see `useChatDock`).
  */
 export function ChatDock({ mode, children, shouldAnimateEntrance = false, className }: ChatDockProps) {
   const isOpen = mode !== "closed";
-  const trapRef = useFocusTrap<HTMLDivElement>(isOpen);
+  const modal = isModal(mode);
+  const trapRef = useFocusTrap<HTMLDivElement>(modal);
   const flipRef = useFlipTransition<HTMLDivElement>(flipKey(mode));
-  useBodyScrollLock(mode === "fullpage");
+  useBodyScrollLock(modal);
 
   return (
     <div
       ref={mergeRefs(trapRef, flipRef)}
       data-slot="chat-dock"
       data-mode={mode}
-      role="dialog"
+      role={modal ? "dialog" : "complementary"}
       aria-label="Chat"
-      aria-modal={isOpen ? "true" : undefined}
+      aria-modal={modal ? "true" : undefined}
       aria-hidden={mode === "closed"}
       tabIndex={-1}
       className={cn(
