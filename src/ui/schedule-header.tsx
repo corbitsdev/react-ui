@@ -1,9 +1,15 @@
 import type { ReactNode } from "react";
 
-import type { WorkflowScope } from "../lib/workflow-registry.js";
+import {
+  WORKFLOW_SCOPE_BADGE_TONE,
+  WORKFLOW_STATUS_BADGE_TONE,
+  WORKFLOW_STATUS_DOT_TONE,
+  workflowScopeLabel,
+  type WorkflowScope,
+} from "../lib/workflow-registry.js";
+import { Badge } from "./badge.js";
 import { InspectorHeader } from "./inspector-shell.js";
-import { ScopePill } from "./scope-pill.js";
-import { StatusChip } from "./status-chip.js";
+import { StatusDot } from "./status-dot.js";
 
 export type ScheduleHeaderProps = {
   readonly enabled: boolean;
@@ -23,8 +29,11 @@ export function ScheduleHeader({ enabled, scope, title, description, actions, cl
       className={className}
       eyebrow={
         <>
-          <StatusChip tone={enabled ? "running" : "paused"} label={enabled ? "Active" : "Paused"} live={enabled} />
-          <ScopePill scope={scope} />
+          <Badge tone={WORKFLOW_STATUS_BADGE_TONE[enabled ? "running" : "paused"]}>
+            <StatusDot label="" tone={WORKFLOW_STATUS_DOT_TONE[enabled ? "running" : "paused"]} live={enabled} />
+            {enabled ? "Active" : "Paused"}
+          </Badge>
+          <Badge tone={WORKFLOW_SCOPE_BADGE_TONE[scope]}>{workflowScopeLabel(scope)}</Badge>
         </>
       }
       title={title}

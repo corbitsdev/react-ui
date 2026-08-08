@@ -13,7 +13,7 @@ const KIND_GLYPH: Record<StepGraphNodeKind, string> = { auto: "●", agent: "◆
 
 // Kind colours: auto stays neutral ink, agent takes the info blue, human
 // takes the accent orange that marks "needs a person" everywhere else in the
-// registry — the same three-way split `StatusChip`'s tones draw on.
+// registry — the same three-way split the status badge's tones draw on.
 const CHIP_CLASS: Record<StepGraphNodeKind, string> = {
   auto: "border-border bg-card",
   agent: "border-accent bg-accent/40",

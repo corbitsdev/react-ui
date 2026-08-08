@@ -482,10 +482,6 @@
       "types": "./dist/ui/schedule-list.d.ts",
       "default": "./dist/ui/schedule-list.js"
     },
-    "./ui/scope-pill": {
-      "types": "./dist/ui/scope-pill.d.ts",
-      "default": "./dist/ui/scope-pill.js"
-    },
     "./ui/section": {
       "types": "./dist/ui/section.d.ts",
       "default": "./dist/ui/section.js"
@@ -517,10 +513,6 @@
     "./ui/stat-tile": {
       "types": "./dist/ui/stat-tile.d.ts",
       "default": "./dist/ui/stat-tile.js"
-    },
-    "./ui/status-chip": {
-      "types": "./dist/ui/status-chip.d.ts",
-      "default": "./dist/ui/status-chip.js"
     },
     "./ui/status-dot": {
       "types": "./dist/ui/status-dot.d.ts",

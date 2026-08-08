@@ -1,11 +1,18 @@
 import {
+  WORKFLOW_SCOPE_BADGE_TONE,
+  WORKFLOW_STATUS_BADGE_TONE,
+  WORKFLOW_STATUS_DOT_TONE,
+  workflowScopeLabel,
+  workflowStatusLive,
+} from "../../src/lib/workflow-registry.js";
+import { Badge } from "../../src/ui/badge.js";
+import {
   InspectorEmpty,
   InspectorHeader,
   InspectorKv,
   InspectorShell,
 } from "../../src/ui/inspector-shell.js";
-import { ScopePill } from "../../src/ui/scope-pill.js";
-import { StatusChip } from "../../src/ui/status-chip.js";
+import { StatusDot } from "../../src/ui/status-dot.js";
 
 export default { title: "Workflow / Inspector shell" };
 
@@ -16,8 +23,11 @@ export const WithContent = () => (
         <InspectorHeader
           eyebrow={
             <>
-              <StatusChip tone="running" label="Running" />
-              <ScopePill scope="personal" />
+              <Badge tone={WORKFLOW_STATUS_BADGE_TONE.running}>
+                <StatusDot label="" tone={WORKFLOW_STATUS_DOT_TONE.running} live={workflowStatusLive("running")} />
+                Running
+              </Badge>
+              <Badge tone={WORKFLOW_SCOPE_BADGE_TONE.personal}>{workflowScopeLabel("personal")}</Badge>
             </>
           }
           title="Nightly digest to Sales"

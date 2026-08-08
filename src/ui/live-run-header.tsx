@@ -3,12 +3,17 @@ import type { ReactNode } from "react";
 import {
   LIVE_RUN_PHASE_LABEL,
   LIVE_RUN_PHASE_TONE,
+  WORKFLOW_SCOPE_BADGE_TONE,
+  WORKFLOW_STATUS_BADGE_TONE,
+  WORKFLOW_STATUS_DOT_TONE,
+  workflowScopeLabel,
+  workflowStatusLive,
   type LiveRunPhase,
   type WorkflowScope,
 } from "../lib/workflow-registry.js";
+import { Badge } from "./badge.js";
 import { InspectorHeader } from "./inspector-shell.js";
-import { ScopePill } from "./scope-pill.js";
-import { StatusChip } from "./status-chip.js";
+import { StatusDot } from "./status-dot.js";
 
 export type LiveRunHeaderProps = {
   readonly phase: LiveRunPhase;
@@ -28,8 +33,17 @@ export function LiveRunHeader({ phase, scope, title, description, actions, class
       className={className}
       eyebrow={
         <>
-          <StatusChip tone={LIVE_RUN_PHASE_TONE[phase]} label={LIVE_RUN_PHASE_LABEL[phase]} />
-          {scope === undefined ? null : <ScopePill scope={scope} />}
+          <Badge tone={WORKFLOW_STATUS_BADGE_TONE[LIVE_RUN_PHASE_TONE[phase]]}>
+            <StatusDot
+              label=""
+              tone={WORKFLOW_STATUS_DOT_TONE[LIVE_RUN_PHASE_TONE[phase]]}
+              live={workflowStatusLive(LIVE_RUN_PHASE_TONE[phase])}
+            />
+            {LIVE_RUN_PHASE_LABEL[phase]}
+          </Badge>
+          {scope === undefined ? null : (
+            <Badge tone={WORKFLOW_SCOPE_BADGE_TONE[scope]}>{workflowScopeLabel(scope)}</Badge>
+          )}
         </>
       }
       title={title}
