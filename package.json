@@ -100,9 +100,21 @@
       "types": "./dist/blocks/login/login-form.d.ts",
       "default": "./dist/blocks/login/login-form.js"
     },
+    "./hooks/use-chat-dock": {
+      "types": "./dist/hooks/use-chat-dock.d.ts",
+      "default": "./dist/hooks/use-chat-dock.js"
+    },
     "./hooks/use-collection-state": {
       "types": "./dist/hooks/use-collection-state.d.ts",
       "default": "./dist/hooks/use-collection-state.js"
+    },
+    "./hooks/use-delayed-autofocus": {
+      "types": "./dist/hooks/use-delayed-autofocus.d.ts",
+      "default": "./dist/hooks/use-delayed-autofocus.js"
+    },
+    "./hooks/use-render-rail": {
+      "types": "./dist/hooks/use-render-rail.d.ts",
+      "default": "./dist/hooks/use-render-rail.js"
     },
     "./hooks/use-scroll-current-into-view": {
       "types": "./dist/hooks/use-scroll-current-into-view.d.ts",
@@ -135,6 +147,10 @@
     "./lib/data-port": {
       "types": "./dist/lib/data-port.d.ts",
       "default": "./dist/lib/data-port.js"
+    },
+    "./lib/generative-block": {
+      "types": "./dist/lib/generative-block.d.ts",
+      "default": "./dist/lib/generative-block.js"
     },
     "./lib/metrics": {
       "types": "./dist/lib/metrics.d.ts",
@@ -256,6 +272,14 @@
       "types": "./dist/ui/chart-frame.d.ts",
       "default": "./dist/ui/chart-frame.js"
     },
+    "./ui/chat-composer": {
+      "types": "./dist/ui/chat-composer.d.ts",
+      "default": "./dist/ui/chat-composer.js"
+    },
+    "./ui/chat-dock": {
+      "types": "./dist/ui/chat-dock.d.ts",
+      "default": "./dist/ui/chat-dock.js"
+    },
     "./ui/chat-input": {
       "types": "./dist/ui/chat-input.d.ts",
       "default": "./dist/ui/chat-input.js"
@@ -363,6 +387,10 @@
     "./ui/gate-block": {
       "types": "./dist/ui/gate-block.d.ts",
       "default": "./dist/ui/gate-block.js"
+    },
+    "./ui/generative-block-view": {
+      "types": "./dist/ui/generative-block-view.d.ts",
+      "default": "./dist/ui/generative-block-view.js"
     },
     "./ui/heatmap": {
       "types": "./dist/ui/heatmap.d.ts",
@@ -487,6 +515,10 @@
     "./ui/recurrence-input": {
       "types": "./dist/ui/recurrence-input.d.ts",
       "default": "./dist/ui/recurrence-input.js"
+    },
+    "./ui/render-rail": {
+      "types": "./dist/ui/render-rail.d.ts",
+      "default": "./dist/ui/render-rail.js"
     },
     "./ui/research-body": {
       "types": "./dist/ui/research-body.d.ts",
@@ -635,6 +667,10 @@
     "./ui/top-bar": {
       "types": "./dist/ui/top-bar.d.ts",
       "default": "./dist/ui/top-bar.js"
+    },
+    "./ui/typing-indicator": {
+      "types": "./dist/ui/typing-indicator.d.ts",
+      "default": "./dist/ui/typing-indicator.js"
     },
     "./ui/view-toggle": {
       "types": "./dist/ui/view-toggle.d.ts",
