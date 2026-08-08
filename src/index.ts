@@ -56,6 +56,7 @@ export * from "./ui/catalog-glyph.js";
 export * from "./ui/chart-frame.js";
 export * from "./ui/chat-composer.js";
 export * from "./ui/chat-dock.js";
+export * from "./ui/chat-dock-timing.js";
 export * from "./ui/chat-input.js";
 export * from "./ui/chat-panel.js";
 export * from "./ui/chat-shell.js";

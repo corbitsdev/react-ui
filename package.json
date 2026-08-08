@@ -280,6 +280,10 @@
       "types": "./dist/ui/chat-dock.d.ts",
       "default": "./dist/ui/chat-dock.js"
     },
+    "./ui/chat-dock-timing": {
+      "types": "./dist/ui/chat-dock-timing.d.ts",
+      "default": "./dist/ui/chat-dock-timing.js"
+    },
     "./ui/chat-input": {
       "types": "./dist/ui/chat-input.d.ts",
       "default": "./dist/ui/chat-input.js"
