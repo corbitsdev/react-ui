@@ -288,6 +288,36 @@
   }
 }
 
+/* The render rail's block swap: a small slide-and-fade for whichever block
+   just became active, including the empty-state's own transition into the
+   first block. Keyed by block id so React remounts a fresh node per swap and
+   this plays every time, unlike the dock's own once-per-open entrances. Used
+   by ui/render-rail. */
+@keyframes corbits-rail-block-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* A small scale-and-fade for a swapped icon — the render rail's Pin/PinOff
+   toggle uses it so the glyph change reads as a cross-fade rather than a
+   jump-cut. Used by ui/render-rail. */
+@keyframes corbits-icon-swap {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* The typing indicator's three dots. Each dot offsets its own
    animation-delay, so the bounce travels left to right. Used by
    ui/typing-indicator. */

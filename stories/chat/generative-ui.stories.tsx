@@ -96,7 +96,13 @@ export const FullpageWithRail = () => {
               }
             />
           </ChatPanel>
-          <RenderRail block={rail.activeBlock} isPinned={rail.isPinned} onTogglePin={() => rail.togglePin(rail.activeBlock?.id ?? "")} />
+          <RenderRail
+            block={rail.activeBlock}
+            isPinned={rail.isPinned}
+            onTogglePin={() => rail.togglePin(rail.activeBlock?.id ?? "")}
+            hasNewerBlock={rail.hasNewerBlock}
+            onJumpToLatest={rail.jumpToLatest}
+          />
         </div>
       </ChatDock>
     </div>
