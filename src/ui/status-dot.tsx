@@ -8,8 +8,12 @@ export type StatusDotProps = {
   /** Adds a ring that pulses outward: this state is live and still changing. */
   readonly live?: boolean;
   readonly tone?: StatusDotTone;
+  /** `sm` (8px, default) beside body text; `xs` (6px) inside dense chrome. */
+  readonly size?: StatusDotSize;
   readonly className?: string;
 };
+
+export type StatusDotSize = "xs" | "sm";
 
 /**
  * Three tones, not one per status, and that is deliberate. A dot is a non-text
@@ -38,9 +42,14 @@ const TONE_CLASS: Record<StatusDotTone, string> = {
  * changing" to people who can see it, and the label already says so to those
  * who cannot. It stills under the theme's reduced-motion rule.
  */
-export function StatusDot({ label, live = false, tone = "neutral", className }: StatusDotProps) {
+const SIZE_CLASS: Record<StatusDotSize, string> = {
+  xs: "size-1.5",
+  sm: "size-2",
+};
+
+export function StatusDot({ label, live = false, tone = "neutral", size = "sm", className }: StatusDotProps) {
   return (
-    <span role="img" aria-label={label} className={cn("relative inline-flex size-2 shrink-0", className)}>
+    <span role="img" aria-label={label} className={cn("relative inline-flex shrink-0", SIZE_CLASS[size], className)}>
       {live ? (
         <span
           aria-hidden
