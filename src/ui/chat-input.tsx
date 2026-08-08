@@ -1,5 +1,5 @@
 import { ArrowUp, Paperclip, Square, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 
 import { cn } from "../lib/utils.js";
 
@@ -20,6 +20,8 @@ export type ChatInputProps = {
   readonly attachments?: readonly ChatAttachment[];
   readonly onAttach?: (files: FileList) => void;
   readonly onRemoveAttachment?: (attachment: ChatAttachment) => void;
+  /** Exposes the textarea node — a host that autofocuses on open needs something to focus. */
+  readonly textareaRef?: RefObject<HTMLTextAreaElement | null>;
   readonly className?: string;
 };
 
@@ -52,9 +54,11 @@ export function ChatInput({
   attachments = [],
   onAttach,
   onRemoveAttachment,
+  textareaRef: externalTextareaRef,
   className,
 }: ChatInputProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const internalTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = externalTextareaRef ?? internalTextareaRef;
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
