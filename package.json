@@ -29,6 +29,7 @@
     "build:types": "tsc -p tsconfig.build.json",
     "build:css": "tailwindcss -i src/styles.css -o dist/styles.css && cp src/theme.css dist/theme.css",
     "typecheck": "tsc --noEmit",
+    "test": "bun test",
     "lint": "eslint .",
     "dep-guard": "node scripts/dep-guard.mjs",
     "contrast-test": "node scripts/contrast-test.mjs",
@@ -59,6 +60,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@happy-dom/global-registrator": "^20.11.2",
     "@ladle/react": "^5.1.1",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -68,6 +70,7 @@
     "@tailwindcss/cli": "^4.3.3",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-query": "^5.90.2",
+    "@types/bun": "^1.3.14",
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
@@ -100,9 +103,29 @@
       "types": "./dist/blocks/login/login-form.d.ts",
       "default": "./dist/blocks/login/login-form.js"
     },
+    "./hooks/use-chat-dock": {
+      "types": "./dist/hooks/use-chat-dock.d.ts",
+      "default": "./dist/hooks/use-chat-dock.js"
+    },
     "./hooks/use-collection-state": {
       "types": "./dist/hooks/use-collection-state.d.ts",
       "default": "./dist/hooks/use-collection-state.js"
+    },
+    "./hooks/use-delayed-autofocus": {
+      "types": "./dist/hooks/use-delayed-autofocus.d.ts",
+      "default": "./dist/hooks/use-delayed-autofocus.js"
+    },
+    "./hooks/use-flip-transition": {
+      "types": "./dist/hooks/use-flip-transition.d.ts",
+      "default": "./dist/hooks/use-flip-transition.js"
+    },
+    "./hooks/use-focus-trap": {
+      "types": "./dist/hooks/use-focus-trap.d.ts",
+      "default": "./dist/hooks/use-focus-trap.js"
+    },
+    "./hooks/use-render-rail": {
+      "types": "./dist/hooks/use-render-rail.d.ts",
+      "default": "./dist/hooks/use-render-rail.js"
     },
     "./hooks/use-scroll-current-into-view": {
       "types": "./dist/hooks/use-scroll-current-into-view.d.ts",
@@ -139,6 +162,10 @@
     "./lib/data-port": {
       "types": "./dist/lib/data-port.d.ts",
       "default": "./dist/lib/data-port.js"
+    },
+    "./lib/generative-block": {
+      "types": "./dist/lib/generative-block.d.ts",
+      "default": "./dist/lib/generative-block.js"
     },
     "./lib/metrics": {
       "types": "./dist/lib/metrics.d.ts",
@@ -260,6 +287,18 @@
       "types": "./dist/ui/chart-frame.d.ts",
       "default": "./dist/ui/chart-frame.js"
     },
+    "./ui/chat-composer": {
+      "types": "./dist/ui/chat-composer.d.ts",
+      "default": "./dist/ui/chat-composer.js"
+    },
+    "./ui/chat-dock": {
+      "types": "./dist/ui/chat-dock.d.ts",
+      "default": "./dist/ui/chat-dock.js"
+    },
+    "./ui/chat-dock-timing": {
+      "types": "./dist/ui/chat-dock-timing.d.ts",
+      "default": "./dist/ui/chat-dock-timing.js"
+    },
     "./ui/chat-input": {
       "types": "./dist/ui/chat-input.d.ts",
       "default": "./dist/ui/chat-input.js"
@@ -267,10 +306,6 @@
     "./ui/chat-panel": {
       "types": "./dist/ui/chat-panel.d.ts",
       "default": "./dist/ui/chat-panel.js"
-    },
-    "./ui/chat-shell": {
-      "types": "./dist/ui/chat-shell.d.ts",
-      "default": "./dist/ui/chat-shell.js"
     },
     "./ui/chat-thread": {
       "types": "./dist/ui/chat-thread.d.ts",
@@ -367,6 +402,10 @@
     "./ui/gate-block": {
       "types": "./dist/ui/gate-block.d.ts",
       "default": "./dist/ui/gate-block.js"
+    },
+    "./ui/generative-block-view": {
+      "types": "./dist/ui/generative-block-view.d.ts",
+      "default": "./dist/ui/generative-block-view.js"
     },
     "./ui/heatmap": {
       "types": "./dist/ui/heatmap.d.ts",
@@ -491,6 +530,10 @@
     "./ui/recurrence-input": {
       "types": "./dist/ui/recurrence-input.d.ts",
       "default": "./dist/ui/recurrence-input.js"
+    },
+    "./ui/render-rail": {
+      "types": "./dist/ui/render-rail.d.ts",
+      "default": "./dist/ui/render-rail.js"
     },
     "./ui/research-body": {
       "types": "./dist/ui/research-body.d.ts",
@@ -655,6 +698,10 @@
     "./ui/top-bar": {
       "types": "./dist/ui/top-bar.d.ts",
       "default": "./dist/ui/top-bar.js"
+    },
+    "./ui/typing-indicator": {
+      "types": "./dist/ui/typing-indicator.d.ts",
+      "default": "./dist/ui/typing-indicator.js"
     },
     "./ui/view-toggle": {
       "types": "./dist/ui/view-toggle.d.ts",

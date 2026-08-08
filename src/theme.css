@@ -108,7 +108,6 @@
   --chart-5: #cc4f47;
 }
 
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -260,6 +259,79 @@
   }
 }
 
+/* The chat dock's FAB entrance: a small pop up off the corner it lives in.
+   Used by ui/chat-dock. */
+@keyframes corbits-fab-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* The chat dock's panel entrance, once open — a slightly larger pop than the
+   FAB's, since the panel is the bigger surface. Only plays on the
+   closed→docked transition; docked→fullpage is a plain CSS transition on the
+   same element, not a re-entrance. Used by ui/chat-dock. */
+@keyframes corbits-dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* The render rail's block swap: a small slide-and-fade for whichever block
+   just became active, including the empty-state's own transition into the
+   first block. Keyed by block id so React remounts a fresh node per swap and
+   this plays every time, unlike the dock's own once-per-open entrances. Used
+   by ui/render-rail. */
+@keyframes corbits-rail-block-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* A small scale-and-fade for a swapped icon — the render rail's Pin/PinOff
+   toggle uses it so the glyph change reads as a cross-fade rather than a
+   jump-cut. Used by ui/render-rail. */
+@keyframes corbits-icon-swap {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The typing indicator's three dots. Each dot offsets its own
+   animation-delay, so the bounce travels left to right. Used by
+   ui/typing-indicator. */
+@keyframes corbits-typing-bounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
 /* The contextual panel's page-swap. One direction, always: the incoming
    page's content settles upward and fades in, whichever page it came from.
    Ships by ui/sidebar-panel via hooks/use-sidebar-panel, keyed on the active
