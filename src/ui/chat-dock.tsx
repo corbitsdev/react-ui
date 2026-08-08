@@ -1,11 +1,11 @@
 import { MessageCircle } from "lucide-react";
-import { useEffect, type MutableRefObject, type ReactNode, type RefObject } from "react";
+import { useEffect, useState, type MutableRefObject, type ReactNode, type RefObject } from "react";
 
 import type { ChatDockMode } from "../hooks/use-chat-dock.js";
 import { useFlipTransition } from "../hooks/use-flip-transition.js";
 import { useFocusTrap } from "../hooks/use-focus-trap.js";
 import { cn } from "../lib/utils.js";
-import { CHAT_DOCK_SCRIM_MS } from "./chat-dock-timing.js";
+import { CHAT_DOCK_ENTRANCE_MS, CHAT_DOCK_SCRIM_MS } from "./chat-dock-timing.js";
 
 function mergeRefs<T>(...refs: ReadonlyArray<RefObject<T | null>>): (node: T | null) => void {
   return (node) => {
@@ -59,8 +59,19 @@ export function ChatDockScrim({ open, onClose, className }: { open: boolean; onC
  * The closed-state pill. Rendered *inside* `ChatDock` while `mode === "closed"`
  * — the pill and the panel share the one dock element, so opening the dock is
  * a class change on that element, not a swap between two fixed-position nodes.
+ *
+ * The pop-in plays once, tracked with a mount flag rather than left as a
+ * static animation class: a class that's always present can be retriggered
+ * by unrelated DOM churn, where a flag that flips once after mount cannot.
  */
 export function ChatDockFab({ onOpen, label = "Ask", className }: { onOpen: () => void; label?: string; className?: string }) {
+  const [playEntrance, setPlayEntrance] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setPlayEntrance(false), CHAT_DOCK_ENTRANCE_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <button
       type="button"
@@ -68,7 +79,8 @@ export function ChatDockFab({ onOpen, label = "Ask", className }: { onOpen: () =
       aria-expanded={false}
       aria-label="Open chat"
       className={cn(
-        "inline-flex h-full w-full items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground shadow-lg transition-colors [animation:corbits-fab-in_280ms_var(--ease-out)_both] hover:bg-primary-active",
+        "inline-flex h-full w-full items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground shadow-lg transition-colors hover:bg-primary-active",
+        playEntrance && "[animation:corbits-fab-in_280ms_var(--ease-out)_both]",
         className,
       )}
     >
@@ -81,13 +93,15 @@ export function ChatDockFab({ onOpen, label = "Ask", className }: { onOpen: () =
 const MODE_CLASS: Record<ChatDockMode, string> = {
   closed: "pointer-events-none right-6 bottom-6 h-14 w-14 rounded-full opacity-0",
   docked:
-    "pointer-events-auto top-3 right-3 bottom-3 left-auto h-auto w-[min(520px,50vw)] max-w-[calc(100vw-24px)] rounded-2xl opacity-100 [animation:corbits-dock-in_280ms_var(--ease-out)_both]",
+    "pointer-events-auto top-3 right-3 bottom-3 left-auto h-auto w-[min(520px,50vw)] max-w-[calc(100vw-24px)] rounded-2xl opacity-100",
   fullpage: "pointer-events-auto inset-3 h-auto w-auto rounded-2xl opacity-100",
 };
 
 export type ChatDockProps = {
   readonly mode: ChatDockMode;
   readonly children: ReactNode;
+  /** Plays the pop-in entrance for this render — pass `useChatDock().shouldAnimateEntrance`. Never true for a `docked <-> fullpage` resize. */
+  readonly shouldAnimateEntrance?: boolean;
   readonly className?: string;
 };
 
@@ -114,7 +128,7 @@ export type ChatDockProps = {
  * scroll locked while `fullpage` — `docked` deliberately leaves the page
  * scrollable, since it never covers the whole viewport.
  */
-export function ChatDock({ mode, children, className }: ChatDockProps) {
+export function ChatDock({ mode, children, shouldAnimateEntrance = false, className }: ChatDockProps) {
   const isOpen = mode !== "closed";
   const trapRef = useFocusTrap<HTMLDivElement>(isOpen);
   const flipRef = useFlipTransition<HTMLDivElement>(flipKey(mode));
@@ -133,6 +147,7 @@ export function ChatDock({ mode, children, className }: ChatDockProps) {
       className={cn(
         "fixed z-50 flex flex-col overflow-hidden border border-border bg-popover text-popover-foreground shadow-xl transition-opacity duration-300 ease-[var(--ease-out)]",
         MODE_CLASS[mode],
+        isOpen && shouldAnimateEntrance && "[animation:corbits-dock-in_280ms_var(--ease-out)_both]",
         className,
       )}
     >

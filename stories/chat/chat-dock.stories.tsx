@@ -61,7 +61,7 @@ export const Walkthrough = () => {
       </div>
 
       <ChatDockScrim open={dock.isOpen} onClose={dock.close} />
-      <ChatDock mode={dock.mode}>
+      <ChatDock mode={dock.mode} shouldAnimateEntrance={dock.shouldAnimateEntrance}>
         {dock.mode === "closed" ? (
           <ChatDockFab onOpen={dock.open} />
         ) : (

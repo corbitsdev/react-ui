@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * The three ways the dock can occupy the screen. `docked` and `fullpage` are
@@ -10,6 +10,12 @@ export type ChatDockMode = "closed" | "docked" | "fullpage";
 export type UseChatDockResult = {
   readonly mode: ChatDockMode;
   readonly isOpen: boolean;
+  /**
+   * True only on the render where `mode` just left `closed` — cycling
+   * `docked <-> fullpage` never sets this, so the pop-in entrance plays once
+   * per open, not on every resize between the two open sizes.
+   */
+  readonly shouldAnimateEntrance: boolean;
   readonly setMode: (mode: ChatDockMode) => void;
   /** Closed → docked. No-op once already open, so a stray call never demotes fullpage. */
   readonly open: () => void;
@@ -26,17 +32,24 @@ export type UseChatDockResult = {
  * `docked → fullpage` feel like one panel growing instead of two panels
  * trading places.
  *
- * Escape always closes fully, mirroring the popup-with-scrim pattern: a
- * fullpage reader who hits Escape expects to leave the assistant, not to step
- * back down to the corner.
+ * Escape steps down one level rather than closing outright: `fullpage` →
+ * `docked`, then `docked` → `closed`. A fullpage reader who hits Escape once
+ * expects to land back at the corner panel, not to lose the conversation
+ * outright — a second press finishes the job.
  */
 export function useChatDock(initialMode: ChatDockMode = "closed"): UseChatDockResult {
   const [mode, setMode] = useState<ChatDockMode>(initialMode);
 
+  const previousModeRef = useRef<ChatDockMode>(initialMode);
+  const previousMode = previousModeRef.current;
+  if (previousMode !== mode) previousModeRef.current = mode;
+  const shouldAnimateEntrance = previousMode === "closed" && mode !== "closed";
+
   useEffect(() => {
     if (mode === "closed") return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMode("closed");
+      if (event.key !== "Escape") return;
+      setMode((current) => (current === "fullpage" ? "docked" : "closed"));
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -48,5 +61,5 @@ export function useChatDock(initialMode: ChatDockMode = "closed"): UseChatDockRe
   const collapse = useCallback(() => setMode((current) => (current === "closed" ? current : "docked")), []);
   const toggle = useCallback(() => setMode((current) => (current === "closed" ? "docked" : "closed")), []);
 
-  return { mode, isOpen: mode !== "closed", setMode, open, close, expand, collapse, toggle };
+  return { mode, isOpen: mode !== "closed", shouldAnimateEntrance, setMode, open, close, expand, collapse, toggle };
 }
