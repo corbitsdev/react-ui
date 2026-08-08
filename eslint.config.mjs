@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist/**", "scratch/**", "node_modules/**", "build/**", "src/index.ts"] },
+  { ignores: ["dist/**", "scratch/**", "node_modules/**", "build/**", ".worktrees/**", "src/index.ts"] },
   js.configs.recommended,
   tseslint.configs.recommended,
   {
