@@ -22,7 +22,9 @@ export function FilterChip({ selected = false, onClick, children, count, classNa
       aria-pressed={selected}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
+        // active:brightness-95 mirrors Button's press state: it lands on
+        // pointer-down, so it sits outside transition-colors.
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors ease-out active:brightness-95",
         selected
           ? "border-border bg-card text-foreground shadow-sm"
           : "border-transparent bg-transparent text-muted-foreground hover:bg-muted",
