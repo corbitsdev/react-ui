@@ -51,7 +51,7 @@ export function SidebarPanelSection({
             id={labelId}
             aria-expanded={!collapsed}
             onClick={onToggleCollapse}
-            className="flex items-center gap-1 rounded-sm text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase hover:text-foreground"
+            className="-my-2 flex items-center gap-1 rounded-sm py-2 text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase transition-colors hover:text-foreground active:brightness-95"
           >
             <ChevronRight
               aria-hidden
@@ -66,7 +66,12 @@ export function SidebarPanelSection({
             type="button"
             aria-label={addLabel ?? `Add ${label}`}
             onClick={onAdd}
-            className="grid size-5 shrink-0 place-items-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className={cn(
+              "relative grid size-5 shrink-0 place-items-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:brightness-95",
+              // The visual target stays 20px; `after:` pads the hit area out to
+              // 40px (10px on every side) without growing the icon itself.
+              "after:absolute after:-inset-2.5 after:content-['']",
+            )}
           >
             <Plus aria-hidden className="size-3.5" />
           </button>
