@@ -1,30 +1,13 @@
 import type { ReactNode } from "react";
 
-import type { StepListItem, WorkflowScope } from "../lib/workflow-registry.js";
+import type { LiveRunPhase, StepListItem, WorkflowScope } from "../lib/workflow-registry.js";
 import { Button } from "./button.js";
-import { InspectorHeader, InspectorKv, InspectorPanelTitle, InspectorShell } from "./inspector-shell.js";
+import { InspectorKv, InspectorPanelTitle, InspectorShell } from "./inspector-shell.js";
 import { LiveRunBanner } from "./live-run-banner.js";
-import { ScopePill } from "./scope-pill.js";
-import { StatusChip } from "./status-chip.js";
+import { LiveRunHeader } from "./live-run-header.js";
 import { StepList } from "./step-list.js";
 
-export type LiveRunPhase = "running" | "awaiting" | "completed" | "failed" | "cancelled";
-
-const LIVE_RUN_TONE: Record<LiveRunPhase, "running" | "awaiting" | "done" | "fail"> = {
-  running: "running",
-  awaiting: "awaiting",
-  completed: "done",
-  failed: "fail",
-  cancelled: "fail",
-};
-
-const LIVE_RUN_LABEL: Record<LiveRunPhase, string> = {
-  running: "Running",
-  awaiting: "Needs you",
-  completed: "Done",
-  failed: "Failed",
-  cancelled: "Cancelled",
-};
+export type { LiveRunPhase } from "../lib/workflow-registry.js";
 
 export type LiveRunInspectorProps = {
   readonly phase: LiveRunPhase;
@@ -45,11 +28,11 @@ export type LiveRunInspectorProps = {
 };
 
 /**
- * A live run's inspector: composed entirely from `InspectorShell`,
- * `StatusChip`, `ScopePill`, `LiveRunBanner`, `GateBlock` (via the `gate`
- * slot) and `StepList` rather than owning any of that presentation itself.
- * The only thing this component adds is the wiring between them — swap any
- * one piece out and the rest keeps working.
+ * A live run's inspector — the composition wrapper, and nothing more: every
+ * visible piece is `InspectorShell`, `LiveRunHeader`, `LiveRunBanner`,
+ * `GateBlock` (via the `gate` slot), `StepList` or `InspectorKv`, each
+ * importable on its own. This component only decides which of them render
+ * and in what order.
  */
 export function LiveRunInspector({
   phase,
@@ -78,13 +61,9 @@ export function LiveRunInspector({
     <InspectorShell
       className={className}
       header={
-        <InspectorHeader
-          eyebrow={
-            <>
-              <StatusChip tone={LIVE_RUN_TONE[phase]} label={LIVE_RUN_LABEL[phase]} />
-              {scope === undefined ? null : <ScopePill scope={scope} />}
-            </>
-          }
+        <LiveRunHeader
+          phase={phase}
+          scope={scope}
           title={title}
           description={description}
           actions={

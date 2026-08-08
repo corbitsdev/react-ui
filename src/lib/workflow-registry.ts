@@ -48,6 +48,27 @@ export function workflowScopeLabel(scope: WorkflowScope): string {
   return scope === "tenant" ? "Everyone" : "Just me";
 }
 
+/** A live run's phase as an inspector or list row reports it — a coarser
+ * vocabulary than `RunStatus` in `workflow-run.ts` (no `provisioning`), for
+ * surfaces that only distinguish what a reader can act on. */
+export type LiveRunPhase = "running" | "awaiting" | "completed" | "failed" | "cancelled";
+
+export const LIVE_RUN_PHASE_TONE: Record<LiveRunPhase, WorkflowStatusTone> = {
+  running: "running",
+  awaiting: "awaiting",
+  completed: "done",
+  failed: "fail",
+  cancelled: "fail",
+};
+
+export const LIVE_RUN_PHASE_LABEL: Record<LiveRunPhase, string> = {
+  running: "Running",
+  awaiting: "Needs you",
+  completed: "Done",
+  failed: "Failed",
+  cancelled: "Cancelled",
+};
+
 export type WorkflowListItemKind = "run" | "schedule";
 
 /** One dense row in the combined live-runs-and-schedules list. */

@@ -2,10 +2,9 @@ import type { ReactNode } from "react";
 
 import type { WorkflowScope } from "../lib/workflow-registry.js";
 import { Button } from "./button.js";
-import { InspectorHeader, InspectorKv, InspectorPanelTitle, InspectorShell } from "./inspector-shell.js";
+import { InspectorKv, InspectorPanelTitle, InspectorShell } from "./inspector-shell.js";
 import { ReadBlock } from "./read-block.js";
-import { ScopePill } from "./scope-pill.js";
-import { StatusChip } from "./status-chip.js";
+import { ScheduleHeader } from "./schedule-header.js";
 
 export type ScheduleInspectorViewProps = {
   readonly enabled: boolean;
@@ -27,9 +26,10 @@ export type ScheduleInspectorViewProps = {
 };
 
 /**
- * A schedule's inspector, composed the same way as `LiveRunInspector`:
- * `InspectorShell` for the frame, `StatusChip`/`ScopePill` for the header
- * chips, `ReadBlock`/`InspectorKv` for the read-only facts.
+ * A schedule's inspector — the composition wrapper, and nothing more:
+ * `InspectorShell` for the frame, `ScheduleHeader` for the header row,
+ * `ReadBlock`/`InspectorKv` for the read-only facts, each importable on its
+ * own.
  */
 export function ScheduleInspectorView({
   enabled,
@@ -60,13 +60,9 @@ export function ScheduleInspectorView({
     <InspectorShell
       className={className}
       header={
-        <InspectorHeader
-          eyebrow={
-            <>
-              <StatusChip tone={enabled ? "running" : "paused"} label={enabled ? "Active" : "Paused"} live={enabled} />
-              <ScopePill scope={scope} />
-            </>
-          }
+        <ScheduleHeader
+          enabled={enabled}
+          scope={scope}
           title={title}
           description={description}
           actions={
