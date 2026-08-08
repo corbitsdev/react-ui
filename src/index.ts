@@ -16,6 +16,7 @@ export * from "./hooks/use-collection-state.js";
 export * from "./hooks/use-scroll-current-into-view.js";
 export * from "./lib/activity.js";
 export * from "./lib/artifact.js";
+export * from "./lib/chart-palette.js";
 export * from "./lib/chat-message.js";
 export * from "./lib/command-registry.js";
 export * from "./lib/csv.js";

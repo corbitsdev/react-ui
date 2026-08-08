@@ -114,6 +114,10 @@
       "types": "./dist/lib/artifact.d.ts",
       "default": "./dist/lib/artifact.js"
     },
+    "./lib/chart-palette": {
+      "types": "./dist/lib/chart-palette.d.ts",
+      "default": "./dist/lib/chart-palette.js"
+    },
     "./lib/chat-message": {
       "types": "./dist/lib/chat-message.d.ts",
       "default": "./dist/lib/chat-message.js"

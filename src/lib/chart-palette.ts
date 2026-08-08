@@ -6,24 +6,44 @@
  * series out never repaints the survivors. A chart whose colours move when the
  * legend changes destroys the one thing colour is doing here, which is identity.
  *
- * The steps behind those tokens were chosen against the data-visualisation
- * standard rather than picked to look nice: each sits inside its mode's
- * lightness band, clears the chroma floor, holds ≥3:1 against both the page and
- * a card, and the *ordering* — blue, orange, violet, green, red — was selected
- * by enumerating orders and keeping the ones whose worst neighbouring pair
- * survives simulated protanopia and deuteranopia. Light mode clears the ΔE 8
- * target outright (worst adjacent pair 10.5). Dark mode lands at 7.2, inside the
- * 6–8 floor band, which is legal **only** alongside a second, non-colour channel
- * — which is why every chart in this registry ships a legend, direct labels and
- * a data table rather than treating them as polish.
- *
- * The theme's contrast gate re-checks the 3:1 half of that on every build. The
- * colour-vision half cannot be re-derived from hex pairs; if you re-step these
- * tokens, re-run the standard's palette validator.
+ * The ramp is blue, green, deep green, deep blue, red — and never orange.
+ * Orange is the reserved action accent: it marks the one thing on a screen a
+ * user can act on, so it must never paint a passive data series, where it would
+ * read as a call to action that is not there. Each step holds ≥3:1 against both
+ * the page and the card in both modes (the theme's contrast gate re-checks that
+ * on every build). Colour-vision safety comes from the ordering: green- and
+ * red-family slots never neighbour each other — under deuteranopia adjacent
+ * green/red collapse into one hue — and adjacent same-family steps differ by
+ * lightness, a channel colour-vision deficiency preserves. That separation is
+ * legal **only** alongside a second, non-colour channel — which is why every
+ * chart in this registry ships a legend, direct labels, a per-slot dash and a
+ * data table rather than treating them as polish.
  */
 
 /** How many distinct series the palette can carry. Past this, fold. */
 export const CHART_SERIES_SLOTS = 5;
+
+export type ChartSeriesSlot = {
+  /** Stable slot key — a readable name for the token family, and a React key. */
+  readonly key: string;
+  /** CSS colour for strokes, fills, and legend swatches. */
+  readonly color: string;
+  /** SVG `stroke-dasharray` — the second channel. `undefined` means solid. */
+  readonly dash: string | undefined;
+};
+
+/**
+ * The ramp itself, in slot order, for callers that lay out a legend or paint a
+ * stacked mosaic and need the whole sequence rather than one slot. Same rules
+ * as `seriesColor`: fixed order, never cycled, orange never appears.
+ */
+export const CHART_SERIES: readonly ChartSeriesSlot[] = [
+  { key: "blue", color: "var(--chart-1)", dash: undefined },
+  { key: "green", color: "var(--chart-2)", dash: "6 3" },
+  { key: "green-deep", color: "var(--chart-3)", dash: "2 3" },
+  { key: "blue-deep", color: "var(--chart-4)", dash: "10 3 2 3" },
+  { key: "red", color: "var(--chart-5)", dash: "1 3" },
+] as const;
 
 /**
  * The CSS colour for series `index`.
@@ -35,8 +55,7 @@ export const CHART_SERIES_SLOTS = 5;
  * five; use `foldSeries` so the label says so too.
  */
 export function seriesColor(index: number): string {
-  if (index < 0 || index >= CHART_SERIES_SLOTS) return "var(--muted-foreground)";
-  return `var(--chart-${index + 1})`;
+  return CHART_SERIES[index]?.color ?? "var(--muted-foreground)";
 }
 
 /**
@@ -54,9 +73,7 @@ export function seriesColor(index: number): string {
  * one lumped-together thing and does not need a pattern of its own.
  */
 export function seriesDash(index: number): string | undefined {
-  const patterns = [undefined, "6 3", "2 3", "10 3 2 3", "1 3"] as const;
-  if (index < 0 || index >= CHART_SERIES_SLOTS) return undefined;
-  return patterns[index];
+  return CHART_SERIES[index]?.dash;
 }
 
 export type FoldedSeries<T> = {
