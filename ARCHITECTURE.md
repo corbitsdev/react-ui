@@ -178,6 +178,21 @@ together" too. The contrast gate re-checks the 3:1 half on every build; the colo
 half cannot be re-derived from hex pairs, so if you re-step these tokens, re-run the
 validator yourself.
 
+## Pieces, then one wrapper
+
+A composite surface — an inspector, a registry list, a step diagram — is built as small
+stateless pieces plus at most one composition wrapper. Each piece is its own file and its
+own export, takes everything through props, holds no state of its own, and renders on its
+own (`StatusChip`, `ScopePill`, `StepList`, `LiveRunHeader`, `WorkflowRegistryRow`). The
+wrapper (`LiveRunInspector`, `WorkflowRegistryList`) contains no markup the pieces do not
+already carry: it only decides which pieces render and in what order, so replacing one
+piece never means forking the wrapper.
+
+Behaviour and arithmetic split out the same way: a reusable behaviour becomes a headless
+hook in `src/hooks/` (`use-scroll-current-into-view` renders nothing and returns a ref),
+and layout math becomes plain functions in `src/lib/` (`step-graph-layout`, like
+`chart-geometry`, is numbers in and numbers out, checkable without rendering anything).
+
 ## Layout
 
 | | |
