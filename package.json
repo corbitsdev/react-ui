@@ -134,6 +134,10 @@
       "types": "./dist/lib/data-port.d.ts",
       "default": "./dist/lib/data-port.js"
     },
+    "./lib/metrics": {
+      "types": "./dist/lib/metrics.d.ts",
+      "default": "./dist/lib/metrics.js"
+    },
     "./lib/now-item": {
       "types": "./dist/lib/now-item.d.ts",
       "default": "./dist/lib/now-item.js"

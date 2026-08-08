@@ -21,6 +21,7 @@ export * from "./lib/chat-message.js";
 export * from "./lib/command-registry.js";
 export * from "./lib/csv.js";
 export * from "./lib/data-port.js";
+export * from "./lib/metrics.js";
 export * from "./lib/now-item.js";
 export * from "./lib/relative-time.js";
 export * from "./lib/schedule.js";
