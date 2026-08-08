@@ -68,7 +68,7 @@ export function HorizontalStepper({ steps, className }: HorizontalStepperProps) 
                 />
               ) : null}
               <span className={cn("relative flex size-8 items-center justify-center rounded-full text-sm font-medium transition-colors", pillClass(step.status))}>
-                {pillGlyph(step.status, index + 1)}
+                {pillGlyph(step.status, step.number)}
               </span>
             </span>
 
