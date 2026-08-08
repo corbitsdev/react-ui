@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 
-import { formatCompact, linePath, niceTicks, scaleLinear } from "../lib/chart-geometry.js";
+import { areaPath, formatCompact, linePath, niceTicks, scaleLinear } from "../lib/chart-geometry.js";
 import { CHART_SERIES_SLOTS, seriesColor, seriesDash } from "../lib/chart-palette.js";
 import { cn } from "../lib/utils.js";
 import { ChartFrame } from "./chart-frame.js";
@@ -18,6 +18,13 @@ export type TimeSeriesChartProps = {
   readonly labels: readonly string[];
   /** At most five. Past that, sum the tail into an "Other" series first. */
   readonly series: readonly TimeSeries[];
+  /**
+   * `area` fills under each line at low opacity — the treatment for volume
+   * ("how much accumulated") where a bare line reads as a rate. The dash and
+   * the stroke stay exactly as in `line`, so the two variants read as one chart
+   * family. Identity still comes from the stroke, never the wash.
+   */
+  readonly variant?: "line" | "area";
   readonly format?: (value: number) => string;
   readonly className?: string;
 };
@@ -66,6 +73,7 @@ export function TimeSeriesChart({
   description,
   labels,
   series,
+  variant = "line",
   format = formatCompact,
   className,
 }: TimeSeriesChartProps) {
@@ -199,6 +207,20 @@ export function TimeSeriesChart({
               strokeWidth={1}
             />
           )}
+
+          {variant === "area"
+            ? drawn.map((entry, index) => (
+                <path
+                  key={entry.label}
+                  d={areaPath(
+                    entry.values.map((value, pointIndex) => ({ x: xAt(pointIndex), y: yAt(value) })),
+                    yAt(0),
+                  )}
+                  fill={seriesColor(index)}
+                  opacity={0.14}
+                />
+              ))
+            : null}
 
           {drawn.map((entry, index) => (
             <path

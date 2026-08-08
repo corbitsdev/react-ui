@@ -70,6 +70,20 @@ export function linePath(points: readonly Point[]): string {
 }
 
 /**
+ * The filled region under a line: the line itself, then down to `baselineY`
+ * and back to the first x, closed. The baseline is passed in rather than
+ * assumed to be the box edge so the fill lands on the plot's zero line, inside
+ * whatever padding the chart drew around it.
+ */
+export function areaPath(points: readonly Point[], baselineY: number): string {
+  if (points.length === 0) return "";
+  const first = points[0];
+  const last = points[points.length - 1];
+  if (first === undefined || last === undefined) return "";
+  return `${linePath(points)} L${last.x} ${baselineY} L${first.x} ${baselineY} Z`;
+}
+
+/**
  * "1,284" · "12.9K" · "4.2M".
  *
  * Compacts only past a thousand, and keeps one decimal so 12.9K and 13.4K stay
