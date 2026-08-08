@@ -320,6 +320,10 @@
       "types": "./dist/ui/data-table.d.ts",
       "default": "./dist/ui/data-table.js"
     },
+    "./ui/delta-badge": {
+      "types": "./dist/ui/delta-badge.d.ts",
+      "default": "./dist/ui/delta-badge.js"
+    },
     "./ui/dial": {
       "types": "./dist/ui/dial.d.ts",
       "default": "./dist/ui/dial.js"
@@ -359,6 +363,10 @@
     "./ui/gate-block": {
       "types": "./dist/ui/gate-block.d.ts",
       "default": "./dist/ui/gate-block.js"
+    },
+    "./ui/heatmap": {
+      "types": "./dist/ui/heatmap.d.ts",
+      "default": "./dist/ui/heatmap.js"
     },
     "./ui/horizontal-stepper": {
       "types": "./dist/ui/horizontal-stepper.d.ts",
@@ -615,6 +623,10 @@
     "./ui/toggle-list": {
       "types": "./dist/ui/toggle-list.d.ts",
       "default": "./dist/ui/toggle-list.js"
+    },
+    "./ui/token-mosaic": {
+      "types": "./dist/ui/token-mosaic.d.ts",
+      "default": "./dist/ui/token-mosaic.js"
     },
     "./ui/tool-narrative": {
       "types": "./dist/ui/tool-narrative.d.ts",
