@@ -300,10 +300,6 @@
       "types": "./dist/ui/chat-panel.d.ts",
       "default": "./dist/ui/chat-panel.js"
     },
-    "./ui/chat-shell": {
-      "types": "./dist/ui/chat-shell.d.ts",
-      "default": "./dist/ui/chat-shell.js"
-    },
     "./ui/chat-thread": {
       "types": "./dist/ui/chat-thread.d.ts",
       "default": "./dist/ui/chat-thread.js"

@@ -61,7 +61,6 @@ export * from "./ui/chat-dock.js";
 export * from "./ui/chat-dock-timing.js";
 export * from "./ui/chat-input.js";
 export * from "./ui/chat-panel.js";
-export * from "./ui/chat-shell.js";
 export * from "./ui/chat-thread.js";
 export * from "./ui/command.js";
 export * from "./ui/command-palette.js";
