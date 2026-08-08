@@ -15,6 +15,7 @@ export * from "./blocks/login/login-form.js";
 export * from "./hooks/use-chat-dock.js";
 export * from "./hooks/use-collection-state.js";
 export * from "./hooks/use-delayed-autofocus.js";
+export * from "./hooks/use-focus-trap.js";
 export * from "./hooks/use-render-rail.js";
 export * from "./hooks/use-scroll-current-into-view.js";
 export * from "./lib/activity.js";

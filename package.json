@@ -112,6 +112,10 @@
       "types": "./dist/hooks/use-delayed-autofocus.d.ts",
       "default": "./dist/hooks/use-delayed-autofocus.js"
     },
+    "./hooks/use-focus-trap": {
+      "types": "./dist/hooks/use-focus-trap.d.ts",
+      "default": "./dist/hooks/use-focus-trap.js"
+    },
     "./hooks/use-render-rail": {
       "types": "./dist/hooks/use-render-rail.d.ts",
       "default": "./dist/hooks/use-render-rail.js"

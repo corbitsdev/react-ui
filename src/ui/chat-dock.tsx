@@ -1,9 +1,26 @@
 import { MessageCircle } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import type { ChatDockMode } from "../hooks/use-chat-dock.js";
+import { useFocusTrap } from "../hooks/use-focus-trap.js";
 import { cn } from "../lib/utils.js";
 import { CHAT_DOCK_SCRIM_MS } from "./chat-dock-timing.js";
+
+/**
+ * Locks the page's own scroll while `locked` is true, restoring whatever
+ * `overflow` it had on unmount — `fullpage` covers the viewport, so a
+ * background scroll underneath it would move content the reader can't see.
+ */
+function useBodyScrollLock(locked: boolean): void {
+  useEffect(() => {
+    if (!locked) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [locked]);
+}
 
 /**
  * The dim-and-blur backdrop behind an open dock. Present in both `docked` and
@@ -74,15 +91,27 @@ export type ChatDockProps = {
  * `prefers-reduced-motion` is handled once, globally, in `theme.css` — every
  * transition and animation on this element collapses to a single frame there,
  * so this piece carries no reduced-motion logic of its own.
+ *
+ * Dialog semantics apply in both open modes: `aria-modal` plus a focus trap
+ * while open, focus restored to whatever had it on close, and the page's own
+ * scroll locked while `fullpage` — `docked` deliberately leaves the page
+ * scrollable, since it never covers the whole viewport.
  */
 export function ChatDock({ mode, children, className }: ChatDockProps) {
+  const isOpen = mode !== "closed";
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen);
+  useBodyScrollLock(mode === "fullpage");
+
   return (
     <div
+      ref={trapRef}
       data-slot="chat-dock"
       data-mode={mode}
       role="dialog"
       aria-label="Chat"
+      aria-modal={isOpen ? "true" : undefined}
       aria-hidden={mode === "closed"}
+      tabIndex={-1}
       className={cn(
         "fixed z-50 flex flex-col overflow-hidden border border-border bg-popover text-popover-foreground shadow-xl transition-[inset,top,right,bottom,left,width,height,border-radius,opacity] duration-300 ease-[var(--ease-out)]",
         MODE_CLASS[mode],
