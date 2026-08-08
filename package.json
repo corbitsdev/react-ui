@@ -470,6 +470,10 @@
       "types": "./dist/ui/research-body.d.ts",
       "default": "./dist/ui/research-body.js"
     },
+    "./ui/rich-empty-state": {
+      "types": "./dist/ui/rich-empty-state.d.ts",
+      "default": "./dist/ui/rich-empty-state.js"
+    },
     "./ui/run-now-button": {
       "types": "./dist/ui/run-now-button.d.ts",
       "default": "./dist/ui/run-now-button.js"

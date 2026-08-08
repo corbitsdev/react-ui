@@ -104,6 +104,7 @@ export * from "./ui/read-block.js";
 export * from "./ui/reconnecting-overlay.js";
 export * from "./ui/recurrence-input.js";
 export * from "./ui/research-body.js";
+export * from "./ui/rich-empty-state.js";
 export * from "./ui/run-now-button.js";
 export * from "./ui/run-once-flow.js";
 export * from "./ui/schedule-flow.js";
