@@ -64,6 +64,7 @@ export * from "./ui/corbits-mark.js";
 export * from "./ui/count-table.js";
 export * from "./ui/csv-table.js";
 export * from "./ui/dashboard.js";
+export * from "./ui/dashboard-section.js";
 export * from "./ui/data-table.js";
 export * from "./ui/dial.js";
 export * from "./ui/dialog.js";

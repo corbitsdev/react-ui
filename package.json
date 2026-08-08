@@ -310,6 +310,10 @@
       "types": "./dist/ui/dashboard.d.ts",
       "default": "./dist/ui/dashboard.js"
     },
+    "./ui/dashboard-section": {
+      "types": "./dist/ui/dashboard-section.d.ts",
+      "default": "./dist/ui/dashboard-section.js"
+    },
     "./ui/data-table": {
       "types": "./dist/ui/data-table.d.ts",
       "default": "./dist/ui/data-table.js"
