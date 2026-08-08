@@ -12,12 +12,21 @@ import { useEffect, useRef, type RefObject } from "react";
  *
  * `block: "nearest"` keeps the page itself from jumping; only the rail's own
  * scroll position moves.
+ *
+ * The scroll itself is smooth, but `scrollIntoView` isn't covered by the
+ * theme's global reduced-motion block, so a `prefers-reduced-motion: reduce`
+ * check here falls back to an instant jump.
  */
 export function useScrollCurrentIntoView<T extends HTMLElement>(currentKey: string | number): RefObject<T | null> {
   const currentRef = useRef<T>(null);
 
   useEffect(() => {
-    currentRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    currentRef.current?.scrollIntoView({
+      block: "nearest",
+      inline: "center",
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
   }, [currentKey]);
 
   return currentRef;
