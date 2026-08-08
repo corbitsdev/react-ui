@@ -73,7 +73,14 @@ export function SidebarRail({ items, activeId, onSelect, footer, label = "Pages"
                 className={cn(
                   "pointer-events-none absolute top-1/2 left-full z-50 ml-2 -translate-y-1/2 rounded-md border border-border",
                   "bg-popover px-2 py-1 text-xs whitespace-nowrap text-popover-foreground opacity-0 shadow-lg transition-opacity",
-                  "group-hover:opacity-100 group-focus-within:opacity-100",
+                  // Hover-in is gated to fine pointers and waits out a short
+                  // delay so a touch tap or a passing cursor never triggers
+                  // it; hiding (removing these classes) has no delay so the
+                  // tooltip clears the instant the pointer leaves. Focus is
+                  // unconditioned and immediate — a keyboard user should
+                  // never wait for their own tab stop.
+                  "[@media(pointer:fine)]:group-hover:opacity-100 [@media(pointer:fine)]:group-hover:delay-300",
+                  "group-focus-within:opacity-100",
                 )}
               >
                 {item.label}
