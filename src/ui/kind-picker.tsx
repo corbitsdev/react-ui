@@ -15,13 +15,13 @@ export type KindPickerCardProps = {
 };
 
 /** One selectable kind card — a workflow kind to attach to a schedule or an
- * automation rule. A real `<button>` carrying `aria-selected`, not a `div`
+ * automation rule. A real `<button>` carrying `aria-pressed`, not a `div`
  * with a click handler. */
 export function KindPickerCard({ item, selected = false, onSelect, className }: KindPickerCardProps) {
   return (
     <button
       type="button"
-      aria-selected={selected}
+      aria-pressed={selected}
       onClick={() => onSelect?.(item)}
       className={cn(
         "flex w-full flex-col gap-1 rounded-lg border px-3.5 py-3 text-left transition-colors hover:bg-muted",

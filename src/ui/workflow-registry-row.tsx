@@ -20,7 +20,7 @@ export function WorkflowRegistryRow({ item, selected = false, onSelect, classNam
     <button
       type="button"
       data-kind={item.itemKind}
-      aria-selected={selected}
+      aria-pressed={selected}
       onClick={() => onSelect?.(item)}
       className={cn(
         WORKFLOW_REGISTRY_GRID,
