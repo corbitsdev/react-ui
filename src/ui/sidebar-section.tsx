@@ -1,4 +1,5 @@
 import { ChevronRight, Plus } from "lucide-react";
+import { useId } from "react";
 import type * as React from "react";
 
 import { cn } from "../lib/utils.js";
@@ -36,7 +37,7 @@ export function SidebarPanelSection({
   onToggleCollapse,
   className,
 }: SidebarPanelSectionProps) {
-  const labelId = `${label.toLowerCase().replace(/\s+/g, "-")}-section-label`;
+  const labelId = useId();
 
   return (
     <div data-slot="sidebar-panel-section" className={cn("px-2 py-1.5", className)}>
