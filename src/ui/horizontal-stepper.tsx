@@ -40,7 +40,8 @@ export type HorizontalStepperProps = {
  * active one off to the side unannounced.
  */
 export function HorizontalStepper({ steps, className }: HorizontalStepperProps) {
-  const currentRef = useScrollCurrentIntoView<HTMLLIElement>([steps]);
+  const currentStep = steps.find((step) => step.status === "current");
+  const currentRef = useScrollCurrentIntoView<HTMLLIElement>(currentStep?.number ?? -1);
   const compress = steps.length > LABEL_VISIBLE_STEP_THRESHOLD;
 
   return (
