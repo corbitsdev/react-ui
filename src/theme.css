@@ -63,13 +63,16 @@
 
   /* Chart series, a fixed order rather than a pool — slot 1 is always the first
      series in the data. See lib/chart-palette.ts for why these steps and this
-     ordering, and do not re-step them by eye: they came out of the
-     data-visualisation standard's palette validator, including the
-     colour-vision half that the contrast gate cannot re-derive from hex. */
+     ordering. The orange family is deliberately absent: orange is the reserved
+     action accent and never paints a passive data series. Green- and red-family
+     slots never neighbour each other — under deuteranopia adjacent green/red
+     collapse into one hue — and adjacent same-family steps differ by lightness,
+     a channel colour-vision deficiency preserves. Every step clears 3:1 against
+     the page and the card in both modes (re-checked by the contrast gate). */
   --chart-1: #1f5fa8;
-  --chart-2: #c05a12;
-  --chart-3: #6b3fa0;
-  --chart-4: #37904a;
+  --chart-2: #37904a;
+  --chart-3: #1f6132;
+  --chart-4: #143e70;
   --chart-5: #9e2b25;
 }
 
@@ -99,12 +102,11 @@
   --ring: #e98428;
 
   --chart-1: #5a95d8;
-  --chart-2: #c96f1c;
-  --chart-3: #9d7de0;
-  --chart-4: #63a86a;
+  --chart-2: #63a86a;
+  --chart-3: #9fd8a8;
+  --chart-4: #9db8e8;
   --chart-5: #cc4f47;
 }
-
 
 @theme inline {
   --color-background: var(--background);
@@ -141,6 +143,10 @@
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
+
+  /* Overrides Tailwind's built-in ease-out with the brand's decelerate curve,
+     so every existing and new `ease-out` usage picks it up in one place. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 /* Dialog motion. Written as real keyframes rather than pulled in from an
@@ -250,6 +256,94 @@
   }
   100% {
     transform: translateX(300%);
+  }
+}
+
+/* The chat dock's FAB entrance: a small pop up off the corner it lives in.
+   Used by ui/chat-dock. */
+@keyframes corbits-fab-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* The chat dock's panel entrance, once open — a slightly larger pop than the
+   FAB's, since the panel is the bigger surface. Only plays on the
+   closed→docked transition; docked→fullpage is a plain CSS transition on the
+   same element, not a re-entrance. Used by ui/chat-dock. */
+@keyframes corbits-dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* The render rail's block swap: a small slide-and-fade for whichever block
+   just became active, including the empty-state's own transition into the
+   first block. Keyed by block id so React remounts a fresh node per swap and
+   this plays every time, unlike the dock's own once-per-open entrances. Used
+   by ui/render-rail. */
+@keyframes corbits-rail-block-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* A small scale-and-fade for a swapped icon — the render rail's Pin/PinOff
+   toggle uses it so the glyph change reads as a cross-fade rather than a
+   jump-cut. Used by ui/render-rail. */
+@keyframes corbits-icon-swap {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The typing indicator's three dots. Each dot offsets its own
+   animation-delay, so the bounce travels left to right. Used by
+   ui/typing-indicator. */
+@keyframes corbits-typing-bounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+/* The contextual panel's page-swap. One direction, always: the incoming
+   page's content settles upward and fades in, whichever page it came from.
+   Ships by ui/sidebar-panel via hooks/use-sidebar-panel, keyed on the active
+   page id so remounting the swapped content is what replays it. */
+@keyframes corbits-panel-swap-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

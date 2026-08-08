@@ -70,6 +70,20 @@ export function linePath(points: readonly Point[]): string {
 }
 
 /**
+ * The filled region under a line: the line itself, then down to `baselineY`
+ * and back to the first x, closed. The baseline is passed in rather than
+ * assumed to be the box edge so the fill lands on the plot's zero line, inside
+ * whatever padding the chart drew around it.
+ */
+export function areaPath(points: readonly Point[], baselineY: number): string {
+  if (points.length === 0) return "";
+  const first = points[0];
+  const last = points[points.length - 1];
+  if (first === undefined || last === undefined) return "";
+  return `${linePath(points)} L${last.x} ${baselineY} L${first.x} ${baselineY} Z`;
+}
+
+/**
  * "1,284" · "12.9K" · "4.2M".
  *
  * Compacts only past a thousand, and keeps one decimal so 12.9K and 13.4K stay
@@ -81,4 +95,45 @@ export function formatCompact(value: number): string {
   if (magnitude >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (magnitude >= 10_000) return `${(value / 1000).toFixed(1)}K`;
   return value.toLocaleString();
+}
+
+/**
+ * The step-graph's node layout runs along one axis at a time — a compact
+ * preview reads left to right, an expanded trace pane reads top to bottom —
+ * so the same edge-drawing and default-ordering helpers serve both instead of
+ * a bespoke path builder per orientation.
+ */
+export type StepGraphLayoutAxis = "horizontal" | "vertical";
+
+export type StepGraphEdgeEndpoint = { readonly from: string; readonly to: string };
+
+/** Every step connects to the next, in array order — the default edge set
+ * when a caller has no real DAG dependency data to draw. */
+export function sequentialStepEdges(stepIds: readonly string[]): readonly StepGraphEdgeEndpoint[] {
+  const edges: StepGraphEdgeEndpoint[] = [];
+  for (let i = 0; i < stepIds.length - 1; i++) {
+    const from = stepIds[i];
+    const to = stepIds[i + 1];
+    if (from !== undefined && to !== undefined) edges.push({ from, to });
+  }
+  return edges;
+}
+
+/**
+ * An SVG path for one node-to-node connector, straight and inset from both
+ * node centers by `inset` so the line meets each node's edge rather than
+ * running through its label. Returns `""` for a degenerate (near-zero-length)
+ * connector — an arrowhead with nothing to point along would be a rendering
+ * artifact, not information.
+ */
+export function buildStepGraphEdgePath(from: Point, to: Point, inset: number): string {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy);
+  if (length <= inset * 2) return "";
+  const ux = dx / length;
+  const uy = dy / length;
+  const start = { x: from.x + ux * inset, y: from.y + uy * inset };
+  const end = { x: to.x - ux * inset, y: to.y - uy * inset };
+  return linePath([start, end]);
 }

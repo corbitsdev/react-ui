@@ -85,16 +85,3 @@ function Delta({ value, period, upIsGood, format }: StatDelta) {
     </p>
   );
 }
-
-/**
- * A row of tiles that reflows instead of scrolling.
- *
- * `auto-fit` with a minimum, not a fixed column count: a KPI row is exactly the
- * thing that gets four tiles on one dashboard and seven on the next, and a
- * hard-coded `grid-cols-4` turns the seventh into a lonely orphan on its own row.
- */
-export function StatGrid({ children, className }: { readonly children: ReactNode; readonly className?: string }) {
-  return (
-    <div className={cn("grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-3", className)}>{children}</div>
-  );
-}

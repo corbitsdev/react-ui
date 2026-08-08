@@ -29,10 +29,12 @@
     "build:types": "tsc -p tsconfig.build.json",
     "build:css": "tailwindcss -i src/styles.css -o dist/styles.css && cp src/theme.css dist/theme.css",
     "typecheck": "tsc --noEmit",
+    "test": "bun test",
     "lint": "eslint .",
     "dep-guard": "node scripts/dep-guard.mjs",
     "contrast-test": "node scripts/contrast-test.mjs",
-    "test": "bun test",
+    "stories": "ladle serve --host 127.0.0.1",
+    "stories:build": "ladle build",
     "prepack": "bun run build",
     "prepare": "node scripts/prepare.mjs"
   },
@@ -43,6 +45,7 @@
   },
   "peerDependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-slot": "^1.2.3",
     "@tanstack/react-query": "^5.90.2",
     "lucide-react": "^0.545.0 || ^1.0.0",
@@ -58,13 +61,17 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@happy-dom/global-registrator": "^20.11.2",
+    "@ladle/react": "^5.1.1",
     "@types/bun": "^1.3.14",
     "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-slot": "^1.2.3",
     "@swc/cli": "^0.7.7",
     "@swc/core": "^1.13.5",
     "@tailwindcss/cli": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-query": "^5.90.2",
+    "@types/bun": "^1.3.14",
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
@@ -97,9 +104,37 @@
       "types": "./dist/blocks/login/login-form.d.ts",
       "default": "./dist/blocks/login/login-form.js"
     },
+    "./hooks/use-chat-dock": {
+      "types": "./dist/hooks/use-chat-dock.d.ts",
+      "default": "./dist/hooks/use-chat-dock.js"
+    },
     "./hooks/use-collection-state": {
       "types": "./dist/hooks/use-collection-state.d.ts",
       "default": "./dist/hooks/use-collection-state.js"
+    },
+    "./hooks/use-delayed-autofocus": {
+      "types": "./dist/hooks/use-delayed-autofocus.d.ts",
+      "default": "./dist/hooks/use-delayed-autofocus.js"
+    },
+    "./hooks/use-flip-transition": {
+      "types": "./dist/hooks/use-flip-transition.d.ts",
+      "default": "./dist/hooks/use-flip-transition.js"
+    },
+    "./hooks/use-focus-trap": {
+      "types": "./dist/hooks/use-focus-trap.d.ts",
+      "default": "./dist/hooks/use-focus-trap.js"
+    },
+    "./hooks/use-render-rail": {
+      "types": "./dist/hooks/use-render-rail.d.ts",
+      "default": "./dist/hooks/use-render-rail.js"
+    },
+    "./hooks/use-scroll-current-into-view": {
+      "types": "./dist/hooks/use-scroll-current-into-view.d.ts",
+      "default": "./dist/hooks/use-scroll-current-into-view.js"
+    },
+    "./hooks/use-sidebar-panel": {
+      "types": "./dist/hooks/use-sidebar-panel.d.ts",
+      "default": "./dist/hooks/use-sidebar-panel.js"
     },
     "./lib/activity": {
       "types": "./dist/lib/activity.d.ts",
@@ -108,6 +143,10 @@
     "./lib/artifact": {
       "types": "./dist/lib/artifact.d.ts",
       "default": "./dist/lib/artifact.js"
+    },
+    "./lib/chart-palette": {
+      "types": "./dist/lib/chart-palette.d.ts",
+      "default": "./dist/lib/chart-palette.js"
     },
     "./lib/chat-message": {
       "types": "./dist/lib/chat-message.d.ts",
@@ -124,6 +163,14 @@
     "./lib/data-port": {
       "types": "./dist/lib/data-port.d.ts",
       "default": "./dist/lib/data-port.js"
+    },
+    "./lib/generative-block": {
+      "types": "./dist/lib/generative-block.d.ts",
+      "default": "./dist/lib/generative-block.js"
+    },
+    "./lib/metrics": {
+      "types": "./dist/lib/metrics.d.ts",
+      "default": "./dist/lib/metrics.js"
     },
     "./lib/now-item": {
       "types": "./dist/lib/now-item.d.ts",
@@ -149,9 +196,25 @@
       "types": "./dist/lib/utils.d.ts",
       "default": "./dist/lib/utils.js"
     },
+    "./lib/workflow-display-flow": {
+      "types": "./dist/lib/workflow-display-flow.d.ts",
+      "default": "./dist/lib/workflow-display-flow.js"
+    },
+    "./lib/workflow-registry": {
+      "types": "./dist/lib/workflow-registry.d.ts",
+      "default": "./dist/lib/workflow-registry.js"
+    },
     "./lib/workflow-run": {
       "types": "./dist/lib/workflow-run.d.ts",
       "default": "./dist/lib/workflow-run.js"
+    },
+    "./lib/workflow-run-error": {
+      "types": "./dist/lib/workflow-run-error.d.ts",
+      "default": "./dist/lib/workflow-run-error.js"
+    },
+    "./lib/workflow-run-progress": {
+      "types": "./dist/lib/workflow-run-progress.d.ts",
+      "default": "./dist/lib/workflow-run-progress.js"
     },
     "./ui/activity-block": {
       "types": "./dist/ui/activity-block.d.ts",
@@ -225,6 +288,18 @@
       "types": "./dist/ui/chart-frame.d.ts",
       "default": "./dist/ui/chart-frame.js"
     },
+    "./ui/chat-composer": {
+      "types": "./dist/ui/chat-composer.d.ts",
+      "default": "./dist/ui/chat-composer.js"
+    },
+    "./ui/chat-dock": {
+      "types": "./dist/ui/chat-dock.d.ts",
+      "default": "./dist/ui/chat-dock.js"
+    },
+    "./ui/chat-dock-timing": {
+      "types": "./dist/ui/chat-dock-timing.d.ts",
+      "default": "./dist/ui/chat-dock-timing.js"
+    },
     "./ui/chat-input": {
       "types": "./dist/ui/chat-input.d.ts",
       "default": "./dist/ui/chat-input.js"
@@ -232,10 +307,6 @@
     "./ui/chat-panel": {
       "types": "./dist/ui/chat-panel.d.ts",
       "default": "./dist/ui/chat-panel.js"
-    },
-    "./ui/chat-shell": {
-      "types": "./dist/ui/chat-shell.d.ts",
-      "default": "./dist/ui/chat-shell.js"
     },
     "./ui/chat-thread": {
       "types": "./dist/ui/chat-thread.d.ts",
@@ -281,9 +352,17 @@
       "types": "./dist/ui/dashboard.d.ts",
       "default": "./dist/ui/dashboard.js"
     },
+    "./ui/dashboard-section": {
+      "types": "./dist/ui/dashboard-section.d.ts",
+      "default": "./dist/ui/dashboard-section.js"
+    },
     "./ui/data-table": {
       "types": "./dist/ui/data-table.d.ts",
       "default": "./dist/ui/data-table.js"
+    },
+    "./ui/delta-badge": {
+      "types": "./dist/ui/delta-badge.d.ts",
+      "default": "./dist/ui/delta-badge.js"
     },
     "./ui/dial": {
       "types": "./dist/ui/dial.d.ts",
@@ -305,6 +384,10 @@
       "types": "./dist/ui/empty-state.d.ts",
       "default": "./dist/ui/empty-state.js"
     },
+    "./ui/failed-run-notice": {
+      "types": "./dist/ui/failed-run-notice.d.ts",
+      "default": "./dist/ui/failed-run-notice.js"
+    },
     "./ui/file-input": {
       "types": "./dist/ui/file-input.d.ts",
       "default": "./dist/ui/file-input.js"
@@ -313,17 +396,69 @@
       "types": "./dist/ui/filter-bar.d.ts",
       "default": "./dist/ui/filter-bar.js"
     },
+    "./ui/filter-chip": {
+      "types": "./dist/ui/filter-chip.d.ts",
+      "default": "./dist/ui/filter-chip.js"
+    },
+    "./ui/gate-block": {
+      "types": "./dist/ui/gate-block.d.ts",
+      "default": "./dist/ui/gate-block.js"
+    },
+    "./ui/generative-block-view": {
+      "types": "./dist/ui/generative-block-view.d.ts",
+      "default": "./dist/ui/generative-block-view.js"
+    },
+    "./ui/heatmap": {
+      "types": "./dist/ui/heatmap.d.ts",
+      "default": "./dist/ui/heatmap.js"
+    },
+    "./ui/horizontal-stepper": {
+      "types": "./dist/ui/horizontal-stepper.d.ts",
+      "default": "./dist/ui/horizontal-stepper.js"
+    },
     "./ui/input": {
       "types": "./dist/ui/input.d.ts",
       "default": "./dist/ui/input.js"
+    },
+    "./ui/inspector-shell": {
+      "types": "./dist/ui/inspector-shell.d.ts",
+      "default": "./dist/ui/inspector-shell.js"
     },
     "./ui/intake-form": {
       "types": "./dist/ui/intake-form.d.ts",
       "default": "./dist/ui/intake-form.js"
     },
+    "./ui/kind-picker": {
+      "types": "./dist/ui/kind-picker.d.ts",
+      "default": "./dist/ui/kind-picker.js"
+    },
+    "./ui/library-page-header": {
+      "types": "./dist/ui/library-page-header.d.ts",
+      "default": "./dist/ui/library-page-header.js"
+    },
+    "./ui/library-search-input": {
+      "types": "./dist/ui/library-search-input.d.ts",
+      "default": "./dist/ui/library-search-input.js"
+    },
     "./ui/list-detail": {
       "types": "./dist/ui/list-detail.d.ts",
       "default": "./dist/ui/list-detail.js"
+    },
+    "./ui/live-run-banner": {
+      "types": "./dist/ui/live-run-banner.d.ts",
+      "default": "./dist/ui/live-run-banner.js"
+    },
+    "./ui/live-run-header": {
+      "types": "./dist/ui/live-run-header.d.ts",
+      "default": "./dist/ui/live-run-header.js"
+    },
+    "./ui/live-run-inspector": {
+      "types": "./dist/ui/live-run-inspector.d.ts",
+      "default": "./dist/ui/live-run-inspector.js"
+    },
+    "./ui/live-status-line": {
+      "types": "./dist/ui/live-status-line.d.ts",
+      "default": "./dist/ui/live-status-line.js"
     },
     "./ui/mail-detail": {
       "types": "./dist/ui/mail-detail.d.ts",
@@ -332,6 +467,10 @@
     "./ui/managed-list": {
       "types": "./dist/ui/managed-list.d.ts",
       "default": "./dist/ui/managed-list.js"
+    },
+    "./ui/menu": {
+      "types": "./dist/ui/menu.d.ts",
+      "default": "./dist/ui/menu.js"
     },
     "./ui/message-bubble": {
       "types": "./dist/ui/message-bubble.d.ts",
@@ -352,6 +491,10 @@
     "./ui/onboarding-tour": {
       "types": "./dist/ui/onboarding-tour.d.ts",
       "default": "./dist/ui/onboarding-tour.js"
+    },
+    "./ui/page-panel": {
+      "types": "./dist/ui/page-panel.d.ts",
+      "default": "./dist/ui/page-panel.js"
     },
     "./ui/page-shell": {
       "types": "./dist/ui/page-shell.d.ts",
@@ -377,6 +520,10 @@
       "types": "./dist/ui/quote-card.d.ts",
       "default": "./dist/ui/quote-card.js"
     },
+    "./ui/read-block": {
+      "types": "./dist/ui/read-block.d.ts",
+      "default": "./dist/ui/read-block.js"
+    },
     "./ui/reconnecting-overlay": {
       "types": "./dist/ui/reconnecting-overlay.d.ts",
       "default": "./dist/ui/reconnecting-overlay.js"
@@ -385,9 +532,17 @@
       "types": "./dist/ui/recurrence-input.d.ts",
       "default": "./dist/ui/recurrence-input.js"
     },
+    "./ui/render-rail": {
+      "types": "./dist/ui/render-rail.d.ts",
+      "default": "./dist/ui/render-rail.js"
+    },
     "./ui/research-body": {
       "types": "./dist/ui/research-body.d.ts",
       "default": "./dist/ui/research-body.js"
+    },
+    "./ui/rich-empty-state": {
+      "types": "./dist/ui/rich-empty-state.d.ts",
+      "default": "./dist/ui/rich-empty-state.js"
     },
     "./ui/run-now-button": {
       "types": "./dist/ui/run-now-button.d.ts",
@@ -400,6 +555,18 @@
     "./ui/schedule-flow": {
       "types": "./dist/ui/schedule-flow.d.ts",
       "default": "./dist/ui/schedule-flow.js"
+    },
+    "./ui/schedule-form-layout": {
+      "types": "./dist/ui/schedule-form-layout.d.ts",
+      "default": "./dist/ui/schedule-form-layout.js"
+    },
+    "./ui/schedule-header": {
+      "types": "./dist/ui/schedule-header.d.ts",
+      "default": "./dist/ui/schedule-header.js"
+    },
+    "./ui/schedule-inspector": {
+      "types": "./dist/ui/schedule-inspector.d.ts",
+      "default": "./dist/ui/schedule-inspector.js"
     },
     "./ui/schedule-list": {
       "types": "./dist/ui/schedule-list.d.ts",
@@ -421,6 +588,22 @@
       "types": "./dist/ui/sidebar.d.ts",
       "default": "./dist/ui/sidebar.js"
     },
+    "./ui/sidebar-item-row": {
+      "types": "./dist/ui/sidebar-item-row.d.ts",
+      "default": "./dist/ui/sidebar-item-row.js"
+    },
+    "./ui/sidebar-panel": {
+      "types": "./dist/ui/sidebar-panel.d.ts",
+      "default": "./dist/ui/sidebar-panel.js"
+    },
+    "./ui/sidebar-rail": {
+      "types": "./dist/ui/sidebar-rail.d.ts",
+      "default": "./dist/ui/sidebar-rail.js"
+    },
+    "./ui/sidebar-section": {
+      "types": "./dist/ui/sidebar-section.d.ts",
+      "default": "./dist/ui/sidebar-section.js"
+    },
     "./ui/skeleton": {
       "types": "./dist/ui/skeleton.d.ts",
       "default": "./dist/ui/skeleton.js"
@@ -433,6 +616,10 @@
       "types": "./dist/ui/sparkline.d.ts",
       "default": "./dist/ui/sparkline.js"
     },
+    "./ui/stat-grid": {
+      "types": "./dist/ui/stat-grid.d.ts",
+      "default": "./dist/ui/stat-grid.js"
+    },
     "./ui/stat-tile": {
       "types": "./dist/ui/stat-tile.d.ts",
       "default": "./dist/ui/stat-tile.js"
@@ -440,6 +627,22 @@
     "./ui/status-dot": {
       "types": "./dist/ui/status-dot.d.ts",
       "default": "./dist/ui/status-dot.js"
+    },
+    "./ui/step-graph": {
+      "types": "./dist/ui/step-graph.d.ts",
+      "default": "./dist/ui/step-graph.js"
+    },
+    "./ui/step-graph-node": {
+      "types": "./dist/ui/step-graph-node.d.ts",
+      "default": "./dist/ui/step-graph-node.js"
+    },
+    "./ui/step-list": {
+      "types": "./dist/ui/step-list.d.ts",
+      "default": "./dist/ui/step-list.js"
+    },
+    "./ui/step-primitives": {
+      "types": "./dist/ui/step-primitives.d.ts",
+      "default": "./dist/ui/step-primitives.js"
     },
     "./ui/subagent-dock": {
       "types": "./dist/ui/subagent-dock.d.ts",
@@ -485,6 +688,10 @@
       "types": "./dist/ui/toggle-list.d.ts",
       "default": "./dist/ui/toggle-list.js"
     },
+    "./ui/token-mosaic": {
+      "types": "./dist/ui/token-mosaic.d.ts",
+      "default": "./dist/ui/token-mosaic.js"
+    },
     "./ui/tool-narrative": {
       "types": "./dist/ui/tool-narrative.d.ts",
       "default": "./dist/ui/tool-narrative.js"
@@ -492,6 +699,10 @@
     "./ui/top-bar": {
       "types": "./dist/ui/top-bar.d.ts",
       "default": "./dist/ui/top-bar.js"
+    },
+    "./ui/typing-indicator": {
+      "types": "./dist/ui/typing-indicator.d.ts",
+      "default": "./dist/ui/typing-indicator.js"
     },
     "./ui/view-toggle": {
       "types": "./dist/ui/view-toggle.d.ts",
@@ -508,6 +719,22 @@
     "./ui/workflow-dock": {
       "types": "./dist/ui/workflow-dock.d.ts",
       "default": "./dist/ui/workflow-dock.js"
+    },
+    "./ui/workflow-registry-list": {
+      "types": "./dist/ui/workflow-registry-list.d.ts",
+      "default": "./dist/ui/workflow-registry-list.js"
+    },
+    "./ui/workflow-registry-row": {
+      "types": "./dist/ui/workflow-registry-row.d.ts",
+      "default": "./dist/ui/workflow-registry-row.js"
+    },
+    "./ui/workflow-registry-section": {
+      "types": "./dist/ui/workflow-registry-section.d.ts",
+      "default": "./dist/ui/workflow-registry-section.js"
+    },
+    "./ui/workflow-status-badge": {
+      "types": "./dist/ui/workflow-status-badge.d.ts",
+      "default": "./dist/ui/workflow-status-badge.js"
     }
   }
 }
