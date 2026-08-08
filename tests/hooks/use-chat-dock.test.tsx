@@ -61,6 +61,67 @@ describe("useChatDock", () => {
     expect(hook.result.current.mode).toBe("closed");
   });
 
+  test("Escape already handled by nested UI (defaultPrevented) does not step the dock down", () => {
+    const hook = renderHook(() => useChatDock("fullpage"));
+    act(() => {
+      const event = new KeyboardEvent("keydown", { key: "Escape", cancelable: true, bubbles: true });
+      event.preventDefault();
+      window.dispatchEvent(event);
+    });
+    expect(hook.result.current.mode).toBe("fullpage");
+  });
+
+  test("Escape originating inside a nested overlay (e.g. a native select) does not step the dock down", () => {
+    const dockContainer = document.createElement("div");
+    dockContainer.dataset.slot = "chat-dock";
+    document.body.appendChild(dockContainer);
+    const select = document.createElement("select");
+    dockContainer.appendChild(select);
+
+    const hook = renderHook(() => useChatDock("fullpage"));
+    act(() => {
+      select.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, composed: true }));
+    });
+    expect(hook.result.current.mode).toBe("fullpage");
+
+    dockContainer.remove();
+  });
+
+  test("Escape originating inside a portal-rendered overlay (role=dialog) does not step the dock down, even outside the dock's DOM subtree", () => {
+    const dockContainer = document.createElement("div");
+    dockContainer.dataset.slot = "chat-dock";
+    document.body.appendChild(dockContainer);
+
+    const portalOverlay = document.createElement("div");
+    portalOverlay.setAttribute("role", "dialog");
+    document.body.appendChild(portalOverlay);
+
+    const hook = renderHook(() => useChatDock("fullpage"));
+    act(() => {
+      portalOverlay.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, composed: true }));
+    });
+    expect(hook.result.current.mode).toBe("fullpage");
+
+    dockContainer.remove();
+    portalOverlay.remove();
+  });
+
+  test("Escape from within the dock's own container (no nested overlay) still steps the dock down", () => {
+    const dockContainer = document.createElement("div");
+    dockContainer.dataset.slot = "chat-dock";
+    document.body.appendChild(dockContainer);
+    const button = document.createElement("button");
+    dockContainer.appendChild(button);
+
+    const hook = renderHook(() => useChatDock("fullpage"));
+    act(() => {
+      button.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, composed: true }));
+    });
+    expect(hook.result.current.mode).toBe("docked");
+
+    dockContainer.remove();
+  });
+
   test("shouldAnimateEntrance is true only when the previous mode was closed", () => {
     const hook = renderHook(() => useChatDock());
     expect(hook.result.current.shouldAnimateEntrance).toBe(false);
