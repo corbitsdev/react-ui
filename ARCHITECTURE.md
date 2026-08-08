@@ -109,6 +109,30 @@ then ready. Getting it wrong is how a surface renders "no results" during a firs
 an empty state over a failed request. It renders nothing because the markup belongs to the
 surface; `isFetching`, `refetch`, `hasNextPage` and `fetchNextPage` pass through unchanged.
 
+## `CommandPalette`
+
+`CommandPalette` is a global-search overlay with no idea what it is searching. It takes
+`groups: CommandPaletteGroup[]` — pre-matched, pre-ordered, pre-paginated — plus `loading`,
+`error` and `hasMore`/`onLoadMore`, and renders the states every such surface needs:
+grouped results, loading, empty, error, "load more". Matching, ranking, debouncing and the
+data source are entirely the caller's; a consumer wiring in server-searched entities keeps
+that fetch, its debounce, and its pagination cursor in its own state, not in this
+component.
+
+Only `item.title` and `item.subtitle` are ever rendered — never `item.id`. A consumer that
+hands in a raw identifier as a title has nothing else to fall back on, but the component
+itself never does that substitution for you.
+
+Keyboard state lives in `useCommandPaletteNavigation`, a separate headless hook: it tracks
+the active row by id rather than index, because the row a person is on has usually just
+been resorted by a fresh keystroke, and an index would silently point at a different item
+than the one they were looking at.
+
+The dialog's fade is the existing `Dialog` opacity transition — no scale, no position — and
+that transition already collapses under `prefers-reduced-motion` at the theme layer. A
+palette a person opens dozens of times a day should not also compete with itself for
+attention.
+
 ## The theme layer
 
 `src/theme.css` is the only CSS source. It carries the design tokens **and** a base layer:
