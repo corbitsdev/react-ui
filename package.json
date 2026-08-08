@@ -422,6 +422,10 @@
       "types": "./dist/ui/onboarding-tour.d.ts",
       "default": "./dist/ui/onboarding-tour.js"
     },
+    "./ui/page-panel": {
+      "types": "./dist/ui/page-panel.d.ts",
+      "default": "./dist/ui/page-panel.js"
+    },
     "./ui/page-shell": {
       "types": "./dist/ui/page-shell.d.ts",
       "default": "./dist/ui/page-shell.js"

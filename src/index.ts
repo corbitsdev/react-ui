@@ -92,6 +92,7 @@ export * from "./ui/moment-walker.js";
 export * from "./ui/notifications-bell.js";
 export * from "./ui/now-cards.js";
 export * from "./ui/onboarding-tour.js";
+export * from "./ui/page-panel.js";
 export * from "./ui/page-shell.js";
 export * from "./ui/pagination.js";
 export * from "./ui/progress-checklist.js";
