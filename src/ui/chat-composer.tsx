@@ -14,8 +14,8 @@ export type ChatComposerProps = Omit<ChatInputProps, "working" | "disabled" | "t
   readonly busy?: boolean;
   /**
    * Flips true→false or false→true to (re)trigger the autofocus timer — pass
-   * the dock's `mode !== "closed"` so it fires once per open, ~220ms after
-   * the panel's own entrance animation would have settled.
+   * the dock's `mode !== "closed"` so it fires once per open, after the
+   * panel's own entrance animation has settled (see `chat-dock-timing.ts`).
    */
   readonly autoFocusOn?: boolean;
   readonly className?: string;

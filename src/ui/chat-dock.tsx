@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import type { ChatDockMode } from "../hooks/use-chat-dock.js";
 import { cn } from "../lib/utils.js";
+import { CHAT_DOCK_SCRIM_MS } from "./chat-dock-timing.js";
 
 /**
  * The dim-and-blur backdrop behind an open dock. Present in both `docked` and
@@ -16,8 +17,9 @@ export function ChatDockScrim({ open, onClose, className }: { open: boolean; onC
       type="button"
       onClick={onClose}
       aria-label="Close chat"
+      style={{ animationDuration: `${CHAT_DOCK_SCRIM_MS}ms` }}
       className={cn(
-        "fixed inset-0 z-40 cursor-default bg-foreground/20 backdrop-blur-[2px] [animation:corbits-fade-in_200ms_var(--ease-out)_both]",
+        "fixed inset-0 z-40 cursor-default bg-foreground/20 backdrop-blur-[2px] [animation-name:corbits-fade-in] [animation-timing-function:var(--ease-out)] [animation-fill-mode:both]",
         className,
       )}
     />
