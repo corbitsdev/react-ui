@@ -90,6 +90,7 @@ export * from "./ui/live-run-inspector.js";
 export * from "./ui/live-status-line.js";
 export * from "./ui/mail-detail.js";
 export * from "./ui/managed-list.js";
+export * from "./ui/menu.js";
 export * from "./ui/message-bubble.js";
 export * from "./ui/moment-walker.js";
 export * from "./ui/notifications-bell.js";
