@@ -24,7 +24,9 @@ export function WorkflowRegistryRow({ item, selected = false, onSelect, classNam
       onClick={() => onSelect?.(item)}
       className={cn(
         WORKFLOW_REGISTRY_GRID,
-        "h-[46px] w-full items-center border-b border-border px-3.5 text-left transition-colors last:border-b-0 hover:bg-muted",
+        // active:brightness-95 mirrors Button's press state: it lands on
+        // pointer-down, so it sits outside transition-colors.
+        "h-[46px] w-full items-center border-b border-border px-3.5 text-left transition-colors ease-out last:border-b-0 hover:bg-muted active:brightness-95",
         selected && "bg-primary/10",
         item.needsYou === true && !selected && "bg-primary/5",
         className,
@@ -37,7 +39,7 @@ export function WorkflowRegistryRow({ item, selected = false, onSelect, classNam
       <span className="truncate text-xs text-muted-foreground">{item.when}</span>
       <Badge tone={WORKFLOW_SCOPE_BADGE_TONE[item.scope]}>{workflowScopeLabel(item.scope)}</Badge>
       <WorkflowStatusBadge tone={item.statusTone} label={item.statusLabel} />
-      <span className={cn("truncate font-mono text-[11.5px] text-muted-foreground", item.nextSoon === true && "font-semibold text-primary-emphasis")}>
+      <span className={cn("truncate font-mono text-[11.5px] tabular-nums text-muted-foreground", item.nextSoon === true && "font-semibold text-primary-emphasis")}>
         {item.nextOrElapsed}
       </span>
     </button>
