@@ -32,7 +32,7 @@
     "lint": "eslint .",
     "dep-guard": "node scripts/dep-guard.mjs",
     "contrast-test": "node scripts/contrast-test.mjs",
-    "stories": "ladle serve",
+    "stories": "ladle serve --host 127.0.0.1",
     "stories:build": "ladle build",
     "prepack": "bun run build",
     "prepare": "node scripts/prepare.mjs"
