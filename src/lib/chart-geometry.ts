@@ -112,7 +112,7 @@ export function sequentialStepEdges(stepIds: readonly string[]): readonly StepGr
  * connector — an arrowhead with nothing to point along would be a rendering
  * artifact, not information.
  */
-export function buildStepGraphEdgePath(from: Point, to: Point, inset: number, axis: StepGraphLayoutAxis): string {
+export function buildStepGraphEdgePath(from: Point, to: Point, inset: number): string {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const length = Math.hypot(dx, dy);
@@ -121,9 +121,5 @@ export function buildStepGraphEdgePath(from: Point, to: Point, inset: number, ax
   const uy = dy / length;
   const start = { x: from.x + ux * inset, y: from.y + uy * inset };
   const end = { x: to.x - ux * inset, y: to.y - uy * inset };
-  // The axis only matters for a straight line insofar as it is already
-  // baked into `from`/`to` by the caller's layout; kept as a parameter so a
-  // future curved-edge variant can branch on it without changing callers.
-  void axis;
   return linePath([start, end]);
 }

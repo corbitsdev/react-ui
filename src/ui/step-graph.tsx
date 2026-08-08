@@ -77,7 +77,7 @@ export function StepGraph({
               const fromCenter = layout.centers[fromIdx];
               const toCenter = layout.centers[toIdx];
               if (fromCenter === undefined || toCenter === undefined) return null;
-              const d = buildStepGraphEdgePath(fromCenter, toCenter, spec.nodeInset, spec.axis);
+              const d = buildStepGraphEdgePath(fromCenter, toCenter, spec.nodeInset);
               if (d === "") return null;
               return (
                 <path
