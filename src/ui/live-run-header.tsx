@@ -3,12 +3,14 @@ import type { ReactNode } from "react";
 import {
   LIVE_RUN_PHASE_LABEL,
   LIVE_RUN_PHASE_TONE,
+  WORKFLOW_SCOPE_BADGE_TONE,
+  workflowScopeLabel,
   type LiveRunPhase,
   type WorkflowScope,
 } from "../lib/workflow-registry.js";
+import { Badge } from "./badge.js";
 import { InspectorHeader } from "./inspector-shell.js";
-import { ScopePill } from "./scope-pill.js";
-import { StatusChip } from "./status-chip.js";
+import { WorkflowStatusBadge } from "./workflow-status-badge.js";
 
 export type LiveRunHeaderProps = {
   readonly phase: LiveRunPhase;
@@ -28,8 +30,10 @@ export function LiveRunHeader({ phase, scope, title, description, actions, class
       className={className}
       eyebrow={
         <>
-          <StatusChip tone={LIVE_RUN_PHASE_TONE[phase]} label={LIVE_RUN_PHASE_LABEL[phase]} />
-          {scope === undefined ? null : <ScopePill scope={scope} />}
+          <WorkflowStatusBadge tone={LIVE_RUN_PHASE_TONE[phase]} label={LIVE_RUN_PHASE_LABEL[phase]} />
+          {scope === undefined ? null : (
+            <Badge tone={WORKFLOW_SCOPE_BADGE_TONE[scope]}>{workflowScopeLabel(scope)}</Badge>
+          )}
         </>
       }
       title={title}

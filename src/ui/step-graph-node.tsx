@@ -13,7 +13,7 @@ const KIND_GLYPH: Record<StepGraphNodeKind, string> = { auto: "●", agent: "◆
 
 // Kind colours: auto stays neutral ink, agent takes the info blue, human
 // takes the accent orange that marks "needs a person" everywhere else in the
-// registry — the same three-way split `StatusChip`'s tones draw on.
+// registry — the same three-way split the status badge's tones draw on.
 const CHIP_CLASS: Record<StepGraphNodeKind, string> = {
   auto: "border-border bg-card",
   agent: "border-accent bg-accent/40",
@@ -72,7 +72,7 @@ export function StepGraphNode({ title, kind, status, index, width, minHeight, le
       </span>
       <div className="flex min-w-0 flex-col">
         <span className="truncate text-[12.5px] font-semibold leading-tight">{title}</span>
-        <span className={cn("flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.04em]", BADGE_CLASS[kind])}>
+        <span className={cn("flex items-center gap-1 text-[10.5px] font-bold uppercase tracking-[0.05em]", BADGE_CLASS[kind])}>
           <span aria-hidden>{KIND_GLYPH[kind]}</span>
           {KIND_LABEL[kind]}
         </span>

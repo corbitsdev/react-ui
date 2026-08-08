@@ -24,7 +24,9 @@ export function KindPickerCard({ item, selected = false, onSelect, className }: 
       aria-pressed={selected}
       onClick={() => onSelect?.(item)}
       className={cn(
-        "flex w-full flex-col gap-1 rounded-lg border px-3.5 py-3 text-left transition-colors hover:bg-muted",
+        // active:brightness-95 mirrors Button's press state: it lands on
+        // pointer-down, so it sits outside transition-colors.
+        "flex w-full flex-col gap-1 rounded-lg border px-3.5 py-3 text-left transition-colors ease-out hover:bg-muted active:brightness-95",
         selected ? "border-primary-emphasis bg-primary/10" : "border-border bg-card",
         className,
       )}

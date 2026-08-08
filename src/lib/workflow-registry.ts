@@ -26,7 +26,7 @@ export const WORKFLOW_STATUS_LABEL: Record<WorkflowStatusTone, string> = {
   fail: "Failed",
 };
 
-/** Chip tone for `StatusChip`, aligned with `Badge`'s contrast-tested tones. */
+/** Badge tone for a status chip composed as `<Badge tone={...}><StatusDot .../>{label}</Badge>`. */
 export const WORKFLOW_STATUS_BADGE_TONE: Record<WorkflowStatusTone, BadgeTone> = {
   running: "info",
   awaiting: "accent",
@@ -44,9 +44,25 @@ export const WORKFLOW_STATUS_DOT_TONE: Record<WorkflowStatusTone, StatusDotTone>
   fail: "danger",
 };
 
+/** Whether a status tone's dot pulses by default — the two tones that are
+ * still moving or still waiting on someone. A caller composing `Badge` +
+ * `StatusDot` directly (there is no `StatusChip` component) passes this as
+ * `StatusDot`'s `live` prop unless it has a more specific signal. */
+export function workflowStatusLive(tone: WorkflowStatusTone): boolean {
+  return tone === "running" || tone === "awaiting";
+}
+
 export function workflowScopeLabel(scope: WorkflowScope): string {
   return scope === "tenant" ? "Everyone" : "Just me";
 }
+
+/** Badge tone for a workflow's scope. `tenant` gets the info tone so it reads
+ * as shared infrastructure; `personal` gets the accent tone that marks
+ * "yours" everywhere else in the registry. */
+export const WORKFLOW_SCOPE_BADGE_TONE: Record<WorkflowScope, BadgeTone> = {
+  tenant: "info",
+  personal: "accent",
+};
 
 /** A live run's phase as an inspector or list row reports it — a coarser
  * vocabulary than `RunStatus` in `workflow-run.ts` (no `provisioning`), for
