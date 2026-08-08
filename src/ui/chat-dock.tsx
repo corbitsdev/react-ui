@@ -1,10 +1,22 @@
 import { MessageCircle } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, type MutableRefObject, type ReactNode, type RefObject } from "react";
 
 import type { ChatDockMode } from "../hooks/use-chat-dock.js";
+import { useFlipTransition } from "../hooks/use-flip-transition.js";
 import { useFocusTrap } from "../hooks/use-focus-trap.js";
 import { cn } from "../lib/utils.js";
 import { CHAT_DOCK_SCRIM_MS } from "./chat-dock-timing.js";
+
+function mergeRefs<T>(...refs: ReadonlyArray<RefObject<T | null>>): (node: T | null) => void {
+  return (node) => {
+    for (const ref of refs) (ref as MutableRefObject<T | null>).current = node;
+  };
+}
+
+/** `docked` and `fullpage` are the only two modes that morph into each other; `closed` plays its own entrance/exit animation instead. */
+function flipKey(mode: ChatDockMode): string | null {
+  return mode === "closed" ? null : mode;
+}
 
 /**
  * Locks the page's own scroll while `locked` is true, restoring whatever
@@ -82,11 +94,16 @@ export type ChatDockProps = {
 /**
  * The dock's own persistent element: `closed`, `docked` and `fullpage` are
  * three sets of classes on this *one* fixed-position container, never three
- * components. `transition-[inset,top,right,bottom,left,width,height,border-radius]`
- * keyed off `--ease-out` is what makes `docked → fullpage` read as the panel
- * growing rather than one panel replacing another; `closed` is the one mode
- * whose content (the FAB) is a genuinely different child, but the container
- * itself never remounts.
+ * components — `closed` is the one mode whose content (the FAB) is a
+ * genuinely different child, but the container itself never remounts.
+ *
+ * Mode changes jump straight to their new `inset`/`width`/`height` — nothing
+ * here transitions a layout property. A fixed element sized against the
+ * viewport is exactly the case where animating `inset`/`width`/`height`
+ * forces a layout recalculation on every frame; `useFlipTransition` measures
+ * the box before and after the jump and animates only `transform` (plus
+ * `opacity` for the closed states) to make `docked ↔ fullpage` read as one
+ * panel growing, at zero layout cost.
  *
  * `prefers-reduced-motion` is handled once, globally, in `theme.css` — every
  * transition and animation on this element collapses to a single frame there,
@@ -100,11 +117,12 @@ export type ChatDockProps = {
 export function ChatDock({ mode, children, className }: ChatDockProps) {
   const isOpen = mode !== "closed";
   const trapRef = useFocusTrap<HTMLDivElement>(isOpen);
+  const flipRef = useFlipTransition<HTMLDivElement>(flipKey(mode));
   useBodyScrollLock(mode === "fullpage");
 
   return (
     <div
-      ref={trapRef}
+      ref={mergeRefs(trapRef, flipRef)}
       data-slot="chat-dock"
       data-mode={mode}
       role="dialog"
@@ -113,7 +131,7 @@ export function ChatDock({ mode, children, className }: ChatDockProps) {
       aria-hidden={mode === "closed"}
       tabIndex={-1}
       className={cn(
-        "fixed z-50 flex flex-col overflow-hidden border border-border bg-popover text-popover-foreground shadow-xl transition-[inset,top,right,bottom,left,width,height,border-radius,opacity] duration-300 ease-[var(--ease-out)]",
+        "fixed z-50 flex flex-col overflow-hidden border border-border bg-popover text-popover-foreground shadow-xl transition-opacity duration-300 ease-[var(--ease-out)]",
         MODE_CLASS[mode],
         className,
       )}

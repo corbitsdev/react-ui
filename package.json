@@ -112,6 +112,10 @@
       "types": "./dist/hooks/use-delayed-autofocus.d.ts",
       "default": "./dist/hooks/use-delayed-autofocus.js"
     },
+    "./hooks/use-flip-transition": {
+      "types": "./dist/hooks/use-flip-transition.d.ts",
+      "default": "./dist/hooks/use-flip-transition.js"
+    },
     "./hooks/use-focus-trap": {
       "types": "./dist/hooks/use-focus-trap.d.ts",
       "default": "./dist/hooks/use-focus-trap.js"
