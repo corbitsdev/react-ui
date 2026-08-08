@@ -13,7 +13,6 @@ export function WorkflowRegistryHead({
 }: WorkflowRegistryHeadProps) {
   return (
     <div
-      role="row"
       className={cn(
         WORKFLOW_REGISTRY_GRID,
         "sticky top-0 z-10 shrink-0 border-b border-border bg-muted/60 px-3.5 py-2 text-[10.5px] font-bold uppercase tracking-[0.06em] text-muted-foreground",
@@ -37,7 +36,6 @@ export type WorkflowRegistrySectionHeaderProps = {
 export function WorkflowRegistrySectionHeader({ title, count, className }: WorkflowRegistrySectionHeaderProps) {
   return (
     <div
-      role="rowheader"
       className={cn(
         "sticky top-0 z-10 border-b border-border bg-muted/80 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.05em] text-muted-foreground",
         className,

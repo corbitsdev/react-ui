@@ -36,37 +36,42 @@ export function WorkflowRegistryList({
   const hasRows = live.length > 0 || scheduled.length > 0;
 
   return (
-    <div role="table" aria-label="Workflows" className={cn("flex min-h-0 min-w-0 flex-col", className)}>
+    <div aria-label="Workflows" className={cn("flex min-h-0 min-w-0 flex-col", className)}>
       {showHead ? <WorkflowRegistryHead /> : null}
-      <div role="rowgroup" className="min-h-0 flex-1 overflow-auto">
-        {!hasRows ? (
-          (empty ?? <EmptyState title="No workflows match these filters" />)
-        ) : (
-          <>
-            {live.length === 0 ? null : (
-              <>
+      {!hasRows ? (
+        <div className="min-h-0 flex-1 overflow-auto">{empty ?? <EmptyState title="No workflows match these filters" />}</div>
+      ) : (
+        <ul className="min-h-0 flex-1 list-none overflow-auto">
+          {live.length === 0 ? null : (
+            <>
+              <li>
                 <WorkflowRegistrySectionHeader title="Live" count={live.length} />
-                {live.map((item) => (
-                  <WorkflowRegistryRow key={item.id} item={item} selected={selectedKind === "run" && selectedId === item.id} onSelect={onSelect} />
-                ))}
-              </>
-            )}
-            {scheduled.length === 0 ? null : (
-              <>
+              </li>
+              {live.map((item) => (
+                <li key={item.id}>
+                  <WorkflowRegistryRow item={item} selected={selectedKind === "run" && selectedId === item.id} onSelect={onSelect} />
+                </li>
+              ))}
+            </>
+          )}
+          {scheduled.length === 0 ? null : (
+            <>
+              <li>
                 <WorkflowRegistrySectionHeader title="Scheduled" count={scheduled.length} />
-                {scheduled.map((item) => (
+              </li>
+              {scheduled.map((item) => (
+                <li key={item.id}>
                   <WorkflowRegistryRow
-                    key={item.id}
                     item={item}
                     selected={selectedKind === "schedule" && selectedId === item.id}
                     onSelect={onSelect}
                   />
-                ))}
-              </>
-            )}
-          </>
-        )}
-      </div>
+                </li>
+              ))}
+            </>
+          )}
+        </ul>
+      )}
     </div>
   );
 }
