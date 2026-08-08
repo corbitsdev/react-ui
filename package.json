@@ -108,6 +108,10 @@
       "types": "./dist/hooks/use-scroll-current-into-view.d.ts",
       "default": "./dist/hooks/use-scroll-current-into-view.js"
     },
+    "./hooks/use-sidebar-panel": {
+      "types": "./dist/hooks/use-sidebar-panel.d.ts",
+      "default": "./dist/hooks/use-sidebar-panel.js"
+    },
     "./lib/activity": {
       "types": "./dist/lib/activity.d.ts",
       "default": "./dist/lib/activity.js"
@@ -539,6 +543,22 @@
     "./ui/sidebar": {
       "types": "./dist/ui/sidebar.d.ts",
       "default": "./dist/ui/sidebar.js"
+    },
+    "./ui/sidebar-item-row": {
+      "types": "./dist/ui/sidebar-item-row.d.ts",
+      "default": "./dist/ui/sidebar-item-row.js"
+    },
+    "./ui/sidebar-panel": {
+      "types": "./dist/ui/sidebar-panel.d.ts",
+      "default": "./dist/ui/sidebar-panel.js"
+    },
+    "./ui/sidebar-rail": {
+      "types": "./dist/ui/sidebar-rail.d.ts",
+      "default": "./dist/ui/sidebar-rail.js"
+    },
+    "./ui/sidebar-section": {
+      "types": "./dist/ui/sidebar-section.d.ts",
+      "default": "./dist/ui/sidebar-section.js"
     },
     "./ui/skeleton": {
       "types": "./dist/ui/skeleton.d.ts",
