@@ -153,7 +153,9 @@ Tailwind resolves `@source` relative to the file containing it, so it means `src
 build the standalone sheet and `dist/` when a consumer imports it out of `node_modules`.
 Since there is only one file, the tokens and keyframes cannot drift between the two.
 
-Dark mode is opt-in through a `dark` class on an ancestor. The host owns theme switching.
+Dark mode is opt-in through a `dark` class on an ancestor. `ThemeProvider`
+owns applying that class (and `data-theme` presets + `color-scheme`) and
+persisting the choice; the host mounts the provider and keys storage per user.
 
 ### Contrast is gated
 

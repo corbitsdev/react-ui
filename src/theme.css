@@ -108,6 +108,52 @@
   --chart-5: #cc4f47;
 }
 
+
+
+/* Named preset overlays. Applied as data-theme on the same root that carries
+   `.dark` (see ThemeProvider). Only surface tints shift — foreground, primary,
+   and chart tokens stay on the base theme so the contrast gate and the brand
+   orange remain authoritative. */
+:root[data-theme="warm"] {
+  --card: #f3efe8;
+  --muted: #ebe6df;
+  --border: #e2d9ce;
+  --secondary: #d4cfc6;
+  --secondary-foreground: #2b2627;
+  --accent: #d4cfc6;
+  --accent-foreground: #2b2627;
+}
+
+.dark[data-theme="warm"] {
+  --card: #322a26;
+  --muted: #1c1614;
+  --border: #4a3f3a;
+  --secondary: #3d342e;
+  --secondary-foreground: #e4d5bc;
+  --accent: #3d342e;
+  --accent-foreground: #e4d5bc;
+}
+
+:root[data-theme="cool"] {
+  --card: #eef2f6;
+  --muted: #e8edf2;
+  --border: #d5dde6;
+  --secondary: #b8c9d9;
+  --secondary-foreground: #2b2627;
+  --accent: #b8c9d9;
+  --accent-foreground: #2b2627;
+}
+
+.dark[data-theme="cool"] {
+  --card: #1e242c;
+  --muted: #14181e;
+  --border: #3a424c;
+  --secondary: #2a3d52;
+  --secondary-foreground: #e4d5bc;
+  --accent: #2a3d52;
+  --accent-foreground: #e4d5bc;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
