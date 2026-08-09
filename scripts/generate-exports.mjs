@@ -35,7 +35,16 @@ const walk = (dir) =>
 const modules = walk(SRC)
   .filter((path) => /\.tsx?$/.test(path))
   .map((path) => relative(SRC, path).replace(/\.tsx?$/, ""))
-  .filter((id) => id !== "index" && !INTERNAL.has(id))
+  .filter(
+    (id) =>
+      id !== "index" &&
+      !INTERNAL.has(id) &&
+      // Test modules never join the published surface — shipping them through
+      // the barrel makes every consumer load them, and bun test discovers the
+      // dist *.test.js files as runnable suites.
+      !/\.test$/.test(id) &&
+      !/(^|\/)test\//.test(id),
+  )
   .sort();
 
 const exportsMap = {
