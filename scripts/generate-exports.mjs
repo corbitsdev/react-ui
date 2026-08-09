@@ -34,6 +34,9 @@ const walk = (dir) =>
 
 const modules = walk(SRC)
   .filter((path) => /\.tsx?$/.test(path))
+  // Tests are co-located under src/ and must never enter the public surface —
+  // re-exporting them from the barrel pulls bun:test into every consumer build.
+  .filter((path) => !/\.test\.tsx?$/.test(path))
   .map((path) => relative(SRC, path).replace(/\.tsx?$/, ""))
   .filter((id) => id !== "index" && !INTERNAL.has(id))
   .sort();

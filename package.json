@@ -71,7 +71,6 @@
     "@tailwindcss/cli": "^4.3.3",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-query": "^5.90.2",
-    "@types/bun": "^1.3.14",
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
@@ -111,6 +110,10 @@
     "./hooks/use-collection-state": {
       "types": "./dist/hooks/use-collection-state.d.ts",
       "default": "./dist/hooks/use-collection-state.js"
+    },
+    "./hooks/use-command-palette-navigation": {
+      "types": "./dist/hooks/use-command-palette-navigation.d.ts",
+      "default": "./dist/hooks/use-command-palette-navigation.js"
     },
     "./hooks/use-delayed-autofocus": {
       "types": "./dist/hooks/use-delayed-autofocus.d.ts",

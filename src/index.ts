@@ -14,6 +14,7 @@ export * from "./blocks/login/auth-layout.js";
 export * from "./blocks/login/login-form.js";
 export * from "./hooks/use-chat-dock.js";
 export * from "./hooks/use-collection-state.js";
+export * from "./hooks/use-command-palette-navigation.js";
 export * from "./hooks/use-delayed-autofocus.js";
 export * from "./hooks/use-flip-transition.js";
 export * from "./hooks/use-focus-trap.js";
