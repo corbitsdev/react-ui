@@ -25,7 +25,7 @@
     "build": "bun run clean && bun run generate && bun run build:js && bun run build:types && bun run build:css && bun run contrast-test",
     "clean": "rm -rf dist",
     "generate": "node scripts/generate-exports.mjs",
-    "build:js": "swc src -d dist --strip-leading-paths --extensions .ts,.tsx",
+    "build:js": "swc src -d dist --strip-leading-paths --extensions .ts,.tsx --ignore \"**/*.test.ts\" --ignore \"**/*.test.tsx\"",
     "build:types": "tsc -p tsconfig.build.json",
     "build:css": "tailwindcss -i src/styles.css -o dist/styles.css && cp src/theme.css dist/theme.css",
     "typecheck": "tsc --noEmit",
@@ -114,10 +114,6 @@
     "./hooks/use-command-palette-navigation": {
       "types": "./dist/hooks/use-command-palette-navigation.d.ts",
       "default": "./dist/hooks/use-command-palette-navigation.js"
-    },
-    "./hooks/use-command-palette-navigation.test": {
-      "types": "./dist/hooks/use-command-palette-navigation.test.d.ts",
-      "default": "./dist/hooks/use-command-palette-navigation.test.js"
     },
     "./hooks/use-delayed-autofocus": {
       "types": "./dist/hooks/use-delayed-autofocus.d.ts",
@@ -330,10 +326,6 @@
     "./ui/command-palette": {
       "types": "./dist/ui/command-palette.d.ts",
       "default": "./dist/ui/command-palette.js"
-    },
-    "./ui/command-palette.test": {
-      "types": "./dist/ui/command-palette.test.d.ts",
-      "default": "./dist/ui/command-palette.test.js"
     },
     "./ui/command-queue": {
       "types": "./dist/ui/command-queue.d.ts",
