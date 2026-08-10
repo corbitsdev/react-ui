@@ -16,7 +16,11 @@ const badgeVariants = cva(
         accent: "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
         info: "border-accent bg-accent text-accent-foreground",
         success: "border-success bg-success text-success-foreground",
+        // Warning reuses accent amber until a dedicated warning pair lands in theme.
+        warning: "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
         danger: "border-destructive bg-destructive text-destructive-foreground",
+        shared: "border-accent bg-accent text-accent-foreground",
+        access: "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
       },
     },
     defaultVariants: { tone: "neutral" },

@@ -94,6 +94,7 @@ export * from "./ui/horizontal-stepper.js";
 export * from "./ui/input.js";
 export * from "./ui/inspector-shell.js";
 export * from "./ui/intake-form.js";
+export * from "./ui/kind-card-grid.js";
 export * from "./ui/kind-picker.js";
 export * from "./ui/library-page-header.js";
 export * from "./ui/library-search-input.js";
