@@ -58,7 +58,7 @@ export const RightSheet = () => (
         <p>
           Trigger: <span className="font-medium text-foreground">schedule / daily-9am</span>
         </p>
-        {Array.from({ length: 12 }, (_, i) => (
+        {Array.from({ length: 40 }, (_, i) => (
           <p key={i} className="text-muted-foreground">
             Step {i + 1}: completed with no warnings.
           </p>
