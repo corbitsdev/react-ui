@@ -435,6 +435,10 @@
       "types": "./dist/ui/intake-form.d.ts",
       "default": "./dist/ui/intake-form.js"
     },
+    "./ui/kind-card-grid": {
+      "types": "./dist/ui/kind-card-grid.d.ts",
+      "default": "./dist/ui/kind-card-grid.js"
+    },
     "./ui/kind-picker": {
       "types": "./dist/ui/kind-picker.d.ts",
       "default": "./dist/ui/kind-picker.js"

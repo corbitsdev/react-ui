@@ -48,7 +48,7 @@ export function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & { side?: DialogSide }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-[corbits-fade-in_150ms_ease-out] data-[state=closed]:animate-[corbits-fade-out_120ms_ease-in]" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] data-[state=open]:animate-[corbits-fade-in_150ms_ease-out] data-[state=closed]:animate-[corbits-fade-out_120ms_ease-in]" />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         data-side={side}
@@ -84,7 +84,14 @@ export function DialogBody({ className, ...props }: React.ComponentProps<"div">)
 
 export function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div data-slot="dialog-footer" className={cn("flex flex-wrap items-center justify-end gap-2", className)} {...props} />
+    <div
+      data-slot="dialog-footer"
+      className={cn(
+        "flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4",
+        className,
+      )}
+      {...props}
+    />
   );
 }
 
@@ -94,4 +101,18 @@ export function DialogTitle({ className, ...props }: React.ComponentProps<typeof
 
 export function DialogDescription({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Description>) {
   return <DialogPrimitive.Description className={cn("text-sm text-muted-foreground", className)} {...props} />;
+}
+
+/** Uppercase field label used inside dialog forms. */
+export function DialogFieldLabel({ className, ...props }: React.ComponentProps<"label">) {
+  return (
+    <label
+      data-slot="dialog-field-label"
+      className={cn(
+        "text-[10.5px] font-bold uppercase tracking-[0.06em] text-muted-foreground",
+        className,
+      )}
+      {...props}
+    />
+  );
 }

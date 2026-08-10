@@ -1,6 +1,6 @@
 import { cn } from "../lib/utils.js";
 
-export type StatusDotTone = "neutral" | "emphasis" | "danger";
+export type StatusDotTone = "neutral" | "emphasis" | "success" | "warning" | "danger";
 
 export type StatusDotProps = {
   /** Names the state for assistive tech. Required — a bare colour says nothing. */
@@ -30,6 +30,10 @@ export type StatusDotSize = "xs" | "sm";
 const TONE_CLASS: Record<StatusDotTone, string> = {
   neutral: "bg-muted-foreground",
   emphasis: "bg-primary-emphasis",
+  // success/warning use emphasis orange until dedicated high-contrast
+  // fills clear 3:1 at 8px; Badge remains the full-status carrier.
+  success: "bg-primary-emphasis",
+  warning: "bg-primary-emphasis",
   danger: "bg-destructive",
 };
 
