@@ -267,6 +267,10 @@
       "types": "./dist/ui/artifact-notice.d.ts",
       "default": "./dist/ui/artifact-notice.js"
     },
+    "./ui/avatar": {
+      "types": "./dist/ui/avatar.d.ts",
+      "default": "./dist/ui/avatar.js"
+    },
     "./ui/badge": {
       "types": "./dist/ui/badge.d.ts",
       "default": "./dist/ui/badge.js"
@@ -519,6 +523,10 @@
       "types": "./dist/ui/pagination.d.ts",
       "default": "./dist/ui/pagination.js"
     },
+    "./ui/profile-card": {
+      "types": "./dist/ui/profile-card.d.ts",
+      "default": "./dist/ui/profile-card.js"
+    },
     "./ui/progress-checklist": {
       "types": "./dist/ui/progress-checklist.d.ts",
       "default": "./dist/ui/progress-checklist.js"
@@ -726,6 +734,10 @@
     "./ui/trace-waterfall": {
       "types": "./dist/ui/trace-waterfall.d.ts",
       "default": "./dist/ui/trace-waterfall.js"
+    },
+    "./ui/triage-pane": {
+      "types": "./dist/ui/triage-pane.d.ts",
+      "default": "./dist/ui/triage-pane.js"
     },
     "./ui/typing-indicator": {
       "types": "./dist/ui/typing-indicator.d.ts",
