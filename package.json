@@ -291,6 +291,10 @@
       "types": "./dist/ui/catalog-glyph.d.ts",
       "default": "./dist/ui/catalog-glyph.js"
     },
+    "./ui/category-bars": {
+      "types": "./dist/ui/category-bars.d.ts",
+      "default": "./dist/ui/category-bars.js"
+    },
     "./ui/chart-frame": {
       "types": "./dist/ui/chart-frame.d.ts",
       "default": "./dist/ui/chart-frame.js"
@@ -714,6 +718,10 @@
     "./ui/top-bar": {
       "types": "./dist/ui/top-bar.d.ts",
       "default": "./dist/ui/top-bar.js"
+    },
+    "./ui/trace-waterfall": {
+      "types": "./dist/ui/trace-waterfall.d.ts",
+      "default": "./dist/ui/trace-waterfall.js"
     },
     "./ui/typing-indicator": {
       "types": "./dist/ui/typing-indicator.d.ts",
