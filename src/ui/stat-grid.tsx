@@ -58,6 +58,11 @@ export type StatGridItemProps = {
   readonly sparklineValues?: readonly number[];
   /** Words for the built-in trend's shape; defaults to "{label} trend". */
   readonly sparklineLabel?: string;
+  /**
+   * When set, the tile is a real `<button>` and activates on click/Enter/Space.
+   * Static tiles stay a non-interactive `div` so they do not join the tab order.
+   */
+  readonly onClick?: () => void;
   readonly className?: string;
 };
 
@@ -66,6 +71,11 @@ export type StatGridItemProps = {
  * print. The value never carries direction by colour alone — `accent` and
  * `danger` are semantic tones the caller opts into, and the delta slot carries
  * its own words.
+ *
+ * Interaction is opt-in. With `onClick`, the shell is a `<button>` (not a div
+ * wearing `role="button"`) so keyboard activation is native. Shared layout
+ * classes stay identical; only the interactive shell adds hover/press
+ * affordance and the `text-left`/`w-full` button reset.
  */
 export function StatGridItem({
   label,
@@ -78,6 +88,7 @@ export function StatGridItem({
   sparkline,
   sparklineValues,
   sparklineLabel,
+  onClick,
   className,
 }: StatGridItemProps) {
   const sparklineNode =
@@ -86,15 +97,14 @@ export function StatGridItem({
       <Sparkline values={sparklineValues} summary={sparklineLabel ?? `${label} trend`} />
     ) : null);
 
-  return (
-    <div
-      data-slot="stat-grid-item"
-      className={cn(
-        "flex flex-col gap-1.5 rounded-[12px] border border-border bg-card",
-        emphasis === true ? "p-5 shadow-sm" : "p-4",
-        className,
-      )}
-    >
+  const shell = cn(
+    "flex flex-col gap-1.5 rounded-[12px] border border-border bg-card",
+    emphasis === true ? "p-5 shadow-sm" : "p-4",
+    className,
+  );
+
+  const body = (
+    <>
       <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-muted-foreground">{label}</span>
       <div className="flex items-baseline gap-2">
         <span
@@ -112,6 +122,30 @@ export function StatGridItem({
       {sub === undefined ? null : (
         <span className="text-[10px] tracking-[0.08em] uppercase text-muted-foreground">{sub}</span>
       )}
-    </div>
+    </>
+  );
+
+  if (onClick === undefined) {
+    return (
+      <div data-slot="stat-grid-item" className={shell}>
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      data-slot="stat-grid-item"
+      onClick={onClick}
+      className={cn(
+        shell,
+        // text-left/w-full: button UA styles centre content and shrink-wrap.
+        // Hover/press only on the interactive shell so static tiles stay quiet.
+        "w-full cursor-pointer text-left transition-colors hover:border-primary-emphasis active:brightness-95",
+      )}
+    >
+      {body}
+    </button>
   );
 }
