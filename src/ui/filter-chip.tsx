@@ -27,7 +27,7 @@ export function FilterChip({ selected = false, onClick, children, count, classNa
         "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors ease-out active:brightness-95",
         selected
           ? "border-border bg-card text-foreground shadow-sm"
-          : "border-transparent bg-transparent text-muted-foreground hover:bg-muted",
+          : "border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
         className,
       )}
     >
