@@ -55,6 +55,7 @@ export * from "./ui/artifact-notice.js";
 export * from "./ui/avatar.js";
 export * from "./ui/badge.js";
 export * from "./ui/bar-chart.js";
+export * from "./ui/block-card.js";
 export * from "./ui/boot-screen.js";
 export * from "./ui/button.js";
 export * from "./ui/card.js";

@@ -279,6 +279,10 @@
       "types": "./dist/ui/bar-chart.d.ts",
       "default": "./dist/ui/bar-chart.js"
     },
+    "./ui/block-card": {
+      "types": "./dist/ui/block-card.d.ts",
+      "default": "./dist/ui/block-card.js"
+    },
     "./ui/boot-screen": {
       "types": "./dist/ui/boot-screen.d.ts",
       "default": "./dist/ui/boot-screen.js"

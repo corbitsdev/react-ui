@@ -62,6 +62,13 @@
   --input: #8a8080;
   --ring: #9a5416;
 
+  /* Status text, not a fill/foreground pair — used where a risk or step state
+     needs to read as "good"/"caution" beyond what --success/--destructive
+     already carry (those are fills). Matches Workbench's app.css exactly, so
+     a block lifted from a consumer app keeps its colours. */
+  --ok: #37904a;
+  --warn: #b7791f;
+
   /* The chrome's elevation. The design is flat — floating chrome separates
      itself with --border-strong, not depth — so the token ships as `none`
      and exists as the single knob if elevation ever returns. */
@@ -108,6 +115,9 @@
   --input: #8a8080;
   --ring: #e98428;
   --shadow: none;
+
+  --ok: #5cb573;
+  --warn: #d9a441;
 
   --chart-1: #5a95d8;
   --chart-2: #63a86a;
@@ -166,6 +176,19 @@
   --accent-foreground: #e4d5bc;
 }
 
+/* SidebarItemRow's own restyle points, deliberately outside `@theme inline`:
+   a Tailwind `bg-primary/10`/`rounded-md` pair is undefeatable without a
+   specificity war, since the utility and its override compile to the same
+   specificity and whichever rule is later in the sheet wins. A CSS variable
+   read at render time has none of that — a consumer sets it once on their own
+   root/scope and the row already reads it, no `!important` and no rebuild.
+   `color-mix` re-derives from `--primary` so both modes stay correct without
+   a `.dark` override of their own. */
+:root {
+  --sidebar-row-radius: var(--radius);
+  --sidebar-row-selected-bg: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -191,6 +214,8 @@
   --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
   --shadow-surface: var(--shadow);
 
   /* The brand faces are named directly and are not bundled — the package ships
@@ -304,6 +329,20 @@
   100% {
     opacity: 0;
     transform: scale(2.6);
+  }
+}
+
+/* The block card's header dot: a plain opacity blink, distinct from the
+   status dot's outward-scaling ring — this one sits inline in a dense header
+   row where a scaling ring would collide with the title text next to it.
+   Used by ui/block-card. */
+@keyframes corbits-block-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
   }
 }
 
