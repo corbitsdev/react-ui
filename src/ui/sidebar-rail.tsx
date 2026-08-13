@@ -10,7 +10,17 @@ export type SidebarRailItem = {
   readonly icon: React.ReactNode;
   /** An unread dot or count. Rendered small and off to the icon's corner. */
   readonly badge?: React.ReactNode;
-};
+} & Omit<React.ComponentPropsWithoutRef<"button">, "id" | "type" | "onClick" | "children" | "className"> & {
+    /** Arbitrary `data-*` targeting attributes, e.g. `data-ctx-target` for a tour or spotlight. */
+    readonly [key: `data-${string}`]: string | number | boolean | undefined;
+  };
+
+/** Props this component manages itself — never spread onto the button, so an item can never clobber them by accident. */
+const OWN_ITEM_KEYS = new Set(["id", "label", "icon", "badge"]);
+
+function restItemProps(item: SidebarRailItem): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(item).filter(([key]) => !OWN_ITEM_KEYS.has(key)));
+}
 
 export type SidebarRailProps = {
   readonly items: readonly SidebarRailItem[];
@@ -69,7 +79,9 @@ export function SidebarRail({
           return (
             <li key={item.id} className="group relative w-full">
               <button
+                {...restItemProps(item)}
                 type="button"
+                id={item.id}
                 data-slot="sidebar-rail-item"
                 aria-current={active ? "page" : undefined}
                 aria-describedby={showLabels ? undefined : tooltipId}
