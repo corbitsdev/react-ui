@@ -49,6 +49,8 @@ const REQUIRED = [
   "border",
   "input",
   "ring",
+  "ok",
+  "warn",
   // Five slots, matching CHART_SERIES_SLOTS in lib/chart-palette.ts.
   "chart-1",
   "chart-2",
