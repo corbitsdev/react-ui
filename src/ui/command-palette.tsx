@@ -39,6 +39,10 @@ export type CommandPaletteProps = {
   readonly hasMore?: boolean;
   readonly onLoadMore?: () => void;
   readonly placeholder?: string;
+  /** Leading content in the input row — a scope chip, a source badge. Sits before the input, inside the same row. */
+  readonly inputAccessory?: ReactNode;
+  /** A legend or hint strip pinned under the results, e.g. keyboard shortcut hints. */
+  readonly footer?: ReactNode;
   readonly className?: string;
 };
 
@@ -77,6 +81,8 @@ export function CommandPalette({
   hasMore = false,
   onLoadMore,
   placeholder = "Search or jump to…",
+  inputAccessory,
+  footer,
   className,
 }: CommandPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -113,23 +119,30 @@ export function CommandPalette({
         onKeyDown={navigation.onKeyDown}
       >
         <DialogTitle className="sr-only">Search</DialogTitle>
-        <input
-          ref={inputRef}
-          type="text"
-          role="combobox"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder={placeholder}
-          aria-label="Search"
-          aria-expanded
-          aria-controls={`${baseId}-list`}
-          aria-activedescendant={navigation.activeId === undefined ? undefined : optionId(navigation.activeId)}
-          aria-autocomplete="list"
-          aria-busy={loading}
-          value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
-          className="h-12 w-full shrink-0 border-b border-border bg-transparent px-4 text-sm outline-none placeholder:text-muted-foreground"
-        />
+        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
+          {inputAccessory === undefined ? null : (
+            <div data-slot="command-palette-input-accessory" className="shrink-0">
+              {inputAccessory}
+            </div>
+          )}
+          <input
+            ref={inputRef}
+            type="text"
+            role="combobox"
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={placeholder}
+            aria-label="Search"
+            aria-expanded
+            aria-controls={`${baseId}-list`}
+            aria-activedescendant={navigation.activeId === undefined ? undefined : optionId(navigation.activeId)}
+            aria-autocomplete="list"
+            aria-busy={loading}
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+        </div>
 
         <ul
           ref={listRef}
@@ -200,6 +213,12 @@ export function CommandPalette({
             </button>
           </div>
         ) : null}
+
+        {footer === undefined ? null : (
+          <div data-slot="command-palette-footer" className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
+            {footer}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
