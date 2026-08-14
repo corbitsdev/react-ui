@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { toSafeHref } from "../lib/url.js";
 import { cn } from "../lib/utils.js";
 import { Avatar, type AvatarTone } from "./avatar.js";
 import { Badge, type BadgeTone } from "./badge.js";
@@ -104,17 +105,20 @@ export function ProfileCard({
             Shared channels
           </h3>
           <ul className="flex flex-col gap-1">
-            {sharedChannels.map((channel) => (
-              <li key={channel.id}>
-                {channel.href === undefined ? (
-                  <span className="text-sm">#{channel.name}</span>
-                ) : (
-                  <a href={channel.href} className="text-sm text-foreground hover:underline">
-                    #{channel.name}
-                  </a>
-                )}
-              </li>
-            ))}
+            {sharedChannels.map((channel) => {
+              const href = toSafeHref(channel.href);
+              return (
+                <li key={channel.id}>
+                  {href === undefined ? (
+                    <span className="text-sm">#{channel.name}</span>
+                  ) : (
+                    <a href={href} className="text-sm text-foreground hover:underline">
+                      #{channel.name}
+                    </a>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
@@ -125,17 +129,18 @@ export function ProfileCard({
             Pinned skills
           </h3>
           <ul className="flex flex-wrap gap-1.5">
-            {pinnedSkills.map((skill) =>
-              skill.href === undefined ? (
+            {pinnedSkills.map((skill) => {
+              const href = toSafeHref(skill.href);
+              return href === undefined ? (
                 <Badge key={skill.id} tone="neutral">
                   {skill.name}
                 </Badge>
               ) : (
-                <a key={skill.id} href={skill.href}>
+                <a key={skill.id} href={href}>
                   <Badge tone="neutral">{skill.name}</Badge>
                 </a>
-              ),
-            )}
+              );
+            })}
           </ul>
         </section>
       )}
