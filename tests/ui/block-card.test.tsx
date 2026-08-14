@@ -47,7 +47,7 @@ describe("BlockCard", () => {
 
 describe("RiskBadge", () => {
   test.each([
-    ["low", "text-ok"],
+    ["low", "text-muted-foreground"],
     ["medium", "text-warn"],
     ["high", "text-destructive"],
   ] as const)("level %s carries its own tone class", (level, toneClass) => {

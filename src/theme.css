@@ -62,10 +62,12 @@
   --input: #8a8080;
   --ring: #9a5416;
 
-  /* Status text, not a fill/foreground pair — used where a risk or step state
-     needs to read as "good"/"caution" beyond what --success/--destructive
-     already carry (those are fills). Matches Workbench's app.css exactly, so
-     a block lifted from a consumer app keeps its colours. */
+  /* Status text, not a fill/foreground pair — used where a step or delivery
+     state needs to read as "good"/"caution" beyond what --success/--destructive
+     already carry (those are fills). --warn also colours a medium/high
+     RiskBadge; low risk stays --muted-foreground so only the levels worth
+     flagging draw the eye. Matches Workbench's app.css exactly, so a block
+     lifted from a consumer app keeps its colours. */
   --ok: #37904a;
   --warn: #b7791f;
 

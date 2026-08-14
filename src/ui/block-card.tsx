@@ -47,7 +47,7 @@ export type RiskBadgeProps = {
 };
 
 const RISK_TONE_CLASS: Record<RiskLevel, string> = {
-  low: "text-ok",
+  low: "text-muted-foreground",
   medium: "text-warn",
   high: "text-destructive",
 };
