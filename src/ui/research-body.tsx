@@ -1,3 +1,4 @@
+import { toSafeHref } from "../lib/url.js";
 import { cn } from "../lib/utils.js";
 
 export type ResearchSource = {
@@ -132,18 +133,25 @@ export function ResearchBody({
               )}
               {cluster.items === undefined || cluster.items.length === 0 ? null : (
                 <ul className="flex flex-col gap-1.5">
-                  {cluster.items.map((item) => (
-                    <li key={item.url} className="min-w-0">
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs leading-snug text-primary-emphasis underline-offset-2 hover:underline"
-                      >
-                        {item.title ?? item.url}
-                      </a>
-                    </li>
-                  ))}
+                  {cluster.items.map((item) => {
+                    const href = toSafeHref(item.url);
+                    return (
+                      <li key={item.url} className="min-w-0">
+                        {href === undefined ? (
+                          <span className="text-xs leading-snug text-muted-foreground">{item.title ?? item.url}</span>
+                        ) : (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs leading-snug text-primary-emphasis underline-offset-2 hover:underline"
+                          >
+                            {item.title ?? item.url}
+                          </a>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </article>
@@ -154,32 +162,35 @@ export function ResearchBody({
       {brief.quotes === undefined || brief.quotes.length === 0 ? null : (
         <section className="flex flex-col gap-3" aria-label="Quotes">
           <h3 className="text-sm font-semibold">Quotes</h3>
-          {brief.quotes.map((quote) => (
-            // <figure>/<figcaption> rather than a div and a span: a quotation
-            // with an attribution is exactly what the element pair is for, and
-            // it is what makes the attribution reachable from the quote for a
-            // screen reader instead of being a loose line of text after it.
-            <figure key={`${quote.source}-${quote.quote.slice(0, 32)}`} className="border-l-2 border-border pl-4">
-              <blockquote className="text-sm leading-relaxed italic">{quote.quote}</blockquote>
-              <figcaption className="mt-1 text-xs text-muted-foreground">
-                {quote.author === undefined ? "" : `${quote.author} · `}
-                {quote.source}
-                {quote.url === undefined ? null : (
-                  <>
-                    {" · "}
-                    <a
-                      href={quote.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary-emphasis underline-offset-2 hover:underline"
-                    >
-                      source
-                    </a>
-                  </>
-                )}
-              </figcaption>
-            </figure>
-          ))}
+          {brief.quotes.map((quote) => {
+            const href = toSafeHref(quote.url);
+            return (
+              // <figure>/<figcaption> rather than a div and a span: a quotation
+              // with an attribution is exactly what the element pair is for, and
+              // it is what makes the attribution reachable from the quote for a
+              // screen reader instead of being a loose line of text after it.
+              <figure key={`${quote.source}-${quote.quote.slice(0, 32)}`} className="border-l-2 border-border pl-4">
+                <blockquote className="text-sm leading-relaxed italic">{quote.quote}</blockquote>
+                <figcaption className="mt-1 text-xs text-muted-foreground">
+                  {quote.author === undefined ? "" : `${quote.author} · `}
+                  {quote.source}
+                  {href === undefined ? null : (
+                    <>
+                      {" · "}
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-emphasis underline-offset-2 hover:underline"
+                      >
+                        source
+                      </a>
+                    </>
+                  )}
+                </figcaption>
+              </figure>
+            );
+          })}
         </section>
       )}
 
@@ -187,22 +198,29 @@ export function ResearchBody({
         <section className="flex flex-col gap-3" aria-label="Citations">
           <h3 className="text-sm font-semibold">Citations</h3>
           <ol className="flex flex-col gap-2">
-            {citations.map((citation, index) => (
-              <li key={citation.url} className="flex items-baseline gap-3 text-xs">
-                <span className="w-6 shrink-0 text-right font-mono text-muted-foreground tabular-nums">{index + 1}</span>
-                <span className="min-w-0 leading-relaxed">
-                  <a
-                    href={citation.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="break-words text-primary-emphasis underline-offset-2 hover:underline"
-                  >
-                    {citation.title ?? citation.url}
-                  </a>
-                  <span className="text-muted-foreground"> · {citation.source}</span>
-                </span>
-              </li>
-            ))}
+            {citations.map((citation, index) => {
+              const href = toSafeHref(citation.url);
+              return (
+                <li key={citation.url} className="flex items-baseline gap-3 text-xs">
+                  <span className="w-6 shrink-0 text-right font-mono text-muted-foreground tabular-nums">{index + 1}</span>
+                  <span className="min-w-0 leading-relaxed">
+                    {href === undefined ? (
+                      <span className="break-words">{citation.title ?? citation.url}</span>
+                    ) : (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="break-words text-primary-emphasis underline-offset-2 hover:underline"
+                      >
+                        {citation.title ?? citation.url}
+                      </a>
+                    )}
+                    <span className="text-muted-foreground"> · {citation.source}</span>
+                  </span>
+                </li>
+              );
+            })}
           </ol>
         </section>
       )}

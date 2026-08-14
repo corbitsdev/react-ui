@@ -1,5 +1,6 @@
 import { ExternalLink } from "lucide-react";
 
+import { isSafeUrl, toSafeHref } from "../lib/url.js";
 import { cn } from "../lib/utils.js";
 import { ArtifactNotice } from "./artifact-notice.js";
 import { buttonVariants } from "./button.js";
@@ -20,21 +21,7 @@ import { buttonVariants } from "./button.js";
  */
 const EMBED_SANDBOX = "allow-scripts allow-same-origin allow-presentation";
 
-/**
- * `https:` only, checked by parsing rather than by prefix.
- *
- * `url.startsWith("https://")` passes `https://evil` and, more to the point,
- * misses that the string may not be a URL at all. It also rejects `javascript:`
- * and `data:` payloads outright, which is the actual reason this exists — an
- * embed URL comes from an artifact payload, which came from a model or a user.
- */
-function isEmbeddable(url: string): boolean {
-  try {
-    return new URL(url).protocol === "https:";
-  } catch {
-    return false;
-  }
-}
+const EMBED_ALLOWED_PROTOCOLS = ["https:"] as const;
 
 export type EmbedBodyProps = {
   /** Must be `https:`. Anything else renders the fallback notice. */
@@ -67,9 +54,10 @@ export type EmbedBodyProps = {
  * to detect our way into.
  */
 export function EmbedBody({ url, title, description, downloadUrl, aspect = "wide", className }: EmbedBodyProps) {
-  if (!isEmbeddable(url)) {
+  if (!isSafeUrl(url, EMBED_ALLOWED_PROTOCOLS)) {
     return <ArtifactNotice message="This link is missing or is not a secure (https) address, so it cannot be shown." />;
   }
+  const safeDownloadUrl = toSafeHref(downloadUrl);
 
   return (
     <div className={cn("flex w-full flex-col gap-3", className)}>
@@ -92,8 +80,8 @@ export function EmbedBody({ url, title, description, downloadUrl, aspect = "wide
           <ExternalLink aria-hidden />
           Open in a new tab
         </a>
-        {downloadUrl === undefined ? null : (
-          <a href={downloadUrl} download className={buttonVariants({ variant: "ghost", size: "sm" })}>
+        {safeDownloadUrl === undefined ? null : (
+          <a href={safeDownloadUrl} download className={buttonVariants({ variant: "ghost", size: "sm" })}>
             Download
           </a>
         )}

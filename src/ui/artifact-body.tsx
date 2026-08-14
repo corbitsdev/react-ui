@@ -1,6 +1,7 @@
 import { Download } from "lucide-react";
 
 import { type Artifact, type ArtifactForm, artifactForm } from "../lib/artifact.js";
+import { toSafeHref } from "../lib/url.js";
 import { cn } from "../lib/utils.js";
 import { ArtifactNotice } from "./artifact-notice.js";
 import { buttonVariants } from "./button.js";
@@ -46,7 +47,7 @@ export function ArtifactBody({ artifact, form, className }: ArtifactBodyProps) {
       case "image": {
         // The thumbnail URL, not the content: an image artifact's bytes live
         // behind a route, and `content` for one is either empty or a caption.
-        const src = artifact.thumbnailUrl ?? artifact.downloadUrl;
+        const src = toSafeHref(artifact.thumbnailUrl ?? artifact.downloadUrl);
         if (src === undefined) return <ArtifactNotice pending={artifact.pending} />;
         return (
           <figure className="flex flex-col gap-3">
@@ -59,15 +60,12 @@ export function ArtifactBody({ artifact, form, className }: ArtifactBodyProps) {
       }
 
       case "download": {
-        if (artifact.downloadUrl === undefined) {
+        const downloadUrl = toSafeHref(artifact.downloadUrl);
+        if (downloadUrl === undefined) {
           return <ArtifactNotice message="This file has no download location, so it cannot be retrieved." />;
         }
         return (
-          <a
-            href={artifact.downloadUrl}
-            download
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
+          <a href={downloadUrl} download className={buttonVariants({ variant: "outline", size: "sm" })}>
             <Download aria-hidden />
             Download {artifact.title}
           </a>
@@ -83,13 +81,14 @@ export function ArtifactBody({ artifact, form, className }: ArtifactBodyProps) {
           />
         );
 
-      case "table":
+      case "table": {
         if (blank) return <ArtifactNotice pending={artifact.pending} />;
+        const downloadUrl = toSafeHref(artifact.downloadUrl);
         return (
           <div className="flex flex-col gap-3">
-            {artifact.downloadUrl === undefined ? null : (
+            {downloadUrl === undefined ? null : (
               <a
-                href={artifact.downloadUrl}
+                href={downloadUrl}
                 download
                 className={cn(buttonVariants({ variant: "outline", size: "sm" }), "self-start")}
               >
@@ -100,6 +99,7 @@ export function ArtifactBody({ artifact, form, className }: ArtifactBodyProps) {
             <CsvTable text={content} caption={artifact.title} />
           </div>
         );
+      }
 
       case "comparison":
         return <CompareBodyFromJson content={content} {...(artifact.pending === undefined ? {} : { pending: artifact.pending })} />;
