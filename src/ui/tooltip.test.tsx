@@ -57,7 +57,10 @@ describe("InfoTooltip", () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(button.getAttribute("aria-describedby")).not.toBeNull();
+    const describedByWhileOpen = button.getAttribute("aria-describedby");
+    expect(describedByWhileOpen).not.toBeNull();
+    const contentIdWhileOpen = describedByWhileOpen as string;
+    expect(document.getElementById(contentIdWhileOpen)).not.toBeNull();
 
     act(() => {
       button.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
@@ -66,10 +69,8 @@ describe("InfoTooltip", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    const describedBy = button.getAttribute("aria-describedby");
-    if (describedBy !== null) {
-      expect(document.getElementById(describedBy)).toBeNull();
-    }
+    expect(button.getAttribute("aria-describedby")).toBeNull();
+    expect(document.getElementById(contentIdWhileOpen)).toBeNull();
     unmount();
   });
 });
