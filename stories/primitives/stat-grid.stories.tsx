@@ -20,11 +20,3 @@ export const Headline = () => (
     <StatGridItem label="Approvals waiting" value="3" emphasis accent />
   </StatGrid>
 );
-
-export const Interactive = () => (
-  <StatGrid columns={3}>
-    <StatGridItem label="Purpose runs" value="128" onClick={() => {}} />
-    <StatGridItem label="Running now" value="4" onClick={() => {}} />
-    <StatGridItem label="Errored" value="2" danger onClick={() => {}} />
-  </StatGrid>
-);

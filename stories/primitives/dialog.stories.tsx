@@ -38,38 +38,6 @@ export const Center = () => (
   </Dialog>
 );
 
-/** Tall centre form: body scrolls under a fixed header/footer. */
-export const CenterScrollable = () => (
-  <Dialog>
-    <DialogTrigger asChild>
-      <Button variant="outline">Open tall dialog</Button>
-    </DialogTrigger>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Review checklist</DialogTitle>
-        <DialogDescription>
-          Header and footer stay put. The body scrolls inside the craft max-height.
-        </DialogDescription>
-      </DialogHeader>
-      <DialogBody className="space-y-3 text-sm">
-        {Array.from({ length: 24 }, (_, i) => (
-          <p key={i} className="text-muted-foreground">
-            Item {i + 1}: confirm this step before publishing.
-          </p>
-        ))}
-      </DialogBody>
-      <DialogFooter>
-        <DialogClose asChild>
-          <Button variant="outline">Cancel</Button>
-        </DialogClose>
-        <DialogClose asChild>
-          <Button>Confirm</Button>
-        </DialogClose>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-);
-
 export const RightSheet = () => (
   <Dialog>
     <DialogTrigger asChild>

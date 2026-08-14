@@ -1,5 +1,5 @@
 import { Activity, Bell, Hash, Lock, MessagesSquare, Pin, Settings, User, Users, Workflow } from "lucide-react";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { useSidebarPanel } from "../../src/hooks/use-sidebar-panel.js";
 import { formatRelativeTime } from "../../src/lib/relative-time.js";
@@ -12,11 +12,8 @@ import { StatusDot } from "../../src/ui/status-dot.js";
 
 export default { title: "Primitives / Sidebar rail + panel" };
 
-// `data-ctx-target` on "channels" demonstrates a consumer attaching its own
-// targeting attribute (a tour, a spotlight) to a specific rail item — passed
-// straight through by SidebarRail to the rendered <button>.
 const PAGES: readonly SidebarRailItem[] = [
-  { id: "channels", label: "Channels", icon: <Hash />, "data-ctx-target": "rail-channels" },
+  { id: "channels", label: "Channels", icon: <Hash /> },
   { id: "routines", label: "Routines", icon: <Workflow /> },
   { id: "activity", label: "Activity", icon: <Activity />, badge: <StatusDot label="3 unread" tone="emphasis" size="xs" /> },
 ];
@@ -172,31 +169,6 @@ export const RoutinesActivity = () => {
         </SidebarPanelSection>
       </SidebarPanelBody>
     </TwoColumnShell>
-  );
-};
-
-/**
- * `--sidebar-row-radius`/`--sidebar-row-selected-bg` are the row's own restyle
- * points — a consumer sets them once on a scoping element and every row under
- * it reads the override, no specificity fight with the Tailwind utility the
- * row ships with by default.
- */
-export const CustomRowTokens = () => {
-  const [page] = useState("channels");
-  const { selectedId, select } = useSidebarPanel({ activePageId: page });
-
-  return (
-    <div style={{ "--sidebar-row-radius": "0px", "--sidebar-row-selected-bg": "color-mix(in srgb, var(--destructive) 12%, transparent)" } as CSSProperties}>
-      <TwoColumnShell page={page} onPageChange={() => undefined}>
-        <SidebarPanelHeader title="Channels" />
-        <SidebarPanelBody>
-          <SidebarPanelSection label="Channels">
-            <SidebarItemRow leading={<Hash className="text-muted-foreground" />} name="general" selected={selectedId === "general"} onSelect={() => select("general")} />
-            <SidebarItemRow leading={<Hash className="text-muted-foreground" />} name="eng" selected={selectedId === "eng"} onSelect={() => select("eng")} />
-          </SidebarPanelSection>
-        </SidebarPanelBody>
-      </TwoColumnShell>
-    </div>
   );
 };
 

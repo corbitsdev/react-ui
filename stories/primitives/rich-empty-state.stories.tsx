@@ -22,14 +22,3 @@ export const MessageOnly = () => (
     description="Workflows you schedule will appear here with their next run time."
   />
 );
-
-/** `actionSize="sm"` matches a stage empty-state to a denser host chrome, e.g. a top bar. */
-export const CompactActions = () => (
-  <RichEmptyState
-    icon={<Inbox className="size-5" />}
-    title="No runs yet"
-    description="Trigger a run from the top bar to see it appear here."
-    actionSize="sm"
-    actions={[{ label: "Run now", variant: "primary" }]}
-  />
-);

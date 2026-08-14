@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/utils.js";
-import { Button, type ButtonProps } from "./button.js";
+import { Button } from "./button.js";
 
 export type RichEmptyStateAction = {
   readonly label: string;
@@ -22,22 +22,20 @@ export type RichEmptyStateProps = {
   readonly actions?: readonly RichEmptyStateAction[];
   /** Extra controls (e.g. a menu) below the primary actions. */
   readonly footer?: ReactNode;
-  /** Action button size. Defaults to `md`; `sm` matches a denser host chrome (e.g. a top bar). */
-  readonly actionSize?: ButtonProps["size"];
   readonly className?: string;
 };
 
-function ActionControl({ action, size }: { readonly action: RichEmptyStateAction; readonly size: ButtonProps["size"] }) {
+function ActionControl({ action }: { readonly action: RichEmptyStateAction }) {
   const variant = action.variant === "primary" ? "primary" : "secondary";
   if (action.href !== undefined) {
     return (
-      <Button asChild variant={variant} size={size}>
+      <Button asChild variant={variant} size="md">
         <a href={action.href}>{action.label}</a>
       </Button>
     );
   }
   return (
-    <Button type="button" variant={variant} size={size} onClick={action.onClick}>
+    <Button type="button" variant={variant} size="md" onClick={action.onClick}>
       {action.label}
     </Button>
   );
@@ -53,15 +51,7 @@ function ActionControl({ action, size }: { readonly action: RichEmptyStateAction
  * icon stays decorative and hidden from assistive tech; the title carries the
  * meaning.
  */
-export function RichEmptyState({
-  icon,
-  title,
-  description,
-  actions,
-  footer,
-  actionSize = "md",
-  className,
-}: RichEmptyStateProps) {
+export function RichEmptyState({ icon, title, description, actions, footer, className }: RichEmptyStateProps) {
   return (
     <div
       data-slot="rich-empty-state"
@@ -80,7 +70,7 @@ export function RichEmptyState({
       {actions !== undefined && actions.length > 0 ? (
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           {actions.map((action) => (
-            <ActionControl key={action.label} action={action} size={actionSize} />
+            <ActionControl key={action.label} action={action} />
           ))}
         </div>
       ) : null}

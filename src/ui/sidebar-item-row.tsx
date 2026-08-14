@@ -77,8 +77,8 @@ export function SidebarItemRow({
     >
       <div
         className={cn(
-          "flex w-full items-center gap-2 rounded-[var(--sidebar-row-radius)] pr-1.5 text-sm transition-colors",
-          selected ? "bg-[var(--sidebar-row-selected-bg)] text-primary-emphasis" : "text-foreground hover:bg-muted",
+          "flex w-full items-center gap-2 rounded-md pr-1.5 text-sm transition-colors",
+          selected ? "bg-primary/10 text-primary-emphasis" : "text-foreground hover:bg-muted",
         )}
       >
         {/* The whole row's identity and selection live on this one button; the
@@ -88,7 +88,7 @@ export function SidebarItemRow({
           type="button"
           aria-current={selected ? "true" : undefined}
           onClick={onSelect}
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-[var(--sidebar-row-radius)] py-1.5 pl-2 text-left active:brightness-95"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 pl-2 text-left active:brightness-95"
         >
           {leading === undefined ? null : (
             <span className="grid size-5 shrink-0 place-items-center [&_svg]:size-4" aria-hidden>

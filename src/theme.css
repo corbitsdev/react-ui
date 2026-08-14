@@ -58,23 +58,8 @@
   --destructive: #9e2b25;
   --destructive-foreground: #ffffff;
   --border: #dfe3e6;
-  --border-strong: #c3ccd2;
   --input: #8a8080;
   --ring: #9a5416;
-
-  /* Status text, not a fill/foreground pair — used where a step or delivery
-     state needs to read as "good"/"caution" beyond what --success/--destructive
-     already carry (those are fills). --warn also colours a medium/high
-     RiskBadge; low risk stays --muted-foreground so only the levels worth
-     flagging draw the eye. Matches Workbench's app.css exactly, so a block
-     lifted from a consumer app keeps its colours. */
-  --ok: #37904a;
-  --warn: #b7791f;
-
-  /* The chrome's elevation. The design is flat — floating chrome separates
-     itself with --border-strong, not depth — so the token ships as `none`
-     and exists as the single knob if elevation ever returns. */
-  --shadow: none;
 
   /* Chart series, a fixed order rather than a pool — slot 1 is always the first
      series in the data. See lib/chart-palette.ts for why these steps and this
@@ -113,13 +98,8 @@
   --destructive: #e6796f;
   --destructive-foreground: #000000;
   --border: #423a3b;
-  --border-strong: #5c5254;
   --input: #8a8080;
   --ring: #e98428;
-  --shadow: none;
-
-  --ok: #5cb573;
-  --warn: #d9a441;
 
   --chart-1: #5a95d8;
   --chart-2: #63a86a;
@@ -138,7 +118,6 @@
   --card: #f3efe8;
   --muted: #ebe6df;
   --border: #e2d9ce;
-  --border-strong: #c9bcab;
   --secondary: #d4cfc6;
   --secondary-foreground: #2b2627;
   --accent: #d4cfc6;
@@ -149,7 +128,6 @@
   --card: #322a26;
   --muted: #1c1614;
   --border: #4a3f3a;
-  --border-strong: #665750;
   --secondary: #3d342e;
   --secondary-foreground: #e4d5bc;
   --accent: #3d342e;
@@ -160,7 +138,6 @@
   --card: #eef2f6;
   --muted: #e8edf2;
   --border: #d5dde6;
-  --border-strong: #b6c3d0;
   --secondary: #b8c9d9;
   --secondary-foreground: #2b2627;
   --accent: #b8c9d9;
@@ -171,24 +148,10 @@
   --card: #1e242c;
   --muted: #14181e;
   --border: #3a424c;
-  --border-strong: #525c68;
   --secondary: #2a3d52;
   --secondary-foreground: #e4d5bc;
   --accent: #2a3d52;
   --accent-foreground: #e4d5bc;
-}
-
-/* SidebarItemRow's own restyle points, deliberately outside `@theme inline`:
-   a Tailwind `bg-primary/10`/`rounded-md` pair is undefeatable without a
-   specificity war, since the utility and its override compile to the same
-   specificity and whichever rule is later in the sheet wins. A CSS variable
-   read at render time has none of that — a consumer sets it once on their own
-   root/scope and the row already reads it, no `!important` and no rebuild.
-   `color-mix` re-derives from `--primary` so both modes stay correct without
-   a `.dark` override of their own. */
-:root {
-  --sidebar-row-radius: var(--radius);
-  --sidebar-row-selected-bg: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 @theme inline {
@@ -213,12 +176,8 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
-  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-ok: var(--ok);
-  --color-warn: var(--warn);
-  --shadow-surface: var(--shadow);
 
   /* The brand faces are named directly and are not bundled — the package ships
      no font files. A consumer that loads Red Hat Display / Space Mono gets the
@@ -334,20 +293,6 @@
   }
 }
 
-/* The block card's header dot: a plain opacity blink, distinct from the
-   status dot's outward-scaling ring — this one sits inline in a dense header
-   row where a scaling ring would collide with the title text next to it.
-   Used by ui/block-card. */
-@keyframes corbits-block-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
-}
-
 /* The boot screen's progress sweep. An indeterminate bar rather than a spinner:
    it says "still working" without implying a percentage nobody knows. Ships
    by ui/boot-screen. */
@@ -446,23 +391,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* Toast motion: a pure 160ms fade, centered above the bottom edge — no
-   slide, no lift. Sonner enters and exits by transitioning translateY, so
-   the transform is pinned (!important, since sonner injects its stylesheet
-   at runtime after any linked sheet) and only opacity is left to move. The
-   durations stay normal-weight declarations so the reduced-motion override
-   below still collapses them. Ships by ui/toast. */
-[data-sonner-toaster] [data-sonner-toast].corbits-toast {
-  left: 50%;
-  transform: translateX(-50%) !important;
-  transition-property: opacity;
-  transition-duration: 160ms;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-[data-sonner-toaster] [data-sonner-toast].corbits-toast[data-removed="true"] {
-  transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
 }
 
 /* Motion is opt-out at the foundation, not per component: anything animated
