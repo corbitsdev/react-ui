@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { isSafeUrl } from "../lib/url.js";
 import { Button } from "./button.js";
 import {
   Dialog,
@@ -85,9 +86,7 @@ export function AddArtifactDialog({ open, onOpenChange, onSubmit }: AddArtifactD
     if (trimmedTitle === "") return "Give the artifact a name.";
     if (trimmedValue === "") return mode === "link" ? "Enter a URL." : "Enter some text.";
     if (mode === "link") {
-      try {
-        new URL(trimmedValue);
-      } catch {
+      if (!isSafeUrl(trimmedValue)) {
         return "That does not look like a URL.";
       }
       return { source: "link", title: trimmedTitle, url: trimmedValue };

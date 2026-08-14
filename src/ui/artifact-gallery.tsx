@@ -5,6 +5,7 @@ import { useCollectionState } from "../hooks/use-collection-state.js";
 import { type Artifact, artifactKindLabel } from "../lib/artifact.js";
 import type { CollectionRequest } from "../lib/data-port.js";
 import { formatRelativeTime } from "../lib/relative-time.js";
+import { toSafeHref } from "../lib/url.js";
 import { cn } from "../lib/utils.js";
 import { Button } from "./button.js";
 import { CatalogGlyph } from "./catalog-glyph.js";
@@ -36,11 +37,12 @@ export function ArtifactCard({
   readonly now?: number;
 }) {
   const stamp = artifact.updatedAt ?? artifact.createdAt;
+  const thumbnailUrl = toSafeHref(artifact.thumbnailUrl);
 
   const inner = (
     <>
       <span className="relative block h-28 w-full overflow-hidden bg-muted">
-        {artifact.thumbnailUrl === undefined ? (
+        {thumbnailUrl === undefined ? (
           <CatalogGlyph seed={artifact.kind} className="h-28 rounded-none" />
         ) : (
           // Decorative: the title sits directly below in the same control, so
@@ -49,7 +51,7 @@ export function ArtifactCard({
           // A plain <img>, not `next/image`: this file is copied into whatever
           // app installs it, and half of those are not Next apps. A framework
           // import here would be a build error for them.
-          <img src={artifact.thumbnailUrl} alt="" className="size-full object-cover" />
+          <img src={thumbnailUrl} alt="" className="size-full object-cover" />
         )}
       </span>
       <span className="flex min-w-0 flex-col gap-0.5 border-t border-border p-3">
