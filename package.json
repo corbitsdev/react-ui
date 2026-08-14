@@ -199,6 +199,10 @@
       "types": "./dist/lib/time-range.d.ts",
       "default": "./dist/lib/time-range.js"
     },
+    "./lib/url": {
+      "types": "./dist/lib/url.d.ts",
+      "default": "./dist/lib/url.js"
+    },
     "./lib/utils": {
       "types": "./dist/lib/utils.d.ts",
       "default": "./dist/lib/utils.js"
