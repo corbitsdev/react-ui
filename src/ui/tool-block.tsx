@@ -31,6 +31,9 @@ export type ToolBlockProps = {
   /** Call arguments, shown in the expanded detail when present. */
   readonly input?: unknown;
   readonly defaultOpen?: boolean;
+  /** Controlled open state. Pair with `onOpenChange` to lift it to a parent. */
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
   readonly className?: string;
 };
 
@@ -120,9 +123,26 @@ function stateDetailTitle(state: ToolBlockState): string {
  * answer is what the user is waiting for. A failed call, a denied approval
  * and a pending approval request all open by default — those are the three
  * states where the detail is the point, not an afterthought.
+ *
+ * Uncontrolled by default, seeded from `defaultOpen` (or the state's own
+ * default). Pass `open`/`onOpenChange` to drive it from a parent.
  */
-export function ToolBlock({ name, label, state, input, defaultOpen, className }: ToolBlockProps) {
-  const [open, setOpen] = useState(defaultOpen ?? OPENS_BY_DEFAULT[state.status]);
+export function ToolBlock({
+  name,
+  label,
+  state,
+  input,
+  defaultOpen,
+  open: openProp,
+  onOpenChange,
+  className,
+}: ToolBlockProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen ?? OPENS_BY_DEFAULT[state.status]);
+  const open = openProp ?? uncontrolledOpen;
+  const setOpen = (value: boolean) => {
+    if (openProp === undefined) setUncontrolledOpen(value);
+    onOpenChange?.(value);
+  };
   const detailText = stateDetailText(state);
   const hasDetail = input !== undefined || detailText !== undefined;
   const displayLabel = label !== undefined && label.length > 0 ? label : humaniseToolName(name);
@@ -131,7 +151,7 @@ export function ToolBlock({ name, label, state, input, defaultOpen, className }:
     <div data-slot="tool-block" data-status={state.status} className={cn("text-xs", className)}>
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => setOpen(!open)}
         aria-expanded={open}
         disabled={!hasDetail}
         // `relative` plus the `::after` pseudo-element below extends the
