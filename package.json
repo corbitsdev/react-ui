@@ -133,6 +133,10 @@
       "types": "./dist/hooks/use-render-rail.d.ts",
       "default": "./dist/hooks/use-render-rail.js"
     },
+    "./hooks/use-resizable-rail": {
+      "types": "./dist/hooks/use-resizable-rail.d.ts",
+      "default": "./dist/hooks/use-resizable-rail.js"
+    },
     "./hooks/use-scroll-current-into-view": {
       "types": "./dist/hooks/use-scroll-current-into-view.d.ts",
       "default": "./dist/hooks/use-scroll-current-into-view.js"
@@ -140,6 +144,10 @@
     "./hooks/use-sidebar-panel": {
       "types": "./dist/hooks/use-sidebar-panel.d.ts",
       "default": "./dist/hooks/use-sidebar-panel.js"
+    },
+    "./hooks/use-view-mode": {
+      "types": "./dist/hooks/use-view-mode.d.ts",
+      "default": "./dist/hooks/use-view-mode.js"
     },
     "./lib/activity": {
       "types": "./dist/lib/activity.d.ts",
@@ -544,6 +552,10 @@
     "./ui/provider-mark": {
       "types": "./dist/ui/provider-mark.d.ts",
       "default": "./dist/ui/provider-mark.js"
+    },
+    "./ui/pulsing-ring": {
+      "types": "./dist/ui/pulsing-ring.d.ts",
+      "default": "./dist/ui/pulsing-ring.js"
     },
     "./ui/quick-reply-chips": {
       "types": "./dist/ui/quick-reply-chips.d.ts",
