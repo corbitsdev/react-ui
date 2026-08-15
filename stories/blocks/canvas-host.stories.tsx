@@ -116,6 +116,30 @@ export const EmptyCanvas = () => (
   </div>
 );
 
+/**
+ * Below `lg` (1024px), a narrow frame proves the chat-first split: `split`
+ * mode keeps the composer reachable instead of hiding it behind the canvas,
+ * and the focus toggle is what swaps to the canvas full-screen and back —
+ * the mobile affordance the toggle was previously missing below `lg`.
+ */
+export const MobileSplit = () => {
+  const [focus, setFocus] = useState(false);
+  return (
+    <div className="relative h-[640px] w-[375px] overflow-hidden rounded-lg border border-dashed border-border">
+      <CanvasHost
+        messages={seedMessages()}
+        content={NOTE}
+        renderCanvas={renderNote}
+        focus={focus}
+        onFocusChange={setFocus}
+        onClose={() => {}}
+        chatHeader={<ChatPanelHeader identity={IDENTITY} />}
+        composer={<ChatComposer value="" onValueChange={() => {}} onSend={() => {}} />}
+      />
+    </div>
+  );
+};
+
 /** A long transcript and a long canvas payload, to prove each column scrolls in its own box rather than the page overflowing. */
 export const LongContentOverflow = () => (
   <div className="h-[640px] w-full overflow-hidden rounded-lg border border-border">

@@ -2,7 +2,12 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, mock, test } from "bun:test";
 
-import { CanvasHost, type CanvasHostContent } from "../../src/blocks/canvas-host/canvas-host.js";
+import {
+  CanvasHost,
+  CHAT_CONTENT_VISIBILITY_CLASS,
+  GRID_CLASS,
+  type CanvasHostContent,
+} from "../../src/blocks/canvas-host/canvas-host.js";
 
 type Mounted = {
   container: HTMLElement;
@@ -243,6 +248,32 @@ describe("CanvasHost Escape key", () => {
     mounted.unmount();
   });
 
+  test("Escape from a nested dialog inside renderCanvas is consumed by the nested UI, not the host", () => {
+    const onFocusChange = mock(() => {});
+    const onClose = mock(() => {});
+    const mounted = render(
+      <CanvasHost
+        messages={[]}
+        content={CONTENT}
+        renderCanvas={() => (
+          <div role="dialog" data-testid="nested-dialog">
+            nested overlay content
+          </div>
+        )}
+        focus={false}
+        onFocusChange={onFocusChange}
+        onClose={onClose}
+      />,
+    );
+    const nestedDialog = mounted.container.querySelector('[data-testid="nested-dialog"]') as HTMLElement;
+    act(() => {
+      nestedDialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    });
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onFocusChange).not.toHaveBeenCalled();
+    mounted.unmount();
+  });
+
   test("Escape is a no-op when nothing is open", () => {
     const onFocusChange = mock(() => {});
     const onClose = mock(() => {});
@@ -299,5 +330,61 @@ describe("CanvasHost chat transcript", () => {
     );
     expect(mounted.container.querySelector('[data-testid="empty-chat"]')).not.toBeNull();
     mounted.unmount();
+  });
+});
+
+describe("CanvasHost composer footer", () => {
+  test("composer omitted renders no footer", () => {
+    const mounted = render(
+      <CanvasHost messages={[]} content={null} renderCanvas={() => <div />} focus={false} onFocusChange={noop} onClose={noop} />,
+    );
+    expect(mounted.container.querySelector('[data-slot="chat-panel-footer"]')).toBeNull();
+    mounted.unmount();
+  });
+
+  test("composer={null} renders no footer, identically to omitting it", () => {
+    const mounted = render(
+      <CanvasHost
+        messages={[]}
+        content={null}
+        renderCanvas={() => <div />}
+        focus={false}
+        onFocusChange={noop}
+        onClose={noop}
+        composer={null}
+      />,
+    );
+    expect(mounted.container.querySelector('[data-slot="chat-panel-footer"]')).toBeNull();
+    mounted.unmount();
+  });
+
+  test("composer with content renders the footer", () => {
+    const mounted = render(
+      <CanvasHost
+        messages={[]}
+        content={null}
+        renderCanvas={() => <div />}
+        focus={false}
+        onFocusChange={noop}
+        onClose={noop}
+        composer={<button type="button">send</button>}
+      />,
+    );
+    expect(mounted.container.querySelector('[data-slot="chat-panel-footer"]')).not.toBeNull();
+    mounted.unmount();
+  });
+});
+
+describe("CanvasHost layout class tables", () => {
+  test("GRID_CLASS: split shows chat below `lg`, both columns at `lg`+", () => {
+    expect(GRID_CLASS.chat).toBe("grid-cols-[minmax(0,1fr)_0px]");
+    expect(GRID_CLASS.split).toBe("grid-cols-[minmax(0,1fr)_0px] lg:grid-cols-[minmax(0,1fr)_min(28rem,40%)]");
+    expect(GRID_CLASS.focus).toBe("grid-cols-[0px_minmax(0,1fr)] lg:grid-cols-[4rem_minmax(0,1fr)]");
+  });
+
+  test("CHAT_CONTENT_VISIBILITY_CLASS: chat stays visible in chat/split, hidden only in focus", () => {
+    expect(CHAT_CONTENT_VISIBILITY_CLASS.chat).toBe("");
+    expect(CHAT_CONTENT_VISIBILITY_CLASS.split).toBe("");
+    expect(CHAT_CONTENT_VISIBILITY_CLASS.focus).toBe("invisible pointer-events-none");
   });
 });

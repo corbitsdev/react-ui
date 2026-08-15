@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 
+import { isEscapeConsumedByNestedUI } from "../../hooks/use-chat-dock.js";
 import type { CanvasHostContent } from "../../lib/canvas-host-state.js";
 import type { Part } from "../../lib/chat-parts.js";
 import { cn } from "../../lib/utils.js";
@@ -26,7 +27,7 @@ export type CanvasHostProps<TData = unknown> = {
   readonly onFocusChange: (focus: boolean) => void;
   readonly onClose: () => void;
   readonly chatHeader?: ReactNode;
-  readonly composer?: ReactNode;
+  readonly composer?: ReactNode | null;
   /** Shown in place of the transcript while `messages` is empty. */
   readonly emptyChat?: ReactNode;
   readonly className?: string;
@@ -50,33 +51,43 @@ function resolveLayoutMode<TData>(content: CanvasHostContent<TData> | null, focu
  * between modes instead of snapping (a transition across a differing track
  * count cannot animate) — see the class on the root element below.
  *
- * Below `lg` (1024px) there is never room for both columns: `split` and
- * `focus` both collapse the chat track to `0px` and hand the canvas the
- * full row, exactly like the deliberate `focus` behavior at `lg`+, per the
- * "canvas takes over below the breakpoint" requirement. This is plain
- * responsive Tailwind on the container, not a JS media query, so it degrades
- * with the viewport for free.
+ * Below `lg` (1024px) there is never room for both columns, so `split` and
+ * `focus` diverge deliberately instead of collapsing to the same thing:
+ *
+ *              | below `lg`                | `lg`+
+ *   -----------|----------------------------|------------------------------
+ *   chat       | chat full, canvas 0px      | chat full, canvas 0px
+ *   split      | chat full, canvas 0px      | chat + canvas share the row
+ *   focus      | canvas full, chat 0px      | canvas full, chat rail (4rem)
+ *
+ * `split` below `lg` keeps the chat column full-width with the canvas
+ * merely off-screen (not torn down) — a reader who opens a canvas on a
+ * phone still has their conversation, and the header's focus toggle is what
+ * swaps to `focus` (canvas full-width) and back, exactly the affordance the
+ * toggle already provides at `lg`+. Without this split, any open canvas
+ * below `lg` would trap the reader away from the composer with no way back
+ * short of closing the canvas outright.
  */
-const GRID_CLASS: Record<CanvasHostLayoutMode, string> = {
+export const GRID_CLASS: Record<CanvasHostLayoutMode, string> = {
   chat: "grid-cols-[minmax(0,1fr)_0px]",
-  split: "grid-cols-[0px_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_min(28rem,40%)]",
+  split: "grid-cols-[minmax(0,1fr)_0px] lg:grid-cols-[minmax(0,1fr)_min(28rem,40%)]",
   focus: "grid-cols-[0px_minmax(0,1fr)] lg:grid-cols-[4rem_minmax(0,1fr)]",
 };
 
 /**
  * Visibility for the chat column's *interactive* content, keyed by mode.
- * `invisible` (not `hidden`, not `inert`) is what removes a collapsed
- * chat column from both hit-testing and the tab order in every browser
- * without any JS knowledge of the current breakpoint: `split` only hides it
- * below `lg` (where the grid track above has already gone to `0px`) and
- * un-hides it at `lg`+ where the track is real again; `focus` hides it at
- * every breakpoint, since focus mode never gives the chat column real width
- * to work with even at `lg`+ — `ChatRailIndicator` fills that space instead,
- * purely as a decorative "still here" marker.
+ * `invisible` (not `hidden`, not `inert`) is what removes it from both
+ * hit-testing and the tab order without any JS knowledge of the current
+ * breakpoint. `chat` and `split` both keep the chat content visible at every
+ * breakpoint now — in `split`, `GRID_CLASS` alone is what takes the canvas
+ * column out of view below `lg` (a `0px` track), so no separate visibility
+ * toggle is needed here. `focus` hides the chat content at every
+ * breakpoint: below `lg` the canvas owns the whole row, and at `lg`+ the
+ * chat column is a decorative rail (`ChatRailIndicator`), never real content.
  */
-const CHAT_CONTENT_VISIBILITY_CLASS: Record<CanvasHostLayoutMode, string> = {
+export const CHAT_CONTENT_VISIBILITY_CLASS: Record<CanvasHostLayoutMode, string> = {
   chat: "",
-  split: "invisible pointer-events-none lg:visible lg:pointer-events-auto",
+  split: "",
   focus: "invisible pointer-events-none",
 };
 
@@ -111,7 +122,8 @@ export function CanvasHost<TData = unknown>({
   useEffect(() => {
     if (content === null) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (event.key !== "Escape") return;
+      if (isEscapeConsumedByNestedUI(event, "canvas-host")) return;
       if (focus) {
         onFocusChange(false);
       } else {
@@ -127,7 +139,14 @@ export function CanvasHost<TData = unknown>({
       data-slot="canvas-host"
       data-layout={mode}
       className={cn(
-        "grid h-full min-h-0 transition-[grid-template-columns] duration-300 ease-[var(--ease-out)]",
+        // Animates `grid-template-columns` — a layout property, not
+        // `transform` — an accepted tradeoff shared with `now-cards.tsx`'s
+        // and `live-status-line.tsx`'s own `grid-template-rows` transitions.
+        // A family-wide transform-based (FLIP) rewrite is a candidate for a
+        // future pass, not this one. A morph (growing/shrinking in place,
+        // not entering/exiting) uses the in-out curve, not the decelerate
+        // one `ease-out` is tuned for.
+        "grid h-full min-h-0 transition-[grid-template-columns] duration-300 ease-[var(--ease-in-out)]",
         GRID_CLASS[mode],
         className,
       )}
@@ -146,7 +165,8 @@ export function CanvasHost<TData = unknown>({
                     </div>
                   ))}
             </MessageList>
-            {composer === undefined ? null : <ChatPanelFooter>{composer}</ChatPanelFooter>}
+            {/* `null` and omitted must behave identically — no empty bordered footer either way. */}
+            {composer === undefined || composer === null ? null : <ChatPanelFooter>{composer}</ChatPanelFooter>}
           </ChatPanel>
         </div>
       </div>

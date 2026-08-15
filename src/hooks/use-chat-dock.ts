@@ -16,7 +16,7 @@ export type ChatDockMode = "closed" | "docked" | "fullpage";
  * hosts. Matched against `composedPath()` so a portal-rendered overlay still
  * counts, even though it lives outside the dock's own DOM subtree.
  */
-const NESTED_OVERLAY_SELECTOR = [
+export const NESTED_OVERLAY_SELECTOR = [
   "select",
   '[role="dialog"]',
   '[role="alertdialog"]',
@@ -26,20 +26,21 @@ const NESTED_OVERLAY_SELECTOR = [
 ].join(",");
 
 /**
- * True when this Escape keypress belongs to UI nested inside the dock, not
- * the dock itself — either something already called `preventDefault()` on
- * it, or `composedPath()` reaches a nested overlay element before it reaches
- * the dock's own `[data-slot="chat-dock"]` container. Walking the dock's own
- * container without hitting an overlay first means Escape is the dock's to
- * handle.
+ * True when this Escape keypress belongs to UI nested inside a container, not
+ * the container itself — either something already called `preventDefault()`
+ * on it, or `composedPath()` reaches a nested overlay element before it
+ * reaches `ownSlot`. Overlay matches are checked first and win immediately
+ * regardless of whose container the path eventually reaches, so this is safe
+ * to reuse for any container (`chat-dock`, `canvas-host`, ...) — `ownSlot`
+ * only trims the walk short once it's clear nothing nested caught the key.
  */
-function isEscapeConsumedByNestedUI(event: KeyboardEvent): boolean {
+export function isEscapeConsumedByNestedUI(event: KeyboardEvent, ownSlot = "chat-dock"): boolean {
   if (event.defaultPrevented) return true;
   const path = typeof event.composedPath === "function" ? event.composedPath() : [];
   for (const node of path) {
     if (!(node instanceof HTMLElement)) continue;
     if (node.matches(NESTED_OVERLAY_SELECTOR)) return true;
-    if (node.dataset.slot === "chat-dock") return false;
+    if (node.dataset.slot === ownSlot) return false;
   }
   return false;
 }

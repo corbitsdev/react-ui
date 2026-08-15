@@ -234,6 +234,11 @@
   /* Overrides Tailwind's built-in ease-out with the brand's decelerate curve,
      so every existing and new `ease-out` usage picks it up in one place. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Symmetric in-out curve for morphs — something growing/shrinking in place
+     rather than entering or exiting — paired with `--ease-out`'s decelerate
+     shape so the two read as one curve family. */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 /* Dialog motion. Written as real keyframes rather than pulled in from an
