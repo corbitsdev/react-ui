@@ -79,6 +79,66 @@ describe("RadioGroup / RadioOption", () => {
     unmount();
   });
 
+  test("clicking the description text selects the option — the whole row is the label", () => {
+    let received: string | undefined;
+    const { container, inputs, unmount } = mount("chat", (value) => {
+      received = value;
+    });
+    const describedBy = inputs()[0]?.getAttribute("aria-describedby") ?? null;
+    const description = container.querySelector(`#${describedBy}`) as HTMLElement;
+    act(() => {
+      description.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(received).toBe("agent");
+    unmount();
+  });
+
+  test("without a label, renders just the bare control", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    act(() => {
+      root.render(
+        createElement(RadioGroup, {
+          name: "bare",
+          label: "Mode",
+          value: "agent",
+          onValueChange: () => {},
+          children: createElement(RadioOption, { key: "agent", value: "agent", id: "bare-radio" }),
+        }),
+      );
+    });
+    expect(container.querySelector("label")).toBeNull();
+    expect((container.querySelector("input") as HTMLInputElement).id).toBe("bare-radio");
+    root.unmount();
+  });
+
+  test("without a label, describedBy passes through to aria-describedby", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    act(() => {
+      root.render(
+        createElement(RadioGroup, {
+          name: "bare",
+          label: "Mode",
+          value: "agent",
+          onValueChange: () => {},
+          children: createElement(RadioOption, {
+            key: "agent",
+            value: "agent",
+            id: "bare-radio",
+            describedBy: "external-description",
+          }),
+        }),
+      );
+    });
+    expect((container.querySelector("input") as HTMLInputElement).getAttribute("aria-describedby")).toBe(
+      "external-description",
+    );
+    root.unmount();
+  });
+
   test("throws when RadioOption is rendered outside a RadioGroup", () => {
     const container = document.createElement("div");
     document.body.appendChild(container);

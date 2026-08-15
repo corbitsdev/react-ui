@@ -88,4 +88,41 @@ describe("Checkbox", () => {
     expect(input().getAttribute("aria-invalid")).toBe("true");
     unmount();
   });
+
+  test("clicking the description text toggles the checkbox — the whole row is the label", () => {
+    let received: boolean | undefined;
+    const { container, input, unmount } = mount({
+      label: "Auto-approve",
+      description: "The agent may act without asking.",
+      checked: false,
+      onCheckedChange: (checked) => {
+        received = checked;
+      },
+    });
+    const describedBy = input().getAttribute("aria-describedby");
+    const description = container.querySelector(`#${describedBy}`) as HTMLElement;
+    act(() => {
+      description.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(received).toBe(true);
+    unmount();
+  });
+
+  test("without a label, renders just the bare control", () => {
+    const { container, input, unmount } = mount({ checked: false, onCheckedChange: () => {}, id: "bare-checkbox" });
+    expect(container.querySelector("label")).toBeNull();
+    expect(input().id).toBe("bare-checkbox");
+    unmount();
+  });
+
+  test("without a label, describedBy passes through to aria-describedby", () => {
+    const { input, unmount } = mount({
+      checked: false,
+      onCheckedChange: () => {},
+      id: "bare-checkbox",
+      describedBy: "external-description",
+    });
+    expect(input().getAttribute("aria-describedby")).toBe("external-description");
+    unmount();
+  });
 });
