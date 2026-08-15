@@ -236,6 +236,146 @@ and layout math becomes plain functions in `src/lib/` (`step-graph-layout`, like
 | `scripts/dep-guard.mjs` | The forbidden-import gates. |
 | `dist/` | Build output. Generated, not committed; the only thing `files` publishes. |
 
+## Small-stateless-components audit
+
+A survey of `src/ui` (150 components) and `src/blocks` (3 block modules)
+against five smells, done ahead of a fix pass (CL-5633). It is not a
+line-by-line review of every file; it is a targeted grep-and-read over the
+patterns below, cross-checked against what similar components in the
+library already do.
+
+Every surveyed module is re-exported from the package root (`src/index.ts`),
+so "public surface" doesn't distinguish findings the way it might in an app —
+everything here is public. Blast radius instead counts how many other
+non-test, non-story modules under `src/` import the component directly; it
+is a proxy for "how many places a change here could be felt," not a measure
+of downstream (workbench) usage, which this repo can't see.
+
+### (a) Internal state that should be controlled
+
+The convention already exists: `Sidebar`/`StepSidebar` take `collapsed` +
+`onToggle`, `Dialog`/`CommandPalette` take `open` + `onOpenChange`. Both
+families hold zero layout state internally — the parent owns it, full stop.
+The components below didn't follow either shape; they held `open`/`expanded`
+in `useState` with no way for a parent to read or drive it.
+
+| Component | Path | Blast radius | Status |
+| --- | --- | --- | --- |
+| `ToolNarrative` | `src/ui/tool-narrative.tsx` | 3 importers | **Fixed** — added optional `open`/`onOpenChange` |
+| `ToolBlock` | `src/ui/tool-block.tsx` | 2 importers | **Fixed** — added optional `open`/`onOpenChange` |
+| `NotificationsBell` | `src/ui/notifications-bell.tsx` | 1 importer | **Fixed** — added optional `open`/`onOpenChange` |
+| `TenantSelector` | `src/ui/tenant-selector.tsx` | 1 importer | **Fixed** — added optional `open`/`onOpenChange` |
+| `ThreadSwitcher` | `src/ui/thread-switcher.tsx` | 1 importer | **Fixed** — added optional `open`/`onOpenChange` |
+| `SubagentDock` (per-row disclosure) | `src/ui/subagent-dock.tsx` | 1 importer | Deferred — lifting it means a parent tracking one open flag per subagent row (a map, not a boolean); a bigger surface change than this pass covers |
+
+All five fixes are additive: `open`/`onOpenChange` are optional, and the
+component still manages its own state when they're omitted, so nothing that
+calls these components today changes behavior.
+
+A few more components hold local `open`/`expanded`-shaped state and were
+checked against the same bar, but don't belong on the fix list:
+`ActivityBlock` is backed by a native `<details>` on purpose (see its own
+doc comment) — the browser supplies the disclosure semantics, keyboard
+behavior and find-in-page expansion, which making it controlled would mean
+re-deriving by hand. `ApprovalCard`'s per-detail "show more" is a text
+truncation toggle, not a layout region — nobody outside the row has a reason
+to know or set it. `ConfirmButton`'s `armed` state is already documented as
+deliberately uncontrolled (`defaultArmed` only seeds the initial value).
+`SidebarItemRow`'s `mounted` flag, `FileInput`'s `dragging` and
+`LibrarySearchInput`'s `focused` are transient, self-contained UI state with
+no parent-relevant meaning. `Command`'s `query`/`activeIndex` and
+`TenantSelector`'s `activeIndex` are listbox/combobox navigation state,
+which is what `use-command-palette-navigation` already exists to
+encapsulate for the one case (`CommandPalette`) that needed it shared.
+
+### (b) Config-object props vs. children/slots
+
+Audited every array-of-object prop in `src/ui`/`src/blocks`
+(`actor-summary`, `token-mosaic`, `intake-form`, `add-artifact-dialog`,
+`kind-picker`, `toggle-list`, `filter-bar`, `workflow-catalog`,
+`kind-card-grid`, `progress-checklist`, `step-list`, `horizontal-stepper`,
+and others). **No findings.** Every one of these is a collection-rendering
+component — a table row set, a step rail, a filter list — consistent with
+the `DataPort`/`use-collection-state` architecture above, where components
+render data the host doesn't have pre-built React elements for (it has
+domain objects: a `Tenant`, a `WorkflowStep`, a `FilterSpec`). Slots are
+used elsewhere in the library exactly where the content genuinely is
+caller-arbitrary markup (`NotificationsBell`'s `children`, `AuthLayout`'s
+`panel`). Swapping a config-array prop for children in a collection
+component would mean the host hand-building list markup the component
+exists to standardize — a regression, not a cleanup.
+
+### (c) Imperative logic that belongs in a hook
+
+| Finding | Components | Blast radius | Status |
+| --- | --- | --- | --- |
+| Outside-click + Escape dismissal, hand-rolled three times | `NotificationsBell`, `TenantSelector`, `ThreadSwitcher` | 3 components, 3 importers combined | **Fixed** — extracted `useDismissablePopover` (`src/hooks/use-dismissable-popover.ts`) |
+| `matchMedia("(prefers-reduced-motion: reduce)")`, read once and never re-checked, duplicated three times | `AnimatedNumber`, `DitherCanvas`, `use-scroll-current-into-view` | 3 components/hooks, 5 importers combined | **Fixed** — extracted `usePrefersReducedMotion` (`src/hooks/use-prefers-reduced-motion.ts`), now reactive via `useSyncExternalStore` |
+| Spotlight measurement (`getBoundingClientRect`, `scrollIntoView`, resize/scroll listeners) | `OnboardingTour` | 1 importer | Deferred — tightly coupled to tour-step semantics (target selectors, centering a step with no target); low reuse value elsewhere today |
+
+`CommandPalette`'s keyboard/query navigation already lives in
+`use-command-palette-navigation.ts` — this is the pattern the fixes above
+extend, not a gap. `DitherBackground`'s pointer-driven canvas loop is
+self-contained and has no sibling that needs the same behavior.
+
+### (d) Colors not sourced from theme tokens
+
+Grepped every `.tsx`/`.css` file under `src/ui`/`src/blocks` for hex/rgb/
+named-color literals and for Tailwind's fixed `text-white`/`bg-black`-style
+utilities.
+
+`DitherCanvas`'s ink fallback (`src/ui/dither-canvas.tsx`) hardcoded
+`#e98428` — the **light**-theme value of `--primary` — used unconditionally
+as the fallback for the instant before the CSS custom property can be read.
+`--primary` is `#bf6b20` in dark mode, so this fallback rendered the wrong
+orange under dark. **Fixed**: it now falls back to the canvas's own computed
+`color`, which the theme's base layer already ties to `--foreground`, for
+whichever theme is active.
+
+Two other `bg-black/*` uses (`Dialog`'s overlay, `OnboardingTour`'s scrim)
+were checked and are fine: a modal/spotlight overlay is conventionally black
+at a fixed opacity in both themes — it's dimming the page behind it, not
+carrying theme-tinted content, so there's no light/dark pair for it to be
+inconsistent with.
+
+### (e) Missing `prefers-reduced-motion` support
+
+The theme's base layer already collapses every CSS `animation`/`transition`
+duration to near-zero globally under `prefers-reduced-motion: reduce` (see
+"The theme layer" above) — opt-out at the foundation, not per-component — so
+the ~50 components using Tailwind's `transition-*`/`animate-*` utilities
+inherit it for free and were not re-checked individually.
+
+The gap is JS-driven motion, which that CSS rule cannot reach:
+`requestAnimationFrame` loops and imperative `scrollIntoView` calls. All
+four such call sites were audited:
+
+| Component | Path | Before | Status |
+| --- | --- | --- | --- |
+| `AnimatedNumber` | `src/ui/animated-number.tsx` | One-shot `matchMedia` check per count-up | **Fixed** — now uses `usePrefersReducedMotion`, re-runs if the OS preference flips mid-count |
+| `DitherCanvas` | `src/ui/dither-canvas.tsx` | One-shot `matchMedia` check per mount | **Fixed** — same |
+| `use-scroll-current-into-view` | `src/hooks/use-scroll-current-into-view.ts` | One-shot `matchMedia` check per scroll | **Fixed** — same |
+| `DitherBackground` | `src/ui/dither-background.tsx` | Already listens for `change` on its own `MediaQueryList` | Reviewed, no change — already the correct, live-reactive pattern |
+
+### Summary
+
+- **150 components surveyed** across `src/ui` and `src/blocks`.
+- (a) 6 components reviewed as controlled-state candidates; 5 fixed, 1
+  deferred, 7 more reviewed and confirmed as legitimately internal.
+- (b) 12 config-object props reviewed; 0 findings.
+- (c) 3 duplicated-imperative-logic findings; 2 fixed (covering 6
+  components), 1 deferred.
+- (d) 1 single-theme color-literal finding; fixed.
+- (e) 4 JS-driven motion call sites audited; 3 fixed, 1 already correct.
+
+**8 components/hooks fixed in this pass**: `NotificationsBell`,
+`TenantSelector`, `ThreadSwitcher`, `ToolBlock`, `ToolNarrative`,
+`AnimatedNumber`, `DitherCanvas`, `use-scroll-current-into-view` — plus two
+new shared hooks, `useDismissablePopover` and `usePrefersReducedMotion`.
+
+**Deferred, with reasons**: `SubagentDock`'s per-row disclosure (needs
+list-keyed controlled state — bigger surface change than this pass), and
+`OnboardingTour`'s measurement logic (tour-specific, low reuse value as a
 ## Known limits
 
 - **`DataPort` covers collections only.** Single-record reads and mutations are absent by
