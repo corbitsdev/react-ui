@@ -4,7 +4,7 @@ export default { title: "Primitives / Avatar" };
 
 export const Tones = () => (
   <div className="flex items-center gap-3">
-    <Avatar initials="SC" label="Sawyer Cutler" tone="neutral" />
+    <Avatar initials="NP" label="Noor Patel" tone="neutral" />
     <Avatar initials="AI" label="Agent" tone="agent" />
     <Avatar initials="A2" label="Agent 2" tone="agent2" />
     <Avatar initials="A3" label="Agent 3" tone="agent3" />
@@ -20,13 +20,13 @@ export const Sizes = () => (
 );
 
 export const WithTenantMonogram = () => (
-  <Avatar initials="SC" label="Sawyer Cutler" tenantMonogram="C" size="lg" />
+  <Avatar initials="NP" label="Noor Patel" tenantMonogram="C" size="lg" />
 );
 
 export const Stack = () => (
   <AvatarStack
     items={[
-      { id: "1", initials: "SC", label: "Sawyer Cutler" },
+      { id: "1", initials: "NP", label: "Noor Patel" },
       { id: "2", initials: "AI", label: "Agent", tone: "agent" },
       { id: "3", initials: "JD", label: "Jane Doe" },
       { id: "4", initials: "MK", label: "Max King" },

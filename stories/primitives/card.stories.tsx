@@ -7,7 +7,7 @@ export const Basic = () => (
   <Card className="max-w-sm">
     <CardHeader>
       <CardTitle>Deploy schedule</CardTitle>
-      <CardDescription>Runs every weekday at 9:00 AM.</CardDescription>
+      <CardDescription>Runs every weekday at 9 am.</CardDescription>
     </CardHeader>
     <p className="text-sm text-muted-foreground">Next run in 4 hours. Last run succeeded.</p>
     <CardFooter>
