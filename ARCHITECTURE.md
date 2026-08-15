@@ -210,10 +210,13 @@ validator yourself.
 A composite surface — an inspector, a registry list, a step diagram — is built as small
 stateless pieces plus at most one composition wrapper. Each piece is its own file and its
 own export, takes everything through props, holds no state of its own, and renders on its
-own (`StatusChip`, `ScopePill`, `StepList`, `LiveRunHeader`, `WorkflowRegistryRow`). The
-wrapper (`LiveRunInspector`, `WorkflowRegistryList`) contains no markup the pieces do not
-already carry: it only decides which pieces render and in what order, so replacing one
-piece never means forking the wrapper.
+own (`LiveRunHeader`, `LiveRunBanner`, `StepList`, `InspectorKv`, `InspectorPanelTitle`).
+The wrapper (`LiveRunInspector`) contains no markup the pieces do not already carry: it
+only decides which pieces render and in what order, so replacing one piece never means
+forking the wrapper. `WorkflowStatusBadge` is the same idea one level down — a `Badge`
+carrying a `StatusDot`, not a bespoke "status chip" component, because `Badge` and
+`StatusDot` already exist and composing them is cheaper than a third thing that does
+what the first two already do together.
 
 Behaviour and arithmetic split out the same way: a reusable behaviour becomes a headless
 hook in `src/hooks/` (`use-scroll-current-into-view` renders nothing and returns a ref),
@@ -226,8 +229,8 @@ and layout math becomes plain functions in `src/lib/` (`step-graph-layout`, like
 | --- | --- |
 | `src/ui/` | Components. Primitives, collection surfaces, shells, and the domain families. |
 | `src/lib/` | Non-component source: `utils`, the `DataPort` seam and its adapter, the per-domain shapes, and the internal chart palette and geometry. |
-| `src/hooks/` | `use-collection-state`. |
-| `src/blocks/` | Multi-file compositions (`login`, `access-notice`). |
+| `src/hooks/` | 15 headless hooks: `use-collection-state`, `use-anchored-scroll`, `use-chat-dock`, `use-command-palette-navigation`, `use-controllable-state`, `use-delayed-autofocus`, `use-dismissable-popover`, `use-flip-transition`, `use-focus-trap`, `use-prefers-reduced-motion`, `use-render-rail`, `use-resizable-rail`, `use-scroll-current-into-view`, `use-sidebar-panel`, `use-view-mode`. |
+| `src/blocks/` | Multi-file compositions (`login`, `access-notice`, `canvas-host`). |
 | `src/theme.css` | Tokens, keyframes, base layer. The only CSS source. |
 | `src/styles.css` | Two `@import`s. The entry Tailwind compiles into `dist/styles.css`. |
 | `src/index.ts` | The root barrel. **Generated** — do not edit. |
@@ -370,8 +373,10 @@ four such call sites were audited:
 
 **8 components/hooks fixed in this pass**: `NotificationsBell`,
 `TenantSelector`, `ThreadSwitcher`, `ToolBlock`, `ToolNarrative`,
-`AnimatedNumber`, `DitherCanvas`, `use-scroll-current-into-view` — plus two
-new shared hooks, `useDismissablePopover` and `usePrefersReducedMotion`.
+`AnimatedNumber`, `DitherCanvas`, `use-scroll-current-into-view` — plus three
+new shared hooks, `useDismissablePopover`, `usePrefersReducedMotion` and
+`useControllableState` (the controlled/uncontrolled resolution the other two
+and `ToolBlock`/`ToolNarrative` all share).
 
 **Deferred, with reasons**: `SubagentDock`'s per-row disclosure (needs
 list-keyed controlled state — bigger surface change than this pass), and
@@ -397,6 +402,14 @@ exception is state a parent has no legitimate reason to want: `ActivityBlock`
 stays a native `<details>`, and a text-truncation toggle stays local. If
 you're unsure which side of that line something is on, ask "would a real
 caller ever need to read or set this from outside" — not "could they."
+
+The controlled-or-uncontrolled resolution itself is one hook,
+`use-controllable-state`, not a ternary copy-pasted into every component that
+needs it — `use-dismissable-popover`, `ToolBlock` and `ToolNarrative` all
+call it rather than hand-rolling `value ?? internalState`. It also carries
+the dev-mode warning if a caller switches between controlled and
+uncontrolled after mount (the same thing React's own `<input>` warns about),
+so that check lives in one place too.
 
 **Arbitrary content is a slot; a domain collection is a data prop.** A
 component whose job is to render caller-supplied content it has no opinion
@@ -445,10 +458,14 @@ changes.
 
 - **`DataPort` covers collections only.** Single-record reads and mutations are absent by
   decision, not by oversight.
-- **No tests.** There is no test runner in this repo. The measurable half of appearance
-  (contrast, in both modes) is gated; layout and behaviour are not.
-- **No rendering gallery.** Nothing in this repo renders the components; visual review
-  means rendering the package inside a consumer app.
+- **Tests exist but are partial.** `bun test` runs 251 tests across 39 files (`src/**/*.test.ts`),
+  covering hooks and a handful of components — the measurable half of appearance (contrast,
+  in both modes) is gated in the build, and a growing slice of behaviour is now covered
+  by these, but most components still have no test.
+- **A rendering gallery exists but is partial.** Ladle (`bun run stories`, `bun run
+  stories:build`) renders 52 stories under `stories/`; most of the ~150 components have
+  none, so visual review of an uncovered component still means rendering the package
+  inside a consumer app.
 - **The prebuilt stylesheet restyles the consuming page** — it carries Tailwind's
   preflight and a base layer. See the README before importing it.
 - **The theme assumes Tailwind v4 CSS variables.** A consumer on a Tailwind
