@@ -22,7 +22,7 @@ export function PulsingRing({ colorClassName, className }: PulsingRingProps) {
     <span
       aria-hidden
       className={cn(
-        "absolute inset-0 rounded-full [animation:corbits-status-pulse_1.6s_ease-out_infinite]",
+        "absolute inset-0 rounded-full [animation:corbits-status-pulse_1.8s_ease-out_infinite]",
         colorClassName,
         className,
       )}
