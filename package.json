@@ -105,6 +105,10 @@
       "types": "./dist/blocks/login/login-form.d.ts",
       "default": "./dist/blocks/login/login-form.js"
     },
+    "./hooks/use-anchored-scroll": {
+      "types": "./dist/hooks/use-anchored-scroll.d.ts",
+      "default": "./dist/hooks/use-anchored-scroll.js"
+    },
     "./hooks/use-chat-dock": {
       "types": "./dist/hooks/use-chat-dock.d.ts",
       "default": "./dist/hooks/use-chat-dock.js"
@@ -164,6 +168,10 @@
     "./lib/chat-message": {
       "types": "./dist/lib/chat-message.d.ts",
       "default": "./dist/lib/chat-message.js"
+    },
+    "./lib/chat-parts": {
+      "types": "./dist/lib/chat-parts.d.ts",
+      "default": "./dist/lib/chat-parts.js"
     },
     "./lib/command-registry": {
       "types": "./dist/lib/command-registry.d.ts",
@@ -517,6 +525,10 @@
       "types": "./dist/ui/message-bubble.d.ts",
       "default": "./dist/ui/message-bubble.js"
     },
+    "./ui/message-list": {
+      "types": "./dist/ui/message-list.d.ts",
+      "default": "./dist/ui/message-list.js"
+    },
     "./ui/moment-walker": {
       "types": "./dist/ui/moment-walker.d.ts",
       "default": "./dist/ui/moment-walker.js"
@@ -544,6 +556,10 @@
     "./ui/pagination": {
       "types": "./dist/ui/pagination.d.ts",
       "default": "./dist/ui/pagination.js"
+    },
+    "./ui/parts-renderer": {
+      "types": "./dist/ui/parts-renderer.d.ts",
+      "default": "./dist/ui/parts-renderer.js"
     },
     "./ui/profile-card": {
       "types": "./dist/ui/profile-card.d.ts",
@@ -752,6 +768,10 @@
     "./ui/token-mosaic": {
       "types": "./dist/ui/token-mosaic.d.ts",
       "default": "./dist/ui/token-mosaic.js"
+    },
+    "./ui/tool-block": {
+      "types": "./dist/ui/tool-block.d.ts",
+      "default": "./dist/ui/tool-block.js"
     },
     "./ui/tool-narrative": {
       "types": "./dist/ui/tool-narrative.d.ts",
