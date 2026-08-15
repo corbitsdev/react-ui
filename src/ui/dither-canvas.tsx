@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js";
 import { cn } from "../lib/utils.js";
 
 /**
@@ -51,6 +52,7 @@ export type DitherCanvasProps = {
  */
 export function DitherCanvas({ cell = 4, color, warpRadius = 160, className }: DitherCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const reduce = usePrefersReducedMotion();
 
   useEffect(() => {
     const canvas = ref.current;
@@ -59,12 +61,16 @@ export function DitherCanvas({ cell = 4, color, warpRadius = 160, className }: D
     if (context === null) return;
 
     // Resolved once per mount: reading a custom property costs a style
-    // recalculation, which is not something to do sixty times a second.
-    const themeInk = getComputedStyle(canvas).getPropertyValue("--primary").trim();
-    const ink = color ?? (themeInk === "" ? "#e98428" : themeInk);
+    // recalculation, which is not something to do sixty times a second. The
+    // fallback reads the canvas's own computed `color` rather than a literal
+    // hex — the theme's base layer already ties that to `--foreground`, so
+    // the fallback tracks the active theme instead of only being correct in
+    // whichever one it was copied from.
+    const computed = getComputedStyle(canvas);
+    const themeInk = computed.getPropertyValue("--primary").trim();
+    const ink = color ?? (themeInk === "" ? computed.color : themeInk);
 
     const pointer = { x: -1e6, y: -1e6 };
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let frame = 0;
     let width = 0;
     let height = 0;
@@ -155,7 +161,7 @@ export function DitherCanvas({ cell = 4, color, warpRadius = 160, className }: D
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerleave", onPointerLeave);
     };
-  }, [cell, color, warpRadius]);
+  }, [cell, color, warpRadius, reduce]);
 
   return <canvas ref={ref} aria-hidden className={cn("block size-full", className)} />;
 }
