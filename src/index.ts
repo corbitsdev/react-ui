@@ -18,6 +18,7 @@ export * from "./hooks/use-anchored-scroll.js";
 export * from "./hooks/use-chat-dock.js";
 export * from "./hooks/use-collection-state.js";
 export * from "./hooks/use-command-palette-navigation.js";
+export * from "./hooks/use-controllable-state.js";
 export * from "./hooks/use-delayed-autofocus.js";
 export * from "./hooks/use-dismissable-popover.js";
 export * from "./hooks/use-flip-transition.js";

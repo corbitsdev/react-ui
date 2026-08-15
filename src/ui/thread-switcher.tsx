@@ -71,7 +71,7 @@ export function ThreadSwitcher({
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         aria-label={`Conversation: ${active?.title ?? placeholder}. Switch conversation`}
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((value) => !value)}
         className="flex w-full items-center gap-2 rounded-md border border-input px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted"
       >
         <MessagesSquare className="size-4 shrink-0 text-muted-foreground" aria-hidden />

@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
-import { useState } from "react";
 
+import { useControllableState } from "../hooks/use-controllable-state.js";
 import { toolLabel, type ToolPart } from "../lib/chat-message.js";
 import { cn } from "../lib/utils.js";
 import { StatusDot } from "./status-dot.js";
@@ -33,12 +33,12 @@ export type ToolNarrativeProps = {
 };
 
 export function ToolNarrative({ part, open: openProp, onOpenChange, className }: ToolNarrativeProps) {
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(part.state === "error");
-  const open = openProp ?? uncontrolledOpen;
-  const setOpen = (value: boolean) => {
-    if (openProp === undefined) setUncontrolledOpen(value);
-    onOpenChange?.(value);
-  };
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: part.state === "error",
+    onChange: onOpenChange,
+    name: "ToolNarrative",
+  });
   const label = toolLabel(part);
   const hasDetail = part.output !== undefined || part.input !== undefined;
 
@@ -46,7 +46,7 @@ export function ToolNarrative({ part, open: openProp, onOpenChange, className }:
     <div data-slot="tool-narrative" className={cn("text-xs", className)}>
       <button
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         disabled={!hasDetail}
         className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:hover:bg-transparent"

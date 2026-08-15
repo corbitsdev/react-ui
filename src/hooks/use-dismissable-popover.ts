@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useRef, type RefObject } from "react";
+
+import { useControllableState, type ControllableStateAction } from "./use-controllable-state.js";
 
 export type UseDismissablePopoverOptions = {
   /** Controlled open flag. Supply this with `onOpenChange` to lift state to a parent. */
@@ -12,7 +14,7 @@ export type UseDismissablePopoverOptions = {
 
 export type UseDismissablePopoverResult<Root extends HTMLElement, Trigger extends HTMLElement> = {
   readonly open: boolean;
-  readonly setOpen: (open: boolean) => void;
+  readonly setOpen: (action: ControllableStateAction<boolean>) => void;
   readonly rootRef: RefObject<Root | null>;
   readonly triggerRef: RefObject<Trigger | null>;
   /** Closes and returns focus to the trigger. */
@@ -30,25 +32,25 @@ export type UseDismissablePopoverResult<Root extends HTMLElement, Trigger extend
  * uncontrolled otherwise, seeded from `defaultOpen`. A caller with its own
  * Escape handling (a listbox that also closes on Tab, say) sets
  * `closeOnEscape: false` and wires Escape itself.
+ *
+ * The controlled/uncontrolled resolution — including the dev-mode warning if
+ * a caller switches between them after mount — is `useControllableState`;
+ * this hook only adds the popover-specific dismissal behavior on top.
+ * `setOpen` takes a value or an updater, same as `useState`.
  */
 export function useDismissablePopover<
   Root extends HTMLElement = HTMLElement,
   Trigger extends HTMLElement = HTMLElement,
 >(options: UseDismissablePopoverOptions = {}): UseDismissablePopoverResult<Root, Trigger> {
   const { open: controlledOpen, onOpenChange, defaultOpen = false, closeOnEscape = true } = options;
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen : uncontrolledOpen;
+  const [open, setOpen] = useControllableState({
+    value: controlledOpen,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: "useDismissablePopover",
+  });
   const rootRef = useRef<Root>(null);
   const triggerRef = useRef<Trigger>(null);
-
-  const setOpen = useCallback(
-    (value: boolean) => {
-      if (!isControlled) setUncontrolledOpen(value);
-      onOpenChange?.(value);
-    },
-    [isControlled, onOpenChange],
-  );
 
   const close = useCallback(() => {
     setOpen(false);

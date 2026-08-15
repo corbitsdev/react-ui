@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -48,6 +48,15 @@ describe("useDismissablePopover", () => {
     expect(handle.get().open).toBe(false);
     act(() => handle.get().setOpen(true));
     expect(handle.get().open).toBe(true);
+    handle.unmount();
+  });
+
+  test("uncontrolled: setOpen accepts a functional updater", () => {
+    const handle = mount();
+    act(() => handle.get().setOpen((value) => !value));
+    expect(handle.get().open).toBe(true);
+    act(() => handle.get().setOpen((value) => !value));
+    expect(handle.get().open).toBe(false);
     handle.unmount();
   });
 
@@ -110,5 +119,28 @@ describe("useDismissablePopover", () => {
     });
     expect(handle.get().open).toBe(true);
     handle.unmount();
+  });
+
+  describe("controlled/uncontrolled transition warning", () => {
+    let errorSpy: ReturnType<typeof mock>;
+
+    beforeEach(() => {
+      errorSpy = mock(() => {});
+      console.error = errorSpy as unknown as typeof console.error;
+    });
+
+    afterEach(() => {
+      // @ts-expect-error restoring the built-in after stubbing it above
+      delete console.error;
+    });
+
+    test("logs once when an uncontrolled caller starts passing open", () => {
+      const handle = mount();
+      expect(errorSpy).not.toHaveBeenCalled();
+      handle.rerender({ open: true, onOpenChange: () => {} });
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(errorSpy.mock.calls[0]?.[0]).toContain("useDismissablePopover");
+      handle.unmount();
+    });
   });
 });

@@ -63,7 +63,7 @@ export function NotificationsBell({
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         aria-label={label}
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((value) => !value)}
         className="relative grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <Bell className="size-4" aria-hidden />

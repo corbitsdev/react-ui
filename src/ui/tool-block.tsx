@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
-import { useState } from "react";
 
+import { useControllableState } from "../hooks/use-controllable-state.js";
 import { cn } from "../lib/utils.js";
 import { StatusDot } from "./status-dot.js";
 
@@ -137,12 +137,12 @@ export function ToolBlock({
   onOpenChange,
   className,
 }: ToolBlockProps) {
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen ?? OPENS_BY_DEFAULT[state.status]);
-  const open = openProp ?? uncontrolledOpen;
-  const setOpen = (value: boolean) => {
-    if (openProp === undefined) setUncontrolledOpen(value);
-    onOpenChange?.(value);
-  };
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: defaultOpen ?? OPENS_BY_DEFAULT[state.status],
+    onChange: onOpenChange,
+    name: "ToolBlock",
+  });
   const detailText = stateDetailText(state);
   const hasDetail = input !== undefined || detailText !== undefined;
   const displayLabel = label !== undefined && label.length > 0 ? label : humaniseToolName(name);
@@ -151,7 +151,7 @@ export function ToolBlock({
     <div data-slot="tool-block" data-status={state.status} className={cn("text-xs", className)}>
       <button
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         disabled={!hasDetail}
         // `relative` plus the `::after` pseudo-element below extends the
