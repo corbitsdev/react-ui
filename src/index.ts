@@ -22,6 +22,7 @@ export * from "./hooks/use-delayed-autofocus.js";
 export * from "./hooks/use-dismissable-popover.js";
 export * from "./hooks/use-flip-transition.js";
 export * from "./hooks/use-focus-trap.js";
+export * from "./hooks/use-prefers-reduced-motion.js";
 export * from "./hooks/use-render-rail.js";
 export * from "./hooks/use-resizable-rail.js";
 export * from "./hooks/use-scroll-current-into-view.js";
