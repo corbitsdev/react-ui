@@ -1,6 +1,7 @@
 import { ChevronsUpDown, MessagesSquare } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useId } from "react";
 
+import { useDismissablePopover } from "../hooks/use-dismissable-popover.js";
 import type { ChatThreadSummary } from "../lib/chat-message.js";
 import type { CollectionRequest } from "../lib/data-port.js";
 import { cn } from "../lib/utils.js";
@@ -16,6 +17,9 @@ export type ThreadSwitcherProps = {
   /** Shown on the trigger before a thread exists. */
   readonly placeholder?: string;
   readonly now?: number;
+  /** Controlled open state. Pair with `onOpenChange` to lift it to a parent. */
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
   readonly className?: string;
 };
 
@@ -38,6 +42,8 @@ export type ThreadSwitcherProps = {
  * and `aria-controls` tying it to the panel, Escape and outside-click to close,
  * focus returning to the trigger when it does, and closing on selection —
  * because a switcher that stays open after you switch is a list.
+ *
+ * Uncontrolled by default. Pass `open`/`onOpenChange` to drive it from a parent.
  */
 export function ThreadSwitcher({
   request,
@@ -46,39 +52,15 @@ export function ThreadSwitcher({
   onNewThread,
   placeholder = "No conversation",
   now,
+  open: openProp,
+  onOpenChange,
   className,
 }: ThreadSwitcherProps) {
-  const [open, setOpen] = useState(false);
   const panelId = useId();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
-  function close() {
-    setOpen(false);
-    triggerRef.current?.focus();
-  }
-
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
-    };
-    // `pointerdown` rather than `click`: closing on the press means the panel is
-    // gone before whatever was clicked behind it reacts.
-    const onPointerDown = (event: PointerEvent) => {
-      if (!(event.target instanceof Node)) return;
-      if (rootRef.current?.contains(event.target) === false) setOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("pointerdown", onPointerDown);
-    };
-  }, [open]);
+  const { open, setOpen, rootRef, triggerRef, close } = useDismissablePopover<HTMLDivElement, HTMLButtonElement>({
+    open: openProp,
+    onOpenChange,
+  });
 
   return (
     <div ref={rootRef} className={cn("relative", className)}>
@@ -89,7 +71,7 @@ export function ThreadSwitcher({
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         aria-label={`Conversation: ${active?.title ?? placeholder}. Switch conversation`}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 rounded-md border border-input px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted"
       >
         <MessagesSquare className="size-4 shrink-0 text-muted-foreground" aria-hidden />
