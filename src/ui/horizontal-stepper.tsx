@@ -1,5 +1,6 @@
 import { useScrollCurrentIntoView } from "../hooks/use-scroll-current-into-view.js";
 import type { WorkflowStep, WorkflowStepStatus } from "../lib/workflow-run-progress.js";
+import { workflowStepGlyph, workflowStepLabelClass } from "../lib/workflow-run-progress.js";
 import { cn } from "../lib/utils.js";
 
 // Above this many steps, an even split can't give every label readable room,
@@ -13,18 +14,6 @@ function pillClass(status: WorkflowStepStatus): string {
   if (status === "failed") return "bg-destructive text-destructive-foreground";
   if (status === "current") return "bg-primary text-primary-foreground";
   return "bg-muted text-muted-foreground";
-}
-
-function labelClass(status: WorkflowStepStatus): string {
-  if (status === "current") return "text-foreground";
-  if (status === "failed") return "text-destructive";
-  return "text-muted-foreground";
-}
-
-function pillGlyph(status: WorkflowStepStatus, number: number): string {
-  if (status === "completed") return "✓";
-  if (status === "failed") return "!";
-  return String(number);
 }
 
 export type HorizontalStepperProps = {
@@ -68,7 +57,7 @@ export function HorizontalStepper({ steps, className }: HorizontalStepperProps) 
                 />
               ) : null}
               <span className={cn("relative flex size-8 items-center justify-center rounded-full text-sm font-medium transition-colors", pillClass(step.status))}>
-                {pillGlyph(step.status, step.number)}
+                {workflowStepGlyph(step.status, step.number)}
               </span>
             </span>
 
@@ -76,7 +65,7 @@ export function HorizontalStepper({ steps, className }: HorizontalStepperProps) 
               title={step.label}
               className={cn(
                 "min-w-0 flex-1 truncate text-sm font-medium",
-                compress && step.status !== "current" ? "sr-only" : labelClass(step.status),
+                compress && step.status !== "current" ? "sr-only" : workflowStepLabelClass(step.status),
               )}
             >
               {step.label}

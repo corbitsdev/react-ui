@@ -37,6 +37,20 @@ export type WorkflowStep = {
   readonly status: WorkflowStepStatus;
 };
 
+/** Label colour for a step's status, shared by every stepper/sidebar rendering. */
+export function workflowStepLabelClass(status: WorkflowStepStatus): string {
+  if (status === "current") return "text-foreground";
+  if (status === "failed") return "text-destructive";
+  return "text-muted-foreground";
+}
+
+/** Mark glyph for a step's status: a checkmark, an exclamation, or its number. */
+export function workflowStepGlyph(status: WorkflowStepStatus, number: number): string {
+  if (status === "completed") return "✓";
+  if (status === "failed") return "!";
+  return String(number);
+}
+
 /**
  * A stepper entry backed by one or more runtime step ids, in run order. A
  * linear workflow maps one runtime id per display step; a clustered one

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { act, createElement } from "react";
+import { act, createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import { StepSidebar } from "./step-sidebar.js";
@@ -11,19 +11,34 @@ const STEPS: WorkflowStep[] = [
   { number: 3, label: "Send to customers", status: "pending" },
 ];
 
+function noop() {
+  // default onToggle for mounts that don't assert on it
+}
+
 function mount(props: Partial<React.ComponentProps<typeof StepSidebar>> = {}) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
   act(() => {
-    root.render(createElement(StepSidebar, { steps: STEPS, ...props }));
+    root.render(createElement(StepSidebar, { steps: STEPS, onToggle: noop, ...props }));
   });
   return {
     container,
-    toggle: () => container.querySelector("[data-slot='step-sidebar-collapse-toggle']") as HTMLButtonElement,
+    toggle: () => container.querySelector("[data-slot='sidebar-collapse-toggle']") as HTMLButtonElement,
     root: () => container.querySelector("[data-slot='step-sidebar']") as HTMLElement,
     unmount: () => root.unmount(),
   };
+}
+
+/** A minimal host wrapper that owns `collapsed` state, mirroring how any
+ * real consumer wires the controlled prop. */
+function ControlledStepSidebar(props: Omit<React.ComponentProps<typeof StepSidebar>, "collapsed" | "onToggle">) {
+  const [collapsed, setCollapsed] = useState(false);
+  return createElement(StepSidebar, {
+    ...props,
+    collapsed,
+    onToggle: () => setCollapsed((c) => !c),
+  });
 }
 
 describe("StepSidebar", () => {
@@ -58,30 +73,62 @@ describe("StepSidebar", () => {
     unmount();
   });
 
-  test("defaults expanded, and the toggle collapses and re-expands it", () => {
+  test("defaults expanded when collapsed is omitted", () => {
     const { toggle, root, unmount } = mount();
     expect(root().getAttribute("data-collapsed")).toBe("false");
     expect(toggle().getAttribute("aria-label")).toBe("Collapse sidebar");
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
-
-    act(() => {
-      toggle().dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-    });
-    expect(root().getAttribute("data-collapsed")).toBe("true");
-    expect(toggle().getAttribute("aria-label")).toBe("Expand sidebar");
-    expect(toggle().getAttribute("aria-expanded")).toBe("false");
-
-    act(() => {
-      toggle().dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-    });
-    expect(root().getAttribute("data-collapsed")).toBe("false");
     unmount();
   });
 
-  test("defaultCollapsed seeds the initial state without a window read", () => {
-    const { root, unmount } = mount({ defaultCollapsed: true });
-    expect(root().getAttribute("data-collapsed")).toBe("true");
-    unmount();
+  test("collapsed is host-controlled: the toggle calls onToggle with no args, and the host decides the next state", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    let toggleCalls = 0;
+    act(() => {
+      root.render(
+        createElement(StepSidebar, {
+          steps: STEPS,
+          collapsed: false,
+          onToggle: () => {
+            toggleCalls++;
+          },
+        }),
+      );
+    });
+    const toggle = () => container.querySelector("[data-slot='sidebar-collapse-toggle']") as HTMLButtonElement;
+    act(() => {
+      toggle().dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+    expect(toggleCalls).toBe(1);
+    // The component does not flip its own state: still reflects the prop.
+    expect(container.querySelector("[data-slot='step-sidebar']")?.getAttribute("data-collapsed")).toBe("false");
+    root.unmount();
+  });
+
+  test("a host wrapper owning collapsed state toggles the rendered state end to end", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    act(() => {
+      root.render(createElement(ControlledStepSidebar, { steps: STEPS }));
+    });
+    const rootEl = () => container.querySelector("[data-slot='step-sidebar']") as HTMLElement;
+    const toggle = () => container.querySelector("[data-slot='sidebar-collapse-toggle']") as HTMLButtonElement;
+    expect(rootEl().getAttribute("data-collapsed")).toBe("false");
+
+    act(() => {
+      toggle().dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+    expect(rootEl().getAttribute("data-collapsed")).toBe("true");
+    expect(toggle().getAttribute("aria-label")).toBe("Expand sidebar");
+
+    act(() => {
+      toggle().dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+    expect(rootEl().getAttribute("data-collapsed")).toBe("false");
+    root.unmount();
   });
 
   test("renders no footer slot when omitted", () => {
@@ -107,6 +154,39 @@ describe("StepSidebar", () => {
       signOutButton.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     });
     expect(signedOut).toBe(true);
+    unmount();
+  });
+
+  test("an empty steps array renders no items and does not crash", () => {
+    const { container, unmount } = mount({ steps: [] });
+    expect(container.querySelectorAll("li[data-step-status]").length).toBe(0);
+    expect(container.querySelector("ol[aria-label='Workflow steps']")).not.toBeNull();
+    unmount();
+  });
+
+  test("a long label truncates via the truncate class and carries a title attribute with the full text", () => {
+    const longLabel =
+      "Reconcile every outstanding invoice across all connected payment processors before sending the weekly summary";
+    const { container, unmount } = mount({
+      steps: [{ number: 1, label: longLabel, status: "current" }],
+    });
+    const labelSpan = container.querySelector("li[data-step-status='current'] span[title]") as HTMLElement;
+    expect(labelSpan).not.toBeNull();
+    expect(labelSpan.getAttribute("title")).toBe(longLabel);
+    expect(labelSpan.className).toContain("truncate");
+    unmount();
+  });
+
+  test("many steps still all render in the DOM inside the scrollable container", () => {
+    const manySteps: WorkflowStep[] = Array.from({ length: 15 }, (_, i) => ({
+      number: i + 1,
+      label: `Step ${i + 1}`,
+      status: i === 0 ? "completed" : i === 1 ? "current" : "pending",
+    }));
+    const { container, unmount } = mount({ steps: manySteps });
+    const list = container.querySelector("ol[aria-label='Workflow steps']") as HTMLElement;
+    expect(list.className).toContain("overflow-y-auto");
+    expect(container.querySelectorAll("li[data-step-status]").length).toBe(15);
     unmount();
   });
 });
