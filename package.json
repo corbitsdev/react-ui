@@ -377,6 +377,10 @@
       "types": "./dist/ui/chat-thread.d.ts",
       "default": "./dist/ui/chat-thread.js"
     },
+    "./ui/checkbox": {
+      "types": "./dist/ui/checkbox.d.ts",
+      "default": "./dist/ui/checkbox.js"
+    },
     "./ui/command": {
       "types": "./dist/ui/command.d.ts",
       "default": "./dist/ui/command.js"
@@ -609,6 +613,10 @@
       "types": "./dist/ui/quote-card.d.ts",
       "default": "./dist/ui/quote-card.js"
     },
+    "./ui/radio-group": {
+      "types": "./dist/ui/radio-group.d.ts",
+      "default": "./dist/ui/radio-group.js"
+    },
     "./ui/read-block": {
       "types": "./dist/ui/read-block.d.ts",
       "default": "./dist/ui/read-block.js"
@@ -668,6 +676,10 @@
     "./ui/section-nav": {
       "types": "./dist/ui/section-nav.d.ts",
       "default": "./dist/ui/section-nav.js"
+    },
+    "./ui/select": {
+      "types": "./dist/ui/select.d.ts",
+      "default": "./dist/ui/select.js"
     },
     "./ui/settings-panel": {
       "types": "./dist/ui/settings-panel.d.ts",
@@ -756,6 +768,10 @@
     "./ui/tenant-selector": {
       "types": "./dist/ui/tenant-selector.d.ts",
       "default": "./dist/ui/tenant-selector.js"
+    },
+    "./ui/textarea": {
+      "types": "./dist/ui/textarea.d.ts",
+      "default": "./dist/ui/textarea.js"
     },
     "./ui/theme-provider": {
       "types": "./dist/ui/theme-provider.d.ts",
