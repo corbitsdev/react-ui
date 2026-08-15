@@ -11,3 +11,7 @@ export const Flat = () => <Sparkline values={[5, 5, 5, 5, 5]} summary="Flat over
 export const Spiky = () => (
   <Sparkline values={[10, 2, 14, 3, 17, 1, 12]} summary="Volatile over 7 days" />
 );
+
+// Fewer than two points has no shape to draw — the component renders an
+// empty labelled placeholder instead of a path.
+export const InsufficientData = () => <Sparkline values={[7]} summary="Not enough history yet" />;

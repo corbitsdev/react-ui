@@ -8,6 +8,8 @@ export type InfoTooltipProps = {
   readonly label: string;
   /** Accessible name for the trigger button. Defaults to `label`. */
   readonly triggerLabel?: string;
+  /** Render already open — uncontrolled, for stories and screenshots. */
+  readonly defaultOpen?: boolean;
   readonly className?: string;
 };
 
@@ -22,10 +24,10 @@ export type InfoTooltipProps = {
  * it is in the tab order, Radix associates the note by id, and tapping it
  * opens the tooltip on touch devices.
  */
-export function InfoTooltip({ label, triggerLabel, className }: InfoTooltipProps) {
+export function InfoTooltip({ label, triggerLabel, defaultOpen, className }: InfoTooltipProps) {
   return (
     <TooltipPrimitive.Provider delayDuration={200}>
-      <TooltipPrimitive.Root>
+      <TooltipPrimitive.Root defaultOpen={defaultOpen}>
         <TooltipPrimitive.Trigger asChild>
           <button
             type="button"
