@@ -689,6 +689,10 @@
       "types": "./dist/ui/step-primitives.d.ts",
       "default": "./dist/ui/step-primitives.js"
     },
+    "./ui/step-sidebar": {
+      "types": "./dist/ui/step-sidebar.d.ts",
+      "default": "./dist/ui/step-sidebar.js"
+    },
     "./ui/subagent-dock": {
       "types": "./dist/ui/subagent-dock.d.ts",
       "default": "./dist/ui/subagent-dock.js"
