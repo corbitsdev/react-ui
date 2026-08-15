@@ -60,6 +60,7 @@ export function useResizableRail({
   const clampStatic = useCallback((px: number) => Math.max(minWidth, Math.min(px, maxWidth)), [minWidth, maxWidth]);
 
   const readStoredWidth = useCallback((): number => {
+    if (typeof window === "undefined") return defaultWidth;
     try {
       const stored = window.localStorage.getItem(storageKey);
       if (stored !== null) {
@@ -75,6 +76,13 @@ export function useResizableRail({
   const [width, setWidth] = useState<number>(readStoredWidth);
   const [dynamicMaxWidth, setDynamicMaxWidth] = useState<number>(maxWidth);
   const [dragging, setDragging] = useState(false);
+
+  // Mirrors `width` for handlers registered once (e.g. the resize listener
+  // below) that need the latest value without re-subscribing on every change.
+  const widthRef = useRef(width);
+  useEffect(() => {
+    widthRef.current = width;
+  }, [width]);
 
   const dynamicMax = useCallback((): number => {
     const container = containerRef.current;
@@ -100,7 +108,10 @@ export function useResizableRail({
   // on viewport resize — the stored value may exceed the current dynamic max.
   useEffect(() => {
     setRail(readStoredWidth());
-    const onResize = () => setRail(width);
+    // Reads widthRef, not the `width` in scope: a resize listener registered
+    // once on mount would otherwise close over that mount-time value and
+    // reset a user-adjusted rail back to it on every subsequent resize.
+    const onResize = () => setRail(widthRef.current);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
     // Runs once on mount; a live re-clamp loop on every width change is not
@@ -111,22 +122,28 @@ export function useResizableRail({
   // Cached container left edge for the drag's duration — invariant while
   // dragging, so this avoids a getBoundingClientRect() layout read per move.
   const dragLeftRef = useRef(0);
+  // The pointerId captured on down; move/up filter to it so a second touch
+  // landing mid-drag (multi-touch) can't hijack the resize.
+  const pointerIdRef = useRef<number | null>(null);
 
-  const onPointerDown = useCallback(() => {
+  const onPointerDown = useCallback((event: PointerEvent) => {
     const container = containerRef.current;
     if (container !== null) dragLeftRef.current = container.getBoundingClientRect().left;
+    pointerIdRef.current = event.pointerId;
+    event.currentTarget.setPointerCapture(event.pointerId);
     draggingRef.current = true;
     setDragging(true);
   }, []);
 
   useEffect(() => {
     function onMove(event: globalThis.PointerEvent) {
-      if (!draggingRef.current) return;
+      if (!draggingRef.current || event.pointerId !== pointerIdRef.current) return;
       setRail(event.clientX - dragLeftRef.current);
     }
-    function onUp() {
-      if (!draggingRef.current) return;
+    function onUp(event: globalThis.PointerEvent) {
+      if (!draggingRef.current || event.pointerId !== pointerIdRef.current) return;
       draggingRef.current = false;
+      pointerIdRef.current = null;
       setDragging(false);
     }
     window.addEventListener("pointermove", onMove);

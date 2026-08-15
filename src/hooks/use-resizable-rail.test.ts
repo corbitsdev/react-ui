@@ -91,4 +91,25 @@ describe("useResizableRail", () => {
     expect(second.get().width).toBe(324);
     second.unmount();
   });
+
+  test("a window resize re-clamps the current width, not the width at mount", async () => {
+    const handle = await mount();
+    act(() => {
+      handle.get().handleProps.onKeyDown({
+        key: "ArrowRight",
+        preventDefault: () => {},
+      } as unknown as Parameters<ResizableRail["handleProps"]["onKeyDown"]>[0]);
+    });
+    expect(handle.get().width).toBe(324);
+
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    // Regression: the resize listener used to close over the mount-time
+    // width and revert the rail to defaultWidth on every resize.
+    expect(handle.get().width).toBe(324);
+    handle.unmount();
+  });
 });
