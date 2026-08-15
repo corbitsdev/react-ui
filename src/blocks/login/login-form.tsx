@@ -20,14 +20,18 @@ export type AuthProvider = {
   readonly icon?: ReactNode;
 };
 
+export type LoginFormMode = "sign-in" | "sign-up";
+
 export type LoginFormProps = {
+  /** "sign-in" (default) shows email/password. "sign-up" adds a name field. */
+  readonly mode?: LoginFormMode;
   readonly heading?: string;
   /** Social / SSO options. Empty renders none, and no divider either. */
   readonly providers?: readonly AuthProvider[];
   readonly onProvider?: (id: string) => void;
   /** Omit to render an SSO-only page with no email fields at all. */
-  readonly onSubmit?: (credentials: { readonly email: string; readonly password: string }) => void;
-  /** True while a sign-in is in flight. Disables every control. */
+  readonly onSubmit?: (credentials: { readonly name?: string; readonly email: string; readonly password: string }) => void;
+  /** True while a sign-in or sign-up is in flight. Disables every control. */
   readonly busy?: boolean;
   /** A failure to show. Announced, not just drawn. */
   readonly error?: string | null;
@@ -49,15 +53,17 @@ export type LoginFormProps = {
  * to happen, and they submit again. It is `aria-live="assertive"` precisely
  * because interrupting is correct here.
  *
- * `autoComplete="email"` and `"current-password"` are not decoration: they are
- * what lets a password manager fill this form, and a sign-in form password
- * managers cannot fill pushes people toward worse passwords.
+ * `autoComplete="email"` and `"current-password"` (`"new-password"` in
+ * sign-up mode) are not decoration: they are what lets a password manager
+ * fill this form, and a form password managers cannot fill pushes people
+ * toward worse passwords.
  *
- * The submit button reads "Signing in…" while busy rather than swapping to a
- * spinner. The label is the status, so it is announced by the same mechanism
- * that announces the button.
+ * The submit button reads "Signing in…" / "Signing up…" while busy rather
+ * than swapping to a spinner. The label is the status, so it is announced by
+ * the same mechanism that announces the button.
  */
 export function LoginForm({
+  mode = "sign-in",
   heading = "Welcome back",
   providers = [],
   onProvider,
@@ -67,8 +73,10 @@ export function LoginForm({
   footer,
   className,
 }: LoginFormProps) {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const isSignUp = mode === "sign-up";
 
   return (
     <div className={cn("flex flex-col gap-6", className)}>
@@ -89,9 +97,25 @@ export function LoginForm({
           className="flex flex-col gap-4"
           onSubmit={(event) => {
             event.preventDefault();
-            onSubmit({ email, password });
+            onSubmit(isSignUp ? { name, email, password } : { email, password });
           }}
         >
+          {!isSignUp ? null : (
+            <label className="flex flex-col gap-1.5 text-sm font-medium">
+              Name
+              <Input
+                type="text"
+                name="name"
+                autoComplete="name"
+                placeholder="Ada Lovelace"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                disabled={busy}
+                required
+                className="h-11"
+              />
+            </label>
+          )}
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             Email
             <Input
@@ -111,7 +135,7 @@ export function LoginForm({
             <Input
               type="password"
               name="password"
-              autoComplete="current-password"
+              autoComplete={isSignUp ? "new-password" : "current-password"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               disabled={busy}
@@ -120,7 +144,7 @@ export function LoginForm({
             />
           </label>
           <Button type="submit" size="lg" disabled={busy}>
-            {busy ? "Signing in…" : "Continue"}
+            {busy ? (isSignUp ? "Signing up…" : "Signing in…") : "Continue"}
           </Button>
         </form>
       )}

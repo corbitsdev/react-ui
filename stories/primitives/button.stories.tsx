@@ -8,6 +8,7 @@ export const Variants = () => (
     <Button variant="secondary">Save draft</Button>
     <Button variant="outline">View details</Button>
     <Button variant="ghost">Dismiss</Button>
+    <Button variant="link">Learn more</Button>
     <Button variant="destructive">Delete schedule</Button>
   </div>
 );

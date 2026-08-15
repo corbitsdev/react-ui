@@ -50,6 +50,13 @@ rather than what changed.
   **`@tanstack/react-query` is optional** — needed only for the TanStack adapter, which is
   why that adapter is importable by subpath but absent from the root entry.
 
+### Breaking changes since 0.1.0
+
+- **`AuthLayout` no longer defaults its decorative panel to `DitherCanvas`.** The panel is
+  now an explicit `panel` slot with no fallback — pass `<DitherCanvas />`,
+  `<DitherBackground src={...} />`, or any other content. A caller that omitted `panel` to
+  get the dither canvas for free now gets a bare panel instead.
+
 #### Notes
 
 - The package ships **no `"use client"` directives**. A React Server Components consumer
