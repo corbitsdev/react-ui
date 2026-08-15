@@ -376,6 +376,71 @@ new shared hooks, `useDismissablePopover` and `usePrefersReducedMotion`.
 **Deferred, with reasons**: `SubagentDock`'s per-row disclosure (needs
 list-keyed controlled state — bigger surface change than this pass), and
 `OnboardingTour`'s measurement logic (tour-specific, low reuse value as a
+hook today).
+
+## Standing pattern
+
+The audit above isn't a one-off cleanup; the four rules below are the bar a
+new component in this library is expected to clear. Each has exemplars
+already in the tree.
+
+**State that describes layout or visibility is controlled, not owned.** If a
+piece of state answers "is this open/collapsed/expanded" and a reasonable
+host might want to read or drive it — closing every other panel when one
+opens, restoring a collapsed sidebar from a saved preference — it's a prop
+pair: `open` + `onOpenChange`, or `collapsed` + `onToggle`. `Sidebar`,
+`StepSidebar` and `CanvasHost` set this precedent; `Dialog` and
+`CommandPalette` apply it to popups; `NotificationsBell`, `TenantSelector`,
+`ThreadSwitcher`, `ToolBlock` and `ToolNarrative` now do too, all
+uncontrolled-by-default so adding the pair is never a breaking change. The
+exception is state a parent has no legitimate reason to want: `ActivityBlock`
+stays a native `<details>`, and a text-truncation toggle stays local. If
+you're unsure which side of that line something is on, ask "would a real
+caller ever need to read or set this from outside" — not "could they."
+
+**Arbitrary content is a slot; a domain collection is a data prop.** A
+component whose job is to render caller-supplied content it has no opinion
+about (`NotificationsBell`'s `children`, `AuthLayout`'s `panel`) takes
+`children` or a named slot. A component whose job is to render a
+*collection* of the library's own domain shapes (a list of `WorkflowStep`, a
+list of `Tenant`) takes that collection as a data prop, the same way
+`DataPort` and `use-collection-state` already assume — that's what makes a
+table, a list and a step rail interchangeable consumers of one
+loading/empty/error contract. Don't reach for a config-object prop as a
+substitute for either of these; if you're tempted to add one, first check
+whether the content is actually caller-arbitrary (make it `children`) or
+actually a collection this library already has a shape for (use that
+shape).
+
+**Non-trivial imperative behavior lives in a headless hook, not the
+component body.** Event listeners, focus management, measurement, timers,
+keyboard handling — if two components would otherwise duplicate the same
+`useEffect`, that's the hook boundary. `use-focus-trap`,
+`use-command-palette-navigation`, `use-resizable-rail`,
+`use-dismissable-popover` and `use-prefers-reduced-motion` are the existing
+examples: each owns exactly the imperative part and returns refs/values, no
+markup. Before writing a second `addEventListener` pair that looks like one
+already in the tree, grep `src/hooks` first.
+
+**Every color comes from a token, with no unconditional literal fallback.**
+`src/theme.css` is the only place a hex, rgb or named color belongs. A
+component that reads a CSS custom property at runtime (`DitherCanvas`
+reading `--primary` for a canvas fill, since canvas can't use `var()`
+directly) may need a fallback for the instant before styles are attached —
+that fallback must resolve through the DOM (`getComputedStyle(...).color`,
+tied to `--foreground` by the base layer), never a hardcoded hex, because a
+literal is by construction correct in at most one theme.
+
+**Motion outside CSS checks `prefers-reduced-motion`, live.** The theme's
+global CSS rule handles every `transition-*`/`animate-*` utility for free —
+don't re-implement that check for a component using only CSS transitions.
+The rule doesn't reach `requestAnimationFrame` loops or imperative calls
+like `scrollIntoView`; those call `usePrefersReducedMotion()` (or, for
+something that needs its own live `MediaQueryList` listener mid-loop,
+follow `DitherBackground`'s pattern) rather than a one-shot
+`matchMedia(...).matches` read that goes stale the moment the OS setting
+changes.
+
 ## Known limits
 
 - **`DataPort` covers collections only.** Single-record reads and mutations are absent by
