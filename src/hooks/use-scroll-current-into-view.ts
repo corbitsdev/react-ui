@@ -1,5 +1,7 @@
 import { useEffect, useRef, type RefObject } from "react";
 
+import { usePrefersReducedMotion } from "./use-prefers-reduced-motion.js";
+
 /**
  * Keeps "the current item" visible inside a scrollable rail: attach the
  * returned ref to whichever element is current, and it is scrolled into view
@@ -19,15 +21,15 @@ import { useEffect, useRef, type RefObject } from "react";
  */
 export function useScrollCurrentIntoView<T extends HTMLElement>(currentKey: string | number): RefObject<T | null> {
   const currentRef = useRef<T>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     currentRef.current?.scrollIntoView({
       block: "nearest",
       inline: "center",
       behavior: prefersReducedMotion ? "auto" : "smooth",
     });
-  }, [currentKey]);
+  }, [currentKey, prefersReducedMotion]);
 
   return currentRef;
 }
