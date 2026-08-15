@@ -10,6 +10,12 @@ export type ConfirmButtonProps = Omit<ButtonProps, "onClick" | "children"> & {
   readonly confirmLabel?: ReactNode;
   /** How long the armed state lasts before disarming, in ms. */
   readonly resetMs?: number;
+  /**
+   * Start already armed. Uncontrolled — it only seeds the initial `useState`,
+   * so it has no effect after mount. For stories and tests that need to show
+   * or exercise the armed state without simulating a first click.
+   */
+  readonly defaultArmed?: boolean;
 };
 
 /**
@@ -29,10 +35,11 @@ export function ConfirmButton({
   children,
   confirmLabel = "Click again to confirm",
   resetMs = 3000,
+  defaultArmed = false,
   variant = "outline",
   ...props
 }: ConfirmButtonProps) {
-  const [armed, setArmed] = useState(false);
+  const [armed, setArmed] = useState(defaultArmed);
   const timerRef = useRef<number | undefined>(undefined);
 
   const disarm = () => {

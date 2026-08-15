@@ -157,3 +157,17 @@ bun run dep-guard
 
 `ARCHITECTURE.md` covers the `DataPort` seam, the theme layer and the known limits.
 `CONTRIBUTING.md` covers the gates and how to add a component.
+
+### Component workbench
+
+```bash
+bun run stories        # Ladle dev server — live, hot-reloading, theme-aware
+bun run stories:build  # static build of the same canvas
+```
+
+[Ladle](https://ladle.dev) renders every story under `stories/` against the real
+`src/theme.css`, with a light/dark toggle in its top bar that flips the actual `.dark`
+class — not a canvas-only colour swap. **A story is the definition-of-done artifact for
+every new component**: a change isn't finished until it has at least one story per
+meaningful state, checked in both themes. See `CONTRIBUTING.md#the-component-workbench`
+for what a story is expected to cover.
