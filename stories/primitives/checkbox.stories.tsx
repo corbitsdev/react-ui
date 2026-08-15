@@ -37,6 +37,37 @@ export const Invalid = () => (
   />
 );
 
+export const DisabledWithDescription = () => (
+  <Checkbox
+    label="Auto-approve safe actions"
+    description="The agent may act without asking when the risk is low."
+    checked={false}
+    onCheckedChange={() => {}}
+    disabled
+  />
+);
+
+export const InvalidWithDescription = () => (
+  <Checkbox
+    label="I agree to the terms"
+    description="Required to continue."
+    checked={false}
+    onCheckedChange={() => {}}
+    invalid
+  />
+);
+
+export const DisabledInvalid = () => (
+  <Checkbox
+    label="I agree to the terms"
+    description="Required to continue."
+    checked={false}
+    onCheckedChange={() => {}}
+    disabled
+    invalid
+  />
+);
+
 export const Indeterminate = () => {
   const [items, setItems] = useState([true, false, false]);
   const allChecked = items.every(Boolean);

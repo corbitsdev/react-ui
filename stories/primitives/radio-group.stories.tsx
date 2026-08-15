@@ -39,6 +39,27 @@ export const Invalid = () => (
   </RadioGroup>
 );
 
+export const DisabledWithDescription = () => (
+  <RadioGroup name="model-disabled-description" label="Model" value="sonnet" onValueChange={() => {}}>
+    <RadioOption value="sonnet" label="Sonnet" description="Balanced speed and capability." />
+    <RadioOption value="opus" label="Opus" description="Most capable, slower and pricier." disabled />
+  </RadioGroup>
+);
+
+export const InvalidWithDescription = () => (
+  <RadioGroup name="model-invalid-description" label="Model" value="" onValueChange={() => {}}>
+    <RadioOption value="sonnet" label="Sonnet" description="Balanced speed and capability." invalid />
+    <RadioOption value="opus" label="Opus" description="Most capable, slower and pricier." invalid />
+  </RadioGroup>
+);
+
+export const DisabledInvalid = () => (
+  <RadioGroup name="model-disabled-invalid" label="Model" value="" onValueChange={() => {}}>
+    <RadioOption value="sonnet" label="Sonnet" description="Balanced speed and capability." disabled invalid />
+    <RadioOption value="opus" label="Opus" description="Most capable, slower and pricier." invalid />
+  </RadioGroup>
+);
+
 export const WithDescriptions = () => {
   const [value, setValue] = useState("agent");
   return (
