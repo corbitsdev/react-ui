@@ -175,6 +175,21 @@ describe("DitherBackground", () => {
     mounted.unmount();
   });
 
+  test("skips the pointermove listener entirely when warp is disabled", () => {
+    const addSpy = window.addEventListener.bind(window) as typeof window.addEventListener;
+    const calls: string[] = [];
+    window.addEventListener = ((type: string, ...rest: unknown[]) => {
+      calls.push(type);
+      return (addSpy as (...args: unknown[]) => void)(type, ...rest);
+    }) as typeof window.addEventListener;
+
+    const mounted = render(<DitherBackground src="https://picsum.photos/seed/dither/800/600" warp={false} />);
+    expect(calls).not.toContain("pointermove");
+
+    window.addEventListener = addSpy;
+    mounted.unmount();
+  });
+
   test("pauses the loop when IntersectionObserver reports the canvas offscreen", () => {
     const mounted = render(<DitherBackground src="https://picsum.photos/seed/dither/800/600" />);
     expect(pendingFrames.size).toBe(1);

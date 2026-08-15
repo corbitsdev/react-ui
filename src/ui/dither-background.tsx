@@ -47,9 +47,11 @@ export type DitherBackgroundProps = {
  * 8×8 Bayer matrix, and redrawn each frame with a slow ambient sine warp plus
  * a cursor-driven displacement.
  *
- * The loop is throttled to ~30fps by timestamp delta (not left to RAF's
- * natural ~60fps), paused while the canvas is offscreen
- * (`IntersectionObserver`) or the tab is hidden (`visibilitychange`), and
+ * The `requestAnimationFrame` callback still fires at the display's native
+ * rate; only the paint work inside it is gated to ~30fps by timestamp delta,
+ * so a 120Hz display doesn't triple the redraw cost for no visual gain. The
+ * loop is paused while the canvas is offscreen (`IntersectionObserver`) or
+ * the tab is hidden (`visibilitychange`), and
  * reacts live to `prefers-reduced-motion` — a `MediaQueryList` `change`
  * listener, not a value read once at mount — by dropping to a single static
  * frame with the warp disabled.
@@ -131,7 +133,10 @@ export function DitherBackground({ src, cell = 4, levels = 4, warp = 1.6, classN
       const inside = targetMouseX > -0.1 && targetMouseX < 1.1 && targetMouseY > -0.1 && targetMouseY < 1.1;
       targetStrength = inside ? 1 : 0;
     };
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    // Disabled warp means the cursor displacement it drives is unused too —
+    // skip the listener rather than paying a getBoundingClientRect per event
+    // for a feature that's off.
+    if (warp !== false) window.addEventListener("pointermove", onPointerMove, { passive: true });
 
     const reduceQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     let reduce = reduceQuery.matches;
@@ -261,7 +266,7 @@ export function DitherBackground({ src, cell = 4, levels = 4, warp = 1.6, classN
       intersectionObserver.disconnect();
       reduceQuery.removeEventListener("change", onReduceChange);
       document.removeEventListener("visibilitychange", onVisibilityChange);
-      window.removeEventListener("pointermove", onPointerMove);
+      if (warp !== false) window.removeEventListener("pointermove", onPointerMove);
     };
   }, [src, cell, levels, warp]);
 

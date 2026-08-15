@@ -15,7 +15,8 @@ export type AuthLayoutProps = {
   readonly panel?: ReactNode;
   /**
    * Laid over the decorative panel — usually a `QuoteCard`. Omit it and the
-   * panel is just `panel`, which is a perfectly good outcome.
+   * panel shows nothing but its own content, which is a perfectly good
+   * outcome.
    */
   readonly aside?: ReactNode;
   readonly className?: string;
