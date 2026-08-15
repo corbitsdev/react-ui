@@ -21,9 +21,24 @@ const STATE_TEXT: Record<ToolPart["state"], string> = {
  *
  * A failed call opens by default. That is the one case where the detail is the
  * point.
+ *
+ * Uncontrolled by default. Pass `open`/`onOpenChange` to drive it from a parent.
  */
-export function ToolNarrative({ part, className }: { part: ToolPart; className?: string }) {
-  const [open, setOpen] = useState(part.state === "error");
+export type ToolNarrativeProps = {
+  readonly part: ToolPart;
+  /** Controlled open state. Pair with `onOpenChange` to lift it to a parent. */
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
+  readonly className?: string;
+};
+
+export function ToolNarrative({ part, open: openProp, onOpenChange, className }: ToolNarrativeProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(part.state === "error");
+  const open = openProp ?? uncontrolledOpen;
+  const setOpen = (value: boolean) => {
+    if (openProp === undefined) setUncontrolledOpen(value);
+    onOpenChange?.(value);
+  };
   const label = toolLabel(part);
   const hasDetail = part.output !== undefined || part.input !== undefined;
 
@@ -31,7 +46,7 @@ export function ToolNarrative({ part, className }: { part: ToolPart; className?:
     <div data-slot="tool-narrative" className={cn("text-xs", className)}>
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => setOpen(!open)}
         aria-expanded={open}
         disabled={!hasDetail}
         className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:hover:bg-transparent"
