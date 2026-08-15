@@ -97,6 +97,14 @@
       "types": "./dist/blocks/access-notice/access-notice.d.ts",
       "default": "./dist/blocks/access-notice/access-notice.js"
     },
+    "./blocks/canvas-host/canvas-host": {
+      "types": "./dist/blocks/canvas-host/canvas-host.d.ts",
+      "default": "./dist/blocks/canvas-host/canvas-host.js"
+    },
+    "./blocks/canvas-host/canvas-host-chrome": {
+      "types": "./dist/blocks/canvas-host/canvas-host-chrome.d.ts",
+      "default": "./dist/blocks/canvas-host/canvas-host-chrome.js"
+    },
     "./blocks/login/auth-layout": {
       "types": "./dist/blocks/login/auth-layout.d.ts",
       "default": "./dist/blocks/login/auth-layout.js"
@@ -160,6 +168,10 @@
     "./lib/artifact": {
       "types": "./dist/lib/artifact.d.ts",
       "default": "./dist/lib/artifact.js"
+    },
+    "./lib/canvas-host-state": {
+      "types": "./dist/lib/canvas-host-state.d.ts",
+      "default": "./dist/lib/canvas-host-state.js"
     },
     "./lib/chart-palette": {
       "types": "./dist/lib/chart-palette.d.ts",
