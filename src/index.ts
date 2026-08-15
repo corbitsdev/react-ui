@@ -154,6 +154,7 @@ export * from "./ui/step-graph.js";
 export * from "./ui/step-graph-node.js";
 export * from "./ui/step-list.js";
 export * from "./ui/step-primitives.js";
+export * from "./ui/step-sidebar.js";
 export * from "./ui/subagent-dock.js";
 export * from "./ui/switch.js";
 export * from "./ui/table.js";
