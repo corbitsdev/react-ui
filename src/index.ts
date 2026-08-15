@@ -10,6 +10,8 @@
 //   @corbits/react-ui/lib/tanstack-data-port
 
 export * from "./blocks/access-notice/access-notice.js";
+export * from "./blocks/canvas-host/canvas-host.js";
+export * from "./blocks/canvas-host/canvas-host-chrome.js";
 export * from "./blocks/login/auth-layout.js";
 export * from "./blocks/login/login-form.js";
 export * from "./hooks/use-anchored-scroll.js";
@@ -26,6 +28,7 @@ export * from "./hooks/use-sidebar-panel.js";
 export * from "./hooks/use-view-mode.js";
 export * from "./lib/activity.js";
 export * from "./lib/artifact.js";
+export * from "./lib/canvas-host-state.js";
 export * from "./lib/chart-palette.js";
 export * from "./lib/chat-message.js";
 export * from "./lib/chat-parts.js";
