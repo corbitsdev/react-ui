@@ -98,7 +98,7 @@ export function StatGridItem({
     ) : null);
 
   const shell = cn(
-    "flex flex-col gap-1.5 rounded-[12px] border border-border bg-card",
+    "flex flex-col gap-1.5 rounded-lg border border-border bg-card",
     emphasis === true ? "p-5 shadow-sm" : "p-4",
     className,
   );

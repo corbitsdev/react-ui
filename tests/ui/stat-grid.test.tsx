@@ -26,7 +26,7 @@ function render(node: React.ReactElement): Mounted {
   };
 }
 
-const SHARED_LAYOUT = ["flex", "flex-col", "gap-1.5", "rounded-[12px]", "border", "border-border", "bg-card", "p-4"];
+const SHARED_LAYOUT = ["flex", "flex-col", "gap-1.5", "rounded-lg", "border", "border-border", "bg-card", "p-4"];
 
 describe("StatGridItem interaction", () => {
   test("static tile is a non-interactive div with shared layout classes", () => {
