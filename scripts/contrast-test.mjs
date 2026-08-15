@@ -168,6 +168,15 @@ function checksFor(tokens) {
     }
   }
 
+  // 4b. `destructive` doubles as the invalid-state border on Select, Textarea,
+  // Checkbox, and RadioOption — a border, not text, so it only has to clear
+  // the 3:1 UI-component threshold (WCAG 1.4.11), not the 4.5:1 text one.
+  for (const surface of ["background", "card"]) {
+    if (has("destructive") && has(surface)) {
+      checks.push([`destructive border against ${surface}`, tokens["destructive"], tokens[surface], AA_UI]);
+    }
+  }
+
   // 5. Chart series marks are UI, not text: a bar or a 2px line has to be
   //    distinguishable from whatever it is drawn on, which is the 3:1
   //    component threshold. Both surfaces, because a chart lands on the page as
