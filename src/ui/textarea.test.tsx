@@ -60,4 +60,42 @@ describe("Textarea", () => {
     expect(node.style.height.endsWith("px")).toBe(true);
     unmount();
   });
+
+  // React tracks `value` through its own instance setter to detect programmatic
+  // changes; assigning `.value` directly is invisible to it, so `onChange` never
+  // fires. Going through the native prototype setter first is what makes the
+  // subsequent `input` event register as a real change.
+  const nativeValueSetter = Object.getOwnPropertyDescriptor(
+    globalThis.HTMLTextAreaElement.prototype,
+    "value",
+  )?.set;
+
+  function setValue(node: HTMLTextAreaElement, value: string) {
+    nativeValueSetter?.call(node, value);
+    node.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  test("autoResize caps height at maxHeight and switches to scrollable overflow", () => {
+    const { textarea, unmount } = mount({ autoResize: true, defaultValue: "", onChange: () => {} });
+    const node = textarea();
+    Object.defineProperty(node, "scrollHeight", { value: 800, configurable: true });
+    act(() => {
+      setValue(node, Array.from({ length: 40 }, (_, i) => `line ${i}`).join("\n"));
+    });
+    expect(node.style.height).toBe("200px");
+    expect(node.className).toContain("overflow-y-auto");
+    expect(node.className).not.toContain("overflow-hidden");
+    unmount();
+  });
+
+  test("a custom maxHeight caps the resize at that value", () => {
+    const { textarea, unmount } = mount({ autoResize: true, maxHeight: 80, defaultValue: "", onChange: () => {} });
+    const node = textarea();
+    Object.defineProperty(node, "scrollHeight", { value: 400, configurable: true });
+    act(() => {
+      setValue(node, "a lot of content");
+    });
+    expect(node.style.height).toBe("80px");
+    unmount();
+  });
 });
