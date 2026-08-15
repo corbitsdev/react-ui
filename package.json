@@ -397,6 +397,10 @@
       "types": "./dist/ui/dialog.d.ts",
       "default": "./dist/ui/dialog.js"
     },
+    "./ui/dither-background": {
+      "types": "./dist/ui/dither-background.d.ts",
+      "default": "./dist/ui/dither-background.js"
+    },
     "./ui/dither-canvas": {
       "types": "./dist/ui/dither-canvas.d.ts",
       "default": "./dist/ui/dither-canvas.js"

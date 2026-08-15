@@ -84,6 +84,7 @@ export * from "./ui/data-table.js";
 export * from "./ui/delta-badge.js";
 export * from "./ui/dial.js";
 export * from "./ui/dialog.js";
+export * from "./ui/dither-background.js";
 export * from "./ui/dither-canvas.js";
 export * from "./ui/embed-body.js";
 export * from "./ui/empty-state.js";

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import { cn } from "../../lib/utils.js";
-import { DitherCanvas } from "../../ui/dither-canvas.js";
 
 export type AuthLayoutProps = {
   /** Your wordmark and product name, top-left. */
@@ -9,8 +8,14 @@ export type AuthLayoutProps = {
   /** The form column's contents — a sign-in form, a reset form, a code prompt. */
   readonly children: ReactNode;
   /**
+   * The decorative panel's own content — `DitherCanvas`, `DitherBackground`,
+   * a static image, or anything else. Omit it and the panel is bare, which is
+   * a perfectly good outcome.
+   */
+  readonly panel?: ReactNode;
+  /**
    * Laid over the decorative panel — usually a `QuoteCard`. Omit it and the
-   * panel is just texture, which is a perfectly good outcome.
+   * panel is just `panel`, which is a perfectly good outcome.
    */
   readonly aside?: ReactNode;
   readonly className?: string;
@@ -33,7 +38,7 @@ export type AuthLayoutProps = {
  * *without* the retracting toolbar, so a `100vh` sign-in page is reliably a
  * little too tall and the button sits just under the fold.
  */
-export function AuthLayout({ brand, children, aside, className }: AuthLayoutProps) {
+export function AuthLayout({ brand, children, panel, aside, className }: AuthLayoutProps) {
   return (
     <div className={cn("grid min-h-svh bg-background lg:grid-cols-2", className)}>
       <main className="relative flex flex-col">
@@ -46,7 +51,7 @@ export function AuthLayout({ brand, children, aside, className }: AuthLayoutProp
       </main>
 
       <div aria-hidden className="relative hidden overflow-hidden bg-card lg:block">
-        <DitherCanvas className="absolute inset-0" />
+        {panel}
         {aside === undefined ? null : (
           <div className="absolute inset-0 flex items-center justify-center p-12">{aside}</div>
         )}
