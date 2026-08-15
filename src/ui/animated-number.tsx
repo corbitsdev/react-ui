@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js";
 import { cn } from "../lib/utils.js";
 
 export type AnimatedNumberProps = {
@@ -39,9 +40,9 @@ export function AnimatedNumber({
   const [display, setDisplay] = useState(value);
   const fromRef = useRef(value);
   const frameRef = useRef(0);
+  const reduce = usePrefersReducedMotion();
 
   useEffect(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const from = fromRef.current;
     if (reduce || from === value) {
       fromRef.current = value;
@@ -61,7 +62,7 @@ export function AnimatedNumber({
     };
     frameRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frameRef.current);
-  }, [value, durationMs]);
+  }, [value, durationMs, reduce]);
 
   const text = format === undefined ? display.toFixed(decimals) : format(display);
 

@@ -1,7 +1,8 @@
 import { Bell } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
 
+import { useDismissablePopover } from "../hooks/use-dismissable-popover.js";
 import { cn } from "../lib/utils.js";
 
 export type NotificationsBellProps = {
@@ -11,6 +12,9 @@ export type NotificationsBellProps = {
   readonly children: ReactNode;
   /** Counts above this render as "N+" so the marker cannot grow unbounded. */
   readonly maxCount?: number;
+  /** Controlled open state. Pair with `onOpenChange` to lift it to a parent. */
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
   readonly className?: string;
 };
 
@@ -24,35 +28,28 @@ export type NotificationsBellProps = {
  * arrow-key semantics that a free-form list does not have. Escape closes and
  * returns focus to the bell; a pointer-down outside closes without stealing
  * focus back, so clicking straight into another control still works.
+ *
+ * Uncontrolled by default. Pass `open`/`onOpenChange` to drive it from a
+ * parent — closing every other panel when this one opens, say.
  */
-export function NotificationsBell({ count, children, maxCount = 99, className }: NotificationsBellProps) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+export function NotificationsBell({
+  count,
+  children,
+  maxCount = 99,
+  open: openProp,
+  onOpenChange,
+  className,
+}: NotificationsBellProps) {
+  const { open, setOpen, rootRef, triggerRef } = useDismissablePopover<HTMLDivElement, HTMLButtonElement>({
+    open: openProp,
+    onOpenChange,
+  });
   const panelRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
 
   useEffect(() => {
     if (!open) return;
     panelRef.current?.focus();
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setOpen(false);
-      triggerRef.current?.focus();
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
   }, [open]);
 
   const label = count === 0 ? "Notifications" : `Notifications, ${count} unread`;

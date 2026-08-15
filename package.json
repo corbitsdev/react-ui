@@ -129,9 +129,17 @@
       "types": "./dist/hooks/use-command-palette-navigation.d.ts",
       "default": "./dist/hooks/use-command-palette-navigation.js"
     },
+    "./hooks/use-controllable-state": {
+      "types": "./dist/hooks/use-controllable-state.d.ts",
+      "default": "./dist/hooks/use-controllable-state.js"
+    },
     "./hooks/use-delayed-autofocus": {
       "types": "./dist/hooks/use-delayed-autofocus.d.ts",
       "default": "./dist/hooks/use-delayed-autofocus.js"
+    },
+    "./hooks/use-dismissable-popover": {
+      "types": "./dist/hooks/use-dismissable-popover.d.ts",
+      "default": "./dist/hooks/use-dismissable-popover.js"
     },
     "./hooks/use-flip-transition": {
       "types": "./dist/hooks/use-flip-transition.d.ts",
@@ -140,6 +148,10 @@
     "./hooks/use-focus-trap": {
       "types": "./dist/hooks/use-focus-trap.d.ts",
       "default": "./dist/hooks/use-focus-trap.js"
+    },
+    "./hooks/use-prefers-reduced-motion": {
+      "types": "./dist/hooks/use-prefers-reduced-motion.d.ts",
+      "default": "./dist/hooks/use-prefers-reduced-motion.js"
     },
     "./hooks/use-render-rail": {
       "types": "./dist/hooks/use-render-rail.d.ts",

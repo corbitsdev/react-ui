@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
-import { useState } from "react";
 
+import { useControllableState } from "../hooks/use-controllable-state.js";
 import { toolLabel, type ToolPart } from "../lib/chat-message.js";
 import { cn } from "../lib/utils.js";
 import { StatusDot } from "./status-dot.js";
@@ -21,9 +21,24 @@ const STATE_TEXT: Record<ToolPart["state"], string> = {
  *
  * A failed call opens by default. That is the one case where the detail is the
  * point.
+ *
+ * Uncontrolled by default. Pass `open`/`onOpenChange` to drive it from a parent.
  */
-export function ToolNarrative({ part, className }: { part: ToolPart; className?: string }) {
-  const [open, setOpen] = useState(part.state === "error");
+export type ToolNarrativeProps = {
+  readonly part: ToolPart;
+  /** Controlled open state. Pair with `onOpenChange` to lift it to a parent. */
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
+  readonly className?: string;
+};
+
+export function ToolNarrative({ part, open: openProp, onOpenChange, className }: ToolNarrativeProps) {
+  const [open, setOpen] = useControllableState({
+    value: openProp,
+    defaultValue: part.state === "error",
+    onChange: onOpenChange,
+    name: "ToolNarrative",
+  });
   const label = toolLabel(part);
   const hasDetail = part.output !== undefined || part.input !== undefined;
 
