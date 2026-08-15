@@ -1,6 +1,7 @@
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
+import { useDismissablePopover } from "../hooks/use-dismissable-popover.js";
 import { cn } from "../lib/utils.js";
 
 export type Tenant = {
@@ -14,6 +15,9 @@ export type TenantSelectorProps = {
   readonly onSelect: (id: string) => void;
   /** Accessible name for the trigger, e.g. "Workbench". */
   readonly label: string;
+  /** Controlled open state. Pair with `onOpenChange` to lift it to a parent. */
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
   readonly className?: string;
 };
 
@@ -26,13 +30,27 @@ export type TenantSelectorProps = {
  * That is the ARIA APG listbox pattern, and it is why the options are `<li>`
  * and not buttons — a button per option would put every tenant in the tab
  * order, which is exactly what a listbox exists to avoid.
+ *
+ * Uncontrolled by default. Pass `open`/`onOpenChange` to drive it from a parent.
  */
-export function TenantSelector({ tenants, activeId, onSelect, label, className }: TenantSelectorProps) {
-  const [open, setOpen] = useState(false);
+export function TenantSelector({
+  tenants,
+  activeId,
+  onSelect,
+  label,
+  open: openProp,
+  onOpenChange,
+  className,
+}: TenantSelectorProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const { open, setOpen, rootRef, triggerRef, close } = useDismissablePopover<HTMLDivElement, HTMLButtonElement>({
+    // Escape is handled by `onListKeyDown` below, alongside Tab — the two
+    // close the listbox the same way, so one handler owns both.
+    closeOnEscape: false,
+    open: openProp,
+    onOpenChange,
+  });
   const listRef = useRef<HTMLUListElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
   const listId = useId();
 
   const active = tenants.find((tenant) => tenant.id === activeId) ?? null;
@@ -40,17 +58,6 @@ export function TenantSelector({ tenants, activeId, onSelect, label, className }
   useEffect(() => {
     if (!open) return;
     listRef.current?.focus();
-  }, [open]);
-
-  // Pointer-down rather than click: a click elsewhere that also opens something
-  // else should close this first, on the way down.
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
   const openAt = (index: number) => {
@@ -62,11 +69,6 @@ export function TenantSelector({ tenants, activeId, onSelect, label, className }
     const tenant = tenants[index];
     if (tenant !== undefined) onSelect(tenant.id);
     close();
-  };
-
-  const close = () => {
-    setOpen(false);
-    triggerRef.current?.focus();
   };
 
   if (tenants.length === 0) return null;
