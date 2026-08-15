@@ -1,10 +1,20 @@
-import { useEffect, useRef, type RefObject } from "react";
+import { useCallback, useEffect, useRef, type RefObject } from "react";
 
 const BOTTOM_PIN_THRESHOLD_PX = 40;
 
 export type UseAnchoredScrollResult<T extends HTMLElement> = {
   /** Attach to the scrollable container. */
   readonly containerRef: RefObject<T | null>;
+  /**
+   * Callback ref for the element that wraps the scrollable content (the
+   * direct child that actually grows: new items, streaming text, an
+   * expanding tool-output block). A callback ref, not a `RefObject`, so a
+   * `ResizeObserver` attaches the instant the node mounts rather than only
+   * on the hook's own first render — it is what catches in-place content
+   * growth, since `itemCount` alone only fires when an item is added or
+   * removed, never when an existing item grows taller.
+   */
+  readonly contentRef: (node: HTMLElement | null) => void;
   /** Attach to the container's `onScroll`. */
   readonly handleScroll: () => void;
 };
@@ -31,6 +41,13 @@ export function useAnchoredScroll<T extends HTMLElement = HTMLDivElement>(
 ): UseAnchoredScrollResult<T> {
   const containerRef = useRef<T>(null);
   const pinnedRef = useRef(true);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+
+  const scrollToBottom = () => {
+    const container = containerRef.current;
+    if (container === null) return;
+    container.scrollTop = container.scrollHeight;
+  };
 
   const handleScroll = () => {
     const container = containerRef.current;
@@ -40,12 +57,22 @@ export function useAnchoredScroll<T extends HTMLElement = HTMLDivElement>(
   };
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (container === null) return;
-    if (pinnedRef.current) {
-      container.scrollTop = container.scrollHeight;
-    }
+    if (pinnedRef.current) scrollToBottom();
   }, [itemCount]);
 
-  return { containerRef, handleScroll };
+  // Re-pins on in-place content growth — streaming text or a growing
+  // tool-output block changes the content's height without changing
+  // `itemCount`, so the effect above alone never catches it.
+  const contentRef = useCallback((node: HTMLElement | null) => {
+    resizeObserverRef.current?.disconnect();
+    resizeObserverRef.current = null;
+    if (node === null || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      if (pinnedRef.current) scrollToBottom();
+    });
+    observer.observe(node);
+    resizeObserverRef.current = observer;
+  }, []);
+
+  return { containerRef, contentRef, handleScroll };
 }

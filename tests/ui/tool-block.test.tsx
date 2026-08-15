@@ -97,4 +97,26 @@ describe("ToolBlock", () => {
     expect(root?.getAttribute("data-status")).toBe("running");
     mounted.unmount();
   });
+
+  test("announces approval-requested as a polite status region", () => {
+    const mounted = render(<ToolBlock name="deploy" state={{ status: "approval-requested" }} />);
+    const status = mounted.container.querySelector("[data-slot='tool-block-status']");
+    expect(status?.getAttribute("role")).toBe("status");
+    expect(status?.getAttribute("aria-live")).toBe("polite");
+    mounted.unmount();
+  });
+
+  test.each([
+    ["pending", { status: "pending" } as const],
+    ["running", { status: "running" } as const],
+    ["output-available", { status: "output-available", output: "ok" } as const],
+    ["error", { status: "error", message: "failed" } as const],
+    ["output-denied", { status: "output-denied" } as const],
+  ])("%s state carries no status-region announcement", (_label, state) => {
+    const mounted = render(<ToolBlock name="deploy" state={state} />);
+    const status = mounted.container.querySelector("[data-slot='tool-block-status']");
+    expect(status?.getAttribute("role")).toBeNull();
+    expect(status?.getAttribute("aria-live")).toBeNull();
+    mounted.unmount();
+  });
 });

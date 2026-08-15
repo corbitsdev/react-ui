@@ -72,14 +72,27 @@ function ReasoningPartView({ text, durationMs }: { text: string; durationMs?: nu
     >
       <summary
         className={cn(
-          "flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+          // `relative` plus the `::after` pseudo-element extends the
+          // effective hit area to 40px tall without changing the row's own
+          // padding/density — see design-engineering.md's hit-area pattern.
+          "relative flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-1.5 text-muted-foreground transition-colors after:absolute after:inset-x-0 after:top-1/2 after:h-10 after:-translate-y-1/2 hover:bg-muted hover:text-foreground",
           "[&::-webkit-details-marker]:hidden",
         )}
       >
-        <ChevronRight className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-90")} aria-hidden />
+        <ChevronRight
+          className={cn("size-3.5 shrink-0 transition-transform duration-200 ease-out", open && "rotate-90")}
+          aria-hidden
+        />
         <span>Thought{durationMs === undefined ? "" : ` for ${formatDuration(durationMs)}`}</span>
       </summary>
-      <p className="mt-1 ml-4 border-l border-border pl-3 leading-relaxed whitespace-pre-wrap text-muted-foreground">
+      {/* Keyed on `open` so the entrance animation replays every time the
+          disclosure opens, not just the first time — the node persists
+          (still present, natively hidden) while collapsed, preserving
+          browser find-in-page's own expand-on-match behaviour. */}
+      <p
+        key={open ? "open" : "closed"}
+        className="mt-1 ml-4 border-l border-border pl-3 leading-relaxed whitespace-pre-wrap text-muted-foreground [animation:corbits-rail-block-in_200ms_var(--ease-out)_both]"
+      >
         {text}
       </p>
     </details>
@@ -144,10 +157,30 @@ function BlockPartFallback({ type, data }: { type: string; data: unknown }) {
 }
 
 /**
+ * A `Part` whose `kind` this renderer has never heard of — a wire value
+ * outside `Part`'s own union, which can only ever arrive because this
+ * package validates nothing of its own (see `chat-parts.ts`). Renders a
+ * neutral labeled card naming the unrecognized kind rather than rendering
+ * nothing, so a producer/consumer version skew is visible in the transcript
+ * instead of silently swallowing content.
+ */
+function UnknownPartFallback({ kind }: { kind: string }) {
+  return (
+    <div
+      data-slot="unknown-part"
+      className="rounded-md border border-dashed border-border bg-muted/30 px-2.5 py-1.5 text-xs text-muted-foreground"
+    >
+      Unsupported part: <span className="font-mono">{kind}</span>
+    </div>
+  );
+}
+
+/**
  * Renders an ordered `Part[]` in the order the model produced it: text as
  * prose, reasoning as a closed disclosure, tool calls through `ToolBlock`,
- * files as an attachment chip, events as an inline system line, and any
- * block part as a labeled fallback card — the host's own generative-UI
+ * files as an attachment chip, events as an inline system line, any block
+ * part as a labeled fallback card, and any `kind` outside the `Part` union
+ * itself as a neutral unknown-part fallback — the host's own generative-UI
  * registry, if it has one, renders blocks by intercepting `kind: "block"`
  * before it reaches this component.
  *
@@ -182,6 +215,8 @@ export function PartsRenderer({ parts, className }: PartsRendererProps) {
             return <EventPartView key={key} event={part.event} />;
           case "block":
             return <BlockPartFallback key={key} type={part.block.type} data={part.block.data} />;
+          default:
+            return <UnknownPartFallback key={key} kind={(part as { kind: string }).kind} />;
         }
       })}
     </div>

@@ -110,6 +110,15 @@ describe("PartsRenderer", () => {
     mounted.unmount();
   });
 
+  test("renders an unrecognized part kind as a neutral fallback instead of nothing", () => {
+    const parts = [{ kind: "poll-vote", choice: "yes" }] as unknown as Part[];
+    const mounted = render(<PartsRenderer parts={parts} />);
+    const fallback = mounted.container.querySelector("[data-slot='unknown-part']");
+    expect(fallback).not.toBeNull();
+    expect(fallback?.textContent).toContain("poll-vote");
+    mounted.unmount();
+  });
+
   test("renders interleaved parts in the given order", () => {
     const parts: Part[] = [
       { kind: "reasoning", text: "thinking" },

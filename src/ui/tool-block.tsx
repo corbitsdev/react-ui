@@ -43,9 +43,17 @@ const STATE_TEXT: Record<ToolBlockState["status"], string> = {
   "output-denied": "Denied",
 };
 
+/**
+ * Orange (`emphasis`) is reserved for `approval-requested` alone: it is the
+ * one state that needs a human to act, so it is the one state that earns the
+ * brand's single emphasis color. `running` already signals "in progress"
+ * through the dot's own pulse animation (`StatusDot`'s `live` prop) — giving
+ * it orange too would stack two "look here" signals on a state that isn't
+ * actually asking for anything.
+ */
 const STATE_TONE: Record<ToolBlockState["status"], "neutral" | "emphasis" | "danger"> = {
   pending: "neutral",
-  running: "emphasis",
+  running: "neutral",
   "output-available": "neutral",
   error: "danger",
   "approval-requested": "emphasis",
@@ -126,21 +134,41 @@ export function ToolBlock({ name, label, state, input, defaultOpen, className }:
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         disabled={!hasDetail}
-        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:hover:bg-transparent"
+        // `relative` plus the `::after` pseudo-element below extends the
+        // button's effective (vertical) hit area to 40px without inflating
+        // its own padding/density — see design-engineering.md's hit-area
+        // pattern. The row is already full-width, so only height needs
+        // extending.
+        className="relative flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-muted-foreground transition-colors after:absolute after:inset-x-0 after:top-1/2 after:h-10 after:-translate-y-1/2 hover:bg-muted hover:text-foreground disabled:hover:bg-transparent"
       >
-        <StatusDot
-          label={STATE_TEXT[state.status]}
-          live={state.status === "running"}
-          tone={STATE_TONE[state.status]}
-        />
+        <span
+          data-slot="tool-block-status"
+          // A pending approval is human-blocking: it needs to reach assistive
+          // tech the instant it appears, not only when a reader happens to
+          // tab onto this button. Scoped to this span alone (not the whole
+          // block) so every other state change in a busy transcript stays
+          // silent — announcing every "Working" -> "Done" tick here would be
+          // spam.
+          role={state.status === "approval-requested" ? "status" : undefined}
+          aria-live={state.status === "approval-requested" ? "polite" : undefined}
+        >
+          <StatusDot
+            label={STATE_TEXT[state.status]}
+            live={state.status === "running"}
+            tone={STATE_TONE[state.status]}
+          />
+        </span>
         <span className="min-w-0 flex-1 truncate">{displayLabel}</span>
         {hasDetail ? (
-          <ChevronRight className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-90")} aria-hidden />
+          <ChevronRight
+            className={cn("size-3.5 shrink-0 transition-transform duration-200 ease-out", open && "rotate-90")}
+            aria-hidden
+          />
         ) : null}
       </button>
 
       {open && hasDetail ? (
-        <div className="mt-1 ml-4 flex flex-col gap-2 border-l border-border pl-3">
+        <div className="mt-1 ml-4 flex flex-col gap-2 border-l border-border pl-3 [animation:corbits-rail-block-in_200ms_var(--ease-out)_both]">
           {input === undefined ? null : <Detail title="Input">{JSON.stringify(input, null, 2)}</Detail>}
           {detailText === undefined ? null : <Detail title={stateDetailTitle(state)}>{detailText}</Detail>}
         </div>

@@ -17,16 +17,18 @@ export type MessageListProps = {
  * renders whatever `children` a caller gives it and owns no message model.
  */
 export function MessageList({ itemCount, children, className }: MessageListProps) {
-  const { containerRef, handleScroll } = useAnchoredScroll<HTMLDivElement>(itemCount);
+  const { containerRef, contentRef, handleScroll } = useAnchoredScroll<HTMLDivElement>(itemCount);
 
   return (
     <div
       data-slot="message-list"
       ref={containerRef}
       onScroll={handleScroll}
-      className={cn("flex flex-col gap-3 overflow-y-auto", className)}
+      className={cn("overflow-y-auto", className)}
     >
-      {children}
+      <div ref={contentRef} className="flex flex-col gap-3">
+        {children}
+      </div>
     </div>
   );
 }
