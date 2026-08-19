@@ -16,8 +16,10 @@ const buttonVariantsBase = cva(
   // active:brightness-95 is the press state for every variant: it darkens the
   // rendered fill whatever that fill is, so it needs no per-variant pressed
   // token. Deliberately outside `transition-colors` — a press should land on
-  // the frame the pointer goes down, not ease in.
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors active:brightness-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+  // the frame the pointer goes down, not ease in. The scale feedback gets its
+  // own `transition-transform` for the same reason: sharing `transition-colors`
+  // would delay the press-down scale behind the color easing.
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors active:brightness-95 motion-safe:transition-transform motion-safe:duration-100 motion-safe:active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
