@@ -34,11 +34,11 @@ export const Breadcrumbs = () => (
  * breadcrumb click never forces a full page reload — the shape a consumer
  * on React Router, Next.js `Link`, or any other client router passes in.
  */
-function SpaLink({ href, children }: BreadcrumbLinkProps) {
+function SpaLink({ href, className, children }: BreadcrumbLinkProps) {
   return (
     <button
       type="button"
-      className="truncate text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+      className={className}
       data-spa-navigate={href}
       onClick={() => console.log(`client-side navigate to ${href}`)}
     >

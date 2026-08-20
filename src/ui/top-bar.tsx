@@ -57,16 +57,29 @@ export type Crumb = {
  */
 export type BreadcrumbLinkProps = {
   readonly href: string;
+  readonly className: string;
   readonly children: React.ReactNode;
 };
 
-function DefaultBreadcrumbLink({ href, children }: BreadcrumbLinkProps) {
+function DefaultBreadcrumbLink({ href, className, children }: BreadcrumbLinkProps) {
   return (
-    <a href={href} className="truncate text-muted-foreground hover:text-foreground">
+    <a href={href} className={className}>
       {children}
     </a>
   );
 }
+
+export type TopBarBreadcrumbsProps = Omit<React.ComponentProps<"nav">, "children"> & {
+  crumbs: readonly Crumb[];
+  /**
+   * Renders every non-last crumb; defaults to a plain `<a>`. Must be a
+   * stable, module-scope reference — an inline arrow here creates a new
+   * component type on every render, which remounts every crumb. A router
+   * `Link` (e.g. React Router) that takes `to` instead of `href` needs a
+   * one-line wrapper: `({ href, ...rest }) => <Link to={href} {...rest} />`.
+   */
+  linkComponent?: React.ComponentType<BreadcrumbLinkProps>;
+};
 
 /**
  * Breadcrumb trail. The last crumb is the current page: it is rendered as text
@@ -82,17 +95,14 @@ export function TopBarBreadcrumbs({
   linkComponent: LinkComponent = DefaultBreadcrumbLink,
   className,
   ...props
-}: Omit<React.ComponentProps<"nav">, "children"> & {
-  crumbs: readonly Crumb[];
-  linkComponent?: React.ComponentType<BreadcrumbLinkProps>;
-}) {
+}: TopBarBreadcrumbsProps) {
   return (
     <nav data-slot="top-bar-breadcrumbs" aria-label="Breadcrumb" className={cn("min-w-0", className)} {...props}>
       <ol className="flex min-w-0 items-center gap-1 text-sm">
         {crumbs.map((crumb, index) => {
           const isLast = index === crumbs.length - 1;
           return (
-            <li key={crumb.label} className="flex min-w-0 items-center gap-1">
+            <li key={index} className="flex min-w-0 items-center gap-1">
               {index === 0 ? null : (
                 <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
               )}
@@ -104,7 +114,9 @@ export function TopBarBreadcrumbs({
                   {crumb.label}
                 </span>
               ) : (
-                <LinkComponent href={crumb.href}>{crumb.label}</LinkComponent>
+                <LinkComponent href={crumb.href} className="truncate text-muted-foreground hover:text-foreground">
+                  {crumb.label}
+                </LinkComponent>
               )}
             </li>
           );

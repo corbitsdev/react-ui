@@ -60,8 +60,8 @@ describe("TopBarBreadcrumbs", () => {
   });
 
   test("renders non-last crumbs through an injected linkComponent instead of <a>", () => {
-    function FakeLink({ href, children }: BreadcrumbLinkProps) {
-      return createElement("button", { "data-fake-link": href }, children);
+    function FakeLink({ href, className, children }: BreadcrumbLinkProps) {
+      return createElement("button", { "data-fake-link": href, className }, children);
     }
 
     const { container, unmount } = mount(createElement(TopBarBreadcrumbs, { crumbs, linkComponent: FakeLink }));
@@ -71,6 +71,7 @@ describe("TopBarBreadcrumbs", () => {
     expect(fakeLinks.length).toBe(2);
     expect(fakeLinks[0]?.getAttribute("data-fake-link")).toBe("/workspace");
     expect(fakeLinks[1]?.getAttribute("data-fake-link")).toBe("/workspace/project");
+    expect(fakeLinks[0]?.className).toBe("truncate text-muted-foreground hover:text-foreground");
 
     const last = container.querySelector('[aria-current="page"]');
     expect(last?.tagName).toBe("SPAN");
