@@ -51,15 +51,41 @@ export type Crumb = {
 };
 
 /**
+ * Props a breadcrumb link receives, whether it renders as a plain `<a>` or a
+ * caller-supplied component. Only non-last crumbs render through this — see
+ * `TopBarBreadcrumbs` for why the last crumb is never a link.
+ */
+export type BreadcrumbLinkProps = {
+  readonly href: string;
+  readonly children: React.ReactNode;
+};
+
+function DefaultBreadcrumbLink({ href, children }: BreadcrumbLinkProps) {
+  return (
+    <a href={href} className="truncate text-muted-foreground hover:text-foreground">
+      {children}
+    </a>
+  );
+}
+
+/**
  * Breadcrumb trail. The last crumb is the current page: it is rendered as text
  * with `aria-current="page"` even if a caller passes an href, because linking
  * to where you already are is a known screen-reader annoyance.
+ *
+ * Every other crumb renders through `linkComponent`, defaulting to a plain
+ * `<a>`. A consumer routing through a SPA router passes its own `Link` so a
+ * breadcrumb click does not force a full page reload.
  */
 export function TopBarBreadcrumbs({
   crumbs,
+  linkComponent: LinkComponent = DefaultBreadcrumbLink,
   className,
   ...props
-}: Omit<React.ComponentProps<"nav">, "children"> & { crumbs: readonly Crumb[] }) {
+}: Omit<React.ComponentProps<"nav">, "children"> & {
+  crumbs: readonly Crumb[];
+  linkComponent?: React.ComponentType<BreadcrumbLinkProps>;
+}) {
   return (
     <nav data-slot="top-bar-breadcrumbs" aria-label="Breadcrumb" className={cn("min-w-0", className)} {...props}>
       <ol className="flex min-w-0 items-center gap-1 text-sm">
@@ -78,9 +104,7 @@ export function TopBarBreadcrumbs({
                   {crumb.label}
                 </span>
               ) : (
-                <a href={crumb.href} className="truncate text-muted-foreground hover:text-foreground">
-                  {crumb.label}
-                </a>
+                <LinkComponent href={crumb.href}>{crumb.label}</LinkComponent>
               )}
             </li>
           );
