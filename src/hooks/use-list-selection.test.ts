@@ -13,13 +13,13 @@ function mountSelection(ids: readonly string[] = IDS) {
   const root = createRoot(container);
   let result: UseListSelectionResult<string>;
 
-  function Host() {
-    result = useListSelection({ ids });
+  function Host({ ids: hostIds }: { ids: readonly string[] }) {
+    result = useListSelection({ ids: hostIds });
     return null;
   }
 
   act(() => {
-    root.render(createElement(Host));
+    root.render(createElement(Host, { ids }));
   });
 
   return {
@@ -27,6 +27,9 @@ function mountSelection(ids: readonly string[] = IDS) {
     toggle: (id: string, modifiers?: { shiftKey?: boolean }) => act(() => result.toggle(id, modifiers)),
     selectAll: () => act(() => result.selectAll()),
     clear: () => act(() => result.clear()),
+    // Re-renders with a fresh `ids` array — exercises reconciliation and the
+    // ref-backed callback identity independently of any state change.
+    rerenderWithIds: (nextIds: readonly string[]) => act(() => root.render(createElement(Host, { ids: nextIds }))),
     unmount: () => act(() => root.unmount()),
   };
 }
@@ -143,7 +146,42 @@ describe("useListSelection", () => {
     const s = mountSelection(["a", "b", "c"]);
     s.toggle("a");
     s.toggle("missing", { shiftKey: true });
-    expect(s.get().selectedIds).toEqual(new Set(["a", "missing"]));
+    // The plain-toggle fallback did select "missing" internally, but it is
+    // not part of `ids` — reconciliation on read filters it straight back
+    // out, the same as any other id that isn't currently visible.
+    expect(s.get().selectedIds).toEqual(new Set(["a"]));
+    expect(s.get().selectedCount).toBe(1);
+    s.unmount();
+  });
+
+  test("a row dropped from ids (a refetch) stops counting, without the caller pruning anything", () => {
+    const s = mountSelection(["a", "b", "c"]);
+    s.toggle("a");
+    s.toggle("b");
+    expect(s.get().selectedCount).toBe(2);
+    s.rerenderWithIds(["b", "c"]); // "a" fell out of the visible set
+    expect(s.get().selectedCount).toBe(1);
+    expect(s.get().isSelected("a")).toBe(false);
+    expect(s.get().isSelected("b")).toBe(true);
+    s.unmount();
+  });
+
+  test("a row that reappears in ids is selected again with no action from the caller", () => {
+    const s = mountSelection(["a", "b", "c"]);
+    s.toggle("a");
+    s.rerenderWithIds(["b", "c"]); // "a" filtered out, still remembered internally
+    expect(s.get().selectedCount).toBe(0);
+    s.rerenderWithIds(["a", "b", "c"]); // filter cleared, "a" is back
+    expect(s.get().isSelected("a")).toBe(true);
+    expect(s.get().selectedCount).toBe(1);
+    s.unmount();
+  });
+
+  test("toggle keeps the same identity across renders even when ids is a fresh array each time", () => {
+    const s = mountSelection(["a", "b", "c"]);
+    const before = s.get().toggle;
+    s.rerenderWithIds(["a", "b", "c"].map((id) => id)); // a structurally-equal but distinct array
+    expect(s.get().toggle).toBe(before);
     s.unmount();
   });
 });

@@ -81,4 +81,21 @@ describe("SelectionCheckbox", () => {
     expect(calls).toBe(0);
     unmount();
   });
+
+  test("indeterminate reports aria-checked=mixed, distinct from both true and false", () => {
+    const { button, unmount } = mount({ checked: "indeterminate", onToggle: () => {}, rowLabel: "all rows" });
+    expect(button().getAttribute("aria-checked")).toBe("mixed");
+    unmount();
+  });
+
+  test("ariaLabel overrides the default Select-prefixed name", () => {
+    const { button, unmount } = mount({
+      checked: false,
+      onToggle: () => {},
+      rowLabel: "all rows",
+      ariaLabel: "Select all rows on this page",
+    });
+    expect(button().getAttribute("aria-label")).toBe("Select all rows on this page");
+    unmount();
+  });
 });

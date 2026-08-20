@@ -13,10 +13,15 @@ const rows = [
   { id: "run-4", name: "Customer export" },
 ];
 
+// Hoisted once, at module scope, rather than mapped inline in the
+// component — `useListSelection`'s `ids` should be a stable reference
+// across renders, not a fresh array literal every time.
+const rowIds = rows.map((row) => row.id);
+
 /** Select a few rows (shift-click for a range) to raise the bar. Escape, or
  * its own Clear button, drops the selection back to zero. */
 export const WithASelectableList = () => {
-  const selection = useListSelection({ ids: rows.map((row) => row.id) });
+  const selection = useListSelection({ ids: rowIds });
 
   return (
     <div className="pb-20">

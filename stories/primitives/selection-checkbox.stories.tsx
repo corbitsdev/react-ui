@@ -10,8 +10,13 @@ const rows = [
   { id: "run-3", name: "Weekly digest", status: "Failed" },
 ];
 
+// Hoisted once, at module scope, rather than mapped inline in the
+// component — `useListSelection`'s `ids` should be a stable reference
+// across renders, not a fresh array literal every time.
+const rowIds = rows.map((row) => row.id);
+
 export const RevealOnHover = () => {
-  const selection = useListSelection({ ids: rows.map((row) => row.id) });
+  const selection = useListSelection({ ids: rowIds });
 
   return (
     <Table>
@@ -46,5 +51,20 @@ export const Checked = () => (
   <div className="flex items-center gap-4">
     <SelectionCheckbox checked={false} onToggle={() => {}} rowLabel="Nightly backfill" className="opacity-100" />
     <SelectionCheckbox checked onToggle={() => {}} rowLabel="Invoice sync" className="opacity-100" />
+  </div>
+);
+
+/** The header checkbox state when some, but not all, rows are selected. */
+export const Indeterminate = () => (
+  <div className="flex items-center gap-4">
+    <SelectionCheckbox
+      checked="indeterminate"
+      onToggle={() => {}}
+      rowLabel="all runs"
+      ariaLabel="Select all runs"
+      className="opacity-100"
+    />
+    <SelectionCheckbox checked onToggle={() => {}} rowLabel="Nightly backfill" className="opacity-100" />
+    <SelectionCheckbox checked={false} onToggle={() => {}} rowLabel="Invoice sync" className="opacity-100" />
   </div>
 );

@@ -499,16 +499,20 @@
   }
 }
 
-/* BulkActionBar's rise into view from the bottom edge it is sticky against.
-   Used by ui/bulk-action-bar. */
+/* BulkActionBar's rise into view. Plays on an inner element, not the
+   outer fixed/centered one — the outer element's horizontal centering
+   transform is a plain, unconditional class rather than something this
+   keyframe has to restate, so a `prefers-reduced-motion` viewer (who never
+   runs this animation at all) still ends up centered. Used by
+   ui/bulk-action-bar. */
 @keyframes corbits-bulk-action-bar-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 12px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
 }
 

@@ -1,7 +1,13 @@
-import { useCallback, useMemo, useReducer } from "react";
+import { useCallback, useMemo, useReducer, useRef } from "react";
 
-export type UseListSelectionOptions<TId extends string> = {
-  /** The full, currently visible row order — range selection is anchored against this. */
+export type UseListSelectionOptions<TId extends PropertyKey> = {
+  /**
+   * The full, currently visible row order — range selection is anchored
+   * against this, and it is also what a stale selection gets reconciled
+   * against (see `selectedIds` below). Ids must be unique: a duplicate
+   * makes `indexOf` resolve to whichever occurrence comes first, so a
+   * shift-click range would sweep rows the person never actually crossed.
+   */
   readonly ids: readonly TId[];
 };
 
@@ -10,7 +16,13 @@ export type ToggleModifiers = {
   readonly shiftKey?: boolean;
 };
 
-export type UseListSelectionResult<TId extends string> = {
+export type UseListSelectionResult<TId extends PropertyKey> = {
+  /**
+   * Selected ids, reconciled against the `ids` this call was given — an id
+   * a refetch or a filter change dropped from `ids` is filtered out here
+   * even though the hook still remembers it internally (see below), so
+   * this is always an honest subset of what is actually on screen.
+   */
   readonly selectedIds: ReadonlySet<TId>;
   readonly selectedCount: number;
   readonly isSelected: (id: TId) => boolean;
@@ -76,7 +88,9 @@ function reducer<TId>(state: State<TId>, action: Action<TId>): State<TId> {
   }
 }
 
-const initialState: State<never> = { selectedIds: new Set(), anchorId: undefined, baseSelection: new Set() };
+function createInitialState<TId>(): State<TId> {
+  return { selectedIds: new Set(), anchorId: undefined, baseSelection: new Set() };
+}
 
 /**
  * Headless selection state for a list/table: toggle-by-id, shift-click range
@@ -89,34 +103,57 @@ const initialState: State<never> = { selectedIds: new Set(), anchorId: undefined
  * move the anchor, so a person can shift-click several times in a row (even
  * in different directions) and each click re-ranges from the same start
  * rather than from wherever they last landed.
+ *
+ * **Stale-id reconciliation.** The hook keeps whatever was selected even
+ * after a row drops out of `ids` (a refetch, a filter change) rather than
+ * pruning it immediately — pruning on every `ids` change would need an
+ * effect, and an extra render on top of whatever caused `ids` to change in
+ * the first place. Instead `selectedIds`/`selectedCount`/`isSelected` are
+ * reconciled against the current `ids` on every read, so a stale id can
+ * never inflate the count or reach the caller; it simply stops counting
+ * once its row is gone, and starts counting again if the same id reappears
+ * (e.g. a filter that got cleared) with no action needed from the caller.
+ *
+ * **Stable callbacks.** `toggle`/`selectAll`/`clear` read `ids` through a
+ * ref rather than closing over the `ids` array directly, so their identity
+ * stays stable across renders even when a caller passes a freshly allocated
+ * array each time (e.g. an inline `rows.map(row => row.id)`) — a memoized
+ * row downstream that depends on `toggle` does not re-render just because
+ * the caller didn't bother memoizing `ids`.
  */
-export function useListSelection<TId extends string>({
+export function useListSelection<TId extends PropertyKey>({
   ids,
 }: UseListSelectionOptions<TId>): UseListSelectionResult<TId> {
-  const [state, dispatch] = useReducer(reducer<TId>, initialState as State<TId>);
+  const [state, dispatch] = useReducer(reducer<TId>, undefined, createInitialState<TId>);
+
+  // Updated on every render, read only inside event handlers — never during
+  // render — so `toggle`/`selectAll` can stay referentially stable while
+  // still acting on the `ids` most recently passed in.
+  const idsRef = useRef(ids);
+  idsRef.current = ids;
 
   const toggle = useCallback(
     (id: TId, modifiers?: ToggleModifiers) =>
-      dispatch({ type: "toggle", id, shiftKey: modifiers?.shiftKey ?? false, ids }),
-    [ids],
+      dispatch({ type: "toggle", id, shiftKey: modifiers?.shiftKey ?? false, ids: idsRef.current }),
+    [],
   );
 
-  const selectAll = useCallback(() => dispatch({ type: "selectAll", ids }), [ids]);
+  const selectAll = useCallback(() => dispatch({ type: "selectAll", ids: idsRef.current }), []);
 
   const clear = useCallback(() => dispatch({ type: "clear" }), []);
 
-  const isSelected = useCallback((id: TId) => state.selectedIds.has(id), [state.selectedIds]);
+  const selectedIds = useMemo(() => {
+    const known = new Set(ids);
+    const reconciled = new Set<TId>();
+    for (const id of state.selectedIds) if (known.has(id)) reconciled.add(id);
+    return reconciled;
+  }, [state.selectedIds, ids]);
+
+  const isSelected = useCallback((id: TId) => selectedIds.has(id), [selectedIds]);
 
   return useMemo(
-    () => ({
-      selectedIds: state.selectedIds,
-      selectedCount: state.selectedIds.size,
-      isSelected,
-      toggle,
-      selectAll,
-      clear,
-    }),
-    [state.selectedIds, isSelected, toggle, selectAll, clear],
+    () => ({ selectedIds, selectedCount: selectedIds.size, isSelected, toggle, selectAll, clear }),
+    [selectedIds, isSelected, toggle, selectAll, clear],
   );
 }
 
