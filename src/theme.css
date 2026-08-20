@@ -239,6 +239,22 @@
      rather than entering or exiting — paired with `--ease-out`'s decelerate
      shape so the two read as one curve family. */
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* A springier decelerate for entrances that should feel like they land with
+     a touch of overshoot — a dock, a popover, a toast arriving — distinct
+     from `--ease-out`'s straight decelerate, which suits exits and resizes
+     that must never overshoot their target. */
+  --ease-spring: cubic-bezier(0.2, 0.9, 0.3, 1.15);
+
+  /* Named durations for the three motion sizes the theme actually uses:
+     micro for a hover/pressed state or an icon swap, standard for a toast or
+     dropdown, large for a dialog, drawer or panel swap. Existing keyframe
+     and transition durations below are literal ms values for now — these
+     tokens are additive, named anchors a new animation can reach for instead
+     of picking a duration by eye. */
+  --duration-micro: 150ms;
+  --duration-standard: 200ms;
+  --duration-large: 300ms;
 }
 
 /* Dialog motion. Written as real keyframes rather than pulled in from an
