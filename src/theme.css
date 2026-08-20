@@ -482,6 +482,40 @@
   }
 }
 
+/* SelectionCheckbox's pop on select: a small overshoot so the check reads as
+   a deliberate snap rather than a plain fade. No `--spring-*` token exists
+   yet in this theme — the overshoot curve below is a literal cubic-bezier
+   rather than a token reference; re-point it at a shared spring token if one
+   lands. Used by ui/selection-checkbox. */
+@keyframes corbits-selection-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* BulkActionBar's rise into view. Plays on an inner element, not the
+   outer fixed/centered one — the outer element's horizontal centering
+   transform is a plain, unconditional class rather than something this
+   keyframe has to restate, so a `prefers-reduced-motion` viewer (who never
+   runs this animation at all) still ends up centered. Used by
+   ui/bulk-action-bar. */
+@keyframes corbits-bulk-action-bar-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Toast motion: a pure 160ms fade, centered above the bottom edge — no
    slide, no lift. Sonner enters and exits by transitioning translateY, so
    the transform is pinned (!important, since sonner injects its stylesheet
