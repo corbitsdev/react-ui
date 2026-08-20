@@ -89,6 +89,20 @@
   --chart-3: #1f6132;
   --chart-4: #143e70;
   --chart-5: #9e2b25;
+
+  /* Named durations for the three motion sizes the theme actually uses:
+     micro for a hover/pressed state or an icon swap, standard for a toast or
+     dropdown, large for a dialog, drawer or panel swap. Declared here, on
+     :root, so a consumer can also read `var(--duration-standard)` directly
+     in a hand-written transition — the @theme inline block below re-exposes
+     them under Tailwind's real `--transition-duration-*` namespace so
+     `duration-standard` etc. compile to a utility class too. The theme's
+     existing hand-tuned keyframes/transitions (220ms/280ms/160ms) predate
+     these and are left as they are; treat these three as the anchors for
+     new motion going forward, not a retrofit of what already shipped. */
+  --duration-micro: 150ms;
+  --duration-standard: 200ms;
+  --duration-large: 300ms;
 }
 
 .dark {
@@ -239,6 +253,21 @@
      rather than entering or exiting — paired with `--ease-out`'s decelerate
      shape so the two read as one curve family. */
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* A springier decelerate for entrances that should feel like they land with
+     a touch of overshoot — a dock, a popover, a toast arriving — distinct
+     from `--ease-out`'s straight decelerate, which suits exits and resizes
+     that must never overshoot their target. */
+  --ease-spring: cubic-bezier(0.2, 0.9, 0.3, 1.15);
+
+  /* Tailwind v4's real namespace for duration utilities is
+     `--transition-duration-*`, not `--duration-*` — an unreferenced name in
+     this inline block is dropped from the build entirely, so re-exporting
+     under the correct namespace is what actually emits `duration-micro`,
+     `duration-standard` and `duration-large` as utility classes. */
+  --transition-duration-micro: var(--duration-micro);
+  --transition-duration-standard: var(--duration-standard);
+  --transition-duration-large: var(--duration-large);
 }
 
 /* Dialog motion. Written as real keyframes rather than pulled in from an
