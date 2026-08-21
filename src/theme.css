@@ -37,6 +37,24 @@
 :root {
   --radius: 0.5rem;
 
+  /* One named icon-size scale, keyed to where a glyph sits rather than an
+     abstract xs/sm/md/lg — a call site names its context, not a pixel value,
+     so nothing hardcodes its own size or repeats a `size=` prop. Matches the
+     owner's mock CSS 1:1 (mock-spec.md §1): rail nav glyphs sit at 15px,
+     top-bar icon buttons at 16px inside a 32x32 hit target, inline button
+     glyphs (and dense list/menu-item icons — a row and a context-menu item
+     read at the same density) at 13px, and the row-selection checkbox tick
+     at 10px. Consume as `text-icon-nav` / `text-icon-topbar` /
+     `text-icon-button` / `text-icon-checkbox` (Tailwind font-size utilities,
+     re-exposed below) on the glyph's wrapping element, sized in `em` against
+     that font-size — this is also the fix for icons rendering unsized
+     (the browser's 300x150 replaced-element fallback) wherever no ancestor
+     rule or `size=` prop already constrained them. */
+  --icon-size-nav: 0.9375rem;
+  --icon-size-topbar: 1rem;
+  --icon-size-button: 0.8125rem;
+  --icon-size-checkbox: 0.625rem;
+
   --background: #ffffff;
   --foreground: #2b2627;
   --card: #f2f4f5;
@@ -244,6 +262,11 @@
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
+
+  --text-icon-nav: var(--icon-size-nav);
+  --text-icon-topbar: var(--icon-size-topbar);
+  --text-icon-button: var(--icon-size-button);
+  --text-icon-checkbox: var(--icon-size-checkbox);
 
   /* Overrides Tailwind's built-in ease-out with the brand's decelerate curve,
      so every existing and new `ease-out` usage picks it up in one place. */
