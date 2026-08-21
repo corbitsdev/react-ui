@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { act, createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import { CommandPalette, type CommandPaletteGroup } from "./command-palette.js";
+import { CommandPalette, CommandPaletteInline, type CommandPaletteGroup } from "./command-palette.js";
 
 const GROUPS: CommandPaletteGroup[] = [
   {
@@ -213,6 +213,108 @@ describe("CommandPalette", () => {
     const { unmount } = mount();
     expect(document.body.querySelector("[data-slot='command-palette-input-accessory']")).toBeNull();
     expect(document.body.querySelector("[data-slot='command-palette-footer']")).toBeNull();
+    unmount();
+  });
+});
+
+function mountInline(props: { readonly startOpen?: boolean } = {}) {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const selected: string[] = [];
+  const openChanges: boolean[] = [];
+
+  function Host() {
+    const [open, setOpen] = useState(props.startOpen ?? true);
+    return createElement(CommandPaletteInline, {
+      open,
+      onOpenChange: (next: boolean) => {
+        openChanges.push(next);
+        setOpen(next);
+      },
+      query: "",
+      onQueryChange: () => {},
+      groups: GROUPS,
+      onSelect: (id: string) => selected.push(id),
+      leading: createElement("button", { type: "button", "data-testid": "magnifier" }, "Search"),
+    });
+  }
+
+  act(() => {
+    root.render(createElement(Host));
+  });
+
+  return {
+    selected,
+    openChanges,
+    field: () => container.querySelector("[data-slot='command-palette-inline-field']"),
+    results: () => container.querySelector("[data-slot='command-palette-inline-results']"),
+    magnifier: () => container.querySelector("[data-testid='magnifier']") as HTMLButtonElement,
+    input: () => container.querySelector("input") as HTMLInputElement | null,
+    unmount: () => {
+      root.unmount();
+      container.remove();
+    },
+  };
+}
+
+describe("CommandPaletteInline", () => {
+  test("collapsed renders the leading slot alone — no input, no results panel", () => {
+    const { magnifier, input, results, unmount } = mountInline({ startOpen: false });
+    expect(magnifier()).not.toBeNull();
+    expect(input()).toBeNull();
+    expect(results()).toBeNull();
+    unmount();
+  });
+
+  test("open renders the input inside the field and focuses it", () => {
+    const { field, input, unmount } = mountInline();
+    const element = input();
+    expect(element).not.toBeNull();
+    expect(field()?.contains(element)).toBe(true);
+    expect(document.activeElement).toBe(element);
+    unmount();
+  });
+
+  test("results are anchored under the field, not in a dialog", () => {
+    const { results, unmount } = mountInline();
+    const panel = results();
+    expect(panel).not.toBeNull();
+    expect(panel?.textContent).toContain("Q3 Launch Plan");
+    expect(document.body.querySelector("[role='dialog']")).toBeNull();
+    expect(document.body.querySelector("[aria-modal]")).toBeNull();
+    unmount();
+  });
+
+  test("Escape in the input collapses back to the leading slot", () => {
+    const { input, openChanges, results, unmount } = mountInline();
+    press(input()!, "Escape");
+    expect(openChanges).toEqual([false]);
+    expect(results()).toBeNull();
+    unmount();
+  });
+
+  test("a pointer press outside collapses it; one inside does not", () => {
+    const { magnifier, openChanges, unmount } = mountInline();
+    act(() => {
+      magnifier().dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+    });
+    expect(openChanges).toEqual([]);
+    act(() => {
+      document.body.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+    });
+    expect(openChanges).toEqual([false]);
+    unmount();
+  });
+
+  test("clicking a result selects it and collapses", () => {
+    const { results, selected, openChanges, unmount } = mountInline();
+    const row = results()?.querySelector("[role='option']") as HTMLElement;
+    act(() => {
+      row.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(selected).toEqual(["page-1"]);
+    expect(openChanges).toEqual([false]);
     unmount();
   });
 });
