@@ -533,3 +533,26 @@
     outline-offset: 2px;
   }
 }
+
+/* Ridge-study motion: keep geometry and timing in the original 100 x 70 space. */
+@keyframes corbits-thinking-sweep {
+  0% { transform: translateX(8px); opacity: 0; }
+  8%, 86% { opacity: 1; }
+  100% { transform: translateX(130px); opacity: 0; }
+}
+@keyframes corbits-thinking-rise {
+  0% { transform: translateY(88px); }
+  100% { transform: translateY(-30px); }
+}
+@keyframes corbits-thinking-wave {
+  0% { transform: scale(.03); opacity: 0; }
+  10% { opacity: 1; }
+  75% { opacity: .9; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .corbits-thinking-silk, .corbits-thinking-strata, .corbits-thinking-echo { animation: none; }
+  .corbits-thinking-silk { transform: translateX(44px); }
+  .corbits-thinking-strata { transform: translateY(30px); }
+  .corbits-thinking-echo { transform: scale(.6); }
+}

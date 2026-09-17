@@ -111,6 +111,8 @@ export * from "./ui/tabs.js";
 export * from "./ui/textarea.js";
 export * from "./ui/theme-provider.js";
 export * from "./ui/theme-toggle.js";
+export * from "./ui/thinking-indicator.js";
+export * from "./ui/thinking-mark.js";
 export * from "./ui/time-series-chart.js";
 export * from "./ui/toast.js";
 export * from "./ui/token-mosaic.js";

@@ -81,6 +81,22 @@ bun run stories      # Ladle workbench
 
 A new component is not done until it has at least one story per meaningful state, checked in both themes. See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
+## Thinking indicator
+
+The Corbits logo has three motion variants: `silk` (default), `strata`, and `echo`.
+
+```tsx
+import { ThinkingIndicator, ThinkingMark } from "@corbits/react-ui";
+
+<ThinkingIndicator variant="silk" />
+<ThinkingIndicator variant="strata" label="Reviewing files..." />
+<ThinkingMark variant="echo" className="w-8" />
+```
+
+`ThinkingIndicator` supplies an accessible status label; `ThinkingMark` is decorative.
+Both accept `variant`, `paused`, `className`, and `style`. Reduced-motion users see a
+static highlight instead.
+
 ## License
 
 LGPL-2.1-only. See [LICENSE](./LICENSE).
