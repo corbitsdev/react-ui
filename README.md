@@ -21,7 +21,9 @@ Import the prebuilt stylesheet once at the app root (no Tailwind build required)
 import "@corbits/react-ui/styles.css";
 ```
 
-That sheet includes Tailwind preflight and a base layer — it restyles the page. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities. Dark mode is a `dark` class on an ancestor; the stylesheet reads it and does not manage it. Mount `ThemeProvider` only if you want the library to persist the choice and apply named presets.
+That sheet includes Tailwind preflight and a base layer — it restyles the page, and neither import is safe to skip: without one of them the components render unstyled markup, not a fallback look. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities; don't import both.
+
+Dark mode is a `dark` class on an ancestor; the stylesheet reads it and does not manage it. With no class at all, the theme follows the OS — a `@media (prefers-color-scheme: dark)` block applies the dark tokens to `:root`, so a zero-JS install already renders dark on a dark-OS host. `ThemeProvider` still wins once it mounts: "dark" adds `.dark`, "light" adds `.light`, which the media query excludes, so an explicit light choice is never clawed back by the OS. Mount `ThemeProvider` only if you want the library to persist the choice and apply named presets.
 
 ```tsx
 import { Button } from "@corbits/react-ui/ui/button";
@@ -30,6 +32,8 @@ import { Button } from "@corbits/react-ui/ui/button";
 ```
 
 Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from the root (`@corbits/react-ui`).
+
+The brand faces (Red Hat Display, Space Mono) are named by the theme but not bundled. Load them yourself, or the stack falls through to system fonts; to use a face loaded under a generated name, override `--font-sans` / `--font-mono`.
 
 ```tsx
 import "@corbits/react-ui/styles.css";
