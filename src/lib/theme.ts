@@ -76,6 +76,10 @@ export function applyThemeToRoot(
   preset: ThemePreset,
 ): void {
   root.classList.toggle("dark", resolved === "dark");
+  // `.light` is the explicit-light escape hatch from the `prefers-color-scheme`
+  // media query in theme.css — without it, "light" mode chosen on a dark-OS
+  // host would be overridden back to dark tokens by the media query.
+  root.classList.toggle("light", resolved === "light");
   if (preset === "default") {
     root.removeAttribute("data-theme");
   } else {
