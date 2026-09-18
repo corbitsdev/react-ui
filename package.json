@@ -523,6 +523,10 @@
       "types": "./dist/ui/tool-narrative.d.ts",
       "default": "./dist/ui/tool-narrative.js"
     },
+    "./ui/tool-picker": {
+      "types": "./dist/ui/tool-picker.d.ts",
+      "default": "./dist/ui/tool-picker.js"
+    },
     "./ui/tooltip": {
       "types": "./dist/ui/tooltip.d.ts",
       "default": "./dist/ui/tooltip.js"

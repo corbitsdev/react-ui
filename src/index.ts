@@ -116,6 +116,7 @@ export * from "./ui/toast.js";
 export * from "./ui/token-mosaic.js";
 export * from "./ui/tool-block.js";
 export * from "./ui/tool-narrative.js";
+export * from "./ui/tool-picker.js";
 export * from "./ui/tooltip.js";
 export * from "./ui/top-bar.js";
 export * from "./ui/trace-waterfall.js";
