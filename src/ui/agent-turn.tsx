@@ -10,8 +10,8 @@ import {
   type ChatMessage,
 } from "../lib/chat-message.js";
 import { cn } from "../lib/utils.js";
-import { ActivityBlock } from "./activity-block.js";
 import { MessageBubble } from "./message-bubble.js";
+import { ReasoningBlock } from "./reasoning-block.js";
 import { ToolNarrative } from "./tool-narrative.js";
 
 export type AgentTurnProps = {
@@ -20,6 +20,8 @@ export type AgentTurnProps = {
   /** Rich body for the answer — a markdown renderer. */
   readonly children?: ReactNode;
   readonly now?: number;
+  /** e.g. "Thought for 4s". Shown on the reasoning block once it stops streaming. */
+  readonly reasoningDurationLabel?: string;
   readonly className?: string;
 };
 
@@ -36,7 +38,14 @@ export type AgentTurnProps = {
  * screen reader should hear "Ada said …" once, not two initials followed by the
  * name.
  */
-export function AgentTurn({ message, identity, children, now, className }: AgentTurnProps) {
+export function AgentTurn({
+  message,
+  identity,
+  children,
+  now,
+  reasoningDurationLabel,
+  className,
+}: AgentTurnProps) {
   const working = isTurnWorking(message);
   const answer = messageText(message);
   const thinking = reasoningText(message);
@@ -59,7 +68,7 @@ export function AgentTurn({ message, identity, children, now, className }: Agent
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         {hasWork ? (
           <div className="flex flex-col">
-            <ActivityBlock text={thinking} working={working} />
+            <ReasoningBlock text={thinking} streaming={working} durationLabel={reasoningDurationLabel} />
             {tools.map((part) => (
               <ToolNarrative key={part.toolCallId} part={part} />
             ))}
