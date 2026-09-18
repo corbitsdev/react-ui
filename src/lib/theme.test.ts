@@ -88,4 +88,15 @@ describe("applyThemeToRoot", () => {
     expect(root.hasAttribute("data-theme")).toBe(false);
     expect(root.style.colorScheme).toBe("light");
   });
+
+  test("toggles a `.light` escape hatch for explicit light on a dark-OS host", () => {
+    const root = document.createElement("div");
+    applyThemeToRoot(root, "light", "default");
+    expect(root.classList.contains("light")).toBe(true);
+    expect(root.classList.contains("dark")).toBe(false);
+
+    applyThemeToRoot(root, "dark", "default");
+    expect(root.classList.contains("light")).toBe(false);
+    expect(root.classList.contains("dark")).toBe(true);
+  });
 });
