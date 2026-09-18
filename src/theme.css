@@ -535,6 +535,18 @@
   }
 }
 
+/* ShimmerText's sweep: a `background-clip: text` gradient sliding across
+   its own background-size, so the brighter band travels through the words.
+   Used by ui/shimmer-text (and, through it, ui/thinking-label). */
+@keyframes corbits-shimmer-sweep {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -50% 0;
+  }
+}
+
 /* Toast motion: a pure 160ms fade, centered above the bottom edge — no
    slide, no lift. Sonner enters and exits by transitioning translateY, so
    the transform is pinned (!important, since sonner injects its stylesheet
