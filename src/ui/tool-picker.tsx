@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 
 import { useCommandPaletteNavigation } from "../hooks/use-command-palette-navigation.js";
@@ -37,6 +37,8 @@ export type ToolPickerProps = {
   /** Shown when the catalog itself is empty. Failed searches use a separate default. */
   readonly empty?: ReactNode;
   readonly searchPlaceholder?: string;
+  /** Accessible name for the search input — set it if this isn't picking tools. */
+  readonly searchLabel?: string;
   readonly className?: string;
 };
 
@@ -89,18 +91,20 @@ export function ToolPicker({
   loading = false,
   empty,
   searchPlaceholder = "Search tools…",
+  searchLabel = "Search tools",
   className,
 }: ToolPickerProps) {
   const baseId = useId();
   const [query, setQuery] = useState("");
+  const listRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => items.filter((item) => matches(item, query)), [items, query]);
   const groups = useMemo(() => groupByPackage(filtered), [filtered]);
-  const selectableIds = useMemo(() => new Set(value), [value]);
+  const selectedIds = useMemo(() => new Set(value), [value]);
 
   const toggle = (item: ToolPickerItem) => {
     if (item.status === "disabled") return;
-    const isSelected = selectableIds.has(item.id);
+    const isSelected = selectedIds.has(item.id);
     if (!multiple) {
       onChange(isSelected ? [] : [item.id]);
       return;
@@ -118,6 +122,10 @@ export function ToolPicker({
       /* Escape is handled below so an empty query does not swallow the key. */
     },
   });
+
+  useEffect(() => {
+    listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
+  }, [navigation.activeId]);
 
   const optionId = (id: string) => `${baseId}-option-${id}`;
 
@@ -142,15 +150,19 @@ export function ToolPicker({
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={onKeyDown}
         placeholder={searchPlaceholder}
-        aria-label="Search tools"
+        aria-label={searchLabel}
         role="combobox"
         aria-expanded
+        aria-autocomplete="list"
         aria-controls={`${baseId}-list`}
         aria-activedescendant={navigation.activeId === undefined ? undefined : optionId(navigation.activeId)}
+        aria-busy={loading}
         autoComplete="off"
+        spellCheck={false}
       />
 
       <div
+        ref={listRef}
         id={`${baseId}-list`}
         role="listbox"
         aria-label="Tools"
@@ -158,15 +170,15 @@ export function ToolPicker({
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto"
       >
         {loading ? (
-          <p className="px-2 py-8 text-center text-sm text-muted-foreground">Loading…</p>
+          <p role="presentation" className="px-2 py-8 text-center text-sm text-muted-foreground">Loading…</p>
         ) : emptyCatalog ? (
-          (empty ?? <EmptyState title="No tools" description="Nothing in the catalog yet." />)
+          <div role="presentation">{empty ?? <EmptyState title="No tools" description="Nothing in the catalog yet." />}</div>
         ) : noMatches ? (
-          <EmptyState title="No tools match" description="Try a different search." />
+          <p role="presentation" className="px-2 py-8 text-center text-sm text-muted-foreground">No tools match — try a different search.</p>
         ) : (
           groups.map((group) => (
             <div key={group.id} role="presentation" className="flex flex-col gap-1">
-              <p className="px-2 text-[11px] font-semibold text-muted-foreground">
+              <p className="px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 {groupHeading(group.id)}
               </p>
               <div className="flex flex-col gap-1">
@@ -175,7 +187,7 @@ export function ToolPicker({
                     key={item.id}
                     id={optionId(item.id)}
                     item={item}
-                    selected={selectableIds.has(item.id)}
+                    selected={selectedIds.has(item.id)}
                     active={navigation.activeId === item.id}
                     onSelect={() => toggle(item)}
                     onPointerMove={() => navigation.setActiveId(item.id)}
@@ -217,14 +229,15 @@ function ToolPickerOption({
       onClick={disabled ? undefined : onSelect}
       className={cn(
         "flex w-full flex-col gap-1 rounded-lg border px-3.5 py-3 text-left transition-colors ease-out",
-        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-muted",
+        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-muted active:brightness-95",
         selected ? "border-primary-emphasis bg-primary/10" : "border-border bg-card",
-        active && !disabled && "bg-muted",
+        // The keyboard cursor must stay visible on disabled rows — aria-activedescendant can land there.
+        active && "bg-muted",
       )}
     >
       <span className="flex items-center gap-2">
         <span className="text-sm font-semibold">{item.name}</span>
-        {item.status === undefined ? null : <Badge tone={item.status === "pending" ? "accent" : "neutral"}>{STATUS_LABEL[item.status]}</Badge>}
+        {item.status === undefined ? null : <Badge tone="neutral">{STATUS_LABEL[item.status]}</Badge>}
       </span>
       {item.description === undefined ? null : (
         <span className="text-xs leading-snug text-muted-foreground">{item.description}</span>

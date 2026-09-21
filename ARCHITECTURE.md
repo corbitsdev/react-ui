@@ -72,6 +72,12 @@ the active row by id rather than index, because the row a person is on has usual
 been resorted by a fresh keystroke, and an index would silently point at a different item
 than the one they were looking at.
 
+`ToolPicker` is the deliberate exception to caller-owns-matching. The palette searches an
+unbounded, possibly server-backed space, so the caller owns the fetch, debounce and cursor;
+the picker is a form control over a bounded, already-fetched catalog, and it needs the match
+outcome itself to split "empty catalog" from "no matches." Self-filtering is scoped to that
+case — anything unbounded still belongs to the caller.
+
 The dialog's fade is the existing `Dialog` opacity transition — no scale, no position — and
 that transition already collapses under `prefers-reduced-motion` at the theme layer. A
 palette a person opens dozens of times a day should not also compete with itself for
