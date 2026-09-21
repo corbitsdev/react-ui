@@ -34,18 +34,25 @@ function stubMatchMedia(initialReducedMotion: boolean): { restore: Restore; set:
 
 function stubInterval(): {
   readonly calls: Array<{ fn: () => void; ms: number | undefined }>;
+  readonly clears: number;
   readonly restore: Restore;
 } {
   const originalSet = globalThis.setInterval;
   const originalClear = globalThis.clearInterval;
   const calls: Array<{ fn: () => void; ms: number | undefined }> = [];
+  const state = { clears: 0 };
   globalThis.setInterval = ((fn: TimerHandler, ms?: number) => {
     calls.push({ fn: fn as () => void, ms });
     return 1 as unknown as ReturnType<typeof setInterval>;
   }) as unknown as typeof setInterval;
-  globalThis.clearInterval = (() => {}) as unknown as typeof clearInterval;
+  globalThis.clearInterval = (() => {
+    state.clears += 1;
+  }) as unknown as typeof clearInterval;
   return {
     calls,
+    get clears() {
+      return state.clears;
+    },
     restore: () => {
       globalThis.setInterval = originalSet;
       globalThis.clearInterval = originalClear;
@@ -62,6 +69,9 @@ function mount(props: { verbs: readonly string[]; intervalMs?: number }) {
   });
   return {
     container,
+    // Every verb stays mounted in the stacked grid — the visible one is the
+    // cell carrying opacity-100.
+    visible: () => container.querySelector('[aria-hidden] .opacity-100')?.textContent ?? "",
     text: () => container.textContent ?? "",
     status: () => container.querySelector('[role="status"]'),
     unmount: () => {
@@ -89,7 +99,7 @@ describe("ThinkingLabel", () => {
 
     const handle = mount({ verbs: ["Reading", "Thinking"] });
     expect(interval.calls).toHaveLength(0);
-    expect(handle.text()).toContain("Reading");
+    expect(handle.visible()).toBe("Reading");
     handle.unmount();
   });
 
@@ -102,8 +112,14 @@ describe("ThinkingLabel", () => {
     const handle = mount({ verbs: ["Reading", "Thinking"] });
     expect(interval.calls).toHaveLength(1);
 
+    act(() => {
+      interval.calls[0]?.fn();
+    });
+    expect(handle.visible()).toBe("Thinking");
+
     act(() => media.set(true));
-    expect(handle.text()).toContain("Reading");
+    expect(interval.clears).toBeGreaterThan(0);
+    expect(handle.visible()).toBe("Reading");
 
     handle.unmount();
   });
@@ -116,17 +132,17 @@ describe("ThinkingLabel", () => {
     const handle = mount({ verbs: ["Reading", "Thinking", "Writing"], intervalMs: 50 });
     expect(interval.calls).toHaveLength(1);
     expect(interval.calls[0]?.ms).toBe(50);
-    expect(handle.text()).toContain("Reading");
+    expect(handle.visible()).toBe("Reading");
 
     act(() => {
       interval.calls[0]?.fn();
     });
-    expect(handle.text()).toContain("Thinking");
+    expect(handle.visible()).toBe("Thinking");
 
     act(() => {
       interval.calls[0]?.fn();
     });
-    expect(handle.text()).toContain("Writing");
+    expect(handle.visible()).toBe("Writing");
 
     handle.unmount();
   });
@@ -145,7 +161,7 @@ describe("ThinkingLabel", () => {
       interval.calls[0]?.fn();
     });
     expect(handle.status()?.textContent).toBe("Working");
-    expect(handle.text()).toContain("Thinking");
+    expect(handle.visible()).toBe("Thinking");
 
     handle.unmount();
   });
