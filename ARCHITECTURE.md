@@ -1,8 +1,9 @@
 # Architecture
 
 `@corbits/react-ui` is an installed npm component library: the code lives in the
-consumer's `node_modules` and is picked up by a version bump. Three properties shape
-the layout.
+consumer's `node_modules` and is picked up by a version bump. Why it exists is
+in [PRODUCT.md](./PRODUCT.md); toolchain, peers and publish layout are in
+[IMPLEMENTATION.md](./IMPLEMENTATION.md). Three properties shape the layout.
 
 **The public surface is a semver commitment.** Every subpath in `exports` is something
 we have promised not to break casually, so the map is *generated* from a triage list in
@@ -52,7 +53,10 @@ Components in this package **never fetch**, and never import a server-side packa
 component that fetches has chosen the consumer's data layer for them; a component that
 imports a server package drags a database tree into a browser bundle.
 
-Data arrives one of two ways: as props, or through a `DataPort`.
+Data arrives one of two ways: as props, or through a `DataPort`. That is the
+README contract — components take data through a `DataPort` (or none). "None"
+is a props-only surface; `DataPortProvider` is required only for components
+that call `useDataPort`.
 
 ```ts
 type DataPort = {
@@ -153,9 +157,13 @@ Tailwind resolves `@source` relative to the file containing it, so it means `src
 build the standalone sheet and `dist/` when a consumer imports it out of `node_modules`.
 Since there is only one file, the tokens and keyframes cannot drift between the two.
 
-Dark mode is opt-in through a `dark` class on an ancestor. `ThemeProvider`
-owns applying that class (and `data-theme` presets + `color-scheme`) and
-persisting the choice; the host mounts the provider and keys storage per user.
+Dark mode is a `dark` class on an ancestor. The stylesheet reads it
+(`@custom-variant dark (&:is(.dark *))`); it does not manage it. A host can
+set the class itself (`<html className="dark">`). `ThemeProvider` is an
+optional helper that applies that class (and `data-theme` presets plus
+`color-scheme`) and persists the choice; the host mounts it and keys storage
+per user. `useTheme` / `ThemeToggle` require the provider; every other
+component does not.
 
 ### Contrast is gated
 

@@ -21,7 +21,7 @@ Import the prebuilt stylesheet once at the app root (no Tailwind build required)
 import "@corbits/react-ui/styles.css";
 ```
 
-That sheet includes Tailwind preflight and a base layer — it restyles the page. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities. Dark mode is a `dark` class on an ancestor; the library reads it and does not manage it.
+That sheet includes Tailwind preflight and a base layer — it restyles the page. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities. Dark mode is a `dark` class on an ancestor; the stylesheet reads it and does not manage it. Mount `ThemeProvider` only if you want the library to persist the choice and apply named presets.
 
 ```tsx
 import { Button } from "@corbits/react-ui/ui/button";
@@ -72,7 +72,7 @@ This package ships no `"use client"` directives. In a React Server Components ap
 
 Components take data through a `DataPort` (or none). The root entry is re-exports only and the package is side-effect free aside from the CSS files, so either import style tree-shakes to what you used. Tokens and keyframes live in `theme.css`; `styles.css` is the prebuilt sheet for hosts that do not run Tailwind.
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for the DataPort seam and the theme layer.
+See [PRODUCT.md](./PRODUCT.md) for why this library exists, [ARCHITECTURE.md](./ARCHITECTURE.md) for the DataPort seam and the theme layer, and [IMPLEMENTATION.md](./IMPLEMENTATION.md) for toolchain and peers.
 
 ## Development
 
