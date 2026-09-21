@@ -55,6 +55,13 @@ contract — modules that are not exported are internal and may change in any re
   `ThemeProvider` writes `.light` for resolved-light mode, so hosts on the provider need
   no change.
 
+### Added
+
+- **`ui/shimmer-text` and `ui/thinking-label`** — a token-pure shimmer sweep
+  over text, and a rotating-verb status label built on it. Verb rotation is
+  width-stable (stacked grid, crossfade) and stops under reduced motion via
+  `usePrefersReducedMotion`.
+
 ## [0.1.0] - 2026-09-17
 
 Nothing has been published before this, so the list below is what the surface consists of

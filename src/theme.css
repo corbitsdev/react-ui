@@ -191,6 +191,7 @@
     --secondary-foreground: #e4d5bc;
     --muted: #1a1718;
     --muted-foreground: #a99c86;
+    --thinking-base: #aaa39a;
     --accent: #2d455c;
     --accent-foreground: #e4d5bc;
     --success: #425a3d;
@@ -532,6 +533,18 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ShimmerText's sweep: a `background-clip: text` gradient sliding across
+   its own background-size, so the brighter band travels through the words.
+   Used by ui/shimmer-text (and, through it, ui/thinking-label). */
+@keyframes corbits-shimmer-sweep {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -50% 0;
   }
 }
 
