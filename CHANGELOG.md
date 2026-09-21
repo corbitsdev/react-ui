@@ -10,12 +10,19 @@ contract — modules that are not exported are internal and may change in any re
 
 ## [Unreleased]
 
-### 0.1.0 — first release
+### Breaking changes since 0.1.0
+
+- **`AuthLayout` no longer defaults its decorative panel to `DitherCanvas`.** The panel is
+  now an explicit `panel` slot with no fallback — pass `<DitherCanvas />`,
+  `<DitherBackground src={...} />`, or any other content. A caller that omitted `panel` to
+  get the dither canvas for free now gets a bare panel instead.
+
+## [0.1.0] - 2026-09-17
 
 Nothing has been published before this, so the list below is what the surface consists of
 rather than what changed.
 
-- **106 public modules** — 89 UI components, 3 block modules, 1 hook and 13 `lib` modules,
+- **197 public modules** — 152 UI components, 5 block modules, 16 hooks and 24 `lib` modules,
   importable by subpath (`@corbits/react-ui/ui/button`) or from the root. Output is
   per-file ESM with matching declarations; the package is side-effect free apart from its
   CSS, so either import style bundles only what you used.
@@ -46,16 +53,10 @@ rather than what changed.
   `@tanstack/react-query` outside the adapter, and on anything reachable from the root
   barrel importing an optional peer.
 - **Peer dependencies** — React 18 or 19, `react-dom`, `lucide-react` (0.545 or 1.x),
-  `sonner`, `@radix-ui/react-dialog` and `@radix-ui/react-slot`.
+  `sonner`, `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`,
+  `@radix-ui/react-slot` and `@radix-ui/react-tooltip`.
   **`@tanstack/react-query` is optional** — needed only for the TanStack adapter, which is
   why that adapter is importable by subpath but absent from the root entry.
-
-### Breaking changes since 0.1.0
-
-- **`AuthLayout` no longer defaults its decorative panel to `DitherCanvas`.** The panel is
-  now an explicit `panel` slot with no fallback — pass `<DitherCanvas />`,
-  `<DitherBackground src={...} />`, or any other content. A caller that omitted `panel` to
-  get the dither canvas for free now gets a bare panel instead.
 
 #### Notes
 
@@ -63,4 +64,5 @@ rather than what changed.
   marks its own client boundary; see the README.
 - `lib/chart-geometry` and `lib/chart-palette` are internal and deliberately not exported.
 
-[Unreleased]: https://github.com/corbitsdev/react-ui
+[Unreleased]: https://github.com/corbitsdev/react-ui/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/corbitsdev/react-ui/releases/tag/v0.1.0
