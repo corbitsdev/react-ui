@@ -39,19 +39,25 @@ import { DataTable } from "@corbits/react-ui/ui/data-table";
 import { DataPortProvider } from "@corbits/react-ui/lib/data-port";
 import { createTanstackDataPort } from "@corbits/react-ui/lib/tanstack-data-port";
 
+type Run = { id: string; name: string; status: string };
+
 export function Runs() {
   return (
     <DataPortProvider value={createTanstackDataPort()}>
-      <DataTable
+      <DataTable<Run>
+        caption="Runs"
+        rowKey={(run) => run.id}
         request={{
           key: ["runs"],
           pageSize: 50,
-          fetch: ({ signal, offset, pageSize }) =>
-            api.runs({ signal, offset, pageSize }),
+          fetch: async ({ signal, offset, pageSize }) => {
+            const items: readonly Run[] = await api.runs({ signal, offset, pageSize });
+            return { items, nextOffset: null };
+          },
         }}
         columns={[
-          { id: "name", header: "Run", cell: (run) => run.name },
-          { id: "status", header: "Status", cell: (run) => run.status },
+          { header: "Run", cell: (run) => run.name },
+          { header: "Status", cell: (run) => run.status },
         ]}
       />
       <Button onClick={() => api.start()}>Run now</Button>
