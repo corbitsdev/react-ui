@@ -5,7 +5,8 @@
   "author": "Sawyer Cutler <sawyer@dirtroad.dev>",
   "license": "LGPL-2.1-only",
   "engines": {
-    "node": ">=24"
+    "node": ">=24",
+    "bun": ">=1.2.0"
   },
   "type": "module",
   "sideEffects": [
