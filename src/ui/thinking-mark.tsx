@@ -56,10 +56,10 @@ export function ThinkingMark({ variant = "silk", paused = false, className, styl
           </>}
         </mask>
       </defs>
-      <g className="fill-[#77716a] dark:fill-[#aaa39a]" opacity=".7">
+      <g className="fill-thinking-base" opacity=".7">
         <path d={CORBITS_MARK_PATH} transform="translate(-2.3 -15) scale(.213)" />
       </g>
-      <g fill="#e98428" mask={`url(#${mask})`}>
+      <g className="fill-primary" mask={`url(#${mask})`}>
         <path d={CORBITS_MARK_PATH} transform="translate(-2.3 -15) scale(.213)" />
       </g>
     </svg>
