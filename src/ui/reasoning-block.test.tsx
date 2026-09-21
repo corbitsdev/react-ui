@@ -70,6 +70,16 @@ describe("ReasoningBlock", () => {
     idle.unmount();
   });
 
+  test("summary wording is overridable", () => {
+    const streaming = mount({ text: "Going.", streaming: true, streamingLabel: "Working…" });
+    expect(streaming.summary()?.textContent).toBe("Working…");
+    streaming.unmount();
+
+    const idle = mount({ text: "Done.", idleLabel: "Reasoning" });
+    expect(idle.summary()?.textContent).toBe("Reasoning");
+    idle.unmount();
+  });
+
   test("streaming-to-idle on the same instance updates the summary and busy state", () => {
     const handle = mount({ text: "Reasoning.", streaming: true });
     expect(handle.summary()?.textContent).toBe("Thinking…");

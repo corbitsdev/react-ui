@@ -8,6 +8,10 @@ export type ReasoningBlockProps = {
   readonly text: string;
   /** Still streaming. Changes the summary wording and marks the body busy. */
   readonly streaming?: boolean;
+  /** Summary while streaming. Defaults to "Thinking…". */
+  readonly streamingLabel?: string;
+  /** Summary once idle when no `durationLabel` is supplied. Defaults to "Thinking". */
+  readonly idleLabel?: string;
   /** e.g. "Thought for 4s". Becomes the summary once reasoning has stopped streaming. */
   readonly durationLabel?: string;
   readonly defaultOpen?: boolean;
@@ -37,6 +41,8 @@ export type ReasoningBlockProps = {
 export function ReasoningBlock({
   text,
   streaming = false,
+  streamingLabel = "Thinking…",
+  idleLabel = "Thinking",
   durationLabel,
   defaultOpen = false,
   open: openProp,
@@ -52,7 +58,7 @@ export function ReasoningBlock({
 
   if (text.trim().length === 0) return null;
 
-  const summary = streaming ? "Thinking…" : (durationLabel ?? "Thinking");
+  const summary = streaming ? streamingLabel : (durationLabel ?? idleLabel);
 
   return (
     <details
