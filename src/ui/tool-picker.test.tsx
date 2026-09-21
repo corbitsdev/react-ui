@@ -144,7 +144,7 @@ describe("ToolPicker", () => {
       input.dispatchEvent(new Event("input", { bubbles: true }));
     });
     expect(container.textContent).toContain("No tools match");
-    expect(container.textContent).toContain("Try a different search.");
+    expect(container.textContent).toContain("try a different search.");
     expect(container.textContent).not.toContain("Nothing in the catalog yet.");
     unmount();
   });
