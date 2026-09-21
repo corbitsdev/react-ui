@@ -9,6 +9,8 @@ export type ThinkingLabelProps = {
   readonly verbs: readonly string[];
   /** Rotation cadence. A heartbeat, not a ticker — keep it at ~1s or slower. */
   readonly intervalMs?: number;
+  /** What the status role announces, once. Defaults to "Working". */
+  readonly statusLabel?: string;
   readonly className?: string;
 };
 
@@ -23,7 +25,12 @@ const DEFAULT_INTERVAL_MS = 3_000;
  * few seconds. Reduced motion is live via `usePrefersReducedMotion` and
  * stops the rotation rather than just stilling the shimmer.
  */
-export function ThinkingLabel({ verbs, intervalMs = DEFAULT_INTERVAL_MS, className }: ThinkingLabelProps) {
+export function ThinkingLabel({
+  verbs,
+  intervalMs = DEFAULT_INTERVAL_MS,
+  statusLabel = "Working",
+  className,
+}: ThinkingLabelProps) {
   const [at, setAt] = useState(0);
   const reduceMotion = usePrefersReducedMotion();
 
@@ -45,7 +52,7 @@ export function ThinkingLabel({ verbs, intervalMs = DEFAULT_INTERVAL_MS, classNa
   return (
     <span className={cn("text-sm", className)}>
       <span role="status" className="sr-only">
-        Working
+        {statusLabel}
       </span>
       <span aria-hidden className="inline-grid">
         {verbs.map((verb, index) => (
