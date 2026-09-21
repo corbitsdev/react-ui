@@ -10,7 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../../src/ui/dialog.js";
+} from "./dialog.js";
 
 type Mounted = {
   container: HTMLElement;

@@ -2,8 +2,8 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import type { Part } from "../../src/lib/chat-parts.js";
-import { PartsRenderer } from "../../src/ui/parts-renderer.js";
+import type { Part } from "../lib/chat-parts.js";
+import { PartsRenderer } from "./parts-renderer.js";
 
 type Mounted = {
   container: HTMLElement;

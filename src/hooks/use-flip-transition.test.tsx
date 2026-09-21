@@ -2,7 +2,7 @@ import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { useFlipTransition, type UseFlipTransitionOptions } from "../../src/hooks/use-flip-transition.js";
+import { useFlipTransition, type UseFlipTransitionOptions } from "./use-flip-transition.js";
 
 type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 

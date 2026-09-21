@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { ToolBlock } from "../../src/ui/tool-block.js";
+import { ToolBlock } from "./tool-block.js";
 
 type Mounted = {
   container: HTMLElement;

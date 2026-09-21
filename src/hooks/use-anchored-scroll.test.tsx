@@ -2,8 +2,8 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { useAnchoredScroll } from "../../src/hooks/use-anchored-scroll.js";
-import { renderHook } from "./render-hook.js";
+import { useAnchoredScroll } from "./use-anchored-scroll.js";
+import { renderHook } from "../test/render-hook.js";
 
 /** happy-dom reports zero for scroll metrics unless a test stubs them. */
 function stubScrollMetrics(el: HTMLElement, { scrollHeight, scrollTop, clientHeight }: Record<string, number>) {

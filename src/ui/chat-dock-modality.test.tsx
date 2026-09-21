@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { ChatDock, ChatDockScrim } from "../../src/ui/chat-dock.js";
+import { ChatDock, ChatDockScrim } from "./chat-dock.js";
 
 type Mounted = {
   container: HTMLElement;

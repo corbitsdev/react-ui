@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { LoginForm } from "../../src/blocks/login/login-form.js";
+import { LoginForm } from "./login-form.js";
 
 type Mounted = {
   container: HTMLElement;

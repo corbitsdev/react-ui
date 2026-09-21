@@ -2,7 +2,7 @@ import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { useFocusTrap } from "../../src/hooks/use-focus-trap.js";
+import { useFocusTrap } from "./use-focus-trap.js";
 
 type Harness = {
   container: HTMLElement;

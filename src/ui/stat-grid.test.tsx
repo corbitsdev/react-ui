@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, mock, test } from "bun:test";
 
-import { StatGrid, StatGridItem } from "../../src/ui/stat-grid.js";
+import { StatGrid, StatGridItem } from "./stat-grid.js";
 
 type Mounted = {
   container: HTMLElement;

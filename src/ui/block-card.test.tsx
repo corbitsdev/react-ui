@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { BlockCard, RiskBadge } from "../../src/ui/block-card.js";
+import { BlockCard, RiskBadge } from "./block-card.js";
 
 type Mounted = {
   container: HTMLElement;

@@ -1,8 +1,8 @@
 import { act } from "react";
 import { describe, expect, test } from "bun:test";
 
-import { useChatDock } from "../../src/hooks/use-chat-dock.js";
-import { renderHook } from "./render-hook.js";
+import { useChatDock } from "./use-chat-dock.js";
+import { renderHook } from "../test/render-hook.js";
 
 function pressEscape(): void {
   act(() => {
