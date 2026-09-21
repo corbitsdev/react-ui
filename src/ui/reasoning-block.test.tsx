@@ -50,6 +50,13 @@ describe("ReasoningBlock", () => {
     streaming.unmount();
   });
 
+  test("idle without a duration label uses Thinking, not a cute fallback", () => {
+    const idle = mount({ text: "Done thinking." });
+    expect(idle.button().textContent).toBe("Thinking");
+    expect(idle.button().textContent).not.toContain("Thought about this");
+    idle.unmount();
+  });
+
   test("two mounted blocks have distinct region ids matching their toggles", () => {
     const first = mount({ text: "First thought.", defaultOpen: true });
     const second = mount({ text: "Second thought.", defaultOpen: true });

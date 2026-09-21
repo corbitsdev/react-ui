@@ -48,7 +48,7 @@ export function ReasoningBlock({
 
   if (text.trim().length === 0) return null;
 
-  const summary = streaming ? "Thinking…" : (durationLabel ?? "Thought about this");
+  const summary = streaming ? "Thinking…" : (durationLabel ?? "Thinking");
 
   return (
     <div data-slot="reasoning-block" className={cn("text-xs", className)}>
