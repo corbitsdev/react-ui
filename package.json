@@ -303,6 +303,10 @@
       "types": "./dist/ui/dialog.d.ts",
       "default": "./dist/ui/dialog.js"
     },
+    "./ui/dictation-status-line": {
+      "types": "./dist/ui/dictation-status-line.d.ts",
+      "default": "./dist/ui/dictation-status-line.js"
+    },
     "./ui/dither-canvas": {
       "types": "./dist/ui/dither-canvas.d.ts",
       "default": "./dist/ui/dither-canvas.js"
@@ -374,6 +378,14 @@
     "./ui/message-bubble": {
       "types": "./dist/ui/message-bubble.d.ts",
       "default": "./dist/ui/message-bubble.js"
+    },
+    "./ui/mic-button": {
+      "types": "./dist/ui/mic-button.d.ts",
+      "default": "./dist/ui/mic-button.js"
+    },
+    "./ui/mic-permission-dialog": {
+      "types": "./dist/ui/mic-permission-dialog.d.ts",
+      "default": "./dist/ui/mic-permission-dialog.js"
     },
     "./ui/notifications-bell": {
       "types": "./dist/ui/notifications-bell.d.ts",
@@ -558,6 +570,10 @@
     "./ui/view-toggle": {
       "types": "./dist/ui/view-toggle.d.ts",
       "default": "./dist/ui/view-toggle.js"
+    },
+    "./ui/voice-waveform": {
+      "types": "./dist/ui/voice-waveform.d.ts",
+      "default": "./dist/ui/voice-waveform.js"
     }
   }
 }
