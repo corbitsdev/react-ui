@@ -7,27 +7,18 @@ Licensed LGPL-2.1-only (see `LICENSE`).
 
 ## Install
 
-```bash
-npm install @corbits/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-slot @radix-ui/react-tooltip
-```
+Not published to npm yet.
 
 ```bash
-pnpm add @corbits/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-slot @radix-ui/react-tooltip
+bun add github:corbitsdev/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-slot @radix-ui/react-tooltip
 ```
 
-```bash
-yarn add @corbits/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-slot @radix-ui/react-tooltip
-```
+Until a registry publish, `npm install @corbits/react-ui` (and the pnpm/yarn/bun
+registry equivalents) 404. Git is the install path.
 
-```bash
-bun add @corbits/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-slot @radix-ui/react-tooltip
-```
-
-Contributors working from an unreleased commit can install straight from git
-(`bun add github:corbitsdev/react-ui`); the `prepare` hook builds `dist/` on the
-way in, and under bun that requires trusting the package's lifecycle scripts
-(`trustedDependencies: ["@corbits/react-ui"]`). Everyone else should prefer the
-registry tarball above, which arrives already built.
+The `prepare` hook builds `dist/` on the way in, and under bun that requires
+trusting the package's lifecycle scripts
+(`trustedDependencies: ["@corbits/react-ui"]`).
 
 React 18 or 19. `@tanstack/react-query` is an **optional** peer, needed only if you use
 `createTanstackDataPort()`; components take their data through a `DataPort` and work with
