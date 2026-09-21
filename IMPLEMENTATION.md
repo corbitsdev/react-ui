@@ -1,7 +1,7 @@
 # Implementation
 
 Concrete toolchain, peers, formats and publish layout. Design of the
-`DataPort` seam and the theme layer lives in [ARCHITECTURE.md](./ARCHITECTURE.md).
+no-fetch rule and the theme layer lives in [ARCHITECTURE.md](./ARCHITECTURE.md).
 Why the library exists lives in [PRODUCT.md](./PRODUCT.md).
 
 ## Runtime
@@ -14,8 +14,6 @@ Why the library exists lives in [PRODUCT.md](./PRODUCT.md).
   `@radix-ui/react-dialog` (`^1.1.15`), `@radix-ui/react-dropdown-menu`
   (`^2.1.16`), `@radix-ui/react-slot` (`^1.2.3`),
   `@radix-ui/react-tooltip` (`^1.2.8`).
-- Optional peer: `@tanstack/react-query` (`^5.90.2`), needed only for
-  `createTanstackDataPort()`. Declared in `peerDependenciesMeta`.
 - Direct dependencies: `class-variance-authority`, `clsx`, `tailwind-merge`.
 - `sideEffects` is CSS-only (`**/*.css`). `files` publishes `dist/` only.
 
@@ -38,8 +36,9 @@ alias. `prepack` runs the whole build so a failing gate cannot be packed.
 no-op when `dist/` is already present.
 
 Other scripts: `bun run typecheck`, `bun run lint` (eslint),
-`bun run dep-guard` (`scripts/dep-guard.mjs`), `bun test`, `bun run stories`
-/ `stories:build` ([Ladle](https://ladle.dev) over `stories/`).
+`bun run dep-guard` (`scripts/dep-guard.mjs` — fails if any file imports
+`@workbench/*`), `bun test`, `bun run stories` / `stories:build`
+([Ladle](https://ladle.dev) over `stories/`).
 
 ## CSS artifacts
 
@@ -63,20 +62,6 @@ writes `.dark`, `data-theme`, and `color-scheme` on a root (default
 `localStorage` key `corbits-theme` (override with `storageKey`). Default
 mode is `"system"`. `ThemeToggle` / `useTheme` require the provider; the
 rest of the library does not.
-
-## DataPort adapter
-
-`src/lib/data-port.ts` is the seam type plus `DataPortProvider` /
-`useDataPort`. `src/lib/tanstack-data-port.ts` is the one implementation:
-`useInfiniteQuery` from `@tanstack/react-query`, `initialPageParam: 0`,
-`getNextPageParam` from `page.nextOffset`. That file is the only public
-module on `BARREL_EXCLUDED` in `scripts/generate-exports.mjs` — import it by
-subpath `@corbits/react-ui/lib/tanstack-data-port`. The host must already
-have a TanStack `QueryClientProvider`.
-
-`dep-guard` fails if anything reachable from `src/index.ts` imports an
-optional peer, if any file other than the adapter imports
-`@tanstack/react-query`, or if any file imports `@workbench/*`.
 
 ## Publish
 

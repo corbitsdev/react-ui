@@ -17,7 +17,7 @@ per source file, no bundling — and `sideEffects` is declared CSS-only. The roo
 re-exports only, so importing from the root and importing by subpath both bundle just
 what you used. They are not guaranteed byte-for-byte identical — a bundler may order or
 name things differently depending on the entry — but neither drags in a component you did
-not reference. One module is deliberately excluded from the root entry; see below.
+not reference.
 
 **Abstraction has to earn its place.** No config indirection, no speculative extension
 points. There is no CLI, no component generator and no docs site, and that is deliberate.
@@ -47,73 +47,12 @@ its own boundary (see README). Baking one framework's convention into a hundred
 published files would make correctness depend on a build step no plain-React consumer
 runs, and hide the boundary where the consumer cannot see it.
 
-## The `DataPort` seam
+## No fetch, ever
 
 Components in this package **never fetch**, and never import a server-side package. A
 component that fetches has chosen the consumer's data layer for them; a component that
-imports a server package drags a database tree into a browser bundle.
-
-Data arrives one of two ways: as props, or through a `DataPort`. That is the
-README contract — components take data through a `DataPort` (or none). "None"
-is a props-only surface; `DataPortProvider` is required only for components
-that call `useDataPort`.
-
-```ts
-type DataPort = {
-  readonly useCollection: <T>(request: CollectionRequest<T>) => CollectionResult<T>;
-};
-```
-
-A component declares *what* it needs — a stable cache key plus a `fetch` thunk that takes
-`{ signal, offset, pageSize }` and returns `{ items, nextOffset }` — and learns nothing
-about how the result is cached, deduped or revalidated. The port is resolved from React
-context (`DataPortProvider` / `useDataPort`), and `useDataPort` throws with a wiring
-message rather than returning `null`.
-
-Three details in `CollectionResult` are load-bearing:
-
-- **`isLoading` and `isFetching` are separate.** `isLoading` means there is nothing to
-  show yet; `isFetching` means a request is in flight, including a background refetch
-  over rows already on screen. Only `isFetching` is an honest input to `aria-busy`.
-- **Pagination costs one field, not a second code path.** A source that returns
-  everything at once reports `nextOffset: null`. There is no paginated variant of any
-  component.
-- **Collections only.** There is deliberately no `useRecord` and no `useMutation` — a
-  mutation shape invented before its first consumer is a shape that will be wrong.
-
-`createTanstackDataPort()` (`lib/tanstack-data-port`) implements `DataPort` over TanStack
-Query's infinite-query API. It is a separate module on purpose: the seam is the type, the
-adapter is one implementation, and that separation is what lets `@tanstack/react-query`
-stay an **optional** peer. A consumer on SWR, a websocket cache or a fixture port swaps
-the provider value and changes no component.
-
-The adapter is therefore the one public module excluded from the root barrel
-(`BARREL_EXCLUDED` in `scripts/generate-exports.mjs`). `src/index.ts` is a single module:
-a bundler tree-shakes *bindings* out of it, but still resolves every module it re-exports,
-so re-exporting the adapter would make `import { Button } from "@corbits/react-ui"` fail
-outright for anyone who did not install the optional peer. This is bundler-dependent —
-Node and Vite fail, Turbopack compiles it — so `dep-guard` walks the relative import graph
-from `src/index.ts` and fails if anything reachable from it imports an optional peer.
-
-## `use-collection-state`
-
-Every collection surface — a table, a list, a grid, a step rail — has the same four
-states. `useCollectionState(request)` collapses a `CollectionResult` into exactly that
-discriminated union and **renders nothing**.
-
-```ts
-type CollectionState<T> =
-  | { status: "loading" }
-  | { status: "error"; error: Error }
-  | { status: "empty" }
-  | { status: "ready"; items: readonly T[] };
-```
-
-The ordering is the whole machine: `isLoading` wins, then `error`, then an empty `items`,
-then ready. Getting it wrong is how a surface renders "no results" during a first load, or
-an empty state over a failed request. It renders nothing because the markup belongs to the
-surface; `isFetching`, `refetch`, `hasNextPage` and `fetchNextPage` pass through unchanged.
-
+imports a server package drags a database tree into a browser bundle. Data arrives as
+props — the host owns its own data layer, caching and pagination.
 ## `CommandPalette`
 
 `CommandPalette` is a global-search overlay with no idea what it is searching. It takes
@@ -215,30 +154,26 @@ validator yourself.
 
 ## Pieces, then one wrapper
 
-A composite surface — an inspector, a registry list, a step diagram — is built as small
-stateless pieces plus at most one composition wrapper. Each piece is its own file and its
-own export, takes everything through props, holds no state of its own, and renders on its
-own (`LiveRunHeader`, `LiveRunBanner`, `StepList`, `InspectorKv`, `InspectorPanelTitle`).
-The wrapper (`LiveRunInspector`) contains no markup the pieces do not already carry: it
-only decides which pieces render and in what order, so replacing one piece never means
-forking the wrapper. `WorkflowStatusBadge` is the same idea one level down — a `Badge`
-carrying a `StatusDot`, not a bespoke "status chip" component, because `Badge` and
-`StatusDot` already exist and composing them is cheaper than a third thing that does
-what the first two already do together.
+A composite surface — an inspector, a step rail, a chat thread — is built as small
+stateless pieces plus at most one composition wrapper. Each piece takes everything
+through props, holds no state of its own, and renders on its own (`LiveRunBanner`,
+`StepList`, `InspectorKv`, `InspectorPanelTitle`, `SidebarPanelBody`). A wrapper
+contains no markup the pieces do not already carry: it only decides which pieces
+render and in what order, so replacing one piece never means forking the wrapper.
 
 Behaviour and arithmetic split out the same way: a reusable behaviour becomes a headless
 hook in `src/hooks/` (`use-scroll-current-into-view` renders nothing and returns a ref),
-and layout math becomes plain functions in `src/lib/` (`step-graph-layout`, like
-`chart-geometry`, is numbers in and numbers out, checkable without rendering anything).
+and layout math becomes plain functions in `src/lib/` (`chart-geometry` is numbers in
+and numbers out, checkable without rendering anything).
 
 ## Layout
 
 | | |
 | --- | --- |
 | `src/ui/` | Components. Primitives, collection surfaces, shells, and the domain families. |
-| `src/lib/` | Non-component source: `utils`, the `DataPort` seam and its adapter, the per-domain shapes, and the internal chart palette and geometry. |
-| `src/hooks/` | 15 headless hooks: `use-collection-state`, `use-anchored-scroll`, `use-chat-dock`, `use-command-palette-navigation`, `use-controllable-state`, `use-delayed-autofocus`, `use-dismissable-popover`, `use-flip-transition`, `use-focus-trap`, `use-prefers-reduced-motion`, `use-render-rail`, `use-resizable-rail`, `use-scroll-current-into-view`, `use-sidebar-panel`, `use-view-mode`. |
-| `src/blocks/` | Multi-file compositions (`login`, `access-notice`, `canvas-host`). |
+| `src/lib/` | Non-component source: `utils`, the per-domain shapes, and the internal chart palette and geometry. |
+| `src/hooks/` | 7 headless hooks: `use-command-palette-navigation`, `use-controllable-state`, `use-delayed-autofocus`, `use-dismissable-popover`, `use-list-selection`, `use-prefers-reduced-motion`, `use-scroll-current-into-view`. |
+| `src/blocks/` | Multi-file compositions (`login`). |
 | `src/theme.css` | Tokens, keyframes, base layer. The only CSS source. |
 | `src/styles.css` | Two `@import`s. The entry Tailwind compiles into `dist/styles.css`. |
 | `src/index.ts` | The root barrel. **Generated** — do not edit. |
@@ -254,6 +189,13 @@ against five smells, done ahead of a fix pass (CL-5633). It is not a
 line-by-line review of every file; it is a targeted grep-and-read over the
 patterns below, cross-checked against what similar components in the
 library already do.
+
+This is a historical record of that pass. Several components it names —
+`TenantSelector`, `ThreadSwitcher`, `SubagentDock`, `OnboardingTour`,
+`DitherBackground`, `SidebarRail`, `StepSidebar`, `LiveRunInspector` and
+others — were removed later, when a consumer-usage audit pruned every module
+no known consumer imports. The findings and the standing rules they produced
+still apply to what remains.
 
 Every surveyed module is re-exported from the package root (`src/index.ts`),
 so "public surface" doesn't distinguish findings the way it might in an app —
@@ -307,9 +249,9 @@ Audited every array-of-object prop in `src/ui`/`src/blocks`
 `kind-card-grid`, `progress-checklist`, `step-list`, `horizontal-stepper`,
 and others). **No findings.** Every one of these is a collection-rendering
 component — a table row set, a step rail, a filter list — consistent with
-the `DataPort`/`use-collection-state` architecture above, where components
+the props-only data flow above, where components
 render data the host doesn't have pre-built React elements for (it has
-domain objects: a `Tenant`, a `WorkflowStep`, a `FilterSpec`). Slots are
+domain objects: a `WorkflowStep`, a `FilterSpec`). Slots are
 used elsewhere in the library exactly where the content genuinely is
 caller-arbitrary markup (`NotificationsBell`'s `children`, `AuthLayout`'s
 `panel`). Swapping a config-array prop for children in a collection
@@ -401,10 +343,9 @@ already in the tree.
 piece of state answers "is this open/collapsed/expanded" and a reasonable
 host might want to read or drive it — closing every other panel when one
 opens, restoring a collapsed sidebar from a saved preference — it's a prop
-pair: `open` + `onOpenChange`, or `collapsed` + `onToggle`. `Sidebar`,
-`StepSidebar` and `CanvasHost` set this precedent; `Dialog` and
-`CommandPalette` apply it to popups; `NotificationsBell`, `TenantSelector`,
-`ThreadSwitcher`, `ToolBlock` and `ToolNarrative` now do too, all
+pair: `open` + `onOpenChange`, or `collapsed` + `onToggle`. `Sidebar` sets
+this precedent; `Dialog` and `CommandPalette` apply it to popups;
+`NotificationsBell`, `ToolBlock` and `ToolNarrative` do too, all
 uncontrolled-by-default so adding the pair is never a breaking change. The
 exception is state a parent has no legitimate reason to want: `ActivityBlock`
 stays a native `<details>`, and a text-truncation toggle stays local. If
@@ -424,9 +365,8 @@ component whose job is to render caller-supplied content it has no opinion
 about (`NotificationsBell`'s `children`, `AuthLayout`'s `panel`) takes
 `children` or a named slot. A component whose job is to render a
 *collection* of the library's own domain shapes (a list of `WorkflowStep`, a
-list of `Tenant`) takes that collection as a data prop, the same way
-`DataPort` and `use-collection-state` already assume — that's what makes a
-table, a list and a step rail interchangeable consumers of one
+list of chat messages) takes that collection as a data prop — that's what
+makes a table, a list and a step rail interchangeable consumers of one
 loading/empty/error contract. Don't reach for a config-object prop as a
 substitute for either of these; if you're tempted to add one, first check
 whether the content is actually caller-arbitrary (make it `children`) or
@@ -436,12 +376,12 @@ shape).
 **Non-trivial imperative behavior lives in a headless hook, not the
 component body.** Event listeners, focus management, measurement, timers,
 keyboard handling — if two components would otherwise duplicate the same
-`useEffect`, that's the hook boundary. `use-focus-trap`,
-`use-command-palette-navigation`, `use-resizable-rail`,
-`use-dismissable-popover` and `use-prefers-reduced-motion` are the existing
-examples: each owns exactly the imperative part and returns refs/values, no
-markup. Before writing a second `addEventListener` pair that looks like one
-already in the tree, grep `src/hooks` first.
+`useEffect`, that's the hook boundary. `use-command-palette-navigation`,
+`use-dismissable-popover`, `use-prefers-reduced-motion` and
+`use-controllable-state` are the existing examples: each owns exactly the
+imperative part and returns refs/values, no markup. Before writing a second
+`addEventListener` pair that looks like one already in the tree, grep
+`src/hooks` first.
 
 **Every color comes from a token, with no unconditional literal fallback.**
 `src/theme.css` is the only place a hex, rgb or named color belongs. A
@@ -456,23 +396,19 @@ literal is by construction correct in at most one theme.
 global CSS rule handles every `transition-*`/`animate-*` utility for free —
 don't re-implement that check for a component using only CSS transitions.
 The rule doesn't reach `requestAnimationFrame` loops or imperative calls
-like `scrollIntoView`; those call `usePrefersReducedMotion()` (or, for
-something that needs its own live `MediaQueryList` listener mid-loop,
-follow `DitherBackground`'s pattern) rather than a one-shot
-`matchMedia(...).matches` read that goes stale the moment the OS setting
-changes.
+like `scrollIntoView`; those call `usePrefersReducedMotion()` rather than a
+one-shot `matchMedia(...).matches` read that goes stale the moment the OS
+setting changes.
 
 ## Known limits
 
-- **`DataPort` covers collections only.** Single-record reads and mutations are absent by
   decision, not by oversight.
 - **Tests exist but are partial.** `bun test` runs 338 tests co-located with their
   subjects (`src/**/*.test.tsx`), plus shared harnesses under `src/test/` — the
   measurable half of appearance (contrast, in both modes) is gated in the build,
   and a growing slice of behaviour is now covered by these, but most components
-  still have no test.
-- **A rendering gallery exists but is partial.** Ladle (`bun run stories`, `bun run
-  stories:build`) renders 52 stories under `stories/`; most of the ~150 components have
+  still have no test.- **A rendering gallery exists but is partial.** Ladle (`bun run stories`, `bun run
+  stories:build`) renders 42 stories under `stories/`; most of the ~90 components have
   none, so visual review of an uncovered component still means rendering the package
   inside a consumer app.
 - **The prebuilt stylesheet restyles the consuming page** — it carries Tailwind's

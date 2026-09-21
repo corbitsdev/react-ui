@@ -1,10 +1,10 @@
 # @corbits/react-ui
 
-React components for agent and workflow surfaces — chat, runs, schedules, artifacts, analytics, collections. Import one module at a time, or from the root barrel.
+React components for agent and workflow surfaces — chat, runs, artifacts, analytics, collections. Import one module at a time, or from the root barrel.
 
 ## Runtime support
 
-Node >= 24 consumes built `dist/`. Peers: `react` and `react-dom` (18 or 19), `lucide-react`, `sonner`, `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-slot`, `@radix-ui/react-tooltip`. `@tanstack/react-query` is an optional peer, needed only for `createTanstackDataPort()`.
+Node >= 24 consumes built `dist/`. Peers: `react` and `react-dom` (18 or 19), `lucide-react`, `sonner`, `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-slot`, `@radix-ui/react-tooltip`.
 
 ## Quickstart
 
@@ -29,39 +29,30 @@ import { Button } from "@corbits/react-ui/ui/button";
 <Button onClick={() => start()}>Run now</Button>
 ```
 
-Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from the root (`@corbits/react-ui`). One module is subpath-only: `@corbits/react-ui/lib/tanstack-data-port`, because it statically imports the optional `@tanstack/react-query` peer.
+Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from the root (`@corbits/react-ui`).
 
 ```tsx
 import "@corbits/react-ui/styles.css";
 
 import { Button } from "@corbits/react-ui/ui/button";
-import { DataTable } from "@corbits/react-ui/ui/data-table";
-import { DataPortProvider } from "@corbits/react-ui/lib/data-port";
-import { createTanstackDataPort } from "@corbits/react-ui/lib/tanstack-data-port";
+import { SortableTable } from "@corbits/react-ui/ui/sortable-table";
 
 type Run = { id: string; name: string; status: string };
 
-export function Runs() {
+export function Runs({ runs }: { readonly runs: readonly Run[] }) {
   return (
-    <DataPortProvider value={createTanstackDataPort()}>
-      <DataTable<Run>
+    <>
+      <SortableTable
         caption="Runs"
+        rows={runs}
         rowKey={(run) => run.id}
-        request={{
-          key: ["runs"],
-          pageSize: 50,
-          fetch: async ({ signal, offset, pageSize }) => {
-            const items: readonly Run[] = await api.runs({ signal, offset, pageSize });
-            return { items, nextOffset: null };
-          },
-        }}
         columns={[
-          { header: "Run", cell: (run) => run.name },
-          { header: "Status", cell: (run) => run.status },
+          { key: "name", header: "Run", cell: (run) => run.name },
+          { key: "status", header: "Status", cell: (run) => run.status },
         ]}
       />
       <Button onClick={() => api.start()}>Run now</Button>
-    </DataPortProvider>
+    </>
   );
 }
 ```
@@ -70,9 +61,9 @@ This package ships no `"use client"` directives. In a React Server Components ap
 
 ## How it works
 
-Components take data through a `DataPort` (or none). The root entry is re-exports only and the package is side-effect free aside from the CSS files, so either import style tree-shakes to what you used. Tokens and keyframes live in `theme.css`; `styles.css` is the prebuilt sheet for hosts that do not run Tailwind.
+Components never fetch — data arrives as props. The root entry is re-exports only and the package is side-effect free aside from the CSS files, so either import style tree-shakes to what you used. Tokens and keyframes live in `theme.css`; `styles.css` is the prebuilt sheet for hosts that do not run Tailwind.
 
-See [PRODUCT.md](./PRODUCT.md) for why this library exists, [ARCHITECTURE.md](./ARCHITECTURE.md) for the DataPort seam and the theme layer, and [IMPLEMENTATION.md](./IMPLEMENTATION.md) for toolchain and peers.
+See [PRODUCT.md](./PRODUCT.md) for why this library exists, [ARCHITECTURE.md](./ARCHITECTURE.md) for the no-fetch rule and the theme layer, and [IMPLEMENTATION.md](./IMPLEMENTATION.md) for toolchain and peers.
 
 ## Development
 

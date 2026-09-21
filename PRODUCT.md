@@ -22,8 +22,8 @@ It is not a design-system starter, not a CLI, and not a template app.
 - Import one module at a time (`@corbits/react-ui/ui/button`) or from the
   root barrel, and bundle only what they used.
 - Render collection surfaces against *their* data. Components never fetch.
-  Data arrives as props, or through a `DataPort` the host provides. Pieces
-  that take no collection need no port at all.
+  Data arrives as props. Pieces that take no collection need no extra
+  host wiring.
 - Style with a single prebuilt sheet (`@corbits/react-ui/styles.css`) and no
   Tailwind, or import `@corbits/react-ui/theme.css` into an existing Tailwind
   v4 build.
@@ -36,8 +36,7 @@ It is not a design-system starter, not a CLI, and not a template app.
 ## What it is not
 
 There is no CLI, no component generator, and no docs site. There is no
-server, no database, and no default backend. `@tanstack/react-query` is
-optional and only required if the host uses `createTanstackDataPort()`.
+server, no database, and no default backend.
 
 The prebuilt stylesheet is not inert: it restyles the consuming page
 (Tailwind preflight plus a base layer). Import it at the root of an app that

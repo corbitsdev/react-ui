@@ -10,8 +10,8 @@ export type LiveRunBannerProps = {
 /**
  * The one-line status strip above a live run's steps: awaiting gets the
  * accent tone that marks "this needs you" everywhere else in the registry,
- * running gets the info tone. Standalone from `LiveRunInspector` so a
- * consumer building its own run surface can reuse just this strip.
+ * running gets the info tone. Standalone so a consumer building its own run
+ * surface can reuse just this strip.
  */
 export function LiveRunBanner({ awaiting = false, message, elapsed, className }: LiveRunBannerProps) {
   return (

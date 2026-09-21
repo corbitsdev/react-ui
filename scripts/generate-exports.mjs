@@ -14,17 +14,16 @@
 // the root barrel*. A module that statically imports an optional peer
 // dependency cannot be re-exported from `index.ts`, because the barrel is one
 // module — importing anything from the root would load it and crash for every
-// consumer who did not install that peer. This is the whole reason the DataPort
-// seam and its TanStack adapter are separate files, and `dep-guard` enforces
-// the property independently.
+// consumer who did not install that peer. `dep-guard` enforces the property
+// independently.
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 const SRC = join(ROOT, "src");
 
-const INTERNAL = new Set(["lib/chart-geometry", "lib/step-graph-layout"]);
-const BARREL_EXCLUDED = new Set(["lib/tanstack-data-port"]);
+const INTERNAL = new Set(["lib/chart-geometry"]);
+const BARREL_EXCLUDED = new Set();
 
 const walk = (dir) =>
   readdirSync(dir).flatMap((entry) => {
