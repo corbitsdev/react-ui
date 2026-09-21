@@ -12,11 +12,19 @@ describe("DictationStatusLine", () => {
     expect(html).not.toContain("allow it");
   });
 
-  test("listening waveform uses the same success accent as MicButton", () => {
+  test("listening waveform uses a text-rated token, never a fill token", () => {
     const html = renderToStaticMarkup(
       createElement(DictationStatusLine, { state: "listening", levels: [0.4, 0.8] }),
     );
-    expect(html).toContain("text-success");
-    expect(html).not.toContain("text-primary-emphasis");
+    expect(html).toContain("text-ok");
+    expect(html).not.toContain("text-success");
+    expect(html).not.toContain("text-secondary");
+    expect(html).not.toContain("text-accent");
+  });
+
+  test("denied without an error message still announces the refusal", () => {
+    const html = renderToStaticMarkup(createElement(DictationStatusLine, { state: "denied" }));
+    expect(html).toContain('role="alert"');
+    expect(html).toContain("Microphone access was blocked.");
   });
 });

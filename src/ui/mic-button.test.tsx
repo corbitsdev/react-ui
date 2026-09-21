@@ -85,4 +85,33 @@ describe("MicButton", () => {
     starting.unmount();
     listening.unmount();
   });
+
+  test("denied announces a dialog, not a toggle", () => {
+    const denied = mount("denied", mock());
+
+    expect(denied.button().getAttribute("aria-pressed")).toBeNull();
+    expect(denied.button().getAttribute("aria-haspopup")).toBe("dialog");
+    expect(denied.button().getAttribute("aria-label")).toBe("Microphone blocked");
+
+    denied.unmount();
+  });
+
+  test("unsupported carries its own label", () => {
+    const unsupported = mount("unsupported", mock());
+
+    expect(unsupported.button().disabled).toBe(true);
+    expect(unsupported.button().getAttribute("aria-label")).toBe("Dictation unavailable");
+
+    unsupported.unmount();
+  });
+
+  test("mousedown does not steal focus from the field being dictated into", () => {
+    const { button, unmount } = mount("idle", mock());
+    const event = new MouseEvent("mousedown", { bubbles: true, cancelable: true });
+
+    button().dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    unmount();
+  });
 });

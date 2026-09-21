@@ -1,4 +1,4 @@
-import { Mic, Square } from "lucide-react";
+import { Mic, MicOff, Square } from "lucide-react";
 
 import { cn } from "../lib/utils.js";
 
@@ -13,6 +13,7 @@ export type MicButtonProps = {
 
 function labelFor(state: DictationState): string {
   if (state === "denied") return "Microphone blocked";
+  if (state === "unsupported") return "Dictation unavailable";
   if (state === "listening") return "Stop dictating";
   if (state === "starting") return "Starting microphone";
   return "Dictate instead of typing";
@@ -47,20 +48,27 @@ function labelFor(state: DictationState): string {
  */
 export function MicButton({ state, onToggle, disabled = false, className }: MicButtonProps) {
   const listening = state === "listening";
+  const denied = state === "denied";
   const unusable = disabled || state === "unsupported";
   const label = labelFor(state);
-  const Glyph = listening ? Square : Mic;
+  const Glyph = listening ? Square : denied ? MicOff : Mic;
 
   return (
     <button
       type="button"
-      aria-pressed={listening}
+      // Denied opens the permission dialog rather than toggling — declare the
+      // popup and drop the toggle semantic.
+      aria-pressed={denied ? undefined : listening}
+      aria-haspopup={denied ? "dialog" : undefined}
       aria-label={label}
-      title={label}
       disabled={unusable}
+      // Tapping the mic must not blur the field being dictated into — a field
+      // that commits on blur would lose the edit to its own microphone tap.
+      onMouseDown={(event) => event.preventDefault()}
       onClick={onToggle}
       className={cn(
-        "grid size-9 shrink-0 place-items-center rounded-md transition-colors disabled:opacity-40",
+        "grid size-9 shrink-0 place-items-center rounded-md transition-colors disabled:opacity-50",
+        !unusable && "active:brightness-95 motion-safe:active:scale-[0.97]",
         listening
           ? "bg-success text-success-foreground hover:bg-success/90"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",

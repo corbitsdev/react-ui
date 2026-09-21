@@ -48,6 +48,13 @@ contract — modules that are not exported are internal and may change in any re
   with the component. The `./ui/command` subpath is gone. `lib/command-registry`
   (and `CommandAction`) is also in the unconsumed prune above.
 
+### Added
+
+- **Voice/dictation family** — `ui/mic-button` (permission-state mic toggle),
+  `ui/voice-waveform` (level bars), `ui/dictation-status-line` (composer status
+  row) and `ui/mic-permission-dialog`. Presentational only: permission state,
+  levels and copy arrive as props; no `getUserMedia`/`SpeechRecognition` here.
+
 ## [0.1.0] - 2026-09-17
 
 Nothing has been published before this, so the list below is what the surface consists of

@@ -8,6 +8,8 @@ export type DictationStatusLineProps = {
   readonly levels?: readonly number[];
   /** Shown while `state` is `"starting"`. */
   readonly startingLabel?: string;
+  /** Shown while `state` is `"listening"`, before the waveform. */
+  readonly listeningLabel?: string;
   /** Shown while `state` is `"denied"`, in place of the waveform row. */
   readonly errorMessage?: string;
   readonly className?: string;
@@ -23,16 +25,16 @@ export function DictationStatusLine({
   state,
   levels = [],
   startingLabel = "Starting microphone…",
+  listeningLabel = "Listening:",
   errorMessage,
   className,
 }: DictationStatusLineProps) {
   if (state === "idle" || state === "unsupported") return null;
 
   if (state === "denied") {
-    if (!errorMessage) return null;
     return (
       <p role="alert" className={cn("text-xs text-destructive", className)}>
-        {errorMessage}
+        {errorMessage ?? "Microphone access was blocked."}
       </p>
     );
   }
@@ -47,8 +49,8 @@ export function DictationStatusLine({
 
   return (
     <p aria-live="polite" className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}>
-      <span>Listening:</span>
-      <VoiceWaveform levels={levels} className="text-success" />
+      <span>{listeningLabel}</span>
+      <VoiceWaveform levels={levels} className="text-ok" />
     </p>
   );
 }
