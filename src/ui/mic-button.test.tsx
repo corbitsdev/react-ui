@@ -12,7 +12,7 @@ function mount(state: DictationState, onToggle: () => void) {
     root.render(createElement(MicButton, { state, onToggle }));
   });
   return {
-    button: () => document.body.querySelector("button") as HTMLButtonElement,
+    button: () => container.querySelector("button") as HTMLButtonElement,
     unmount: () => {
       act(() => root.unmount());
       container.remove();
@@ -49,17 +49,40 @@ describe("MicButton", () => {
     unmount();
   });
 
-  test("denied matches the documented contract: disabled, onToggle does not fire", () => {
+  test("denied stays clickable so the host can open the permission dialog", () => {
     const onToggle = mock();
     const { button, unmount } = mount("denied", onToggle);
 
-    expect(button().disabled).toBe(true);
+    expect(button().disabled).toBe(false);
+    expect(button().getAttribute("aria-label")).toMatch(/blocked/i);
 
     act(() => {
       button().click();
     });
 
-    expect(onToggle).not.toHaveBeenCalled();
+    expect(onToggle).toHaveBeenCalledTimes(1);
     unmount();
+  });
+
+  test("listening uses a stop square and starting does not look like listening", () => {
+    const idle = mount("idle", mock());
+    const starting = mount("starting", mock());
+    const listening = mount("listening", mock());
+
+    expect(idle.button().getAttribute("aria-pressed")).toBe("false");
+    expect(starting.button().getAttribute("aria-pressed")).toBe("false");
+    expect(listening.button().getAttribute("aria-pressed")).toBe("true");
+
+    expect(idle.button().className).not.toContain("bg-success");
+    expect(starting.button().className).not.toContain("bg-success");
+    expect(listening.button().className).toContain("bg-success");
+
+    expect(idle.button().querySelector("svg")?.classList.contains("size-4")).toBe(true);
+    expect(starting.button().querySelector("svg")?.classList.contains("size-4")).toBe(true);
+    expect(listening.button().querySelector("svg")?.classList.contains("size-3.5")).toBe(true);
+
+    idle.unmount();
+    starting.unmount();
+    listening.unmount();
   });
 });

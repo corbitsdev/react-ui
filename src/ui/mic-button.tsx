@@ -1,4 +1,4 @@
-import { Mic } from "lucide-react";
+import { Mic, Square } from "lucide-react";
 
 import { cn } from "../lib/utils.js";
 
@@ -10,6 +10,13 @@ export type MicButtonProps = {
   readonly disabled?: boolean;
   readonly className?: string;
 };
+
+function labelFor(state: DictationState): string {
+  if (state === "denied") return "Microphone blocked";
+  if (state === "listening") return "Stop dictating";
+  if (state === "starting") return "Starting microphone";
+  return "Dictate instead of typing";
+}
 
 /**
  * A microphone toggle for dictation, presentational only.
@@ -32,14 +39,17 @@ export type MicButtonProps = {
  * };
  * ```
  *
- * `state` drives both the pressed look and the label: green while listening,
- * because a live microphone must never be ambiguous, and disabled while the
- * browser has refused permission or does not support dictation at all.
+ * `state` drives the pressed look, the glyph, and the label. Listening is
+ * green with a stop square so colour is never the only channel; starting
+ * stays the idle mic so it cannot be mistaken for a live capture.
+ * `unsupported` is disabled. `denied` stays clickable so the host can open
+ * `MicPermissionDialog` from `onToggle`.
  */
 export function MicButton({ state, onToggle, disabled = false, className }: MicButtonProps) {
-  const listening = state === "listening" || state === "starting";
-  const unusable = disabled || state === "unsupported" || state === "denied";
-  const label = listening ? "Stop dictating" : "Dictate instead of typing";
+  const listening = state === "listening";
+  const unusable = disabled || state === "unsupported";
+  const label = labelFor(state);
+  const Glyph = listening ? Square : Mic;
 
   return (
     <button
@@ -57,7 +67,7 @@ export function MicButton({ state, onToggle, disabled = false, className }: MicB
         className,
       )}
     >
-      <Mic className="size-4" aria-hidden />
+      <Glyph className={listening ? "size-3.5 fill-current" : "size-4"} aria-hidden />
     </button>
   );
 }
