@@ -47,6 +47,13 @@ contract — modules that are not exported are internal and may change in any re
   family deliberately leaves matching to the caller. `commandMatches` is gone
   with the component. The `./ui/command` subpath is gone. `lib/command-registry`
   (and `CommandAction`) is also in the unconsumed prune above.
+- **A classless root now follows `prefers-color-scheme`.** Under
+  `@media (prefers-color-scheme: dark)`, `:root` receives the dark tokens when neither
+  `.dark` nor `.light` is present — a host that toggled dark mode by adding and removing
+  `.dark` must now also add `.light` to `documentElement` for explicit light, or dark-OS
+  users will see dark anyway. `dark:` utilities still require a real `.dark` ancestor.
+  `ThemeProvider` writes `.light` for resolved-light mode, so hosts on the provider need
+  no change.
 
 ## [0.1.0] - 2026-09-17
 

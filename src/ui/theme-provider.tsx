@@ -70,8 +70,10 @@ export type ThemeProviderProps = {
   readonly defaultMode?: ThemeMode;
   readonly defaultPreset?: ThemePreset;
   /**
-   * Element that receives `.dark`, `data-theme`, and `color-scheme`.
-   * Defaults to `document.documentElement`.
+   * Element that receives `.dark`/`.light`, `data-theme`, and `color-scheme`.
+   * Defaults to `document.documentElement`. A scoped root still inherits the
+   * OS-following media query, which only inspects `:root` — explicit light on
+   * a dark-OS host requires `.light` on `documentElement` regardless.
    */
   readonly root?: Element | null;
 };

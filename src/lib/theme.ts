@@ -1,8 +1,11 @@
 /** Theme mode and preset resolution for ThemeProvider.
 
- * Dark mode is opt-in via a `.dark` class on an ancestor (see theme.css
- * `@custom-variant dark`). This module owns the pure resolution rules;
- * ThemeProvider applies them to the document and persists the choice.
+ * Dark mode is a `.dark` class on an ancestor, with an OS-following fallback
+ * when neither `.dark` nor `.light` is set (see theme.css — `@custom-variant
+ * dark` plus the `prefers-color-scheme` block). `.light` is the explicit
+ * opt-out and only works on `documentElement`. This module owns the pure
+ * resolution rules; ThemeProvider applies them to the document and persists
+ * the choice.
  */
 
 export type ThemeMode = "system" | "light" | "dark";

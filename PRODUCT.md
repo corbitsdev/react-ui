@@ -27,9 +27,11 @@ It is not a design-system starter, not a CLI, and not a template app.
 - Style with a single prebuilt sheet (`@corbits/react-ui/styles.css`) and no
   Tailwind, or import `@corbits/react-ui/theme.css` into an existing Tailwind
   v4 build.
-- Choose dark mode by putting a `dark` class on an ancestor. The stylesheet
-  reads that class; the host owns switching. Mounting `ThemeProvider` is
-  optional — persistence and named presets, not a requirement to go dark.
+- Choose dark mode by putting a `dark` class on an ancestor — or nothing at
+  all: with no class set, the stylesheet follows `prefers-color-scheme`.
+  `light` on `documentElement` is the explicit light opt-out. Mounting
+  `ThemeProvider` is optional — persistence and named presets, not a
+  requirement to go dark.
 - Mark their own React Server Components boundary. This package ships no
   `"use client"` directives.
 
