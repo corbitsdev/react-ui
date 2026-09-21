@@ -16,6 +16,12 @@ contract — modules that are not exported are internal and may change in any re
   now an explicit `panel` slot with no fallback — pass `<DitherCanvas />`,
   `<DitherBackground src={...} />`, or any other content. A caller that omitted `panel` to
   get the dither canvas for free now gets a bare panel instead.
+- **`ui/command` is removed.** `Command` was a second, weaker inline command surface next
+  to `CommandPaletteInline` — index-based keyboard navigation (which loses the highlighted
+  row when the list re-sorts under a keystroke) and self-filtering, where the palette
+  family deliberately leaves matching to the caller. `CommandAction` moves to
+  `lib/command-registry`, its only consumer; `commandMatches` is gone with the component.
+  Root-barrel imports of `CommandAction` still work; the `./ui/command` subpath is gone.
 
 ## [0.1.0] - 2026-09-17
 

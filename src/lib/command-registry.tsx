@@ -1,7 +1,19 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
-import type { CommandAction } from "../ui/command.js";
+/** One thing the user can do. */
+export type CommandAction = {
+  readonly id: string;
+  readonly label: string;
+  /** Section heading. Actions with no group render before any grouped ones. */
+  readonly group?: string;
+  /** Extra words that should find this action — synonyms, the old name for it. */
+  readonly keywords?: readonly string[];
+  readonly icon?: ReactNode;
+  /** Displayed hint like "⌘K". Purely a label; this file binds nothing. */
+  readonly shortcut?: string;
+  readonly run: () => void;
+};
 
 /**
  * Lets a page contribute commands to the palette without the palette importing

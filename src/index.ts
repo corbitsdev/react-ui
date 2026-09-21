@@ -82,7 +82,6 @@ export * from "./ui/chat-input.js";
 export * from "./ui/chat-panel.js";
 export * from "./ui/chat-thread.js";
 export * from "./ui/checkbox.js";
-export * from "./ui/command.js";
 export * from "./ui/command-palette.js";
 export * from "./ui/command-queue.js";
 export * from "./ui/compare-body.js";

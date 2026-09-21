@@ -394,10 +394,6 @@
       "types": "./dist/ui/checkbox.d.ts",
       "default": "./dist/ui/checkbox.js"
     },
-    "./ui/command": {
-      "types": "./dist/ui/command.d.ts",
-      "default": "./dist/ui/command.js"
-    },
     "./ui/command-palette": {
       "types": "./dist/ui/command-palette.d.ts",
       "default": "./dist/ui/command-palette.js"
