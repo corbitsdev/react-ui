@@ -38,7 +38,7 @@ export type MicButtonProps = {
  */
 export function MicButton({ state, onToggle, disabled = false, className }: MicButtonProps) {
   const listening = state === "listening" || state === "starting";
-  const unusable = disabled || state === "unsupported";
+  const unusable = disabled || state === "unsupported" || state === "denied";
   const label = listening ? "Stop dictating" : "Dictate instead of typing";
 
   return (

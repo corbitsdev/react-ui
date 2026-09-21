@@ -23,7 +23,7 @@ export function VoiceWaveform({ levels, className }: VoiceWaveformProps) {
   const reducedMotion = usePrefersReducedMotion();
 
   return (
-    <span className={cn("inline-flex h-4 items-center gap-px", className)}>
+    <span aria-hidden className={cn("inline-flex h-4 items-center gap-px", className)}>
       {levels.map((level, index) => (
         <i
           key={index}
