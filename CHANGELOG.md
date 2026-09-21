@@ -12,16 +12,41 @@ contract — modules that are not exported are internal and may change in any re
 
 ### Breaking changes since 0.1.0
 
+- **84 modules removed — every module no known consumer imports.** A usage audit across
+  the workbench, portal, scout and solutions-builder codebases showed these surfaces were
+  unreachable from any consumer, so they were deleted rather than carried as semver
+  promises. The removed clusters: the entire `DataPort` seam (`lib/data-port`,
+  `lib/tanstack-data-port`, `hooks/use-collection-state`) and its dependents
+  (`data-table`, `thread-list`, `command-queue`); the now-inbox surfaces (`mail-detail`,
+  `triage-pane`, `context-strip`, `activity-timeline`, `moment-walker`, `actor-summary`);
+  all scheduling (`schedule-*`, `run-once-flow`,
+  `recurrence-input`); the workflow registry (`workflow-registry-*`, `workflow-catalog`,
+  `workflow-dock`, `workflow-status-badge`); step-graph visualization (`step-graph`,
+  `step-graph-node`, `step-sidebar`, `step-primitives`, `lib/step-graph-layout`);
+  `subagent-dock`, `chat-dock` and `message-list`; the canvas/artifact-host surfaces
+  (`access-notice`, `canvas-host`, `canvas-host-chrome`, `generative-block-view`,
+  `artifact-detail`, `artifact-gallery`, `add-artifact-dialog`); and the unused
+  primitives and screens (`dial`, `pagination`, `radio-group`, `pulsing-ring`,
+  `dashboard`, `dashboard-section`, `whats-new`, `onboarding-tour`,
+  `reconnecting-overlay`, `stat-tile`, `delta-badge`, `count-table`, `heatmap`,
+  `kind-picker`, `toggle-list`, `managed-list`, `tenant-selector`, `thread-switcher`,
+  `section-nav`, `sidebar-rail`, `sidebar-section`, `read-block`, `render-rail`,
+  `failed-run-notice`, `live-run-header`, `live-run-inspector`, `time-range-control`,
+  `library-search-input`, `catalog-glyph`, `command`, `lib/command-registry`,
+  `dither-background`, and the hooks that only served them). `agent-turn` and
+  `activity-block` stayed — `chat-thread` uses them. The package is now 113
+  public modules. **`@tanstack/react-query` is no longer a peer dependency** —
+  nothing in the package imports it.
 - **`AuthLayout` no longer defaults its decorative panel to `DitherCanvas`.** The panel is
-  now an explicit `panel` slot with no fallback — pass `<DitherCanvas />`,
-  `<DitherBackground src={...} />`, or any other content. A caller that omitted `panel` to
-  get the dither canvas for free now gets a bare panel instead.
+  now an explicit `panel` slot with no fallback — pass `<DitherCanvas />` or any other
+  content. A caller that omitted `panel` to get the dither canvas for free now gets a
+  bare panel instead. (`DitherBackground` was among the removed modules.)
 - **`ui/command` is removed.** `Command` was a second, weaker inline command surface next
   to `CommandPaletteInline` — index-based keyboard navigation (which loses the highlighted
   row when the list re-sorts under a keystroke) and self-filtering, where the palette
-  family deliberately leaves matching to the caller. `CommandAction` moves to
-  `lib/command-registry`, its only consumer; `commandMatches` is gone with the component.
-  Root-barrel imports of `CommandAction` still work; the `./ui/command` subpath is gone.
+  family deliberately leaves matching to the caller. `commandMatches` is gone
+  with the component. The `./ui/command` subpath is gone. `lib/command-registry`
+  (and `CommandAction`) is also in the unconsumed prune above.
 
 ## [0.1.0] - 2026-09-17
 

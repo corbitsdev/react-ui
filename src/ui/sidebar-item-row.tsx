@@ -15,9 +15,8 @@ export type SidebarItemRowProps = {
   readonly selected?: boolean;
   /**
    * Set right before removing the row from its list, and keep it mounted for
-   * one more frame (~150ms) so `corbits-row-out` gets to play. `use-sidebar-
-   * panel` does not manage this — list membership is the consumer's data,
-   * not the panel's.
+   * one more frame (~150ms) so the leave transition gets to play. List
+   * membership is the consumer's data — nothing here manages it for you.
    */
   readonly leaving?: boolean;
   readonly onSelect?: () => void;

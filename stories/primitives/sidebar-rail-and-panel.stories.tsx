@@ -1,84 +1,30 @@
-import { Activity, Bell, Hash, Lock, MessagesSquare, Pin, Settings, User, Users, Workflow } from "lucide-react";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { Hash, MessagesSquare, Pin, Settings, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { useSidebarPanel } from "../../src/hooks/use-sidebar-panel.js";
 import { formatRelativeTime } from "../../src/lib/relative-time.js";
 import { Badge } from "../../src/ui/badge.js";
 import { SidebarItemRow } from "../../src/ui/sidebar-item-row.js";
 import { SidebarPanel, SidebarPanelBody, SidebarPanelFooter, SidebarPanelHeader, SidebarPanelPins } from "../../src/ui/sidebar-panel.js";
-import { SidebarRail, type SidebarRailItem } from "../../src/ui/sidebar-rail.js";
-import { SidebarPanelSection } from "../../src/ui/sidebar-section.js";
 import { StatusDot } from "../../src/ui/status-dot.js";
 
-export default { title: "Primitives / Sidebar rail + panel" };
+export default { title: "Primitives / Sidebar panel" };
 
-// `data-ctx-target` on "channels" demonstrates a consumer attaching its own
-// targeting attribute (a tour, a spotlight) to a specific rail item — passed
-// straight through by SidebarRail to the rendered <button>.
-const PAGES: readonly SidebarRailItem[] = [
-  { id: "channels", label: "Channels", icon: <Hash />, "data-ctx-target": "rail-channels" },
-  { id: "routines", label: "Routines", icon: <Workflow /> },
-  { id: "activity", label: "Activity", icon: <Activity />, badge: <StatusDot label="3 unread" tone="emphasis" size="xs" /> },
-];
-
-/**
- * Composition contract, demonstrated: an app owns `SidebarRail`'s `items` and
- * `activeId`/`onSelect`, and swaps what it renders inside `SidebarPanel`
- * based on that same `activeId` — `useSidebarPanel({ activePageId })` is what
- * hands back the `panelKey`/`panelTransitionClassName` pair that replays the
- * page-swap animation when the app does.
- */
-function TwoColumnShell({ page, onPageChange, children }: { page: string; onPageChange: (id: string) => void; children: ReactNode }) {
-  const { panelKey, panelTransitionClassName } = useSidebarPanel({ activePageId: page });
+export const ChannelsPanel = () => {
+  const [selectedId, setSelectedId] = useState("general");
 
   return (
     <div className="flex h-[520px] overflow-hidden rounded-lg border border-border">
-      <SidebarRail
-        items={PAGES}
-        activeId={page}
-        onSelect={onPageChange}
-        footer={
-          <>
-            <button type="button" aria-label="Notifications" className="grid size-10 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
-              <Bell className="size-5" aria-hidden />
-            </button>
-            <button type="button" aria-label="Corbits Bench, signed in as Dana" className="grid size-10 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
-              <User className="size-5" aria-hidden />
-            </button>
-          </>
-        }
-      />
-      <SidebarPanel key={panelKey} className={panelTransitionClassName}>
-        {children}
-      </SidebarPanel>
-    </div>
-  );
-}
-
-export const ChannelsPanel = () => {
-  const [page, setPage] = useState("channels");
-  const { selectedId, select, isSectionCollapsed, toggleSection } = useSidebarPanel({ activePageId: page });
-
-  return (
-    <TwoColumnShell page={page} onPageChange={setPage}>
-      <SidebarPanelHeader title="Channels" action={<Settings className="size-4 text-muted-foreground" aria-hidden />} />
-      <SidebarPanelPins>
-        <SidebarPanelSection label="Pinned">
+      <SidebarPanel>
+        <SidebarPanelHeader title="Channels" action={<Settings className="size-4 text-muted-foreground" aria-hidden />} />
+        <SidebarPanelPins>
           <SidebarItemRow
             leading={<Pin className="text-muted-foreground" />}
             name="#launch-week"
             selected={selectedId === "launch-week"}
-            onSelect={() => select("launch-week")}
+            onSelect={() => setSelectedId("launch-week")}
           />
-        </SidebarPanelSection>
-      </SidebarPanelPins>
-      <SidebarPanelBody>
-        <SidebarPanelSection
-          label="Channels"
-          onAdd={() => undefined}
-          collapsed={isSectionCollapsed("channels")}
-          onToggleCollapse={() => toggleSection("channels")}
-        >
+        </SidebarPanelPins>
+        <SidebarPanelBody>
           {[
             { id: "general", name: "general", unread: true },
             { id: "eng", name: "eng", unread: false },
@@ -91,39 +37,25 @@ export const ChannelsPanel = () => {
               unread={channel.unread}
               meta={channel.unread ? <Badge tone="accent">3</Badge> : undefined}
               selected={selectedId === channel.id}
-              onSelect={() => select(channel.id)}
+              onSelect={() => setSelectedId(channel.id)}
             />
           ))}
-        </SidebarPanelSection>
-
-        <SidebarPanelSection
-          label="Direct messages"
-          collapsed={isSectionCollapsed("dms")}
-          onToggleCollapse={() => toggleSection("dms")}
-        >
           <SidebarItemRow
             leading={<MessagesSquare className="text-muted-foreground" />}
             name="Priya Shah"
             meta={<StatusDot label="Online" tone="emphasis" size="xs" />}
             selected={selectedId === "priya"}
-            onSelect={() => select("priya")}
+            onSelect={() => setSelectedId("priya")}
           />
-          <SidebarItemRow
-            leading={<MessagesSquare className="text-muted-foreground" />}
-            name="Marcus Webb"
-            meta={<StatusDot label="Away" tone="neutral" size="xs" />}
-            selected={selectedId === "marcus"}
-            onSelect={() => select("marcus")}
-          />
-        </SidebarPanelSection>
-      </SidebarPanelBody>
-      <SidebarPanelFooter>
-        <button type="button" className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted">
-          <Users className="size-4" aria-hidden />
-          Invite people
-        </button>
-      </SidebarPanelFooter>
-    </TwoColumnShell>
+        </SidebarPanelBody>
+        <SidebarPanelFooter>
+          <button type="button" className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted">
+            <Users className="size-4" aria-hidden />
+            Invite people
+          </button>
+        </SidebarPanelFooter>
+      </SidebarPanel>
+    </div>
   );
 };
 
@@ -134,8 +66,7 @@ type RoutineRun = { readonly id: string; readonly name: string; readonly started
  * plays `corbits-row-in` on mount, and the oldest run is marked `leaving`
  * for one frame — playing `corbits-row-out` — before it is actually dropped.
  */
-export const RoutinesActivity = () => {
-  const [page] = useState("routines");
+export const LiveRows = () => {
   const [now, setNow] = useState(() => Date.now());
   const [runs, setRuns] = useState<readonly RoutineRun[]>([
     { id: "r1", name: "Nightly digest", startedAt: new Date(Date.now() - 45_000).toISOString() },
@@ -156,10 +87,10 @@ export const RoutinesActivity = () => {
   }, []);
 
   return (
-    <TwoColumnShell page={page} onPageChange={() => undefined}>
-      <SidebarPanelHeader title="Routines activity" />
-      <SidebarPanelBody>
-        <SidebarPanelSection label="Running now">
+    <div className="flex h-[520px] overflow-hidden rounded-lg border border-border">
+      <SidebarPanel>
+        <SidebarPanelHeader title="Routines activity" />
+        <SidebarPanelBody>
           {runs.map((run) => (
             <SidebarItemRow
               key={run.id}
@@ -169,55 +100,8 @@ export const RoutinesActivity = () => {
               leaving={run.leaving}
             />
           ))}
-        </SidebarPanelSection>
-      </SidebarPanelBody>
-    </TwoColumnShell>
-  );
-};
-
-/**
- * `--sidebar-row-radius`/`--sidebar-row-selected-bg` are the row's own restyle
- * points — a consumer sets them once on a scoping element and every row under
- * it reads the override, no specificity fight with the Tailwind utility the
- * row ships with by default.
- */
-export const CustomRowTokens = () => {
-  const [page] = useState("channels");
-  const { selectedId, select } = useSidebarPanel({ activePageId: page });
-
-  return (
-    <div style={{ "--sidebar-row-radius": "0px", "--sidebar-row-selected-bg": "color-mix(in srgb, var(--destructive) 12%, transparent)" } as CSSProperties}>
-      <TwoColumnShell page={page} onPageChange={() => undefined}>
-        <SidebarPanelHeader title="Channels" />
-        <SidebarPanelBody>
-          <SidebarPanelSection label="Channels">
-            <SidebarItemRow leading={<Hash className="text-muted-foreground" />} name="general" selected={selectedId === "general"} onSelect={() => select("general")} />
-            <SidebarItemRow leading={<Hash className="text-muted-foreground" />} name="eng" selected={selectedId === "eng"} onSelect={() => select("eng")} />
-          </SidebarPanelSection>
         </SidebarPanelBody>
-      </TwoColumnShell>
+      </SidebarPanel>
     </div>
-  );
-};
-
-export const PinsSection = () => {
-  const [page] = useState("activity");
-  const { selectedId, select } = useSidebarPanel({ activePageId: page });
-
-  return (
-    <TwoColumnShell page={page} onPageChange={() => undefined}>
-      <SidebarPanelHeader title="Activity" />
-      <SidebarPanelPins>
-        <SidebarPanelSection label="Pins">
-          <SidebarItemRow leading={<Pin className="text-primary-emphasis" />} name="Q3 roadmap" selected={selectedId === "roadmap"} onSelect={() => select("roadmap")} />
-          <SidebarItemRow leading={<Pin className="text-primary-emphasis" />} name="Incident #482" meta={<Badge tone="danger">Open</Badge>} selected={selectedId === "incident"} onSelect={() => select("incident")} />
-        </SidebarPanelSection>
-      </SidebarPanelPins>
-      <SidebarPanelBody>
-        <SidebarPanelSection label="Recent">
-          <SidebarItemRow leading={<Lock className="text-muted-foreground" />} name="Access review" onSelect={() => select("access-review")} />
-        </SidebarPanelSection>
-      </SidebarPanelBody>
-    </TwoColumnShell>
   );
 };

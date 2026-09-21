@@ -1,20 +1,13 @@
-// Three import rules that types alone cannot enforce. Each one is a property a
+// Two import rules that types alone cannot enforce. Each one is a property a
 // consumer would feel and no other step in the build would notice.
 //
 // 1. Nothing imports from @workbench/*. corbits-ui is a clean rewrite; a single
 //    leaked import would drag the old package back in.
 //
-// 2. Only lib/tanstack-data-port.ts imports @tanstack/react-query. That module
-//    is one implementation of the DataPort seam, and keeping it the sole
-//    importer is what lets the query library stay an *optional* peer
-//    dependency.
-//
-// 3. Nothing reachable from the root barrel imports an optional peer. This is
-//    rule 2's real point, and rule 2 alone does not cover it: the barrel is a
-//    single module, so re-exporting the adapter from index.ts loads it on *any*
-//    root import and crashes for every consumer who did not install the peer —
-//    while rule 2 stays green, because the adapter is still the only file with
-//    the import. That is exactly the bug this rule was added to catch.
+// 2. Nothing reachable from the root barrel imports an optional peer. The
+//    barrel is a single module, so re-exporting a module that statically
+//    imports an optional peer loads it on *any* root import and crashes for
+//    every consumer who did not install that peer.
 //
 //    Only Node and Vite surface it; a Turbopack consumer builds cleanly, so
 //    this cannot be left to whichever bundler the person testing happened to
@@ -24,15 +17,10 @@ import { dirname, join, relative, resolve } from "node:path";
 
 const ROOT = new URL("../src", import.meta.url).pathname;
 
-const OPTIONAL_PEERS = ["@tanstack/react-query"];
+const OPTIONAL_PEERS = [];
 
 const RULES = [
   { label: "@workbench/*", pattern: /["'](@workbench\/[^"']*)["']/g, allow: () => false },
-  {
-    label: "@tanstack/react-query",
-    pattern: /["'](@tanstack\/react-query)["']/g,
-    allow: (file) => file === "lib/tanstack-data-port.ts",
-  },
 ];
 
 const walk = (dir) =>
@@ -45,7 +33,7 @@ const sources = walk(ROOT).filter((path) => /\.tsx?$/.test(path));
 const read = (path) => readFileSync(path, "utf8");
 const id = (path) => relative(ROOT, path);
 
-// --- Rules 1 and 2: who imports what ---------------------------------------
+// --- Rule 1: who imports what ----------------------------------------------
 
 const violations = sources.flatMap((path) => {
   const source = read(path);
@@ -54,7 +42,7 @@ const violations = sources.flatMap((path) => {
   );
 });
 
-// --- Rule 3: what the root barrel drags in ---------------------------------
+// --- Rule 2: what the root barrel drags in ---------------------------------
 
 /** Source paths reachable from `entry` through relative imports. */
 function reachableFrom(entry) {

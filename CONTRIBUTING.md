@@ -12,8 +12,8 @@ bun install
 bun run build
 ```
 
-There is no database and no backend. If a change needs one, it belongs behind the
-`DataPort` seam, not in a component.
+There is no database and no backend. If a change needs one, it belongs in the
+consumer's data layer, not in a component — data arrives as props.
 
 ## Gates
 
@@ -48,25 +48,23 @@ the build gate does not cover them. Record the result in the change.
 
 ## The dep-guard
 
-`scripts/dep-guard.mjs` walks every `.ts` / `.tsx` under `src/` and enforces three rules.
+`scripts/dep-guard.mjs` walks every `.ts` / `.tsx` under `src/` and enforces two rules.
 The forbidden strings are named here deliberately — a guard whose forbidden string is a
 secret is a guard nobody can comply with.
 
 1. **No `@workbench/*`.** A published file that imports an unpublished scope is
    uninstallable for everyone outside the project that defines it, and the failure lands
    in the *consumer's* install, where they cannot fix it.
-2. **Only `lib/tanstack-data-port.ts` imports `@tanstack/react-query`.** That is what lets
-   the query library be an *optional* peer dependency.
-3. **Nothing reachable from the root barrel imports an optional peer.** Rule 2 alone does
-   not cover this: re-exporting the adapter from `src/index.ts` keeps rule 2 green while
-   making the optional peer mandatory for every root import.
+2. **Nothing reachable from the root barrel imports an optional peer.** Re-exporting a
+   module that statically imports an optional peer makes that peer mandatory for every
+   root import, so such a module must be kept out of the barrel (`BARREL_EXCLUDED`).
 
 The same rule, not machine-checked, applies to server-side packages: a component must
 never import one. They carry database drivers, and pulling one into a browser bundle is a
-category error. Data reaches a component through props or a `DataPort`.
+category error. Data reaches a component through props.
 
-Wanting to relax any of this is the signal to widen the `DataPort` or add a prop — never
-to import your way around it.
+Wanting to relax any of this is the signal to add a prop — never to import your way
+around it.
 
 ## Adding a component
 
