@@ -123,6 +123,7 @@ describe("useDismissablePopover", () => {
 
   describe("controlled/uncontrolled transition warning", () => {
     let errorSpy: ReturnType<typeof mock>;
+    const originalError = console.error;
 
     beforeEach(() => {
       errorSpy = mock(() => {});
@@ -130,8 +131,7 @@ describe("useDismissablePopover", () => {
     });
 
     afterEach(() => {
-      // @ts-expect-error restoring the built-in after stubbing it above
-      delete console.error;
+      console.error = originalError;
     });
 
     test("logs once when an uncontrolled caller starts passing open", () => {
@@ -142,5 +142,9 @@ describe("useDismissablePopover", () => {
       expect(errorSpy.mock.calls[0]?.[0]).toContain("useDismissablePopover");
       handle.unmount();
     });
+  });
+
+  test("console.error is a function after warning spies restore", () => {
+    expect(typeof console.error).toBe("function");
   });
 });

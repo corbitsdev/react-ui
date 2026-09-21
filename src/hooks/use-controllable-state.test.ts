@@ -67,6 +67,7 @@ describe("useControllableState", () => {
 
   describe("controlled/uncontrolled transition warning", () => {
     let errorSpy: ReturnType<typeof mock>;
+    const originalError = console.error;
 
     beforeEach(() => {
       errorSpy = mock(() => {});
@@ -74,8 +75,7 @@ describe("useControllableState", () => {
     });
 
     afterEach(() => {
-      // @ts-expect-error restoring the built-in after stubbing it above
-      delete console.error;
+      console.error = originalError;
     });
 
     test("logs once when an uncontrolled caller starts passing a value", () => {
@@ -106,5 +106,9 @@ describe("useControllableState", () => {
       handle.unmount();
       controlled.unmount();
     });
+  });
+
+  test("console.error is a function after warning spies restore", () => {
+    expect(typeof console.error).toBe("function");
   });
 });
