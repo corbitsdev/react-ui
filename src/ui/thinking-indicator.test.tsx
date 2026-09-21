@@ -22,4 +22,16 @@ describe("ThinkingIndicator", () => {
       expect(html).toContain(`corbits-thinking-${variant}`);
     }
   });
+
+  test("paused freezes every animated node", () => {
+    const html = renderToStaticMarkup(createElement(ThinkingMark, { paused: true }));
+
+    expect(html).toContain("animation-play-state:paused");
+  });
+
+  test("echo hides its second wave under reduced motion", () => {
+    const html = renderToStaticMarkup(createElement(ThinkingMark, { variant: "echo" }));
+
+    expect(html).toContain("motion-reduce:hidden");
+  });
 });

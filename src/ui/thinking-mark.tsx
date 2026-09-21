@@ -52,7 +52,9 @@ export function ThinkingMark({ variant = "silk", paused = false, className, styl
           {variant === "strata" && <rect className="corbits-thinking-strata [animation:corbits-thinking-rise_3.2s_cubic-bezier(.3,0,.3,1)_infinite]" x="0" y="-12" width="100" height="33" fill={`url(#${gradient})`} />}
           {variant === "echo" && <>
             <circle className="corbits-thinking-echo origin-[62px_9px] [animation:corbits-thinking-wave_3.6s_cubic-bezier(.15,.3,.3,1)_infinite]" cx="62" cy="9" r="80" fill={`url(#${gradient})`} />
-            <circle className="corbits-thinking-echo origin-[62px_9px] [animation:corbits-thinking-wave_3.6s_cubic-bezier(.15,.3,.3,1)_infinite] [animation-delay:-1.8s] motion-reduce:hidden" cx="62" cy="9" r="80" fill={`url(#${gradient})`} />
+            {/* The delay lives inside the shorthand — a separate animation-delay
+                utility can be reset by the shorthand's own emission order. */}
+            <circle className="corbits-thinking-echo origin-[62px_9px] motion-reduce:hidden [animation:corbits-thinking-wave_3.6s_cubic-bezier(.15,.3,.3,1)_-1.8s_infinite]" cx="62" cy="9" r="80" fill={`url(#${gradient})`} />
           </>}
         </mask>
       </defs>
