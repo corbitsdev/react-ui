@@ -10,7 +10,7 @@ import {
   serializeThemePreference,
 } from "./theme.js";
 
-const theme = readFileSync(join(import.meta.dir, "../src/theme.css"), "utf-8");
+const theme = readFileSync(join(import.meta.dir, "../theme.css"), "utf-8");
 
 /** Body of the first `{ ... }` after `needle`, respecting nested braces. */
 function ruleBodyAfter(css: string, needle: string): string {
