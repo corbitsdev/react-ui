@@ -191,10 +191,6 @@
       "types": "./dist/lib/workflow-run-progress.d.ts",
       "default": "./dist/lib/workflow-run-progress.js"
     },
-    "./ui/activity-block": {
-      "types": "./dist/ui/activity-block.d.ts",
-      "default": "./dist/ui/activity-block.js"
-    },
     "./ui/agent-turn": {
       "types": "./dist/ui/agent-turn.d.ts",
       "default": "./dist/ui/agent-turn.js"
@@ -414,6 +410,10 @@
     "./ui/quote-card": {
       "types": "./dist/ui/quote-card.d.ts",
       "default": "./dist/ui/quote-card.js"
+    },
+    "./ui/reasoning-block": {
+      "types": "./dist/ui/reasoning-block.d.ts",
+      "default": "./dist/ui/reasoning-block.js"
     },
     "./ui/research-body": {
       "types": "./dist/ui/research-body.d.ts",

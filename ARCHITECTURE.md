@@ -219,6 +219,7 @@ in `useState` with no way for a parent to read or drive it.
 | `NotificationsBell` | `src/ui/notifications-bell.tsx` | 1 importer | **Fixed** — added optional `open`/`onOpenChange` |
 | `TenantSelector` | `src/ui/tenant-selector.tsx` | 1 importer | **Fixed** — added optional `open`/`onOpenChange` |
 | `ThreadSwitcher` | `src/ui/thread-switcher.tsx` | 1 importer | **Fixed** — added optional `open`/`onOpenChange` |
+| `ReasoningBlock` (was `ActivityBlock`) | `src/ui/reasoning-block.tsx` | 1 importer | **Fixed** — added optional `open`/`onOpenChange` over the native `<details>` |
 | `SubagentDock` (per-row disclosure) | `src/ui/subagent-dock.tsx` | 1 importer | Deferred — lifting it means a parent tracking one open flag per subagent row (a map, not a boolean); a bigger surface change than this pass covers |
 
 All five fixes are additive: `open`/`onOpenChange` are optional, and the
@@ -227,10 +228,7 @@ calls these components today changes behavior.
 
 A few more components hold local `open`/`expanded`-shaped state and were
 checked against the same bar, but don't belong on the fix list:
-`ActivityBlock` is backed by a native `<details>` on purpose (see its own
-doc comment) — the browser supplies the disclosure semantics, keyboard
-behavior and find-in-page expansion, which making it controlled would mean
-re-deriving by hand. `ApprovalCard`'s per-detail "show more" is a text
+`ApprovalCard`'s per-detail "show more" is a text
 truncation toggle, not a layout region — nobody outside the row has a reason
 to know or set it. `ConfirmButton`'s `armed` state is already documented as
 deliberately uncontrolled (`defaultArmed` only seeds the initial value).
@@ -347,8 +345,8 @@ pair: `open` + `onOpenChange`, or `collapsed` + `onToggle`. `Sidebar` sets
 this precedent; `Dialog` and `CommandPalette` apply it to popups;
 `NotificationsBell`, `ToolBlock` and `ToolNarrative` do too, all
 uncontrolled-by-default so adding the pair is never a breaking change. The
-exception is state a parent has no legitimate reason to want: `ActivityBlock`
-stays a native `<details>`, and a text-truncation toggle stays local. If
+exception is state a parent has no legitimate reason to want: a
+text-truncation toggle stays local. If
 you're unsure which side of that line something is on, ask "would a real
 caller ever need to read or set this from outside" — not "could they."
 

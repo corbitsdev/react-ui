@@ -13,64 +13,72 @@ function mount(props: ComponentProps<typeof ReasoningBlock>) {
     root.render(createElement(ReasoningBlock, props));
   });
   return {
-    button: () => container.querySelector("button") as HTMLButtonElement,
-    region: () => container.querySelector('[role="region"]'),
+    details: () => container.querySelector("details"),
+    summary: () => container.querySelector("summary"),
+    body: () => container.querySelector("details > p"),
     unmount: () => act(() => root.unmount()),
   };
 }
 
 describe("ReasoningBlock", () => {
   test("renders nothing for empty reasoning text", () => {
-    const { button, unmount } = mount({ text: "   " });
-    expect(button()).toBeNull();
+    const { details, unmount } = mount({ text: "   " });
+    expect(details()).toBeNull();
     unmount();
   });
 
-  test("is collapsed by default and toggles open on click", () => {
-    const { button, region, unmount } = mount({ text: "Weighing two options." });
-    expect(button().getAttribute("aria-expanded")).toBe("false");
-    expect(region()).toBeNull();
+  test("is collapsed by default and opens via the details toggle", () => {
+    const { details, summary, body, unmount } = mount({ text: "Weighing two options." });
+    expect(details()?.hasAttribute("open")).toBe(false);
+    expect(body()).toBeTruthy();
 
+    const el = details() as HTMLDetailsElement;
     act(() => {
-      button().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      el.open = true;
+      el.dispatchEvent(new Event("toggle"));
     });
 
-    expect(button().getAttribute("aria-expanded")).toBe("true");
-    expect(region()?.textContent).toBe("Weighing two options.");
+    expect(details()?.hasAttribute("open")).toBe(true);
+    expect(body()?.textContent).toBe("Weighing two options.");
+    expect(summary()).toBeTruthy();
     unmount();
   });
 
   test("shows the duration label once idle, and \"Thinking…\" while streaming", () => {
     const idle = mount({ text: "Done thinking.", durationLabel: "Thought for 4s" });
-    expect(idle.button().textContent).toBe("Thought for 4s");
+    expect(idle.summary()?.textContent).toBe("Thought for 4s");
     idle.unmount();
 
     const streaming = mount({ text: "Still going.", streaming: true, durationLabel: "Thought for 4s" });
-    expect(streaming.button().textContent).toBe("Thinking…");
+    expect(streaming.summary()?.textContent).toBe("Thinking…");
     streaming.unmount();
   });
 
   test("idle without a duration label uses Thinking, not a cute fallback", () => {
     const idle = mount({ text: "Done thinking." });
-    expect(idle.button().textContent).toBe("Thinking");
-    expect(idle.button().textContent).not.toContain("Thought about this");
+    expect(idle.summary()?.textContent).toBe("Thinking");
+    expect(idle.summary()?.textContent).not.toContain("Thought about this");
     idle.unmount();
   });
 
-  test("two mounted blocks have distinct region ids matching their toggles", () => {
-    const first = mount({ text: "First thought.", defaultOpen: true });
-    const second = mount({ text: "Second thought.", defaultOpen: true });
+  test("controlled open state reports toggles through onOpenChange", () => {
+    let seen: boolean | undefined;
+    const { details, unmount } = mount({
+      text: "Controlled.",
+      open: true,
+      onOpenChange: (next) => {
+        seen = next;
+      },
+    });
+    expect(details()?.hasAttribute("open")).toBe(true);
 
-    const firstControls = first.button().getAttribute("aria-controls");
-    const secondControls = second.button().getAttribute("aria-controls");
+    const el = details() as HTMLDetailsElement;
+    act(() => {
+      el.open = false;
+      el.dispatchEvent(new Event("toggle"));
+    });
 
-    expect(firstControls).toBeTruthy();
-    expect(secondControls).toBeTruthy();
-    expect(firstControls).not.toBe(secondControls);
-    expect(first.region()?.id ?? null).toBe(firstControls);
-    expect(second.region()?.id ?? null).toBe(secondControls);
-
-    first.unmount();
-    second.unmount();
+    expect(seen).toBe(false);
+    unmount();
   });
 });

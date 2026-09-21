@@ -37,6 +37,10 @@ contract — modules that are not exported are internal and may change in any re
   `activity-block` stayed — `chat-thread` uses them. The package is now 113
   public modules. **`@tanstack/react-query` is no longer a peer dependency** —
   nothing in the package imports it.
+- **`ActivityBlock` is renamed `ReasoningBlock`** (module `reasoning-block`),
+  aligned with `reasoningText()` naming. The prop `working` is now `streaming`,
+  and it gains `durationLabel` plus the optional `open`/`onOpenChange`
+  controlled pair while staying a native `<details>`.
 - **`AuthLayout` no longer defaults its decorative panel to `DitherCanvas`.** The panel is
   now an explicit `panel` slot with no fallback — pass `<DitherCanvas />` or any other
   content. A caller that omitted `panel` to get the dither canvas for free now gets a
