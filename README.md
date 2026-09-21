@@ -1,67 +1,39 @@
 # @corbits/react-ui
 
-React components for agent and workflow surfaces — chat, runs, schedules, artifacts,
-analytics, collections. 197 modules, importable one at a time.
-
-Licensed LGPL-2.1-only (see `LICENSE`).
+React components for agent and workflow surfaces — chat, runs, schedules, artifacts, analytics, collections. Import one module at a time, or from the root barrel.
 
 ## Install
 
-Not published to npm yet. Requires Node.js 24 LTS or later.
-
+Requires Node 24+.
 
 ```bash
-bun add github:corbitsdev/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-slot @radix-ui/react-tooltip
+npm install @corbits/react-ui
+pnpm add @corbits/react-ui
+yarn add @corbits/react-ui
+bun add @corbits/react-ui
 ```
 
-Until a registry publish, `npm install @corbits/react-ui` (and the pnpm/yarn/bun
-registry equivalents) 404. Git is the install path.
+Peers: `react` and `react-dom` (18 or 19), `lucide-react`, `sonner`, `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-slot`, `@radix-ui/react-tooltip`. `@tanstack/react-query` is an optional peer, needed only for `createTanstackDataPort()`.
 
-The `prepare` hook builds `dist/` on the way in, and under bun that requires
-trusting the package's lifecycle scripts
-(`trustedDependencies: ["@corbits/react-ui"]`).
-
-React 18 or 19. `@tanstack/react-query` is an **optional** peer, needed only if you use
-`createTanstackDataPort()`; components take their data through a `DataPort` and work with
-any data layer, or none.
-
-## Styling
-
-Import the prebuilt stylesheet once, at the root of your app. It needs no Tailwind and no
-build configuration:
+Import the prebuilt stylesheet once at the app root (no Tailwind build required):
 
 ```tsx
 import "@corbits/react-ui/styles.css";
 ```
 
-**This sheet is not inert — it restyles your page.** It carries Tailwind's preflight and a
-base layer, so importing it resets margins and list styles across your app, sets every
-element's default border color, and sets the page background, text color and font. That is
-what makes the components look right with no build configuration, and it is a global
-change. Import it at the root of an app you are willing to hand over to it.
+That sheet includes Tailwind preflight and a base layer — it restyles the page. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities. Dark mode is a `dark` class on an ancestor; the library reads it and does not manage it.
 
-If you already use Tailwind v4 — or you need the components styled without the reset —
-import the theme instead and let your own build generate the utilities:
-
-```css
-@import "tailwindcss";
-@import "@corbits/react-ui/theme.css";
-```
-
-That one directive gives you the tokens, the keyframes and the base layer without a second
-copy of preflight, and points Tailwind at the package's own class names.
-
-Dark mode is a `dark` class on an ancestor. The library reads it; it does not manage it.
+## Use
 
 ```tsx
-<html className="dark">
+import { Button } from "@corbits/react-ui/ui/button";
+
+<Button onClick={() => start()}>Run now</Button>
 ```
 
-The brand faces (Red Hat Display, Space Mono) are named by the theme but not bundled. Load
-them yourself, or the stack falls through to system fonts. To use a face loaded under a
-generated name, override `--font-sans` / `--font-mono`.
+Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from the root (`@corbits/react-ui`). One module is subpath-only: `@corbits/react-ui/lib/tanstack-data-port`, because it statically imports the optional `@tanstack/react-query` peer.
 
-## Usage
+## Full example
 
 ```tsx
 import "@corbits/react-ui/styles.css";
@@ -78,7 +50,8 @@ export function Runs() {
         request={{
           key: ["runs"],
           pageSize: 50,
-          fetch: ({ signal, offset, pageSize }) => api.runs({ signal, offset, pageSize }),
+          fetch: ({ signal, offset, pageSize }) =>
+            api.runs({ signal, offset, pageSize }),
         }}
         columns={[
           { id: "name", header: "Run", cell: (run) => run.name },
@@ -91,55 +64,28 @@ export function Runs() {
 }
 ```
 
-Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from the root
-(`@corbits/react-ui`). Both resolve to the same module; the root entry is re-exports only
-and the package is side-effect free, so either way you bundle just what you used.
+This package ships no `"use client"` directives. In a React Server Components app, re-export stateful components from a file you mark yourself, using subpaths rather than the root barrel.
 
-**One module is subpath-only: `@corbits/react-ui/lib/tanstack-data-port`.** It is fully
-public, just deliberately absent from the root entry, because it statically imports the
-optional `@tanstack/react-query` peer — re-exporting it from the root would make that peer
-mandatory for everyone. Import the adapter by its subpath, as above.
+## How it works
 
-## Server components
+Components take data through a `DataPort` (or none). The root entry is re-exports only and the package is side-effect free aside from the CSS files, so either import style tree-shakes to what you used. Tokens and keyframes live in `theme.css`; `styles.css` is the prebuilt sheet for hosts that do not run Tailwind.
 
-**This package ships no `"use client"` directives.** In a React Server Components app —
-Next.js App Router and similar — components that hold state or take event handlers must be
-imported from a file you mark yourself:
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the DataPort seam and the theme layer.
 
-```tsx
-"use client";
-export { Button } from "@corbits/react-ui/ui/button";
-export { CommandPalette } from "@corbits/react-ui/ui/command-palette";
-```
+## Contributing
 
-Use subpaths rather than the root entry here: a client-boundary file is re-exported into
-your own bundle, and naming the modules you actually mark keeps the boundary — and the
-bundle — to exactly those. Components that render no state (tiles, badges, layout shells)
-work directly in a server component with no boundary at all.
-
-## Development
-
-```bash
+```sh
 bun install
-bun run build      # generate → SWC → tsc → Tailwind → contrast gate
+bun run build        # generate → SWC → tsc → Tailwind → contrast gate
 bun run typecheck
 bun run lint
 bun run dep-guard
+bun run test
+bun run stories      # Ladle workbench
 ```
 
-`ARCHITECTURE.md` covers the `DataPort` seam, the theme layer and the known limits.
-`CONTRIBUTING.md` covers the gates and how to add a component.
+A new component is not done until it has at least one story per meaningful state, checked in both themes. See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-### Component workbench
+## License
 
-```bash
-bun run stories        # Ladle dev server — live, hot-reloading, theme-aware
-bun run stories:build  # static build of the same canvas
-```
-
-[Ladle](https://ladle.dev) renders every story under `stories/` against the real
-`src/theme.css`, with a light/dark toggle in its top bar that flips the actual `.dark`
-class — not a canvas-only colour swap. **A story is the definition-of-done artifact for
-every new component**: a change isn't finished until it has at least one story per
-meaningful state, checked in both themes. See `CONTRIBUTING.md#the-component-workbench`
-for what a story is expected to cover.
+LGPL-2.1-only. See [LICENSE](./LICENSE).
