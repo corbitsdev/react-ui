@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import { useId } from "react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";
 import { cn } from "../lib/utils.js";
@@ -43,11 +44,11 @@ export function ReasoningBlock({
     onChange: onOpenChange,
     name: "ReasoningBlock",
   });
+  const regionId = useId();
 
   if (text.trim().length === 0) return null;
 
   const summary = streaming ? "Thinking…" : (durationLabel ?? "Thought about this");
-  const regionId = "reasoning-block-content";
 
   return (
     <div data-slot="reasoning-block" className={cn("text-xs", className)}>

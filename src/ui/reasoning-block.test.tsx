@@ -49,4 +49,21 @@ describe("ReasoningBlock", () => {
     expect(streaming.button().textContent).toBe("Thinking…");
     streaming.unmount();
   });
+
+  test("two mounted blocks have distinct region ids matching their toggles", () => {
+    const first = mount({ text: "First thought.", defaultOpen: true });
+    const second = mount({ text: "Second thought.", defaultOpen: true });
+
+    const firstControls = first.button().getAttribute("aria-controls");
+    const secondControls = second.button().getAttribute("aria-controls");
+
+    expect(firstControls).toBeTruthy();
+    expect(secondControls).toBeTruthy();
+    expect(firstControls).not.toBe(secondControls);
+    expect(first.region()?.id ?? null).toBe(firstControls);
+    expect(second.region()?.id ?? null).toBe(secondControls);
+
+    first.unmount();
+    second.unmount();
+  });
 });
