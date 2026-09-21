@@ -503,6 +503,14 @@
       "types": "./dist/ui/theme-toggle.d.ts",
       "default": "./dist/ui/theme-toggle.js"
     },
+    "./ui/thinking-indicator": {
+      "types": "./dist/ui/thinking-indicator.d.ts",
+      "default": "./dist/ui/thinking-indicator.js"
+    },
+    "./ui/thinking-mark": {
+      "types": "./dist/ui/thinking-mark.d.ts",
+      "default": "./dist/ui/thinking-mark.js"
+    },
     "./ui/time-series-chart": {
       "types": "./dist/ui/time-series-chart.d.ts",
       "default": "./dist/ui/time-series-chart.js"

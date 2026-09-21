@@ -69,6 +69,7 @@
   --secondary-foreground: #2b2627;
   --muted: #eceff1;
   --muted-foreground: #5c5555;
+  --thinking-base: #77716a;
   --accent: #c5d2de;
   --accent-foreground: #2b2627;
   --success: #c1d1be;
@@ -138,6 +139,7 @@
   --secondary-foreground: #e4d5bc;
   --muted: #1a1718;
   --muted-foreground: #a99c86;
+  --thinking-base: #aaa39a;
   --accent: #2d455c;
   --accent-foreground: #e4d5bc;
   --success: #425a3d;
@@ -289,6 +291,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-thinking-base: var(--thinking-base);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-success: var(--success);
@@ -583,4 +586,30 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+}
+
+/* Ridge-study motion: keep geometry and timing in the original 100 x 70 space. */
+@keyframes corbits-thinking-sweep {
+  0% { transform: translateX(8px); opacity: 0; }
+  8%, 86% { opacity: 1; }
+  100% { transform: translateX(130px); opacity: 0; }
+}
+@keyframes corbits-thinking-rise {
+  0% { transform: translateY(88px); }
+  100% { transform: translateY(-30px); }
+}
+@keyframes corbits-thinking-wave {
+  0% { transform: scale(.03); opacity: 0; }
+  10% { opacity: 1; }
+  75% { opacity: .9; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Static poses land the gradient mid-stroke. These offsets mirror the SVG
+     geometry in thinking-mark.tsx — change the rect/circle geometry there and
+     these poses have to be re-picked to match. */
+  .corbits-thinking-silk, .corbits-thinking-strata, .corbits-thinking-echo { animation: none; }
+  .corbits-thinking-silk { transform: translateX(44px); }
+  .corbits-thinking-strata { transform: translateY(30px); }
+  .corbits-thinking-echo { transform: scale(.6); }
 }
