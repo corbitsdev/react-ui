@@ -6,7 +6,7 @@ import {
   parseThemePreference,
   resolveThemeMode,
   serializeThemePreference,
-} from "../src/lib/theme.js";
+} from "./theme.js";
 
 describe("resolveThemeMode", () => {
   test("light and dark ignore the system preference", () => {

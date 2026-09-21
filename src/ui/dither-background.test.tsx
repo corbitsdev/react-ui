@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
-import { DitherBackground } from "../../src/ui/dither-background.js";
+import { DitherBackground } from "./dither-background.js";
 
 type Mounted = {
   container: HTMLElement;

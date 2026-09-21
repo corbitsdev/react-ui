@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { MessageList } from "../../src/ui/message-list.js";
+import { MessageList } from "./message-list.js";
 
 type Mounted = {
   container: HTMLElement;

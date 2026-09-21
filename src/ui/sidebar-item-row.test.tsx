@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { SidebarItemRow } from "../../src/ui/sidebar-item-row.js";
+import { SidebarItemRow } from "./sidebar-item-row.js";
 
 type Mounted = {
   container: HTMLElement;

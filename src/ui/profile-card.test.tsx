@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { ProfileCard } from "../../src/ui/profile-card.js";
+import { ProfileCard } from "./profile-card.js";
 
 type Mounted = {
   container: HTMLElement;

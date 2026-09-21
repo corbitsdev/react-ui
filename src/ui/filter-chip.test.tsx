@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { FilterChip } from "../../src/ui/filter-chip.js";
+import { FilterChip } from "./filter-chip.js";
 
 type Mounted = {
   container: HTMLElement;

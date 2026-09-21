@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const theme = readFileSync(join(import.meta.dir, "../src/theme.css"), "utf-8");
+const theme = readFileSync(join(import.meta.dir, "./theme.css"), "utf-8");
 
 // One named icon-size scale, matching the owner's mock CSS 1:1, so call
 // sites stop inventing their own px/rem sizes (or a `size=` prop) per spot.

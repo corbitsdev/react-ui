@@ -458,10 +458,11 @@ changes.
 
 - **`DataPort` covers collections only.** Single-record reads and mutations are absent by
   decision, not by oversight.
-- **Tests exist but are partial.** `bun test` runs 251 tests across 39 files (`src/**/*.test.ts`),
-  covering hooks and a handful of components — the measurable half of appearance (contrast,
-  in both modes) is gated in the build, and a growing slice of behaviour is now covered
-  by these, but most components still have no test.
+- **Tests exist but are partial.** `bun test` runs 338 tests co-located with their
+  subjects (`src/**/*.test.tsx`), plus shared harnesses under `src/test/` — the
+  measurable half of appearance (contrast, in both modes) is gated in the build,
+  and a growing slice of behaviour is now covered by these, but most components
+  still have no test.
 - **A rendering gallery exists but is partial.** Ladle (`bun run stories`, `bun run
   stories:build`) renders 52 stories under `stories/`; most of the ~150 components have
   none, so visual review of an uncovered component still means rendering the package

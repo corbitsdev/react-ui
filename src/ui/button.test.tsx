@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { Button, buttonVariants } from "../../src/ui/button.js";
+import { Button, buttonVariants } from "./button.js";
 
 type Mounted = {
   container: HTMLElement;

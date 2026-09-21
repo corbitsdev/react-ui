@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { RichEmptyState } from "../../src/ui/rich-empty-state.js";
+import { RichEmptyState } from "./rich-empty-state.js";
 
 type Mounted = {
   container: HTMLElement;

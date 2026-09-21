@@ -7,7 +7,7 @@ import {
   CHAT_CONTENT_VISIBILITY_CLASS,
   GRID_CLASS,
   type CanvasHostContent,
-} from "../../src/blocks/canvas-host/canvas-host.js";
+} from "./canvas-host.js";
 
 type Mounted = {
   container: HTMLElement;

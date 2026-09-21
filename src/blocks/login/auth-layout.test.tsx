@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import { AuthLayout } from "../../src/blocks/login/auth-layout.js";
+import { AuthLayout } from "./auth-layout.js";
 
 type Mounted = {
   container: HTMLElement;

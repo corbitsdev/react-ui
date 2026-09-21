@@ -1,9 +1,9 @@
 import { act } from "react";
 import { describe, expect, test } from "bun:test";
 
-import { useRenderRail } from "../../src/hooks/use-render-rail.js";
-import type { GenerativeBlock } from "../../src/lib/generative-block.js";
-import { renderHook } from "./render-hook.js";
+import { useRenderRail } from "./use-render-rail.js";
+import type { GenerativeBlock } from "../lib/generative-block.js";
+import { renderHook } from "../test/render-hook.js";
 
 function block(id: string): GenerativeBlock {
   return { type: "callout", id, title: id, body: id };
