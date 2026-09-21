@@ -7,7 +7,8 @@ Licensed LGPL-2.1-only (see `LICENSE`).
 
 ## Install
 
-Not published to npm yet.
+Not published to npm yet. Requires Node.js 24 LTS or later.
+
 
 ```bash
 bun add github:corbitsdev/react-ui react react-dom lucide-react sonner @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-slot @radix-ui/react-tooltip
