@@ -10,6 +10,7 @@ const ITEMS: ComponentProps<typeof ToolPicker>["items"] = [
   { id: "slack-react", name: "Add reaction", package: "slack" },
   { id: "linear-create", name: "Create issue", package: "linear", status: "pending" },
   { id: "linear-close", name: "Close issue", package: "linear", status: "disabled" },
+  { id: "gmail-send", name: "Send email", package: "google-drive" },
 ];
 
 function mount(props: Partial<ComponentProps<typeof ToolPicker>> = {}) {
@@ -28,11 +29,23 @@ function mount(props: Partial<ComponentProps<typeof ToolPicker>> = {}) {
 }
 
 describe("ToolPicker", () => {
-  test("groups items by package", () => {
+  test("groups items by package with humanized headings, not raw slugs", () => {
     const { container, unmount } = mount();
     const headings = [...container.querySelectorAll('p[role="presentation"], p')].map((el) => el.textContent);
-    expect(headings).toContain("slack");
-    expect(headings).toContain("linear");
+    expect(headings).toContain("Slack");
+    expect(headings).toContain("Linear");
+    expect(headings).toContain("Google Drive");
+    expect(headings).not.toContain("slack");
+    expect(headings).not.toContain("google-drive");
+    unmount();
+  });
+
+  test("keeps a package string that is already a display name", () => {
+    const { container, unmount } = mount({
+      items: [{ id: "x", name: "Post message", package: "Slack" }],
+    });
+    const headings = [...container.querySelectorAll("p")].map((el) => el.textContent);
+    expect(headings).toContain("Slack");
     unmount();
   });
 
@@ -149,7 +162,7 @@ describe("ToolPicker", () => {
     act(() => {
       input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
     });
-    expect(options().length).toBe(4);
+    expect(options().length).toBe(5);
 
     const second = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
     act(() => {
