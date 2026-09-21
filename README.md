@@ -23,7 +23,7 @@ import "@corbits/react-ui/styles.css";
 
 That sheet includes Tailwind preflight and a base layer — it restyles the page, and neither import is safe to skip: without one of them the components render unstyled markup, not a fallback look. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities; don't import both.
 
-Dark mode is a `dark` class on an ancestor; the stylesheet reads it and does not manage it. With no class at all, the theme follows the OS — a `@media (prefers-color-scheme: dark)` block applies the dark tokens to `:root`, so a zero-JS install already renders dark on a dark-OS host. `ThemeProvider` still wins once it mounts: "dark" adds `.dark`, "light" adds `.light`, which the media query excludes, so an explicit light choice is never clawed back by the OS. Mount `ThemeProvider` only if you want the library to persist the choice and apply named presets.
+Dark mode is a `dark` class on an ancestor; the stylesheet reads it and does not manage it. With no class at all, the theme follows the OS — a `@media (prefers-color-scheme: dark)` block applies the dark tokens to `:root` and sets `color-scheme: dark` so native controls follow, so a zero-JS install already renders dark on a dark-OS host. `ThemeProvider` still wins once it mounts: "dark" adds `.dark`, "light" adds `.light`, which the media query excludes, so an explicit light choice is never clawed back by the OS. Mount `ThemeProvider` only if you want the library to persist the choice and apply named presets.
 
 ```tsx
 import { Button } from "@corbits/react-ui/ui/button";

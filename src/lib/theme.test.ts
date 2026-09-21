@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import {
   applyThemeToRoot,
@@ -7,6 +9,35 @@ import {
   resolveThemeMode,
   serializeThemePreference,
 } from "./theme.js";
+
+const theme = readFileSync(join(import.meta.dir, "../src/theme.css"), "utf-8");
+
+/** Body of the first `{ ... }` after `needle`, respecting nested braces. */
+function ruleBodyAfter(css: string, needle: string): string {
+  const at = css.indexOf(needle);
+  if (at === -1) throw new Error(`theme.css: no \`${needle}\``);
+  const open = css.indexOf("{", at);
+  let depth = 0;
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === "{") depth += 1;
+    else if (css[i] === "}") {
+      depth -= 1;
+      if (depth === 0) return css.slice(open + 1, i);
+    }
+  }
+  throw new Error(`theme.css: unclosed rule after \`${needle}\``);
+}
+
+function declarations(body: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const match of body.matchAll(/^\s*([a-z0-9-]+):\s*([^;]+);/gm)) {
+    const name = match[1];
+    const value = match[2];
+    if (name === undefined || value === undefined) continue;
+    out[name] = value.trim();
+  }
+  return out;
+}
 
 describe("resolveThemeMode", () => {
   test("light and dark ignore the system preference", () => {
@@ -98,5 +129,15 @@ describe("applyThemeToRoot", () => {
     applyThemeToRoot(root, "dark", "default");
     expect(root.classList.contains("light")).toBe(false);
     expect(root.classList.contains("dark")).toBe(true);
+  });
+});
+
+describe("zero-JS prefers-color-scheme dark", () => {
+  test("the media-query :root block matches .dark (tokens + color-scheme) so they cannot drift", () => {
+    const dark = declarations(ruleBodyAfter(theme, "\n.dark {"));
+    const media = ruleBodyAfter(theme, "@media (prefers-color-scheme: dark)");
+    const mediaRoot = declarations(ruleBodyAfter(media, ":root:not(.dark):not(.light)"));
+    expect(mediaRoot).toEqual(dark);
+    expect(mediaRoot["color-scheme"]).toBe("dark");
   });
 });
