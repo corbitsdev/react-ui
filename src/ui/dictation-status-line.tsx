@@ -22,7 +22,7 @@ export type DictationStatusLineProps = {
 export function DictationStatusLine({
   state,
   levels = [],
-  startingLabel = "Starting the microphone… If asked, allow it.",
+  startingLabel = "Starting microphone…",
   errorMessage,
   className,
 }: DictationStatusLineProps) {
@@ -48,7 +48,7 @@ export function DictationStatusLine({
   return (
     <p aria-live="polite" className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}>
       <span>Listening:</span>
-      <VoiceWaveform levels={levels} className="text-primary-emphasis" />
+      <VoiceWaveform levels={levels} className="text-success" />
     </p>
   );
 }
