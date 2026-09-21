@@ -443,6 +443,10 @@
       "types": "./dist/ui/settings-panel.d.ts",
       "default": "./dist/ui/settings-panel.js"
     },
+    "./ui/shimmer-text": {
+      "types": "./dist/ui/shimmer-text.d.ts",
+      "default": "./dist/ui/shimmer-text.js"
+    },
     "./ui/sidebar": {
       "types": "./dist/ui/sidebar.d.ts",
       "default": "./dist/ui/sidebar.js"
@@ -506,6 +510,10 @@
     "./ui/thinking-indicator": {
       "types": "./dist/ui/thinking-indicator.d.ts",
       "default": "./dist/ui/thinking-indicator.js"
+    },
+    "./ui/thinking-label": {
+      "types": "./dist/ui/thinking-label.d.ts",
+      "default": "./dist/ui/thinking-label.js"
     },
     "./ui/thinking-mark": {
       "types": "./dist/ui/thinking-mark.d.ts",
