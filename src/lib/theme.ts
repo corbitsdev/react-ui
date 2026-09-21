@@ -1,8 +1,11 @@
 /** Theme mode and preset resolution for ThemeProvider.
 
- * Dark mode is opt-in via a `.dark` class on an ancestor (see theme.css
- * `@custom-variant dark`). This module owns the pure resolution rules;
- * ThemeProvider applies them to the document and persists the choice.
+ * Dark mode is a `.dark` class on an ancestor, with an OS-following fallback
+ * when neither `.dark` nor `.light` is set (see theme.css — `@custom-variant
+ * dark` plus the `prefers-color-scheme` block). `.light` is the explicit
+ * opt-out and only works on `documentElement`. This module owns the pure
+ * resolution rules; ThemeProvider applies them to the document and persists
+ * the choice.
  */
 
 export type ThemeMode = "system" | "light" | "dark";
@@ -76,6 +79,10 @@ export function applyThemeToRoot(
   preset: ThemePreset,
 ): void {
   root.classList.toggle("dark", resolved === "dark");
+  // `.light` is the explicit-light escape hatch from the `prefers-color-scheme`
+  // media query in theme.css — without it, "light" mode chosen on a dark-OS
+  // host would be overridden back to dark tokens by the media query.
+  root.classList.toggle("light", resolved === "light");
   if (preset === "default") {
     root.removeAttribute("data-theme");
   } else {

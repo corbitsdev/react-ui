@@ -1,6 +1,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, test } from "bun:test";
+import { toast as sonnerToast } from "sonner";
 
 import { toast, Toaster } from "./toast.js";
 
@@ -40,6 +41,12 @@ describe("toast replace-semantics edges", () => {
   let mounted: Mounted | undefined;
 
   afterEach(() => {
+    // Sonner keeps a process-wide toast store and replays active toasts to
+    // the next Toaster that subscribes. Dismiss before unmount so a later
+    // test does not inherit the previous confirmation.
+    act(() => {
+      sonnerToast.dismiss();
+    });
     mounted?.unmount();
     mounted = undefined;
   });

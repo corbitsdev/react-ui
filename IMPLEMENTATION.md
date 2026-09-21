@@ -50,18 +50,22 @@ Two published sheets, both generated from `src/theme.css`:
 - `@corbits/react-ui/theme.css` → `dist/theme.css`, a byte copy of
   `src/theme.css`. For a host already on Tailwind v4.
 
-Dark mode is the CSS custom variant `@custom-variant dark (&:is(.dark *));`.
-The sheet reads a `dark` class on an ancestor; it does not set it. Named
-presets are `data-theme` values (`default` / `warm` / `cool`). Brand faces
-are `--font-sans: "Red Hat Display", …` and `--font-mono: "Space Mono", …`;
+Dark mode is the CSS custom variant `@custom-variant dark (&:is(.dark *));`
+plus a `@media (prefers-color-scheme: dark)` fallback that applies dark
+tokens to `:root` when neither `.dark` nor `.light` is set. Removing `.dark`
+alone is not light on a dark-OS host — `.light` on `documentElement` is the
+explicit opt-out. `dark:` utilities still require a real `.dark` ancestor.
+Named presets are `data-theme` values (`default` / `warm` / `cool`). Brand
+faces are `--font-sans: "Red Hat Display", …` and `--font-mono: "Space Mono", …`;
 no font files ship.
 
 `ThemeProvider` (`src/ui/theme-provider.tsx`) is optional host wiring. It
-writes `.dark`, `data-theme`, and `color-scheme` on a root (default
-`document.documentElement`) and persists `{ mode, preset }` JSON under
-`localStorage` key `corbits-theme` (override with `storageKey`). Default
-mode is `"system"`. `ThemeToggle` / `useTheme` require the provider; the
-rest of the library does not.
+writes `.dark`/`.light`, `data-theme`, and `color-scheme` on a root (default
+`document.documentElement` — a scoped `root` cannot escape the OS-following
+media query, which only inspects `:root`) and persists `{ mode, preset }`
+JSON under `localStorage` key `corbits-theme` (override with `storageKey`).
+Default mode is `"system"`. `ThemeToggle` / `useTheme` require the provider;
+the rest of the library does not.
 
 ## Publish
 

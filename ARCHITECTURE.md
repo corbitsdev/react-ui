@@ -96,13 +96,18 @@ Tailwind resolves `@source` relative to the file containing it, so it means `src
 build the standalone sheet and `dist/` when a consumer imports it out of `node_modules`.
 Since there is only one file, the tokens and keyframes cannot drift between the two.
 
-Dark mode is a `dark` class on an ancestor. The stylesheet reads it
-(`@custom-variant dark (&:is(.dark *))`); it does not manage it. A host can
-set the class itself (`<html className="dark">`). `ThemeProvider` is an
-optional helper that applies that class (and `data-theme` presets plus
-`color-scheme`) and persists the choice; the host mounts it and keys storage
-per user. `useTheme` / `ThemeToggle` require the provider; every other
-component does not.
+Dark mode is a `dark` class on an ancestor, with an OS fallback when no
+class is set. The stylesheet reads `.dark` (`@custom-variant dark (&:is(.dark *))`)
+and, under `@media (prefers-color-scheme: dark)`, applies the dark tokens to
+`:root` when neither `.dark` nor `.light` is present — so a zero-JS host on a
+dark OS first-paints dark, and removing `.dark` alone is not light. `.light`
+is a `:root`-only sentinel that opts out of the media query; it carries no
+token block, so it must live on `documentElement`. `dark:` utilities still
+require a real `.dark` ancestor — the media path moves tokens only.
+`ThemeProvider` is an optional helper that applies `.dark`/`.light` (and
+`data-theme` presets plus `color-scheme`) and persists the choice; the host
+mounts it and keys storage per user. `useTheme` / `ThemeToggle` require the
+provider; every other component does not.
 
 ### Contrast is gated
 

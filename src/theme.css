@@ -158,9 +158,60 @@
   --chart-3: #9fd8a8;
   --chart-4: #9db8e8;
   --chart-5: #cc4f47;
+  color-scheme: dark;
 }
 
+/* Dark by default: a fresh install on a dark-OS host gets dark tokens with
+   zero JS and zero explicit `.dark` class. The `:not(.dark):not(.light)`
+   guard means ThemeProvider still wins in both directions once it mounts —
+   an explicit "dark" adds `.dark` (already true, no-op here) and an explicit
+   "light" adds `.light`, which this selector excludes.
 
+   Native CSS cannot attach one declaration list to both `.dark` (any OS) and
+   a media-qualified `:root` without `light-dark()` — and `light-dark()` would
+   break the contrast gate, which parses hex off `.dark {`. So the two blocks
+   stay token-identical on purpose; tests/theme.test.ts fails the build if
+   they drift. `color-scheme: dark` is part of that shared set so zero-JS
+   dark paints native controls dark too. */
+@media (prefers-color-scheme: dark) {
+  :root:not(.dark):not(.light) {
+    --background: #000000;
+    --foreground: #e4d5bc;
+    --card: #2b2627;
+    --card-foreground: #e4d5bc;
+    --popover: #332c2d;
+    --popover-foreground: #e4d5bc;
+    --primary: #bf6b20;
+    --primary-foreground: #000000;
+    --primary-active: #d4791f;
+    --primary-emphasis: #e98428;
+    --secondary: #2d455c;
+    --secondary-foreground: #e4d5bc;
+    --muted: #1a1718;
+    --muted-foreground: #a99c86;
+    --accent: #2d455c;
+    --accent-foreground: #e4d5bc;
+    --success: #425a3d;
+    --success-foreground: #e4d5bc;
+    --destructive: #e6796f;
+    --destructive-foreground: #000000;
+    --border: #423a3b;
+    --border-strong: #5c5254;
+    --input: #8a8080;
+    --ring: #e98428;
+    --shadow: none;
+
+    --ok: #5cb573;
+    --warn: #d9a441;
+
+    --chart-1: #5a95d8;
+    --chart-2: #63a86a;
+    --chart-3: #9fd8a8;
+    --chart-4: #9db8e8;
+    --chart-5: #cc4f47;
+    color-scheme: dark;
+  }
+}
 
 /* Named preset overlays. Applied as data-theme on the same root that carries
    `.dark` (see ThemeProvider). Only surface tints shift — foreground, primary,
