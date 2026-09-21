@@ -115,9 +115,47 @@ describe("ToolPicker", () => {
     unmount();
   });
 
-  test("empty catalog shows the empty state", () => {
+  test("empty catalog shows a catalog-empty state, not a failed search", () => {
     const { container, unmount } = mount({ items: [] });
+    expect(container.textContent).toContain("Nothing in the catalog yet.");
+    expect(container.textContent).not.toContain("Try a different search.");
+    unmount();
+  });
+
+  test("a search with no hits shows no-matches copy", () => {
+    const { container, unmount } = mount();
+    const input = container.querySelector("input") as HTMLInputElement;
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      setter?.call(input, "zzzz-no-such-tool");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     expect(container.textContent).toContain("No tools match");
+    expect(container.textContent).toContain("Try a different search.");
+    expect(container.textContent).not.toContain("Nothing in the catalog yet.");
+    unmount();
+  });
+
+  test("Escape clears the search query and does not swallow a second Escape", () => {
+    const { container, options, unmount } = mount();
+    const input = container.querySelector("input") as HTMLInputElement;
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      setter?.call(input, "linear");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(options().length).toBe(2);
+
+    act(() => {
+      input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    });
+    expect(options().length).toBe(4);
+
+    const second = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+    act(() => {
+      input.dispatchEvent(second);
+    });
+    expect(second.defaultPrevented).toBe(false);
     unmount();
   });
 });

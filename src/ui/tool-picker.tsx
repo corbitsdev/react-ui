@@ -34,6 +34,7 @@ export type ToolPickerProps = {
   readonly multiple?: boolean;
   /** First load — the catalog has not arrived yet, distinct from an empty catalog. */
   readonly loading?: boolean;
+  /** Shown when the catalog itself is empty. Failed searches use a separate default. */
   readonly empty?: ReactNode;
   readonly searchPlaceholder?: string;
   readonly className?: string;
@@ -104,15 +105,25 @@ export function ToolPicker({
       if (item !== undefined) toggle(item);
     },
     onClose: () => {
-      /* Escape has nothing to close here — the picker is inline, not a popover. */
+      /* Escape is handled below so an empty query does not swallow the key. */
     },
   });
 
   const optionId = (id: string) => `${baseId}-option-${id}`;
 
   const onKeyDown = (event: ReactKeyboardEvent) => {
+    if (event.key === "Escape") {
+      if (query.length > 0) {
+        event.preventDefault();
+        setQuery("");
+      }
+      return;
+    }
     navigation.onKeyDown(event);
   };
+
+  const emptyCatalog = items.length === 0;
+  const noMatches = !emptyCatalog && filtered.length === 0;
 
   return (
     <div data-slot="tool-picker" className={cn("flex min-h-0 flex-col gap-2", className)}>
@@ -139,8 +150,10 @@ export function ToolPicker({
       >
         {loading ? (
           <p className="px-2 py-8 text-center text-sm text-muted-foreground">Loading…</p>
-        ) : groups.length === 0 ? (
-          (empty ?? <EmptyState title="No tools match" description="Try a different search." />)
+        ) : emptyCatalog ? (
+          (empty ?? <EmptyState title="No tools" description="Nothing in the catalog yet." />)
+        ) : noMatches ? (
+          <EmptyState title="No tools match" description="Try a different search." />
         ) : (
           groups.map((group) => (
             <div key={group.id} role="presentation" className="flex flex-col gap-1">
