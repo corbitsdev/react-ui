@@ -4,6 +4,7 @@
   "description": "React components for agent and workflow surfaces.",
   "author": "Sawyer Cutler <sawyer@dirtroad.dev>",
   "license": "LGPL-2.1-only",
+  "packageManager": "bun@1.4.0",
   "engines": {
     "node": ">=24"
   },
