@@ -25,7 +25,7 @@ const BRANCHING_STEPS: StepGraphStep[] = [
   { id: "4", title: "Approve the reply", kind: "human", status: "pending" },
 ];
 
-export const Branching = () => (
+export const LinearDagEdges = () => (
   <StepGraph
     steps={BRANCHING_STEPS}
     edges={[
