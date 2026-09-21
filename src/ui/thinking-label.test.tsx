@@ -6,18 +6,29 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { ThinkingLabel } from "./thinking-label.js";
 
 type Restore = () => void;
+type Listener = (event: { matches: boolean }) => void;
 
-function stubMatchMedia(reducedMotion: boolean): Restore {
+function stubMatchMedia(initialReducedMotion: boolean): { restore: Restore; set: (value: boolean) => void } {
+  let matches = initialReducedMotion;
+  const listeners = new Set<Listener>();
   const original = window.matchMedia;
   window.matchMedia = ((query: string) =>
     ({
-      matches: reducedMotion && query.includes("prefers-reduced-motion"),
+      get matches() {
+        return matches && query.includes("prefers-reduced-motion");
+      },
       media: query,
-      addEventListener: () => {},
-      removeEventListener: () => {},
+      addEventListener: (_type: string, listener: Listener) => listeners.add(listener),
+      removeEventListener: (_type: string, listener: Listener) => listeners.delete(listener),
     }) as unknown as MediaQueryList) as typeof window.matchMedia;
-  return () => {
-    window.matchMedia = original;
+  return {
+    set: (value: boolean) => {
+      matches = value;
+      for (const listener of listeners) listener({ matches: value });
+    },
+    restore: () => {
+      window.matchMedia = original;
+    },
   };
 }
 
@@ -50,7 +61,9 @@ function mount(props: { verbs: readonly string[]; intervalMs?: number }) {
     root.render(createElement(ThinkingLabel, props));
   });
   return {
+    container,
     text: () => container.textContent ?? "",
+    status: () => container.querySelector('[role="status"]'),
     unmount: () => {
       act(() => root.unmount());
       container.remove();
@@ -70,7 +83,7 @@ describe("ThinkingLabel", () => {
   });
 
   test("reduced motion does not setInterval", () => {
-    restores.push(stubMatchMedia(true));
+    restores.push(stubMatchMedia(true).restore);
     const interval = stubInterval();
     restores.push(interval.restore);
 
@@ -80,8 +93,23 @@ describe("ThinkingLabel", () => {
     handle.unmount();
   });
 
+  test("turning reduced motion on live stops the interval", () => {
+    const media = stubMatchMedia(false);
+    restores.push(media.restore);
+    const interval = stubInterval();
+    restores.push(interval.restore);
+
+    const handle = mount({ verbs: ["Reading", "Thinking"] });
+    expect(interval.calls).toHaveLength(1);
+
+    act(() => media.set(true));
+    expect(handle.text()).toContain("Reading");
+
+    handle.unmount();
+  });
+
   test("rotation advances after intervalMs", () => {
-    restores.push(stubMatchMedia(false));
+    restores.push(stubMatchMedia(false).restore);
     const interval = stubInterval();
     restores.push(interval.restore);
 
@@ -99,6 +127,25 @@ describe("ThinkingLabel", () => {
       interval.calls[0]?.fn();
     });
     expect(handle.text()).toContain("Writing");
+
+    handle.unmount();
+  });
+
+  test("status announces Working once and does not live-announce verb ticks", () => {
+    restores.push(stubMatchMedia(false).restore);
+    const interval = stubInterval();
+    restores.push(interval.restore);
+
+    const handle = mount({ verbs: ["Reading", "Thinking"], intervalMs: 50 });
+    expect(handle.status()?.textContent).toBe("Working");
+    expect(handle.status()?.getAttribute("aria-live")).toBeNull();
+    expect(handle.container.querySelector("[aria-live]")).toBeNull();
+
+    act(() => {
+      interval.calls[0]?.fn();
+    });
+    expect(handle.status()?.textContent).toBe("Working");
+    expect(handle.text()).toContain("Thinking");
 
     handle.unmount();
   });
