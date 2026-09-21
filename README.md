@@ -2,18 +2,18 @@
 
 React components for agent and workflow surfaces — chat, runs, schedules, artifacts, analytics, collections. Import one module at a time, or from the root barrel.
 
-## Install
+## Runtime support
 
-Requires Node 24+.
+Node >= 24 consumes built `dist/`. Peers: `react` and `react-dom` (18 or 19), `lucide-react`, `sonner`, `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-slot`, `@radix-ui/react-tooltip`. `@tanstack/react-query` is an optional peer, needed only for `createTanstackDataPort()`.
+
+## Quickstart
 
 ```bash
-npm install @corbits/react-ui
+npm add @corbits/react-ui
 pnpm add @corbits/react-ui
 yarn add @corbits/react-ui
 bun add @corbits/react-ui
 ```
-
-Peers: `react` and `react-dom` (18 or 19), `lucide-react`, `sonner`, `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-slot`, `@radix-ui/react-tooltip`. `@tanstack/react-query` is an optional peer, needed only for `createTanstackDataPort()`.
 
 Import the prebuilt stylesheet once at the app root (no Tailwind build required):
 
@@ -23,8 +23,6 @@ import "@corbits/react-ui/styles.css";
 
 That sheet includes Tailwind preflight and a base layer — it restyles the page. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities. Dark mode is a `dark` class on an ancestor; the library reads it and does not manage it.
 
-## Use
-
 ```tsx
 import { Button } from "@corbits/react-ui/ui/button";
 
@@ -32,8 +30,6 @@ import { Button } from "@corbits/react-ui/ui/button";
 ```
 
 Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from the root (`@corbits/react-ui`). One module is subpath-only: `@corbits/react-ui/lib/tanstack-data-port`, because it statically imports the optional `@tanstack/react-query` peer.
-
-## Full example
 
 ```tsx
 import "@corbits/react-ui/styles.css";
@@ -72,9 +68,11 @@ Components take data through a `DataPort` (or none). The root entry is re-export
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for the DataPort seam and the theme layer.
 
-## Contributing
+## Development
 
 ```sh
+git clone https://github.com/corbitsdev/react-ui.git
+cd react-ui
 bun install
 bun run build        # generate → SWC → tsc → Tailwind → contrast gate
 bun run typecheck
