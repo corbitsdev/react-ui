@@ -26,6 +26,12 @@ export type HorizontalStepperProps = {
    */
   readonly variant?: "pills" | "segments";
   readonly className?: string;
+  /**
+   * Makes completed steps clickable — a finished step is a place you can go
+   * back to, not just a mark of progress. Pending and current steps stay
+   * inert: there is nothing behind them to open.
+   */
+  readonly onStepClick?: (step: WorkflowStep) => void;
 };
 
 /**
@@ -35,12 +41,24 @@ export type HorizontalStepperProps = {
  * change, so a run with more steps than fit on screen never leaves the
  * active one off to the side unannounced.
  */
-export function HorizontalStepper({ steps, variant = "pills", className }: HorizontalStepperProps) {
+export function HorizontalStepper({ steps, variant = "pills", className, onStepClick }: HorizontalStepperProps) {
   const currentStep = steps.find((step) => step.status === "current");
   const currentRef = useScrollCurrentIntoView<HTMLLIElement>(currentStep?.number ?? -1);
   const compress = steps.length > LABEL_VISIBLE_STEP_THRESHOLD;
 
   if (variant === "segments") {
+    const segmentClass = (step: WorkflowStep) =>
+      cn(
+        "h-0.5 rounded-full transition-[width,background-color] duration-300",
+        step.status === "current" ? "w-6" : "w-4",
+        step.status === "completed"
+          ? "bg-foreground"
+          : step.status === "failed"
+            ? "bg-destructive"
+            : step.status === "current"
+              ? "bg-primary"
+              : "bg-border",
+      );
     return (
       <ol
         aria-label="Workflow progress"
@@ -51,20 +69,23 @@ export function HorizontalStepper({ steps, variant = "pills", className }: Horiz
             key={step.number}
             ref={step.status === "current" ? currentRef : undefined}
             aria-current={step.status === "current" ? "step" : undefined}
-            title={step.label}
-            className={cn(
-              "h-0.5 rounded-full transition-[width,background-color] duration-300",
-              step.status === "current" ? "w-6" : "w-4",
-              step.status === "completed"
-                ? "bg-foreground"
-                : step.status === "failed"
-                  ? "bg-destructive"
-                  : step.status === "current"
-                    ? "bg-primary"
-                    : "bg-border",
-            )}
+            className="flex"
           >
-            <span className="sr-only">{step.label}</span>
+            {step.status === "completed" && onStepClick ? (
+              <button
+                type="button"
+                title={step.label}
+                aria-label={step.label}
+                onClick={() => onStepClick(step)}
+                className={cn(segmentClass(step), "cursor-pointer py-1 -my-1 bg-clip-content hover:bg-primary")}
+              >
+                <span className="sr-only">{step.label}</span>
+              </button>
+            ) : (
+              <span title={step.label} aria-hidden="true" className={segmentClass(step)}>
+                <span className="sr-only">{step.label}</span>
+              </span>
+            )}
           </li>
         ))}
       </ol>
