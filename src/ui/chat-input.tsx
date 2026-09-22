@@ -20,6 +20,16 @@ export type ChatInputProps = {
   readonly onSend: () => void;
   /** Shown while the agent is replying. Its presence turns send into stop. */
   readonly onStop?: () => void;
+  /**
+   * Holding the send button fires this instead of sending — the heavier
+   * alternative gesture (send back, send-and-…) that shares the button
+   * because it is a send, not a separate action. The click that ends the
+   * hold is swallowed so it never sends on release. There is no keyboard
+   * hold, so whatever this opens must be reachable another way too.
+   */
+  readonly onSendHold?: () => void;
+  /** How long a press counts as a hold. Defaults to 450ms. */
+  readonly sendHoldMs?: number;
   readonly working?: boolean;
   readonly placeholder?: string;
   readonly disabled?: boolean;
@@ -62,6 +72,9 @@ export type ChatInputSubmitProps = Omit<ComponentProps<"button">, "type" | "chil
   readonly sendIcon?: ReactNode;
   /** When false, send is disabled. Omit to leave enablement to `disabled`. */
   readonly canSend?: boolean;
+  readonly onSendHold?: () => void;
+  /** How long a press counts as a hold. Defaults to 450ms. */
+  readonly sendHoldMs?: number;
 };
 
 export type ChatInputAttachProps = {
@@ -100,12 +113,17 @@ const toolButtonClass =
  * Callers that need extra footer controls (dictate, model picker, …) pass
  * `leadingTools` / `trailingTools`, or compose the named slots instead of
  * this all-in-one. Omit the extras and the composer looks as it did.
+ *
+ * Holding send fires `onSendHold` instead of sending. The click that ends the
+ * hold is swallowed so it never sends on release.
  */
 export function ChatInput({
   value,
   onValueChange,
   onSend,
   onStop,
+  onSendHold,
+  sendHoldMs = 450,
   working = false,
   placeholder = "Send a message…",
   disabled = false,
@@ -120,8 +138,14 @@ export function ChatInput({
   className,
 }: ChatInputProps) {
   const canSend = value.trim().length > 0 && !disabled;
+  // Set when a hold fires so the click that ends the press does not send.
+  const heldRef = useRef(false);
 
   const submit = () => {
+    if (heldRef.current) {
+      heldRef.current = false;
+      return;
+    }
     if (!canSend) return;
     onSend();
   };
@@ -172,7 +196,21 @@ export function ChatInput({
           {leadingTools}
         </ChatInputTools>
         {trailingTools}
-        <ChatInputSubmit onStop={onStop} working={working} sendIcon={sendIcon} canSend={canSend} />
+        <ChatInputSubmit
+          onStop={onStop}
+          working={working}
+          sendIcon={sendIcon}
+          canSend={canSend}
+          sendHoldMs={sendHoldMs}
+          {...(onSendHold === undefined
+            ? {}
+            : {
+                onSendHold: () => {
+                  heldRef.current = true;
+                  onSendHold();
+                },
+              })}
+        />
       </ChatInputFooter>
     </ChatInputRoot>
   );
@@ -339,7 +377,7 @@ export function ChatInputAttach({
   );
 }
 
-/** Send, or stop while the agent is replying. */
+/** Send, or stop while the agent is replying. Holding send fires `onSendHold`. */
 export function ChatInputSubmit({
   onStop,
   working = false,
@@ -347,10 +385,22 @@ export function ChatInputSubmit({
   canSend,
   disabled,
   className,
+  onSendHold,
+  sendHoldMs = 450,
   ...props
 }: ChatInputSubmitProps) {
   const showStop = working && onStop !== undefined;
-  const sendDisabled = disabled === true || canSend === false;
+  const sendDisabled = disabled === true || (canSend === false && onSendHold === undefined);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const releaseHold = () => {
+    if (holdTimer.current !== null) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+  };
+
+  useEffect(() => releaseHold, []);
 
   if (showStop) {
     return (
@@ -377,6 +427,20 @@ export function ChatInputSubmit({
       data-slot="chat-input-submit"
       disabled={sendDisabled}
       aria-label={props["aria-label"] ?? "Send message"}
+      {...(onSendHold === undefined
+        ? {}
+        : {
+            onPointerDown: () => {
+              releaseHold();
+              holdTimer.current = setTimeout(() => {
+                holdTimer.current = null;
+                onSendHold();
+              }, sendHoldMs);
+            },
+            onPointerUp: releaseHold,
+            onPointerLeave: releaseHold,
+            onPointerCancel: releaseHold,
+          })}
       className={cn(
         "grid size-9 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary-active disabled:opacity-40",
         className,

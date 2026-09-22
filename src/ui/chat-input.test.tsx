@@ -171,6 +171,27 @@ describe("ChatInput send", () => {
     expect(onSend).not.toHaveBeenCalled();
     unmount();
   });
+
+  test("holding send fires onSendHold and swallows the trailing click", async () => {
+    const onSend = mock();
+    const onSendHold = mock();
+    const { send, unmount } = mount({ value: "hello", onSend, onSendHold, sendHoldMs: 20 });
+    const button = send();
+    if (button === null) throw new Error("send button missing");
+    act(() => {
+      button.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    });
+    expect(onSendHold).toHaveBeenCalledTimes(1);
+    act(() => {
+      button.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      button.click();
+    });
+    expect(onSend).not.toHaveBeenCalled();
+    unmount();
+  });
 });
 
 describe("ChatInput compound slots", () => {
