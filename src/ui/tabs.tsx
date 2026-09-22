@@ -1,4 +1,4 @@
-import { useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/utils.js";
@@ -8,6 +8,10 @@ export type TabDescriptor<Id extends string> = {
   readonly label: string;
   /** Shown beside the label — a count of what is inside. */
   readonly count?: number;
+  /** A glyph before the label — the thing's kind, not decoration. */
+  readonly icon?: ReactNode;
+  /** A trailing mark — a live dot, a dirty flag — rendered after the label. */
+  readonly marker?: ReactNode;
 };
 
 export type TabsProps<Id extends string> = {
@@ -20,8 +24,18 @@ export type TabsProps<Id extends string> = {
   readonly children: (active: Id) => ReactNode;
   /** `underline` for page-level navigation, `enclosed` for tabs inside a card. */
   readonly variant?: "underline" | "enclosed";
+  /**
+   * Scrolls the tab list horizontally instead of wrapping, with edge fades on
+   * whichever side hides tabs. For strips that can outgrow their pane — a
+   * growing artifact set — where wrapping would push content down.
+   */
+  readonly scrollable?: boolean;
   readonly className?: string;
 };
+
+const FADE_L = "[mask-image:linear-gradient(to_right,transparent,black_32px)]";
+const FADE_R = "[mask-image:linear-gradient(to_left,transparent,black_32px)]";
+const FADE_BOTH = "[mask-image:linear-gradient(to_right,transparent,black_32px,black_calc(100%-32px),transparent)]";
 
 /**
  * Tabs that behave the way the tab pattern promises.
@@ -54,6 +68,7 @@ export function Tabs<Id extends string>({
   label,
   children,
   variant = "underline",
+  scrollable = false,
   className,
 }: TabsProps<Id>) {
   const base = useId();
@@ -70,6 +85,32 @@ export function Tabs<Id extends string>({
     buttons.current.get(id)?.focus();
   }
 
+  // Scrollable strips fade whichever edge still hides tabs. Both directions are
+  // tracked separately — mid-scroll shows both — and a ResizeObserver catches
+  // the pane itself changing width, not just the list being scrolled.
+  const listRef = useRef<HTMLDivElement>(null);
+  const [fades, setFades] = useState({ left: false, right: false });
+  useEffect(() => {
+    if (!scrollable) return;
+    const el = listRef.current;
+    if (!el) return;
+    const update = () => {
+      const next = {
+        left: el.scrollLeft > 1,
+        right: el.scrollLeft + el.clientWidth < el.scrollWidth - 1,
+      };
+      setFades((prev) => (prev.left === next.left && prev.right === next.right ? prev : next));
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      observer.disconnect();
+    };
+  }, [scrollable, tabs.length]);
+
   function move(delta: number) {
     const index = tabs.findIndex((tab) => tab.id === active);
     const next = tabs[(index + delta + tabs.length) % tabs.length];
@@ -79,6 +120,7 @@ export function Tabs<Id extends string>({
   return (
     <div className={cn("flex flex-col gap-4", className)}>
       <div
+        ref={scrollable ? listRef : undefined}
         role="tablist"
         aria-label={label}
         onKeyDown={(event) => {
@@ -98,7 +140,13 @@ export function Tabs<Id extends string>({
           }
         }}
         className={cn(
-          "flex flex-wrap items-center",
+          "flex items-center",
+          scrollable
+            ? cn(
+                "flex-nowrap gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+                fades.left && fades.right ? FADE_BOTH : fades.left ? FADE_L : fades.right ? FADE_R : "",
+              )
+            : "flex-wrap",
           variant === "underline" ? "gap-1 border-b border-border" : "gap-1 rounded-md border border-border p-1",
         )}
       >
@@ -131,10 +179,16 @@ export function Tabs<Id extends string>({
                     : "rounded-sm text-muted-foreground hover:text-foreground",
               )}
             >
+              {tab.icon === undefined ? null : (
+                <span aria-hidden className="shrink-0 [&>svg]:size-[1em] [&>svg]:block">
+                  {tab.icon}
+                </span>
+              )}
               {tab.label}
               {tab.count === undefined ? null : (
                 <span className="rounded-sm bg-muted px-1.5 font-mono text-xs text-muted-foreground">{tab.count}</span>
               )}
+              {tab.marker}
             </button>
           );
         })}

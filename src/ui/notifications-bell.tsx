@@ -12,6 +12,12 @@ export type NotificationsBellProps = {
   readonly children: ReactNode;
   /** Counts above this render as "N+" so the marker cannot grow unbounded. */
   readonly maxCount?: number;
+  /**
+   * `count` shows the number; `dot` shows a bare mark — for hosts where the
+   * count is noise (a queue that is either empty or not) but "something is
+   * waiting" is not.
+   */
+  readonly marker?: "count" | "dot";
   /** Controlled open state. Pair with `onOpenChange` to lift it to a parent. */
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
@@ -36,6 +42,7 @@ export function NotificationsBell({
   count,
   children,
   maxCount = 99,
+  marker = "count",
   open: openProp,
   onOpenChange,
   className,
@@ -68,12 +75,16 @@ export function NotificationsBell({
       >
         <Bell className="size-4" aria-hidden />
         {count > 0 ? (
-          <span
-            aria-hidden
-            className="absolute top-1 right-1 min-w-4 rounded-full bg-primary px-1 text-center font-mono text-[10px] leading-4 text-primary-foreground"
-          >
-            {count > maxCount ? `${maxCount}+` : count}
-          </span>
+          marker === "dot" ? (
+            <span aria-hidden className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
+          ) : (
+            <span
+              aria-hidden
+              className="absolute top-1 right-1 min-w-4 rounded-full bg-primary px-1 text-center font-mono text-[10px] leading-4 text-primary-foreground"
+            >
+              {count > maxCount ? `${maxCount}+` : count}
+            </span>
+          )
         ) : null}
       </button>
 
