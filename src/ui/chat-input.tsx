@@ -14,6 +14,16 @@ export type ChatInputProps = {
   readonly onSend: () => void;
   /** Shown while the agent is replying. Its presence turns send into stop. */
   readonly onStop?: () => void;
+  /**
+   * Holding the send button fires this instead of sending — the heavier
+   * alternative gesture (send back, send-and-…) that shares the button
+   * because it is a send, not a separate action. The click that ends the
+   * hold is swallowed so it never sends on release. There is no keyboard
+   * hold, so whatever this opens must be reachable another way too.
+   */
+  readonly onSendHold?: () => void;
+  /** How long a press counts as a hold. Defaults to 450ms. */
+  readonly sendHoldMs?: number;
   readonly working?: boolean;
   readonly placeholder?: string;
   readonly disabled?: boolean;
@@ -48,6 +58,8 @@ export function ChatInput({
   onValueChange,
   onSend,
   onStop,
+  onSendHold,
+  sendHoldMs = 450,
   working = false,
   placeholder = "Send a message…",
   disabled = false,
@@ -68,12 +80,28 @@ export function ChatInput({
     node.style.height = `${Math.min(node.scrollHeight, MAX_ROWS_PX)}px`;
   }, [value]);
 
+  useEffect(() => releaseHold, []);
+
   const canSend = value.trim().length > 0 && !disabled;
   const showStop = working && onStop !== undefined;
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Set when a hold fires so the click that ends the press does not send.
+  const heldRef = useRef(false);
 
   const submit = () => {
+    if (heldRef.current) {
+      heldRef.current = false;
+      return;
+    }
     if (!canSend) return;
     onSend();
+  };
+
+  const releaseHold = () => {
+    if (holdTimer.current !== null) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
   };
 
   return (
@@ -163,8 +191,27 @@ export function ChatInput({
         ) : (
           <button
             type="submit"
-            disabled={!canSend}
+            disabled={!canSend && onSendHold === undefined}
             aria-label="Send message"
+            {...(onSendHold === undefined
+              ? {}
+              : {
+                  onPointerDown: () => {
+                    releaseHold();
+                    // A hold released off the button never produces the
+                    // click that consumes this — reset it per press so it
+                    // cannot swallow a later normal send.
+                    heldRef.current = false;
+                    holdTimer.current = setTimeout(() => {
+                      heldRef.current = true;
+                      holdTimer.current = null;
+                      onSendHold();
+                    }, sendHoldMs);
+                  },
+                  onPointerUp: releaseHold,
+                  onPointerLeave: releaseHold,
+                  onPointerCancel: releaseHold,
+                })}
             className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary-active disabled:opacity-40"
           >
             <ArrowUp className="size-4" aria-hidden />
