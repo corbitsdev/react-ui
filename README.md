@@ -15,10 +15,31 @@ yarn add @corbits/react-ui
 bun add @corbits/react-ui
 ```
 
-Import the prebuilt stylesheet once at the app root (no Tailwind build required):
+Until a release is cut, consumers pin a commit instead of a version range:
+
+```json
+"@corbits/react-ui": "github:corbitsdev/react-ui#<commit-sha>"
+```
+
+Import the stylesheet once at the app root, before your own CSS (no Tailwind build required). Mount `ThemeProvider` near the root so dark mode persists per user, and `Toaster` once alongside it so any component can call `toast()`:
 
 ```tsx
 import "@corbits/react-ui/styles.css";
+
+import { ThemeProvider, Toaster, toast } from "@corbits/react-ui";
+
+export function Root() {
+  return (
+    <ThemeProvider storageKey="corbits-theme" defaultMode="light">
+      <App />
+      <Toaster position="bottom-right" />
+    </ThemeProvider>
+  );
+}
+
+function App() {
+  return <button onClick={() => toast("Signed out.")}>Sign out</button>;
+}
 ```
 
 That sheet includes Tailwind preflight and a base layer — it restyles the page, and neither import is safe to skip: without one of them the components render unstyled markup, not a fallback look. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities; don't import both.
@@ -27,41 +48,31 @@ Dark mode is a `dark` class on an ancestor; the stylesheet reads it and does not
 
 Removing `.dark` is not light: hosts that toggle by adding and removing `.dark` must now add `.light` for an explicit light choice (or mount `ThemeProvider`, which toggles both), or a dark-OS user falls back to OS dark. An explicit-light choice on a dark OS first-paints dark then swaps when JS adds `.light`; to block the flash, apply it before first paint *only when the stored choice is light* — `<script>if (localStorage.getItem("corbits-theme")?.includes('"light"')) document.documentElement.classList.add("light")</script>` — adding it unconditionally pins light for dark-OS users too. `ThemeProvider` still wins once it mounts — mount it only if you want the library to persist the choice and apply named presets.
 
-```tsx
-import { Button } from "@corbits/react-ui/ui/button";
+A page body typically pairs `PageShell` (margins and scroll ownership) with `EmptyState` (title, description, an optional icon, and an action):
 
-<Button onClick={() => start()}>Run now</Button>
+```tsx
+import { Button, EmptyState, PageShell } from "@corbits/react-ui";
+
+export function NotFoundPage() {
+  return (
+    <PageShell width="full">
+      <EmptyState
+        title="Page not found"
+        description="This page doesn't exist."
+        action={
+          <Button variant="outline" onClick={() => window.history.back()}>
+            Go back
+          </Button>
+        }
+      />
+    </PageShell>
+  );
+}
 ```
 
 Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from the root (`@corbits/react-ui`).
 
 The brand faces (Red Hat Display, Space Mono) are named by the theme but not bundled. Load them yourself, or the stack falls through to system fonts; to use a face loaded under a generated name, override `--font-sans` / `--font-mono`.
-
-```tsx
-import "@corbits/react-ui/styles.css";
-
-import { Button } from "@corbits/react-ui/ui/button";
-import { SortableTable } from "@corbits/react-ui/ui/sortable-table";
-
-type Run = { id: string; name: string; status: string };
-
-export function Runs({ runs }: { readonly runs: readonly Run[] }) {
-  return (
-    <>
-      <SortableTable
-        caption="Runs"
-        rows={runs}
-        rowKey={(run) => run.id}
-        columns={[
-          { key: "name", header: "Run", cell: (run) => run.name },
-          { key: "status", header: "Status", cell: (run) => run.status },
-        ]}
-      />
-      <Button onClick={() => api.start()}>Run now</Button>
-    </>
-  );
-}
-```
 
 This package ships no `"use client"` directives. In a React Server Components app, re-export stateful components from a file you mark yourself, using subpaths rather than the root barrel.
 
@@ -94,9 +105,15 @@ The Corbits logo has three motion variants: `silk` (default), `strata`, and `ech
 ```tsx
 import { ThinkingIndicator, ThinkingMark } from "@corbits/react-ui";
 
-<ThinkingIndicator variant="silk" />
-<ThinkingIndicator variant="strata" label="Reviewing files..." />
-<ThinkingMark variant="echo" className="w-8" />
+export function Thinking() {
+  return (
+    <>
+      <ThinkingIndicator variant="silk" />
+      <ThinkingIndicator variant="strata" label="Reviewing files..." />
+      <ThinkingMark variant="echo" className="w-8" />
+    </>
+  );
+}
 ```
 
 `ThinkingIndicator` supplies an accessible status label; `ThinkingMark` is decorative.
