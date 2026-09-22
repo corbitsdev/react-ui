@@ -96,6 +96,7 @@ export * from "./ui/research-body.js";
 export * from "./ui/rich-empty-state.js";
 export * from "./ui/run-now-button.js";
 export * from "./ui/section.js";
+export * from "./ui/segmented-control.js";
 export * from "./ui/select.js";
 export * from "./ui/selection-checkbox.js";
 export * from "./ui/settings-panel.js";

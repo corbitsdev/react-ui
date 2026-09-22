@@ -443,6 +443,10 @@
       "types": "./dist/ui/section.d.ts",
       "default": "./dist/ui/section.js"
     },
+    "./ui/segmented-control": {
+      "types": "./dist/ui/segmented-control.d.ts",
+      "default": "./dist/ui/segmented-control.js"
+    },
     "./ui/select": {
       "types": "./dist/ui/select.d.ts",
       "default": "./dist/ui/select.js"
