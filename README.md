@@ -15,27 +15,7 @@ yarn add @corbits/react-ui
 bun add @corbits/react-ui
 ```
 
-Import the prebuilt stylesheet once at the app root (no Tailwind build required):
-
-```tsx
-import "@corbits/react-ui/styles.css";
-```
-
-That sheet includes Tailwind preflight and a base layer — it restyles the page, and neither import is safe to skip: without one of them the components render unstyled markup, not a fallback look. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities; don't import both.
-
-Dark mode is a `dark` class on an ancestor; the stylesheet reads it and does not manage it. With neither `.dark` nor `.light` set, the theme follows the OS — a `@media (prefers-color-scheme: dark)` block applies the dark tokens to `:root` and sets `color-scheme: dark` so native controls follow, so a zero-JS install already renders dark on a dark-OS host. That media-query path is tokens only — `dark:` utilities still need a `.dark` ancestor.
-
-Removing `.dark` is not light: hosts that toggle by adding and removing `.dark` must now add `.light` for an explicit light choice (or mount `ThemeProvider`, which toggles both), or a dark-OS user falls back to OS dark. An explicit-light choice on a dark OS first-paints dark then swaps when JS adds `.light`; to block the flash, apply it before first paint *only when the stored choice is light* — `<script>if (localStorage.getItem("corbits-theme")?.includes('"light"')) document.documentElement.classList.add("light")</script>` — adding it unconditionally pins light for dark-OS users too. `ThemeProvider` still wins once it mounts — mount it only if you want the library to persist the choice and apply named presets.
-
-```tsx
-import { Button } from "@corbits/react-ui/ui/button";
-
-<Button onClick={() => start()}>Run now</Button>
-```
-
-Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from the root (`@corbits/react-ui`).
-
-The brand faces (Red Hat Display, Space Mono) are named by the theme but not bundled. Load them yourself, or the stack falls through to system fonts; to use a face loaded under a generated name, override `--font-sans` / `--font-mono`.
+Render a table and a button. The stylesheet import is part of the program — import it once at the app root (no Tailwind build required):
 
 ```tsx
 import "@corbits/react-ui/styles.css";
@@ -45,23 +25,38 @@ import { SortableTable } from "@corbits/react-ui/ui/sortable-table";
 
 type Run = { id: string; name: string; status: string };
 
-export function Runs({ runs }: { readonly runs: readonly Run[] }) {
+const RUNS: readonly Run[] = [
+  { id: "run-1", name: "Nightly ingest", status: "succeeded" },
+  { id: "run-2", name: "Backfill", status: "running" },
+];
+
+export function Runs() {
   return (
     <>
       <SortableTable
         caption="Runs"
-        rows={runs}
+        rows={RUNS}
         rowKey={(run) => run.id}
         columns={[
           { key: "name", header: "Run", cell: (run) => run.name },
           { key: "status", header: "Status", cell: (run) => run.status },
         ]}
       />
-      <Button onClick={() => api.start()}>Run now</Button>
+      <Button onClick={() => window.location.reload()}>Refresh</Button>
     </>
   );
 }
 ```
+
+That sheet includes Tailwind preflight and a base layer — it restyles the page, and neither import is safe to skip: without one of them the components render unstyled markup, not a fallback look. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities; don't import both.
+
+Dark mode is a `dark` class on an ancestor; the stylesheet reads it and does not manage it. With neither `.dark` nor `.light` set, the theme follows the OS — a `@media (prefers-color-scheme: dark)` block applies the dark tokens to `:root` and sets `color-scheme: dark` so native controls follow, so a zero-JS install already renders dark on a dark-OS host. That media-query path is tokens only — `dark:` utilities still need a `.dark` ancestor.
+
+Removing `.dark` is not light: hosts that toggle by adding and removing `.dark` must now add `.light` for an explicit light choice (or mount `ThemeProvider`, which toggles both), or a dark-OS user falls back to OS dark. An explicit-light choice on a dark OS first-paints dark then swaps when JS adds `.light`; to block the flash, apply it before first paint *only when the stored choice is light* — `<script>if (localStorage.getItem("corbits-theme")?.includes('"light"')) document.documentElement.classList.add("light")</script>` — adding it unconditionally pins light for dark-OS users too. `ThemeProvider` still wins once it mounts — mount it only if you want the library to persist the choice and apply named presets.
+
+Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from the root (`@corbits/react-ui`).
+
+The brand faces (Red Hat Display, Space Mono) are named by the theme but not bundled. Load them yourself, or the stack falls through to system fonts; to use a face loaded under a generated name, override `--font-sans` / `--font-mono`.
 
 This package ships no `"use client"` directives. In a React Server Components app, re-export stateful components from a file you mark yourself, using subpaths rather than the root barrel.
 
@@ -94,9 +89,15 @@ The Corbits logo has three motion variants: `silk` (default), `strata`, and `ech
 ```tsx
 import { ThinkingIndicator, ThinkingMark } from "@corbits/react-ui";
 
-<ThinkingIndicator variant="silk" />
-<ThinkingIndicator variant="strata" label="Reviewing files..." />
-<ThinkingMark variant="echo" className="w-8" />
+export function Thinking() {
+  return (
+    <>
+      <ThinkingIndicator variant="silk" />
+      <ThinkingIndicator variant="strata" label="Reviewing files..." />
+      <ThinkingMark variant="echo" className="w-8" />
+    </>
+  );
+}
 ```
 
 `ThinkingIndicator` supplies an accessible status label; `ThinkingMark` is decorative.
