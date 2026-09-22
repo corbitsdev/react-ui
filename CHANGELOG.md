@@ -61,6 +61,10 @@ contract — modules that are not exported are internal and may change in any re
 
 ### Added
 
+- **`ChatInput` icon slots** — optional `attachIcon` and `sendIcon` (`ReactNode`)
+  replace the default Paperclip and ArrowUp glyphs. Omit them and the composer
+  looks as it did; the stop control is unchanged.
+
 - **`ui/shimmer-text` and `ui/thinking-label`** — a token-pure shimmer sweep
   over text, and a rotating-verb status label built on it. Verb rotation is
   width-stable (stacked grid, crossfade) and stops under reduced motion via

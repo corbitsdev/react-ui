@@ -1,5 +1,5 @@
 import { ArrowUp, Paperclip, Square, X } from "lucide-react";
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 
 import { cn } from "../lib/utils.js";
 
@@ -22,10 +22,17 @@ export type ChatInputProps = {
   readonly onRemoveAttachment?: (attachment: ChatAttachment) => void;
   /** Exposes the textarea node — a host that autofocuses on open needs something to focus. */
   readonly textareaRef?: RefObject<HTMLTextAreaElement | null>;
+  /** Replaces the default paperclip on the attach control. Ignored when `onAttach` is omitted. */
+  readonly attachIcon?: ReactNode;
+  /** Replaces the default arrow on the send control. The stop control is unchanged. */
+  readonly sendIcon?: ReactNode;
   readonly className?: string;
 };
 
 const MAX_ROWS_PX = 200;
+
+const defaultAttachIcon = <Paperclip className="size-4" aria-hidden />;
+const defaultSendIcon = <ArrowUp className="size-4" aria-hidden />;
 
 /**
  * The composer.
@@ -55,6 +62,8 @@ export function ChatInput({
   onAttach,
   onRemoveAttachment,
   textareaRef: externalTextareaRef,
+  attachIcon = defaultAttachIcon,
+  sendIcon = defaultSendIcon,
   className,
 }: ChatInputProps) {
   const internalTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -127,7 +136,7 @@ export function ChatInput({
               aria-label="Attach files"
               className="grid size-9 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
             >
-              <Paperclip className="size-4" aria-hidden />
+              {attachIcon}
             </button>
           </>
         )}
@@ -167,7 +176,7 @@ export function ChatInput({
             aria-label="Send message"
             className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary-active disabled:opacity-40"
           >
-            <ArrowUp className="size-4" aria-hidden />
+            {sendIcon}
           </button>
         )}
       </div>
