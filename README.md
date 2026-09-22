@@ -15,36 +15,30 @@ yarn add @corbits/react-ui
 bun add @corbits/react-ui
 ```
 
-Render a table and a button. The stylesheet import is part of the program — import it once at the app root (no Tailwind build required):
+Until a release is cut, consumers pin a commit instead of a version range:
+
+```json
+"@corbits/react-ui": "github:corbitsdev/react-ui#<commit-sha>"
+```
+
+Import the stylesheet once at the app root, before your own CSS (no Tailwind build required). Mount `ThemeProvider` near the root so dark mode persists per user, and `Toaster` once alongside it so any component can call `toast()`:
 
 ```tsx
 import "@corbits/react-ui/styles.css";
 
-import { Button } from "@corbits/react-ui/ui/button";
-import { SortableTable } from "@corbits/react-ui/ui/sortable-table";
+import { ThemeProvider, Toaster, toast } from "@corbits/react-ui";
 
-type Run = { id: string; name: string; status: string };
-
-const RUNS: readonly Run[] = [
-  { id: "run-1", name: "Nightly ingest", status: "succeeded" },
-  { id: "run-2", name: "Backfill", status: "running" },
-];
-
-export function Runs() {
+export function Root() {
   return (
-    <>
-      <SortableTable
-        caption="Runs"
-        rows={RUNS}
-        rowKey={(run) => run.id}
-        columns={[
-          { key: "name", header: "Run", cell: (run) => run.name },
-          { key: "status", header: "Status", cell: (run) => run.status },
-        ]}
-      />
-      <Button onClick={() => window.location.reload()}>Refresh</Button>
-    </>
+    <ThemeProvider storageKey="corbits-theme" defaultMode="light">
+      <App />
+      <Toaster position="bottom-right" />
+    </ThemeProvider>
   );
+}
+
+function App() {
+  return <button onClick={() => toast("Signed out.")}>Sign out</button>;
 }
 ```
 
@@ -53,6 +47,28 @@ That sheet includes Tailwind preflight and a base layer — it restyles the page
 Dark mode is a `dark` class on an ancestor; the stylesheet reads it and does not manage it. With neither `.dark` nor `.light` set, the theme follows the OS — a `@media (prefers-color-scheme: dark)` block applies the dark tokens to `:root` and sets `color-scheme: dark` so native controls follow, so a zero-JS install already renders dark on a dark-OS host. That media-query path is tokens only — `dark:` utilities still need a `.dark` ancestor.
 
 Removing `.dark` is not light: hosts that toggle by adding and removing `.dark` must now add `.light` for an explicit light choice (or mount `ThemeProvider`, which toggles both), or a dark-OS user falls back to OS dark. An explicit-light choice on a dark OS first-paints dark then swaps when JS adds `.light`; to block the flash, apply it before first paint *only when the stored choice is light* — `<script>if (localStorage.getItem("corbits-theme")?.includes('"light"')) document.documentElement.classList.add("light")</script>` — adding it unconditionally pins light for dark-OS users too. `ThemeProvider` still wins once it mounts — mount it only if you want the library to persist the choice and apply named presets.
+
+A page body typically pairs `PageShell` (margins and scroll ownership) with `EmptyState` (title, description, an optional icon, and an action):
+
+```tsx
+import { Button, EmptyState, PageShell } from "@corbits/react-ui";
+
+export function NotFoundPage() {
+  return (
+    <PageShell width="full">
+      <EmptyState
+        title="Page not found"
+        description="This page doesn't exist."
+        action={
+          <Button variant="outline" onClick={() => window.history.back()}>
+            Go back
+          </Button>
+        }
+      />
+    </PageShell>
+  );
+}
+```
 
 Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from the root (`@corbits/react-ui`).
 
