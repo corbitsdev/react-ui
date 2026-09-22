@@ -61,6 +61,14 @@ contract — modules that are not exported are internal and may change in any re
 
 ### Added
 
+- **`ChatInput` compound slots** — `ChatInputRoot`, `ChatInputHeader`,
+  `ChatInputBody`, `ChatInputTextarea`, `ChatInputFooter`, `ChatInputTools`,
+  `ChatInputSubmit`, `ChatInputButton`, and `ChatInputAttach` compose a
+  Vercel-style prompt. The existing all-in-one `ChatInput` still works;
+  optional `leadingTools` and `trailingTools` land extra footer controls
+  (dictate, model picker, …) without overlaying the composer. `attachIcon`
+  and `sendIcon` are unchanged.
+
 - **`ChatInput` icon slots** — optional `attachIcon` and `sendIcon` (`ReactNode`)
   replace the default Paperclip and ArrowUp glyphs. Omit them and the composer
   looks as it did; the stop control is unchanged.
