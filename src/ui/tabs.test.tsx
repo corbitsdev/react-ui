@@ -74,7 +74,7 @@ describe("Tabs", () => {
     expect(tablist().className).toContain("flex-nowrap");
     expect(tablist().className).not.toContain("flex-wrap");
     act(() => {
-      tabs()[2]?.click();
+      (tabs()[2] as HTMLElement | undefined)?.click();
     });
     expect(received).toBe("packet");
     unmount();
