@@ -27,6 +27,8 @@ bun run test:e2e       # pack, install into tests/e2e/host, run Playwright
 
 `test:e2e` needs Chromium once: `bunx playwright install chromium`. Each scenario is a
 route in `tests/e2e/host/src/scenarios.tsx`, rendered against the packed tarball.
+The same run builds the Ladle stories and fails on any serious or critical axe
+violation in any story.
 
 All five must be clean before a change lands; CI runs them on every pull request.
 `typecheck` is not negotiable and `any` is not a way past it: the escapes that exist each
