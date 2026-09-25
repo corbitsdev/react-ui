@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { GATE_KIND_LABEL, type GateShellModel } from "../lib/workflow-registry.js";
 import { cn } from "../lib/utils.js";
 
+export type { GateKind, GateShellModel } from "../lib/workflow-registry.js";
+
 export type GateBlockProps = {
   readonly gate: GateShellModel;
   /** The interactive payload — a review list, choice buttons, a form. */
