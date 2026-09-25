@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   verify:
@@ -26,3 +25,5 @@ jobs:
       - run: bun run dep-guard
       - run: bun test
       - run: bun run build
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run test:e2e

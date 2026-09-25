@@ -6,14 +6,9 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "esModuleInterop": true,
     "isolatedModules": true
   },
-  "include": ["src/**/*", "stories/**/*", "tests/e2e/*.ts", ".ladle/**/*", "vite.ladle.config.mjs"],
-  "exclude": ["node_modules", "dist", "scratch"]
+  "include": ["src", "vite.config.ts"]
 }
