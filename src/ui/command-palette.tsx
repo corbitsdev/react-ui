@@ -300,6 +300,7 @@ export function CommandPalette({
   className,
 }: CommandPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   const machine = usePaletteMachine(groups, onSelect, () => onOpenChange(false));
 
   useEffect(() => {
@@ -311,6 +312,16 @@ export function CommandPalette({
       <DialogContent
         className={cn("max-w-xl gap-0 p-0 [&_[aria-label=Close]]:hidden", className)}
         onKeyDown={machine.onKeyDown}
+        // The palette opens from a shortcut or a host button, never a Radix
+        // trigger, so Radix has nothing to hand focus back to on close.
+        onOpenAutoFocus={() => {
+          openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        }}
+        onCloseAutoFocus={(event) => {
+          if (openerRef.current === null) return;
+          event.preventDefault();
+          openerRef.current.focus();
+        }}
       >
         <DialogTitle className="sr-only">Search</DialogTitle>
         <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">

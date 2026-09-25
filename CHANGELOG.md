@@ -73,6 +73,11 @@ contract — modules that are not exported are internal and may change in any re
   row) and `ui/mic-permission-dialog`. Presentational only: permission state,
   levels and copy arrive as props; no `getUserMedia`/`SpeechRecognition` here.
 
+### Fixed
+
+- **`CommandPalette` returns focus to whatever opened it** when it closes. It has no Radix
+  trigger, so focus used to fall to `<body>`.
+
 ## [0.1.0] - 2026-09-17
 
 Nothing has been published before this, so the list below is what the surface consists of
