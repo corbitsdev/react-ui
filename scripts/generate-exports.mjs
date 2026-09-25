@@ -30,7 +30,14 @@ const INTERNAL = new Set([
   "lib/workflow-registry",
   "ui/chat-dock-timing",
 ]);
-const BARREL_EXCLUDED = new Set();
+const BARREL_EXCLUDED = new Set([
+  "ui/command-palette",
+  "ui/dialog",
+  "ui/menu",
+  "ui/mic-permission-dialog",
+  "ui/toast",
+  "ui/tooltip",
+]);
 
 const walk = (dir) =>
   readdirSync(dir).flatMap((entry) => {
