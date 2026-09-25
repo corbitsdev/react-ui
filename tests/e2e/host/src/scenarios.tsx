@@ -15,6 +15,8 @@ import {
   type ChatMessage,
 } from "@corbits/react-ui";
 import { CommandPalette, type CommandPaletteGroup } from "@corbits/react-ui/ui/command-palette";
+import { ShimmerText } from "@corbits/react-ui/ui/shimmer-text";
+import { ThinkingMark } from "@corbits/react-ui/ui/thinking-mark";
 
 const REQUEST: ApprovalRequest = {
   id: "req-1",
@@ -168,6 +170,9 @@ export const scenarios: Record<string, () => ReactNode> = {
   "dictation-denied": () => <DictationStatusLine state="denied" />,
   "auth-layout": () => <AuthLayout>Form</AuthLayout>,
   "auth-layout-panel": () => <AuthLayout panel={<div data-testid="custom-panel">custom</div>}>Form</AuthLayout>,
+  shimmer: () => <ShimmerText>Thinking</ShimmerText>,
+  "thinking-mark": () => <ThinkingMark variant="echo" />,
+  "thinking-mark-paused": () => <ThinkingMark variant="echo" paused />,
   theme: () => <Swatches />,
   "theme-toggle": () => (
     <ThemeProvider storageKey="e2e-theme" defaultMode="light">
