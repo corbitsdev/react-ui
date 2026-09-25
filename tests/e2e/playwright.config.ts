@@ -5,6 +5,8 @@ export default defineConfig({
   testDir: ".",
   testMatch: "*.spec.ts",
   reporter: "list",
+  // Screenshots are text-free token swatches, so one baseline serves every OS.
+  snapshotPathTemplate: "{testDir}/__screenshots__/{arg}{ext}",
   use: { baseURL: "http://localhost:4173" },
   projects: [{ name: "chromium", use: devices["Desktop Chrome"] }],
   webServer: {
