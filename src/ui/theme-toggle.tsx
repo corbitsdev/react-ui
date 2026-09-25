@@ -1,3 +1,5 @@
+"use client";
+
 import { Monitor, Moon, Sun } from "lucide-react";
 
 import { Button, type ButtonProps } from "./button.js";

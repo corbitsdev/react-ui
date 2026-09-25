@@ -1,3 +1,5 @@
+"use client";
+
 import { ChevronRight, Paperclip } from "lucide-react";
 import { useState } from "react";
 

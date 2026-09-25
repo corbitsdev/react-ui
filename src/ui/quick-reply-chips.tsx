@@ -1,3 +1,5 @@
+"use client";
+
 import type { QuickReply } from "../lib/chat-message.js";
 import { cn } from "../lib/utils.js";
 

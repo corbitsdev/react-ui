@@ -1,4 +1,4 @@
-// Two import rules that types alone cannot enforce. Each one is a property a
+// Three source rules that types alone cannot enforce. Each one is a property a
 // consumer would feel and no other step in the build would notice.
 //
 // 1. Nothing imports from @workbench/*. corbits-ui is a clean rewrite; a single
@@ -12,7 +12,13 @@
 //    Only Node and Vite surface it; a Turbopack consumer builds cleanly, so
 //    this cannot be left to whichever bundler the person testing happened to
 //    use.
-import { readdirSync, readFileSync, statSync } from "node:fs";
+//
+// 3. A `ui/` or `blocks/` component starts with "use client" exactly when it
+//    calls a hook, creates a context, defines an inline event handler, or
+//    imports an optional peer. Missing, it breaks React Server Components
+//    consumers; extra, it makes a stateless component client-only for no
+//    reason. After a build, the emitted dist/ module must keep the directive.
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 
 const ROOT = new URL("../src", import.meta.url).pathname;
@@ -85,11 +91,37 @@ for (const path of reachableFrom(barrel)) {
   }
 }
 
+// --- Rule 3: client boundaries ------------------------------------------------
+
+const CLIENT_ONLY = new RegExp(
+  [
+    String.raw`\buse[A-Z]\w*\s*[<(]`,
+    "createContext",
+    String.raw`\bon[A-Z]\w*=\{\s*(\(|\w+\s*=>)`,
+    `["'](${OPTIONAL_PEERS.map((peer) => peer.replace("/", "\\/")).join("|")})["']`,
+  ].join("|"),
+);
+const DIST = new URL("../dist", import.meta.url).pathname;
+const stripComments = (source) => source.replace(/\/\*[\s\S]*?\*\/|(^|[^:])\/\/.*$/gm, "$1");
+
+for (const path of sources) {
+  if (!/^(ui|blocks)\//.test(id(path)) || /\.test\.tsx?$/.test(path)) continue;
+  const source = read(path);
+  const marked = source.startsWith('"use client";');
+  if (CLIENT_ONLY.test(stripComments(source)) !== marked) {
+    violations.push(`${id(path)}: ${marked ? "stateless but marked" : "stateful but missing"} "use client"`);
+  }
+  const built = join(DIST, id(path).replace(/\.tsx?$/, ".js"));
+  if (marked && existsSync(built) && !read(built).startsWith('"use client";')) {
+    violations.push(`${id(path)}: the build dropped "use client" from ${relative(DIST, built)}`);
+  }
+}
+
 if (violations.length > 0) {
   console.error(`dep-guard: forbidden imports\n${[...new Set(violations)].join("\n")}`);
   process.exit(1);
 }
 console.log(
   `dep-guard: clean (${RULES.map((rule) => rule.label).join(", ")}; ` +
-    `root barrel free of ${OPTIONAL_PEERS.join(", ")})`,
+    `root barrel free of ${OPTIONAL_PEERS.join(", ")}; client boundaries match)`,
 );
