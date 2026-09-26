@@ -10,7 +10,10 @@ export const Default = () => (
 
 export const FastRotation = () => (
   <div className="p-4">
-    <ThinkingLabel verbs={["Listening", "Sharpening the problem", "Writing the brief"]} intervalMs={900} />
+    <ThinkingLabel
+      verbs={["Listening", "Sharpening the problem", "Writing the brief"]}
+      intervalMs={900}
+    />
   </div>
 );
 

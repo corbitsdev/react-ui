@@ -1,6 +1,11 @@
 import { cn } from "../lib/utils.js";
 
-export type StatusDotTone = "neutral" | "emphasis" | "success" | "warning" | "danger";
+export type StatusDotTone =
+  | "neutral"
+  | "emphasis"
+  | "success"
+  | "warning"
+  | "danger";
 
 export type StatusDotProps = {
   /** Names the state for assistive tech. Required — a bare colour says nothing. */
@@ -51,9 +56,23 @@ const SIZE_CLASS: Record<StatusDotSize, string> = {
   sm: "size-2",
 };
 
-export function StatusDot({ label, live = false, tone = "neutral", size = "sm", className }: StatusDotProps) {
+export function StatusDot({
+  label,
+  live = false,
+  tone = "neutral",
+  size = "sm",
+  className,
+}: StatusDotProps) {
   return (
-    <span role="img" aria-label={label} className={cn("relative inline-flex shrink-0", SIZE_CLASS[size], className)}>
+    <span
+      role="img"
+      aria-label={label}
+      className={cn(
+        "relative inline-flex shrink-0",
+        SIZE_CLASS[size],
+        className,
+      )}
+    >
       {live ? (
         <span
           aria-hidden
@@ -63,7 +82,10 @@ export function StatusDot({ label, live = false, tone = "neutral", size = "sm", 
           )}
         />
       ) : null}
-      <span aria-hidden className={cn("relative size-full rounded-full", TONE_CLASS[tone])} />
+      <span
+        aria-hidden
+        className={cn("relative size-full rounded-full", TONE_CLASS[tone])}
+      />
     </span>
   );
 }

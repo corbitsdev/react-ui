@@ -6,7 +6,14 @@ import type { ReactNode } from "react";
 
 import { cn } from "../lib/utils.js";
 import { EmptyState } from "./empty-state.js";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table.js";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./table.js";
 
 export type SortDirection = "asc" | "desc";
 
@@ -29,7 +36,10 @@ export type SortableTableProps<T> = {
   readonly rows: readonly T[];
   readonly columns: readonly SortableColumn<T>[];
   readonly rowKey: (row: T) => string;
-  readonly initialSort?: { readonly key: string; readonly direction: SortDirection };
+  readonly initialSort?: {
+    readonly key: string;
+    readonly direction: SortDirection;
+  };
   readonly empty?: ReactNode;
   readonly className?: string;
 };
@@ -58,7 +68,10 @@ export function SortableTable<T>({
   empty,
   className,
 }: SortableTableProps<T>) {
-  const [sort, setSort] = useState<{ key: string; direction: SortDirection } | null>(initialSort ?? null);
+  const [sort, setSort] = useState<{
+    key: string;
+    direction: SortDirection;
+  } | null>(initialSort ?? null);
 
   const sorted = useMemo(() => {
     if (sort === null) return rows;
@@ -102,8 +115,17 @@ export function SortableTable<T>({
               <TableHead
                 key={column.key}
                 scope="col"
-                aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : undefined}
-                className={cn(column.align === "right" && "text-right", column.className)}
+                aria-sort={
+                  active
+                    ? sort.direction === "asc"
+                      ? "ascending"
+                      : "descending"
+                    : undefined
+                }
+                className={cn(
+                  column.align === "right" && "text-right",
+                  column.className,
+                )}
               >
                 {sortable ? (
                   <button
@@ -122,7 +144,10 @@ export function SortableTable<T>({
                         <ChevronDown className="size-3.5" aria-hidden />
                       )
                     ) : (
-                      <ChevronsUpDown className="size-3.5 opacity-50" aria-hidden />
+                      <ChevronsUpDown
+                        className="size-3.5 opacity-50"
+                        aria-hidden
+                      />
                     )}
                   </button>
                 ) : (
@@ -137,7 +162,13 @@ export function SortableTable<T>({
         {sorted.map((row) => (
           <TableRow key={rowKey(row)}>
             {columns.map((column) => (
-              <TableCell key={column.key} className={cn(column.align === "right" && "text-right", column.className)}>
+              <TableCell
+                key={column.key}
+                className={cn(
+                  column.align === "right" && "text-right",
+                  column.className,
+                )}
+              >
                 {column.cell(row)}
               </TableCell>
             ))}

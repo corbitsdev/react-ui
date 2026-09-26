@@ -36,9 +36,13 @@ describe("AuthLayout panel slot", () => {
 
   test("renders whatever node is passed as the panel", () => {
     const mounted = render(
-      <AuthLayout panel={<div data-testid="custom-panel">custom</div>}>Form</AuthLayout>,
+      <AuthLayout panel={<div data-testid="custom-panel">custom</div>}>
+        Form
+      </AuthLayout>,
     );
-    expect(mounted.container.querySelector('[data-testid="custom-panel"]')).not.toBeNull();
+    expect(
+      mounted.container.querySelector('[data-testid="custom-panel"]'),
+    ).not.toBeNull();
     mounted.unmount();
   });
 });

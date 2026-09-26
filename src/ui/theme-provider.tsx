@@ -35,7 +35,10 @@ export type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function readSystemPrefersDark(): boolean {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+  if (
+    typeof window === "undefined" ||
+    typeof window.matchMedia !== "function"
+  ) {
     return false;
   }
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -47,16 +50,25 @@ function readStoredPreference(
 ): ThemePreference {
   if (typeof window === "undefined") return fallback;
   try {
-    return parseThemePreference(window.localStorage.getItem(storageKey), fallback);
+    return parseThemePreference(
+      window.localStorage.getItem(storageKey),
+      fallback,
+    );
   } catch {
     return fallback;
   }
 }
 
-function writeStoredPreference(storageKey: string, preference: ThemePreference): void {
+function writeStoredPreference(
+  storageKey: string,
+  preference: ThemePreference,
+): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(storageKey, serializeThemePreference(preference));
+    window.localStorage.setItem(
+      storageKey,
+      serializeThemePreference(preference),
+    );
   } catch {
     // Quota / private mode — preference still applies for this session.
   }
@@ -102,7 +114,9 @@ export function ThemeProvider({
   const [preference, setPreference] = useState<ThemePreference>(() =>
     readStoredPreference(storageKey, fallback),
   );
-  const [systemPrefersDark, setSystemPrefersDark] = useState(readSystemPrefersDark);
+  const [systemPrefersDark, setSystemPrefersDark] = useState(
+    readSystemPrefersDark,
+  );
 
   // Re-read when the host changes the storage key (e.g. user signs in).
   useEffect(() => {
@@ -110,7 +124,10 @@ export function ThemeProvider({
   }, [storageKey, fallback]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
       return;
     }
     const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -124,7 +141,8 @@ export function ThemeProvider({
 
   useEffect(() => {
     const target =
-      root ?? (typeof document !== "undefined" ? document.documentElement : null);
+      root ??
+      (typeof document !== "undefined" ? document.documentElement : null);
     if (target === null) return;
     applyThemeToRoot(target, resolvedMode, preference.preset);
   }, [root, resolvedMode, preference.preset]);
@@ -164,10 +182,19 @@ export function ThemeProvider({
       preset: preference.preset,
       setPreset,
     }),
-    [preference.mode, preference.preset, setMode, cycleMode, resolvedMode, setPreset],
+    [
+      preference.mode,
+      preference.preset,
+      setMode,
+      cycleMode,
+      resolvedMode,
+      setPreset,
+    ],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 export function useTheme(): ThemeContextValue {

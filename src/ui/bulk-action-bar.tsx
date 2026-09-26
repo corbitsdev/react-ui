@@ -41,7 +41,13 @@ export type BulkActionBarProps = {
  * already handled its own Escape wins instead of also clearing the
  * selection underneath it.
  */
-export function BulkActionBar({ count, onClear, children, label = "Bulk actions", className }: BulkActionBarProps) {
+export function BulkActionBar({
+  count,
+  onClear,
+  children,
+  label = "Bulk actions",
+  className,
+}: BulkActionBarProps) {
   useEffect(() => {
     if (count === 0) return;
     function onKeyDown(event: KeyboardEvent) {
@@ -54,7 +60,9 @@ export function BulkActionBar({ count, onClear, children, label = "Bulk actions"
   if (count === 0) return null;
 
   return (
-    <div className={cn("fixed bottom-6 left-1/2 z-40 -translate-x-1/2", className)}>
+    <div
+      className={cn("fixed bottom-6 left-1/2 z-40 -translate-x-1/2", className)}
+    >
       <div
         role="group"
         aria-label={label}
@@ -63,7 +71,10 @@ export function BulkActionBar({ count, onClear, children, label = "Bulk actions"
           "motion-safe:[animation:corbits-bulk-action-bar-in_220ms_var(--ease-out)_both]",
         )}
       >
-        <span aria-live="polite" className="text-sm font-medium whitespace-nowrap">
+        <span
+          aria-live="polite"
+          className="text-sm font-medium whitespace-nowrap"
+        >
           {count} selected
         </span>
         <div className="flex items-center gap-2">{children}</div>

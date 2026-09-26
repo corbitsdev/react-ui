@@ -27,11 +27,20 @@ export type EmptyStateProps = {
  * Not a `role="status"`. An empty state is the rendered result of a finished
  * load, not an announcement — the surface that was loading owns that.
  */
-export function EmptyState({ title, description, icon, action, className }: EmptyStateProps) {
+export function EmptyState({
+  title,
+  description,
+  icon,
+  action,
+  className,
+}: EmptyStateProps) {
   return (
     <div
       data-slot="empty-state"
-      className={cn("flex flex-col items-center gap-3 px-6 py-12 text-center", className)}
+      className={cn(
+        "flex flex-col items-center gap-3 px-6 py-12 text-center",
+        className,
+      )}
     >
       {icon === undefined ? null : (
         <span
@@ -44,7 +53,9 @@ export function EmptyState({ title, description, icon, action, className }: Empt
       <div className="flex flex-col gap-1">
         <p className="text-sm font-medium">{title}</p>
         {description === undefined ? null : (
-          <p className="max-w-prose text-xs leading-relaxed text-muted-foreground">{description}</p>
+          <p className="max-w-prose text-xs leading-relaxed text-muted-foreground">
+            {description}
+          </p>
         )}
       </div>
       {action}

@@ -21,14 +21,22 @@ function mount(props: ComponentProps<typeof SelectionCheckbox>) {
 
 describe("SelectionCheckbox", () => {
   test("renders a role=checkbox control named after the row", () => {
-    const { button, unmount } = mount({ checked: false, onToggle: () => {}, rowLabel: '"Q3 rollup"' });
+    const { button, unmount } = mount({
+      checked: false,
+      onToggle: () => {},
+      rowLabel: '"Q3 rollup"',
+    });
     expect(button().getAttribute("role")).toBe("checkbox");
     expect(button().getAttribute("aria-label")).toBe('Select "Q3 rollup"');
     unmount();
   });
 
   test("aria-checked reflects the checked prop", () => {
-    const { button, unmount } = mount({ checked: true, onToggle: () => {}, rowLabel: "row" });
+    const { button, unmount } = mount({
+      checked: true,
+      onToggle: () => {},
+      rowLabel: "row",
+    });
     expect(button().getAttribute("aria-checked")).toBe("true");
     unmount();
   });
@@ -41,7 +49,9 @@ describe("SelectionCheckbox", () => {
       rowLabel: "row",
     });
     act(() => {
-      button().dispatchEvent(new MouseEvent("click", { bubbles: true, shiftKey: true }));
+      button().dispatchEvent(
+        new MouseEvent("click", { bubbles: true, shiftKey: true }),
+      );
     });
     expect(received).toEqual([true]);
     unmount();
@@ -57,10 +67,22 @@ describe("SelectionCheckbox", () => {
       rowLabel: "row",
     });
     act(() => {
-      button().dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true, cancelable: true }));
+      button().dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: " ",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
     });
     act(() => {
-      button().dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+      button().dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
     });
     expect(calls).toBe(2);
     unmount();
@@ -76,14 +98,24 @@ describe("SelectionCheckbox", () => {
       rowLabel: "row",
     });
     act(() => {
-      button().dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+      button().dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Tab",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
     });
     expect(calls).toBe(0);
     unmount();
   });
 
   test("indeterminate reports aria-checked=mixed, distinct from both true and false", () => {
-    const { button, unmount } = mount({ checked: "indeterminate", onToggle: () => {}, rowLabel: "all rows" });
+    const { button, unmount } = mount({
+      checked: "indeterminate",
+      onToggle: () => {},
+      rowLabel: "all rows",
+    });
     expect(button().getAttribute("aria-checked")).toBe("mixed");
     unmount();
   });
@@ -95,7 +127,9 @@ describe("SelectionCheckbox", () => {
       rowLabel: "all rows",
       ariaLabel: "Select all rows on this page",
     });
-    expect(button().getAttribute("aria-label")).toBe("Select all rows on this page");
+    expect(button().getAttribute("aria-label")).toBe(
+      "Select all rows on this page",
+    );
     unmount();
   });
 });

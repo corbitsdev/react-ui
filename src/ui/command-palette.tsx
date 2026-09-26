@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject } from "react";
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  ReactNode,
+  RefObject,
+} from "react";
 
 import { cn } from "../lib/utils.js";
 import { useCommandPaletteNavigation } from "../hooks/use-command-palette-navigation.js";
@@ -72,7 +76,11 @@ function flatten(groups: readonly CommandPaletteGroup[]): CommandPaletteItem[] {
   return groups.flatMap((group) => group.items);
 }
 
-function statusMessage(loading: boolean, error: ReactNode, hasQuery: boolean): ReactNode {
+function statusMessage(
+  loading: boolean,
+  error: ReactNode,
+  hasQuery: boolean,
+): ReactNode {
   if (error !== undefined) return error;
   if (loading) return "Searching…";
   if (hasQuery) return "No matches found.";
@@ -111,10 +119,16 @@ function usePaletteMachine(
     onClose();
   };
 
-  const navigation = useCommandPaletteNavigation({ items, onSelect: select, onClose });
+  const navigation = useCommandPaletteNavigation({
+    items,
+    onSelect: select,
+    onClose,
+  });
 
   useEffect(() => {
-    listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
+    listRef.current
+      ?.querySelector('[data-active="true"]')
+      ?.scrollIntoView({ block: "nearest" });
   }, [navigation.activeId]);
 
   return {
@@ -159,7 +173,11 @@ function PaletteInput({
       aria-label="Search"
       aria-expanded
       aria-controls={`${machine.baseId}-list`}
-      aria-activedescendant={machine.activeId === undefined ? undefined : machine.optionId(machine.activeId)}
+      aria-activedescendant={
+        machine.activeId === undefined
+          ? undefined
+          : machine.optionId(machine.activeId)
+      }
       aria-autocomplete="list"
       aria-busy={loading}
       value={query}
@@ -192,7 +210,10 @@ function PaletteResults({
       className={className}
     >
       {machine.items.length === 0 ? (
-        <li role="presentation" className="px-2 py-8 text-center text-sm text-muted-foreground">
+        <li
+          role="presentation"
+          className="px-2 py-8 text-center text-sm text-muted-foreground"
+        >
           {message}
         </li>
       ) : (
@@ -218,14 +239,19 @@ function PaletteResults({
                     )}
                   >
                     {item.icon === undefined ? null : (
-                      <span className="grid size-4 shrink-0 place-items-center text-muted-foreground [&_svg]:size-4" aria-hidden>
+                      <span
+                        className="grid size-4 shrink-0 place-items-center text-muted-foreground [&_svg]:size-4"
+                        aria-hidden
+                      >
                         {item.icon}
                       </span>
                     )}
                     <span className="min-w-0 flex-1">
                       <span className="block truncate">{item.title}</span>
                       {item.subtitle === undefined ? null : (
-                        <span className="block truncate text-xs text-muted-foreground">{item.subtitle}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {item.subtitle}
+                        </span>
                       )}
                     </span>
                   </li>
@@ -267,7 +293,10 @@ function PaletteLoadMore({
 function PaletteFooter({ footer }: { readonly footer: ReactNode }) {
   if (footer === undefined) return null;
   return (
-    <div data-slot="command-palette-footer" className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
+    <div
+      data-slot="command-palette-footer"
+      className="border-t border-border px-3 py-2 text-xs text-muted-foreground"
+    >
       {footer}
     </div>
   );
@@ -302,7 +331,9 @@ export function CommandPalette({
   className,
 }: CommandPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const machine = usePaletteMachine(groups, onSelect, () => onOpenChange(false));
+  const machine = usePaletteMachine(groups, onSelect, () =>
+    onOpenChange(false),
+  );
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -311,13 +342,19 @@ export function CommandPalette({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={cn("max-w-xl gap-0 p-0 [&_[aria-label=Close]]:hidden", className)}
+        className={cn(
+          "max-w-xl gap-0 p-0 [&_[aria-label=Close]]:hidden",
+          className,
+        )}
         onKeyDown={machine.onKeyDown}
       >
         <DialogTitle className="sr-only">Search</DialogTitle>
         <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
           {inputAccessory === undefined ? null : (
-            <div data-slot="command-palette-input-accessory" className="shrink-0">
+            <div
+              data-slot="command-palette-input-accessory"
+              className="shrink-0"
+            >
               {inputAccessory}
             </div>
           )}
@@ -340,7 +377,11 @@ export function CommandPalette({
           className="max-h-96 min-h-0 flex-1 overflow-y-auto p-2"
         />
 
-        <PaletteLoadMore hasMore={hasMore} onLoadMore={onLoadMore} loading={loading} />
+        <PaletteLoadMore
+          hasMore={hasMore}
+          onLoadMore={onLoadMore}
+          loading={loading}
+        />
         <PaletteFooter footer={footer} />
       </DialogContent>
     </Dialog>
@@ -384,7 +425,9 @@ export function CommandPaletteInline({
 }: CommandPaletteInlineProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const machine = usePaletteMachine(groups, onSelect, () => onOpenChange(false));
+  const machine = usePaletteMachine(groups, onSelect, () =>
+    onOpenChange(false),
+  );
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -404,13 +447,24 @@ export function CommandPaletteInline({
   }, [open, onOpenChange]);
 
   return (
-    <div ref={rootRef} data-slot="command-palette-inline" data-open={open} className={cn("relative", className)}>
-      <div data-slot="command-palette-inline-field" onKeyDown={machine.onKeyDown}>
+    <div
+      ref={rootRef}
+      data-slot="command-palette-inline"
+      data-open={open}
+      className={cn("relative", className)}
+    >
+      <div
+        data-slot="command-palette-inline-field"
+        onKeyDown={machine.onKeyDown}
+      >
         {leading}
         {open ? (
           <>
             {inputAccessory === undefined ? null : (
-              <div data-slot="command-palette-input-accessory" className="shrink-0">
+              <div
+                data-slot="command-palette-input-accessory"
+                className="shrink-0"
+              >
                 {inputAccessory}
               </div>
             )}
@@ -440,7 +494,11 @@ export function CommandPaletteInline({
             error={error}
             className="max-h-96 min-h-0 flex-1 overflow-y-auto p-2"
           />
-          <PaletteLoadMore hasMore={hasMore} onLoadMore={onLoadMore} loading={loading} />
+          <PaletteLoadMore
+            hasMore={hasMore}
+            onLoadMore={onLoadMore}
+            loading={loading}
+          />
           <PaletteFooter footer={footer} />
         </div>
       ) : null}
@@ -462,9 +520,18 @@ export function useCommandShortcut(onToggle: () => void, enabled = true): void {
   useEffect(() => {
     if (!enabled) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== "k" || !(event.metaKey || event.ctrlKey) || event.repeat) return;
+      if (
+        event.key.toLowerCase() !== "k" ||
+        !(event.metaKey || event.ctrlKey) ||
+        event.repeat
+      )
+        return;
       const target = event.target as HTMLElement | null;
-      if (target?.isContentEditable === true || /^(input|textarea|select)$/i.test(target?.tagName ?? "")) return;
+      if (
+        target?.isContentEditable === true ||
+        /^(input|textarea|select)$/i.test(target?.tagName ?? "")
+      )
+        return;
       event.preventDefault();
       onToggle();
     };

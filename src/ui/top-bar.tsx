@@ -12,11 +12,17 @@ import { cn } from "../lib/utils.js";
  * and a fixed prop list would push every one of them through a `ReactNode` prop
  * that does the same job as a child.
  */
-export function TopBar({ className, ...props }: React.ComponentProps<"header">) {
+export function TopBar({
+  className,
+  ...props
+}: React.ComponentProps<"header">) {
   return (
     <header
       data-slot="top-bar"
-      className={cn("flex min-h-14 shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-2", className)}
+      className={cn(
+        "flex min-h-14 shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-2",
+        className,
+      )}
       {...props}
     />
   );
@@ -30,10 +36,18 @@ export function TopBarTitle({
   ...props
 }: React.ComponentProps<"div"> & { count?: number; subtitle?: string }) {
   return (
-    <div data-slot="top-bar-title" className={cn("flex min-w-0 shrink items-center gap-2", className)} {...props}>
+    <div
+      data-slot="top-bar-title"
+      className={cn("flex min-w-0 shrink items-center gap-2", className)}
+      {...props}
+    >
       <div className="flex min-w-0 flex-col">
-        <h1 className="truncate text-base font-semibold tracking-tight">{children}</h1>
-        {subtitle === undefined ? null : <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
+        <h1 className="truncate text-base font-semibold tracking-tight">
+          {children}
+        </h1>
+        {subtitle === undefined ? null : (
+          <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+        )}
       </div>
       {count === undefined ? null : (
         <span className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
@@ -61,7 +75,11 @@ export type BreadcrumbLinkProps = {
   readonly children: React.ReactNode;
 };
 
-function DefaultBreadcrumbLink({ href, className, children }: BreadcrumbLinkProps) {
+function DefaultBreadcrumbLink({
+  href,
+  className,
+  children,
+}: BreadcrumbLinkProps) {
   return (
     <a href={href} className={className}>
       {children}
@@ -69,7 +87,10 @@ function DefaultBreadcrumbLink({ href, className, children }: BreadcrumbLinkProp
   );
 }
 
-export type TopBarBreadcrumbsProps = Omit<React.ComponentProps<"nav">, "children"> & {
+export type TopBarBreadcrumbsProps = Omit<
+  React.ComponentProps<"nav">,
+  "children"
+> & {
   crumbs: readonly Crumb[];
   /**
    * Renders every non-last crumb; defaults to a plain `<a>`. Must be a
@@ -97,24 +118,38 @@ export function TopBarBreadcrumbs({
   ...props
 }: TopBarBreadcrumbsProps) {
   return (
-    <nav data-slot="top-bar-breadcrumbs" aria-label="Breadcrumb" className={cn("min-w-0", className)} {...props}>
+    <nav
+      data-slot="top-bar-breadcrumbs"
+      aria-label="Breadcrumb"
+      className={cn("min-w-0", className)}
+      {...props}
+    >
       <ol className="flex min-w-0 items-center gap-1 text-sm">
         {crumbs.map((crumb, index) => {
           const isLast = index === crumbs.length - 1;
           return (
             <li key={index} className="flex min-w-0 items-center gap-1">
               {index === 0 ? null : (
-                <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                <ChevronRight
+                  className="size-3.5 shrink-0 text-muted-foreground"
+                  aria-hidden
+                />
               )}
               {isLast || crumb.href === undefined ? (
                 <span
                   aria-current={isLast ? "page" : undefined}
-                  className={cn("truncate", isLast ? "font-medium" : "text-muted-foreground")}
+                  className={cn(
+                    "truncate",
+                    isLast ? "font-medium" : "text-muted-foreground",
+                  )}
                 >
                   {crumb.label}
                 </span>
               ) : (
-                <LinkComponent href={crumb.href} className="truncate text-muted-foreground hover:text-foreground">
+                <LinkComponent
+                  href={crumb.href}
+                  className="truncate text-muted-foreground hover:text-foreground"
+                >
                   {crumb.label}
                 </LinkComponent>
               )}
@@ -127,7 +162,10 @@ export function TopBarBreadcrumbs({
 }
 
 /** Trailing controls. Pushes itself to the right; put it last. */
-export function TopBarActions({ className, ...props }: React.ComponentProps<"div">) {
+export function TopBarActions({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="top-bar-actions"

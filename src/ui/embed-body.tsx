@@ -53,22 +53,41 @@ export type EmbedBodyProps = {
  * the direct link is always present rather than being a fallback we would have
  * to detect our way into.
  */
-export function EmbedBody({ url, title, description, downloadUrl, aspect = "wide", className }: EmbedBodyProps) {
+export function EmbedBody({
+  url,
+  title,
+  description,
+  downloadUrl,
+  aspect = "wide",
+  className,
+}: EmbedBodyProps) {
   if (!isSafeUrl(url, EMBED_ALLOWED_PROTOCOLS)) {
-    return <ArtifactNotice message="This link is missing or is not a secure (https) address, so it cannot be shown." />;
+    return (
+      <ArtifactNotice message="This link is missing or is not a secure (https) address, so it cannot be shown." />
+    );
   }
   const safeDownloadUrl = toSafeHref(downloadUrl);
 
   return (
     <div className={cn("flex w-full flex-col gap-3", className)}>
-      {description === undefined ? null : <p className="max-w-prose text-sm text-muted-foreground">{description}</p>}
+      {description === undefined ? null : (
+        <p className="max-w-prose text-sm text-muted-foreground">
+          {description}
+        </p>
+      )}
       <div
         className={cn(
           "w-full overflow-hidden rounded-lg border border-border bg-card",
           aspect === "wide" ? "aspect-video" : "aspect-[3/4] max-h-[75vh]",
         )}
       >
-        <iframe src={url} title={title} sandbox={EMBED_SANDBOX} allow="fullscreen" className="size-full border-0" />
+        <iframe
+          src={url}
+          title={title}
+          sandbox={EMBED_SANDBOX}
+          allow="fullscreen"
+          className="size-full border-0"
+        />
       </div>
       <div className="flex items-center gap-2">
         <a
@@ -81,7 +100,11 @@ export function EmbedBody({ url, title, description, downloadUrl, aspect = "wide
           Open in a new tab
         </a>
         {safeDownloadUrl === undefined ? null : (
-          <a href={safeDownloadUrl} download className={buttonVariants({ variant: "ghost", size: "sm" })}>
+          <a
+            href={safeDownloadUrl}
+            download
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+          >
             Download
           </a>
         )}

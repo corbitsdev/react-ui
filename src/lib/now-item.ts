@@ -49,13 +49,24 @@ export type NowItem =
       readonly read: boolean;
     });
 
-const PRIORITY_RANK: Record<NowPriority, number> = { now: 0, next: 1, later: 2 };
+const PRIORITY_RANK: Record<NowPriority, number> = {
+  now: 0,
+  next: 1,
+  later: 2,
+};
 
 /** Short band label for the queue's priority column. */
-export const PRIORITY_LABEL: Record<NowPriority, string> = { now: "HIGH", next: "MED", later: "LOW" };
+export const PRIORITY_LABEL: Record<NowPriority, string> = {
+  now: "HIGH",
+  next: "MED",
+  later: "LOW",
+};
 
 /** Human label for the status marker. */
-export const STATUS_LABEL: Record<NowStatus, string> = { "needs-action": "Needs action", done: "Done" };
+export const STATUS_LABEL: Record<NowStatus, string> = {
+  "needs-action": "Needs action",
+  done: "Done",
+};
 
 /**
  * Priority first, then newest. Sorts a copy — a component handed a frozen or
@@ -78,15 +89,22 @@ export type NowGroup = {
  * Sorted items split into priority bands. Empty bands are dropped rather than
  * returned empty, so a caller can map straight to headings without checking.
  */
-export function groupNowItemsByPriority(items: readonly NowItem[]): readonly NowGroup[] {
+export function groupNowItemsByPriority(
+  items: readonly NowItem[],
+): readonly NowGroup[] {
   const sorted = sortNowItems(items);
   const order: readonly NowPriority[] = ["now", "next", "later"];
   return order
-    .map((priority) => ({ priority, items: sorted.filter((item) => item.priority === priority) }))
+    .map((priority) => ({
+      priority,
+      items: sorted.filter((item) => item.priority === priority),
+    }))
     .filter((group) => group.items.length > 0);
 }
 
 /** The classifications present, in first-appearance order — for a filter row. */
-export function nowItemClassifications(items: readonly NowItem[]): readonly string[] {
+export function nowItemClassifications(
+  items: readonly NowItem[],
+): readonly string[] {
   return [...new Set(sortNowItems(items).map((item) => item.classification))];
 }

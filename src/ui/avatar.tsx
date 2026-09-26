@@ -93,18 +93,29 @@ export type AvatarStackProps = {
 /**
  * Overlapping avatar stack for thread participants and channel members.
  */
-export function AvatarStack({ items, max = 4, size = "sm", className }: AvatarStackProps) {
+export function AvatarStack({
+  items,
+  max = 4,
+  size = "sm",
+  className,
+}: AvatarStackProps) {
   const visible = items.slice(0, max);
   const overflow = items.length - visible.length;
   return (
-    <span className={cn("inline-flex items-center", className)} role="group" aria-label="Participants">
+    <span
+      className={cn("inline-flex items-center", className)}
+      role="group"
+      aria-label="Participants"
+    >
       {visible.map((item, index) => (
         <Avatar
           key={item.id}
           initials={item.initials}
           label={item.label}
           {...(item.tone === undefined ? {} : { tone: item.tone })}
-          {...(item.tenantMonogram === undefined ? {} : { tenantMonogram: item.tenantMonogram })}
+          {...(item.tenantMonogram === undefined
+            ? {}
+            : { tenantMonogram: item.tenantMonogram })}
           size={size}
           className={cn("ring-1 ring-background", index > 0 && "-ml-1.5")}
         />

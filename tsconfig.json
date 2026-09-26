@@ -14,6 +14,11 @@
     "esModuleInterop": true,
     "isolatedModules": true
   },
-  "include": ["src/**/*", "stories/**/*", ".ladle/**/*", "vite.ladle.config.mjs"],
+  "include": [
+    "src/**/*",
+    "stories/**/*",
+    ".ladle/**/*",
+    "vite.ladle.config.mjs"
+  ],
   "exclude": ["node_modules", "dist", "scratch"]
 }

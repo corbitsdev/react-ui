@@ -52,7 +52,10 @@ export function CategoryBars({
         {data.map((datum) => {
           const pct = (datum.value / axisMax) * 100;
           return (
-            <div key={datum.label} className="grid grid-cols-[minmax(6rem,10rem)_1fr_auto] items-center gap-2">
+            <div
+              key={datum.label}
+              className="grid grid-cols-[minmax(6rem,10rem)_1fr_auto] items-center gap-2"
+            >
               <p className="truncate text-xs font-medium">{datum.label}</p>
               <div className="h-3 w-full bg-muted">
                 <div
@@ -63,7 +66,9 @@ export function CategoryBars({
               <div className="min-w-[3.5rem] text-right font-mono text-[11px] leading-tight">
                 <p className="font-semibold">{format(datum.value)}</p>
                 {datum.secondaryLabel === undefined ? null : (
-                  <p className="text-muted-foreground">{datum.secondaryLabel}</p>
+                  <p className="text-muted-foreground">
+                    {datum.secondaryLabel}
+                  </p>
                 )}
               </div>
             </div>

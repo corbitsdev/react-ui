@@ -10,7 +10,11 @@ function mount(onConfirm: () => void) {
   const root = createRoot(container);
   act(() => {
     root.render(
-      createElement(ConfirmButton, { onConfirm, resetMs: 3000, children: "Revoke access" }),
+      createElement(ConfirmButton, {
+        onConfirm,
+        resetMs: 3000,
+        children: "Revoke access",
+      }),
     );
   });
   return {

@@ -7,9 +7,17 @@ export default { title: "Primitives / File input" };
 // and there is no prop to force it. Verify that state by hand when touching it.
 
 export const Basic = () => (
-  <FileInput onFiles={(files) => alert(`${files.length} file(s) selected`)} className="max-w-sm" />
+  <FileInput
+    onFiles={(files) => alert(`${files.length} file(s) selected`)}
+    className="max-w-sm"
+  />
 );
 
 export const Disabled = () => (
-  <FileInput onFiles={() => {}} disabled hint="Uploads are paused" className="max-w-sm" />
+  <FileInput
+    onFiles={() => {}}
+    disabled
+    hint="Uploads are paused"
+    className="max-w-sm"
+  />
 );

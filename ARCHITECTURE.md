@@ -23,10 +23,10 @@ points. There is no CLI, no component generator and no docs site, and that is de
 
 `bun run build` is three steps, joined by `&&`, in order:
 
-| Step | Tool | Output |
-| --- | --- | --- |
-| `build:js` | `tsc -p tsconfig.build.json` | `dist/**/*.js` and `dist/**/*.d.ts`, one per source file |
-| `build:css` | Tailwind v4 CLI | `dist/styles.css`, plus `dist/theme.css` copied from source |
+| Step        | Tool                         | Output                                                      |
+| ----------- | ---------------------------- | ----------------------------------------------------------- |
+| `build:js`  | `tsc -p tsconfig.build.json` | `dist/**/*.js` and `dist/**/*.d.ts`, one per source file    |
+| `build:css` | Tailwind v4 CLI              | `dist/styles.css`, plus `dist/theme.css` copied from source |
 
 `tsc` emits the JavaScript and the declarations in one pass. Nothing bundles, so nothing
 can merge two modules into one chunk. `prepack` runs the build, so npm publishes a fresh
@@ -47,6 +47,7 @@ Components in this package **never fetch**, and never import a server-side packa
 component that fetches has chosen the consumer's data layer for them; a component that
 imports a server package drags a database tree into a browser bundle. Data arrives as
 props — the host owns its own data layer, caching and pagination.
+
 ## `CommandPalette`
 
 `CommandPalette` is a global-search overlay with no idea what it is searching. It takes
@@ -112,7 +113,7 @@ provider; every other component does not.
 ### Contrast is gated
 
 `contrast-test` runs in CI after the build. It parses the **built** `dist/styles.css`
-for the `:root` and `.dark` custom properties and derives its pairs from token *names*,
+for the `:root` and `.dark` custom properties and derives its pairs from token _names_,
 never from listed hexes, so a new `--warning` / `--warning-foreground` is covered on the
 next run with no edit. Six rules:
 
@@ -123,7 +124,7 @@ next run with no edit. Six rules:
    a border;
 4. `input` and `ring` clear the 3:1 UI-component threshold on both surfaces;
 5. every `chart-N` clears 3:1 against both surfaces;
-6. a card is separable from the page by at least 1.2:1, satisfied by *either* its fill or
+6. a card is separable from the page by at least 1.2:1, satisfied by _either_ its fill or
    its border.
 
 Both modes run every time, with dark treated as an override layer over light so a token
@@ -151,7 +152,7 @@ alongside a second, non-colour channel.
 
 That is why `seriesDash()` exists next to `seriesColor()`, and why every chart ships a
 legend, direct labels and a data table rather than treating them as polish: the palette is
-compliant *because* they are there. Past five series `seriesColor` returns the muted ink
+compliant _because_ they are there. Past five series `seriesColor` returns the muted ink
 rather than cycling or inventing a hue — use `foldSeries` so the label says "lumped
 together" too. The contrast gate re-checks the 3:1 half on every build; the colour-vision
 half cannot be re-derived from hex pairs, so if you re-step these tokens, re-run the
@@ -173,18 +174,18 @@ and numbers out, checkable without rendering anything).
 
 ## Layout
 
-| | |
-| --- | --- |
-| `src/ui/` | Components. Primitives, collection surfaces, shells, and the domain families. |
-| `src/lib/` | Non-component source: `utils`, the per-domain shapes, and the internal chart palette and geometry. |
-| `src/hooks/` | 7 headless hooks: `use-command-palette-navigation`, `use-controllable-state`, `use-delayed-autofocus`, `use-dismissable-popover`, `use-list-selection`, `use-prefers-reduced-motion`, `use-scroll-current-into-view`. |
-| `src/blocks/` | Multi-file compositions (`login`). |
-| `src/theme.css` | Tokens, keyframes, base layer. The only CSS source. |
-| `src/styles.css` | Two `@import`s. The entry Tailwind compiles into `dist/styles.css`. |
-| `src/index.ts` | The root barrel. Hand-written: add a public module here. |
-| `scripts/contrast-test.mjs` | The theme gate. Reads `dist/styles.css`. |
-| `scripts/dep-guard.mjs` | The forbidden-import gates. |
-| `dist/` | Build output. Generated, not committed; the only thing `files` publishes. |
+|                             |                                                                                                                                                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ui/`                   | Components. Primitives, collection surfaces, shells, and the domain families.                                                                                                                                         |
+| `src/lib/`                  | Non-component source: `utils`, the per-domain shapes, and the internal chart palette and geometry.                                                                                                                    |
+| `src/hooks/`                | 7 headless hooks: `use-command-palette-navigation`, `use-controllable-state`, `use-delayed-autofocus`, `use-dismissable-popover`, `use-list-selection`, `use-prefers-reduced-motion`, `use-scroll-current-into-view`. |
+| `src/blocks/`               | Multi-file compositions (`login`).                                                                                                                                                                                    |
+| `src/theme.css`             | Tokens, keyframes, base layer. The only CSS source.                                                                                                                                                                   |
+| `src/styles.css`            | Two `@import`s. The entry Tailwind compiles into `dist/styles.css`.                                                                                                                                                   |
+| `src/index.ts`              | The root barrel. Hand-written: add a public module here.                                                                                                                                                              |
+| `scripts/contrast-test.mjs` | The theme gate. Reads `dist/styles.css`.                                                                                                                                                                              |
+| `scripts/dep-guard.mjs`     | The forbidden-import gates.                                                                                                                                                                                           |
+| `dist/`                     | Build output. Generated, not committed; the only thing `files` publishes.                                                                                                                                             |
 
 ## Small-stateless-components audit
 
@@ -216,15 +217,15 @@ families hold zero layout state internally — the parent owns it, full stop.
 The components below didn't follow either shape; they held `open`/`expanded`
 in `useState` with no way for a parent to read or drive it.
 
-| Component | Path | Blast radius | Status |
-| --- | --- | --- | --- |
-| `ToolNarrative` | `src/ui/tool-narrative.tsx` | 3 importers | **Fixed** — added optional `open`/`onOpenChange` |
-| `ToolBlock` | `src/ui/tool-block.tsx` | 2 importers | **Fixed** — added optional `open`/`onOpenChange` |
-| `NotificationsBell` | `src/ui/notifications-bell.tsx` | 1 importer | **Fixed** — added optional `open`/`onOpenChange` |
-| `TenantSelector` | `src/ui/tenant-selector.tsx` | 1 importer | **Fixed** — added optional `open`/`onOpenChange` |
-| `ThreadSwitcher` | `src/ui/thread-switcher.tsx` | 1 importer | **Fixed** — added optional `open`/`onOpenChange` |
-| `ReasoningBlock` (was `ActivityBlock`) | `src/ui/reasoning-block.tsx` | 1 importer | **Fixed** — added optional `open`/`onOpenChange` over the native `<details>` |
-| `SubagentDock` (per-row disclosure) | `src/ui/subagent-dock.tsx` | 1 importer | Deferred — lifting it means a parent tracking one open flag per subagent row (a map, not a boolean); a bigger surface change than this pass covers |
+| Component                              | Path                            | Blast radius | Status                                                                                                                                             |
+| -------------------------------------- | ------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ToolNarrative`                        | `src/ui/tool-narrative.tsx`     | 3 importers  | **Fixed** — added optional `open`/`onOpenChange`                                                                                                   |
+| `ToolBlock`                            | `src/ui/tool-block.tsx`         | 2 importers  | **Fixed** — added optional `open`/`onOpenChange`                                                                                                   |
+| `NotificationsBell`                    | `src/ui/notifications-bell.tsx` | 1 importer   | **Fixed** — added optional `open`/`onOpenChange`                                                                                                   |
+| `TenantSelector`                       | `src/ui/tenant-selector.tsx`    | 1 importer   | **Fixed** — added optional `open`/`onOpenChange`                                                                                                   |
+| `ThreadSwitcher`                       | `src/ui/thread-switcher.tsx`    | 1 importer   | **Fixed** — added optional `open`/`onOpenChange`                                                                                                   |
+| `ReasoningBlock` (was `ActivityBlock`) | `src/ui/reasoning-block.tsx`    | 1 importer   | **Fixed** — added optional `open`/`onOpenChange` over the native `<details>`                                                                       |
+| `SubagentDock` (per-row disclosure)    | `src/ui/subagent-dock.tsx`      | 1 importer   | Deferred — lifting it means a parent tracking one open flag per subagent row (a map, not a boolean); a bigger surface change than this pass covers |
 
 All five fixes are additive: `open`/`onOpenChange` are optional, and the
 component still manages its own state when they're omitted, so nothing that
@@ -262,11 +263,11 @@ exists to standardize — a regression, not a cleanup.
 
 ### (c) Imperative logic that belongs in a hook
 
-| Finding | Components | Blast radius | Status |
-| --- | --- | --- | --- |
-| Outside-click + Escape dismissal, hand-rolled three times | `NotificationsBell`, `TenantSelector`, `ThreadSwitcher` | 3 components, 3 importers combined | **Fixed** — extracted `useDismissablePopover` (`src/hooks/use-dismissable-popover.ts`) |
-| `matchMedia("(prefers-reduced-motion: reduce)")`, read once and never re-checked, duplicated three times | `AnimatedNumber`, `DitherCanvas`, `use-scroll-current-into-view` | 3 components/hooks, 5 importers combined | **Fixed** — extracted `usePrefersReducedMotion` (`src/hooks/use-prefers-reduced-motion.ts`), now reactive via `useSyncExternalStore` |
-| Spotlight measurement (`getBoundingClientRect`, `scrollIntoView`, resize/scroll listeners) | `OnboardingTour` | 1 importer | Deferred — tightly coupled to tour-step semantics (target selectors, centering a step with no target); low reuse value elsewhere today |
+| Finding                                                                                                  | Components                                                       | Blast radius                             | Status                                                                                                                                 |
+| -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Outside-click + Escape dismissal, hand-rolled three times                                                | `NotificationsBell`, `TenantSelector`, `ThreadSwitcher`          | 3 components, 3 importers combined       | **Fixed** — extracted `useDismissablePopover` (`src/hooks/use-dismissable-popover.ts`)                                                 |
+| `matchMedia("(prefers-reduced-motion: reduce)")`, read once and never re-checked, duplicated three times | `AnimatedNumber`, `DitherCanvas`, `use-scroll-current-into-view` | 3 components/hooks, 5 importers combined | **Fixed** — extracted `usePrefersReducedMotion` (`src/hooks/use-prefers-reduced-motion.ts`), now reactive via `useSyncExternalStore`   |
+| Spotlight measurement (`getBoundingClientRect`, `scrollIntoView`, resize/scroll listeners)               | `OnboardingTour`                                                 | 1 importer                               | Deferred — tightly coupled to tour-step semantics (target selectors, centering a step with no target); low reuse value elsewhere today |
 
 `CommandPalette`'s keyboard/query navigation already lives in
 `use-command-palette-navigation.ts` — this is the pattern the fixes above
@@ -305,12 +306,12 @@ The gap is JS-driven motion, which that CSS rule cannot reach:
 `requestAnimationFrame` loops and imperative `scrollIntoView` calls. All
 four such call sites were audited:
 
-| Component | Path | Before | Status |
-| --- | --- | --- | --- |
-| `AnimatedNumber` | `src/ui/animated-number.tsx` | One-shot `matchMedia` check per count-up | **Fixed** — now uses `usePrefersReducedMotion`, re-runs if the OS preference flips mid-count |
-| `DitherCanvas` | `src/ui/dither-canvas.tsx` | One-shot `matchMedia` check per mount | **Fixed** — same |
-| `use-scroll-current-into-view` | `src/hooks/use-scroll-current-into-view.ts` | One-shot `matchMedia` check per scroll | **Fixed** — same |
-| `DitherBackground` | `src/ui/dither-background.tsx` | Already listens for `change` on its own `MediaQueryList` | Reviewed, no change — already the correct, live-reactive pattern |
+| Component                      | Path                                        | Before                                                   | Status                                                                                       |
+| ------------------------------ | ------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `AnimatedNumber`               | `src/ui/animated-number.tsx`                | One-shot `matchMedia` check per count-up                 | **Fixed** — now uses `usePrefersReducedMotion`, re-runs if the OS preference flips mid-count |
+| `DitherCanvas`                 | `src/ui/dither-canvas.tsx`                  | One-shot `matchMedia` check per mount                    | **Fixed** — same                                                                             |
+| `use-scroll-current-into-view` | `src/hooks/use-scroll-current-into-view.ts` | One-shot `matchMedia` check per scroll                   | **Fixed** — same                                                                             |
+| `DitherBackground`             | `src/ui/dither-background.tsx`              | Already listens for `change` on its own `MediaQueryList` | Reviewed, no change — already the correct, live-reactive pattern                             |
 
 ### Summary
 
@@ -366,7 +367,7 @@ so that check lives in one place too.
 component whose job is to render caller-supplied content it has no opinion
 about (`NotificationsBell`'s `children`, `AuthLayout`'s `panel`) takes
 `children` or a named slot. A component whose job is to render a
-*collection* of the library's own domain shapes (a list of `WorkflowStep`, a
+_collection_ of the library's own domain shapes (a list of `WorkflowStep`, a
 list of chat messages) takes that collection as a data prop — that's what
 makes a table, a list and a step rail interchangeable consumers of one
 loading/empty/error contract. Don't reach for a config-object prop as a
@@ -404,13 +405,14 @@ setting changes.
 
 ## Known limits
 
-  decision, not by oversight.
+decision, not by oversight.
+
 - **Tests exist but are partial.** `bun test` runs 338 tests co-located with their
   subjects (`src/**/*.test.tsx`), plus shared harnesses under `src/test/` — the
   measurable half of appearance (contrast, in both modes) is gated in the build,
   and a growing slice of behaviour is now covered by these, but most components
   still have no test.- **A rendering gallery exists but is partial.** Ladle (`bun run stories`, `bun run
-  stories:build`) renders 42 stories under `stories/`; most of the ~90 components have
+stories:build`) renders 42 stories under `stories/`; most of the ~90 components have
   none, so visual review of an uncovered component still means rendering the package
   inside a consumer app.
 - **The prebuilt stylesheet restyles the consuming page** — it carries Tailwind's

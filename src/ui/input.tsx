@@ -6,7 +6,11 @@ import { cn } from "../lib/utils.js";
 // threshold against both the page and the card, so the field actually has an
 // edge. `border-border` is the soft decorative one and must not be used here.
 // The focus ring comes from the theme's base layer, not from this file.
-export function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+export function Input({
+  className,
+  type,
+  ...props
+}: React.ComponentProps<"input">) {
   return (
     <input
       type={type}

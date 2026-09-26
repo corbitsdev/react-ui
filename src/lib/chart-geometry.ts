@@ -30,7 +30,9 @@ export function niceTicks(max: number, count = 4): readonly number[] {
   const rough = max / count;
   const magnitude = 10 ** Math.floor(Math.log10(rough));
   const normalized = rough / magnitude;
-  const step = (normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10) * magnitude;
+  const step =
+    (normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10) *
+    magnitude;
 
   const top = Math.ceil(max / step) * step;
   const ticks: number[] = [];
@@ -50,7 +52,11 @@ export function niceTicks(max: number, count = 4): readonly number[] {
  * attribute makes the entire path vanish, so a flat line at the baseline is both
  * correct and the only readable failure mode.
  */
-export function scaleLinear(value: number, domainMax: number, rangeMax: number): number {
+export function scaleLinear(
+  value: number,
+  domainMax: number,
+  rangeMax: number,
+): number {
   if (domainMax <= 0) return 0;
   return (value / domainMax) * rangeMax;
 }
@@ -66,7 +72,9 @@ export type Point = { readonly x: number; readonly y: number };
  */
 export function linePath(points: readonly Point[]): string {
   if (points.length === 0) return "";
-  return points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`).join(" ");
+  return points
+    .map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`)
+    .join(" ");
 }
 
 /**
@@ -96,4 +104,3 @@ export function formatCompact(value: number): string {
   if (magnitude >= 10_000) return `${(value / 1000).toFixed(1)}K`;
   return value.toLocaleString();
 }
-

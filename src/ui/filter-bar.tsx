@@ -49,18 +49,31 @@ export type FilterBarProps = {
  * URL. Owning it here would mean every consumer fights the component to make
  * their filters linkable.
  */
-export function FilterBar({ filters, onChange, children, className }: FilterBarProps) {
+export function FilterBar({
+  filters,
+  onChange,
+  children,
+  className,
+}: FilterBarProps) {
   const active = filters.filter((filter) => filter.value !== null);
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <div className="flex flex-wrap items-center gap-3">
         {filters.map((filter) => (
-          <label key={filter.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <label
+            key={filter.id}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground"
+          >
             {filter.label}
             <select
               value={filter.value ?? ""}
-              onChange={(event) => onChange(filter.id, event.target.value === "" ? null : event.target.value)}
+              onChange={(event) =>
+                onChange(
+                  filter.id,
+                  event.target.value === "" ? null : event.target.value,
+                )
+              }
               className="h-8 rounded-md border border-input bg-card px-2 text-xs text-foreground"
             >
               <option value="">{filter.anyLabel}</option>
@@ -78,7 +91,9 @@ export function FilterBar({ filters, onChange, children, className }: FilterBarP
       {active.length === 0 ? null : (
         <div className="flex flex-wrap items-center gap-2">
           {active.map((filter) => {
-            const option = filter.options.find((candidate) => candidate.value === filter.value);
+            const option = filter.options.find(
+              (candidate) => candidate.value === filter.value,
+            );
             return (
               <button
                 key={filter.id}
@@ -89,7 +104,9 @@ export function FilterBar({ filters, onChange, children, className }: FilterBarP
                 aria-label={`Remove filter ${filter.label}: ${option?.label ?? filter.value}`}
                 className="inline-flex items-center gap-1 rounded-sm bg-muted px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
-                <span className="font-medium text-foreground">{filter.label}</span>
+                <span className="font-medium text-foreground">
+                  {filter.label}
+                </span>
                 {option?.label ?? filter.value}
                 <X className="size-3" aria-hidden />
               </button>

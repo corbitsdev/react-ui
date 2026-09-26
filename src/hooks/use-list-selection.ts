@@ -51,14 +51,23 @@ type State<TId> = {
 };
 
 type Action<TId> =
-  | { readonly type: "toggle"; readonly id: TId; readonly shiftKey: boolean; readonly ids: readonly TId[] }
+  | {
+      readonly type: "toggle";
+      readonly id: TId;
+      readonly shiftKey: boolean;
+      readonly ids: readonly TId[];
+    }
   | { readonly type: "selectAll"; readonly ids: readonly TId[] }
   | { readonly type: "clear" };
 
 function reducer<TId>(state: State<TId>, action: Action<TId>): State<TId> {
   switch (action.type) {
     case "clear":
-      return { selectedIds: new Set(), anchorId: undefined, baseSelection: new Set() };
+      return {
+        selectedIds: new Set(),
+        anchorId: undefined,
+        baseSelection: new Set(),
+      };
     case "selectAll": {
       const all = new Set(action.ids);
       return { selectedIds: all, anchorId: state.anchorId, baseSelection: all };
@@ -75,7 +84,10 @@ function reducer<TId>(state: State<TId>, action: Action<TId>): State<TId> {
           const next = toggleOne(state.selectedIds, id);
           return { selectedIds: next, anchorId: id, baseSelection: next };
         }
-        const [start, end] = anchorIndex <= targetIndex ? [anchorIndex, targetIndex] : [targetIndex, anchorIndex];
+        const [start, end] =
+          anchorIndex <= targetIndex
+            ? [anchorIndex, targetIndex]
+            : [targetIndex, anchorIndex];
         const range = ids.slice(start, end + 1);
         const selectedIds = new Set(state.baseSelection);
         for (const rangeId of range) selectedIds.add(rangeId);
@@ -89,7 +101,11 @@ function reducer<TId>(state: State<TId>, action: Action<TId>): State<TId> {
 }
 
 function createInitialState<TId>(): State<TId> {
-  return { selectedIds: new Set(), anchorId: undefined, baseSelection: new Set() };
+  return {
+    selectedIds: new Set(),
+    anchorId: undefined,
+    baseSelection: new Set(),
+  };
 }
 
 /**
@@ -124,7 +140,11 @@ function createInitialState<TId>(): State<TId> {
 export function useListSelection<TId extends PropertyKey>({
   ids,
 }: UseListSelectionOptions<TId>): UseListSelectionResult<TId> {
-  const [state, dispatch] = useReducer(reducer<TId>, undefined, createInitialState<TId>);
+  const [state, dispatch] = useReducer(
+    reducer<TId>,
+    undefined,
+    createInitialState<TId>,
+  );
 
   // Updated on every render, read only inside event handlers — never during
   // render — so `toggle`/`selectAll` can stay referentially stable while
@@ -134,11 +154,19 @@ export function useListSelection<TId extends PropertyKey>({
 
   const toggle = useCallback(
     (id: TId, modifiers?: ToggleModifiers) =>
-      dispatch({ type: "toggle", id, shiftKey: modifiers?.shiftKey ?? false, ids: idsRef.current }),
+      dispatch({
+        type: "toggle",
+        id,
+        shiftKey: modifiers?.shiftKey ?? false,
+        ids: idsRef.current,
+      }),
     [],
   );
 
-  const selectAll = useCallback(() => dispatch({ type: "selectAll", ids: idsRef.current }), []);
+  const selectAll = useCallback(
+    () => dispatch({ type: "selectAll", ids: idsRef.current }),
+    [],
+  );
 
   const clear = useCallback(() => dispatch({ type: "clear" }), []);
 
@@ -149,10 +177,20 @@ export function useListSelection<TId extends PropertyKey>({
     return reconciled;
   }, [state.selectedIds, ids]);
 
-  const isSelected = useCallback((id: TId) => selectedIds.has(id), [selectedIds]);
+  const isSelected = useCallback(
+    (id: TId) => selectedIds.has(id),
+    [selectedIds],
+  );
 
   return useMemo(
-    () => ({ selectedIds, selectedCount: selectedIds.size, isSelected, toggle, selectAll, clear }),
+    () => ({
+      selectedIds,
+      selectedCount: selectedIds.size,
+      isSelected,
+      toggle,
+      selectAll,
+      clear,
+    }),
     [selectedIds, isSelected, toggle, selectAll, clear],
   );
 }

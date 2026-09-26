@@ -86,7 +86,10 @@ export function ReasoningBlock({
         )}
       >
         <ChevronRight
-          className={cn("size-3.5 shrink-0 transition-transform duration-200 ease-out", open && "rotate-90")}
+          className={cn(
+            "size-3.5 shrink-0 transition-transform duration-200 ease-out",
+            open && "rotate-90",
+          )}
           aria-hidden
         />
         <span aria-live="polite">{summary}</span>

@@ -68,7 +68,11 @@ export function AgentTurn({
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         {hasWork ? (
           <div className="flex flex-col">
-            <ReasoningBlock text={thinking} streaming={working} durationLabel={reasoningDurationLabel} />
+            <ReasoningBlock
+              text={thinking}
+              streaming={working}
+              durationLabel={reasoningDurationLabel}
+            />
             {tools.map((part) => (
               <ToolNarrative key={part.toolCallId} part={part} />
             ))}

@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
-export type UseCommandPaletteNavigationOptions<TItem extends { readonly id: string }> = {
+export type UseCommandPaletteNavigationOptions<
+  TItem extends { readonly id: string },
+> = {
   /** The flat, visible result order — grouping is a display concern only. */
   readonly items: readonly TItem[];
   readonly onSelect: (id: string) => void;
@@ -22,7 +24,9 @@ export type UseCommandPaletteNavigationResult = {
  * reordering that happens every keystroke (fresh search results land at
  * different positions) — an index would silently point at the wrong row.
  */
-export function useCommandPaletteNavigation<TItem extends { readonly id: string }>({
+export function useCommandPaletteNavigation<
+  TItem extends { readonly id: string },
+>({
   items,
   onSelect,
   onClose,
@@ -31,13 +35,20 @@ export function useCommandPaletteNavigation<TItem extends { readonly id: string 
 
   const activeId = useMemo(() => {
     if (items.length === 0) return undefined;
-    if (requestedId !== undefined && items.some((item) => item.id === requestedId)) return requestedId;
+    if (
+      requestedId !== undefined &&
+      items.some((item) => item.id === requestedId)
+    )
+      return requestedId;
     return items[0]?.id;
   }, [items, requestedId]);
 
   function moveBy(delta: number) {
     if (items.length === 0) return;
-    const currentIndex = activeId === undefined ? -1 : items.findIndex((item) => item.id === activeId);
+    const currentIndex =
+      activeId === undefined
+        ? -1
+        : items.findIndex((item) => item.id === activeId);
     const nextIndex = (currentIndex + delta + items.length) % items.length;
     setRequestedId(items[nextIndex]?.id);
   }

@@ -39,13 +39,13 @@ Defects in the components this package ships:
 - credentials, tokens, internal hostnames or real data in a shipped file or a
   fixture;
 - a declared dependency the package does not actually need, an undeclared one it
-   does, or anything that runs at install time — the package has no install scripts,
-   and adding one would be a supply-chain change.
+  does, or anything that runs at install time — the package has no install scripts,
+  and adding one would be a supply-chain change.
 
 ## What is not
 
 - **Authentication and authorization.** This package ships no auth. The `login` and
-  `access-notice` blocks are *presentation*: they render a form and a message. What
+  `access-notice` blocks are _presentation_: they render a form and a message. What
   a submission does, whether a session is valid, and who may see a route are the
   host's, and a host that trusts a client-side check owns that decision.
 - **Fetching, caching and transport.** Components never fetch. A `DataPort`

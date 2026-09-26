@@ -1,6 +1,10 @@
 import { useState } from "react";
 
-import { CommandPalette, CommandPaletteInline, type CommandPaletteGroup } from "../../src/ui/command-palette.js";
+import {
+  CommandPalette,
+  CommandPaletteInline,
+  type CommandPaletteGroup,
+} from "../../src/ui/command-palette.js";
 import { Badge } from "../../src/ui/badge.js";
 
 export default { title: "Primitives / Command palette" };

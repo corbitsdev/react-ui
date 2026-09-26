@@ -16,7 +16,10 @@ const DEFAULT_ALLOWED_PROTOCOLS: readonly string[] = ["http:", "https:"];
  * an embed — so there is no in-app page a bare path could sensibly mean, and
  * inventing a base to resolve against would only guess wrong.
  */
-export function isSafeUrl(url: string, allowedProtocols: readonly string[] = DEFAULT_ALLOWED_PROTOCOLS): boolean {
+export function isSafeUrl(
+  url: string,
+  allowedProtocols: readonly string[] = DEFAULT_ALLOWED_PROTOCOLS,
+): boolean {
   try {
     return allowedProtocols.includes(new URL(url).protocol);
   } catch {

@@ -3,7 +3,14 @@
 import { useMemo } from "react";
 
 import { capCsv, isTabular, parseCsv } from "../lib/csv.js";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table.js";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./table.js";
 
 /**
  * CSV text, rendered as a table when that is honest and as raw text when it is
@@ -23,7 +30,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
  * freely and headers are routinely empty or repeated ("", two "Name" columns);
  * a content key would collide and drop data.
  */
-export function CsvTable({ text, caption = "CSV contents" }: { readonly text: string; readonly caption?: string }) {
+export function CsvTable({
+  text,
+  caption = "CSV contents",
+}: {
+  readonly text: string;
+  readonly caption?: string;
+}) {
   const parsed = useMemo(() => parseCsv(text), [text]);
 
   if (parsed === null) {
@@ -38,17 +51,23 @@ export function CsvTable({ text, caption = "CSV contents" }: { readonly text: st
     // Height-capped with its own scroll: a multi-thousand-line file as one
     // <pre> is the same DOM freeze the size guard exists to prevent.
     return (
-      <pre className="max-h-96 overflow-auto rounded-md border border-border bg-muted p-3 font-mono text-xs">{text}</pre>
+      <pre className="max-h-96 overflow-auto rounded-md border border-border bg-muted p-3 font-mono text-xs">
+        {text}
+      </pre>
     );
   }
 
   const capped = capCsv(parsed);
   const notes: string[] = [];
   if (capped.rowsTruncated) {
-    notes.push(`${capped.rows.length.toLocaleString()} of ${capped.totalRows.toLocaleString()} rows`);
+    notes.push(
+      `${capped.rows.length.toLocaleString()} of ${capped.totalRows.toLocaleString()} rows`,
+    );
   }
   if (capped.columnsTruncated) {
-    notes.push(`${capped.headers.length.toLocaleString()} of ${capped.totalColumns.toLocaleString()} columns`);
+    notes.push(
+      `${capped.headers.length.toLocaleString()} of ${capped.totalColumns.toLocaleString()} columns`,
+    );
   }
 
   return (
@@ -78,7 +97,9 @@ export function CsvTable({ text, caption = "CSV contents" }: { readonly text: st
         </Table>
       </div>
       {notes.length === 0 ? null : (
-        <p className="text-xs text-muted-foreground">Showing {notes.join(" and ")} — download for the full file.</p>
+        <p className="text-xs text-muted-foreground">
+          Showing {notes.join(" and ")} — download for the full file.
+        </p>
       )}
     </div>
   );

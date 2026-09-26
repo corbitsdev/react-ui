@@ -13,14 +13,17 @@ const badgeVariants = cva(
     variants: {
       tone: {
         neutral: "border-border bg-muted text-muted-foreground",
-        accent: "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
+        accent:
+          "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
         info: "border-accent bg-accent text-accent-foreground",
         success: "border-success bg-success text-success-foreground",
         // Warning reuses accent amber until a dedicated warning pair lands in theme.
-        warning: "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
+        warning:
+          "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
         danger: "border-destructive bg-destructive text-destructive-foreground",
         shared: "border-accent bg-accent text-accent-foreground",
-        access: "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
+        access:
+          "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
       },
     },
     defaultVariants: { tone: "neutral" },
@@ -30,10 +33,17 @@ const badgeVariants = cva(
 /** The tone names, exported so callers can type a state → tone lookup table. */
 export type BadgeTone = NonNullable<VariantProps<typeof badgeVariants>["tone"]>;
 
-export type BadgeProps = React.ComponentProps<"span"> & VariantProps<typeof badgeVariants>;
+export type BadgeProps = React.ComponentProps<"span"> &
+  VariantProps<typeof badgeVariants>;
 
 export function Badge({ className, tone, ...props }: BadgeProps) {
-  return <span data-slot="badge" className={cn(badgeVariants({ tone }), className)} {...props} />;
+  return (
+    <span
+      data-slot="badge"
+      className={cn(badgeVariants({ tone }), className)}
+      {...props}
+    />
+  );
 }
 
 export { badgeVariants };

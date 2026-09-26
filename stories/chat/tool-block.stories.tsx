@@ -10,7 +10,10 @@ export const LifecycleStates = () => (
     <ToolBlock
       name="search__query"
       input={{ query: "invoices from last week" }}
-      state={{ status: "output-available", output: "Found 12 invoices totalling $8,420." }}
+      state={{
+        status: "output-available",
+        output: "Found 12 invoices totalling $8,420.",
+      }}
     />
     <ToolBlock
       name="mail__send"
@@ -19,11 +22,17 @@ export const LifecycleStates = () => (
     />
     <ToolBlock
       name="deploy__promote"
-      state={{ status: "approval-requested", reason: "Promotes to production — needs a human sign-off." }}
+      state={{
+        status: "approval-requested",
+        reason: "Promotes to production — needs a human sign-off.",
+      }}
     />
     <ToolBlock
       name="deploy__promote"
-      state={{ status: "output-denied", reason: "Rejected by on-call: change freeze in effect." }}
+      state={{
+        status: "output-denied",
+        reason: "Rejected by on-call: change freeze in effect.",
+      }}
     />
   </div>
 );
@@ -31,7 +40,10 @@ export const LifecycleStates = () => (
 /** No `label` given — the raw `provider__action` id is humanised for display. */
 export const HumanisedName = () => (
   <div className="max-w-md rounded-lg border border-border bg-card p-3">
-    <ToolBlock name="slack__post_message" state={{ status: "output-available", output: "Posted to #general." }} />
+    <ToolBlock
+      name="slack__post_message"
+      state={{ status: "output-available", output: "Posted to #general." }}
+    />
   </div>
 );
 
@@ -49,7 +61,10 @@ export const ExplicitLabel = () => (
 /** No input, no output — nothing to expand, so the chevron and toggle disappear entirely. */
 export const NoDetailToExpand = () => (
   <div className="max-w-md rounded-lg border border-border bg-card p-3">
-    <ToolBlock name="ping__health_check" state={{ status: "output-available", output: "" }} />
+    <ToolBlock
+      name="ping__health_check"
+      state={{ status: "output-available", output: "" }}
+    />
   </div>
 );
 
@@ -61,9 +76,10 @@ export const LongOutputScrollsInPlace = () => (
       input={{ range: "2025-01-01..2025-12-31", format: "csv" }}
       state={{
         status: "output-available",
-        output: Array.from({ length: 60 }, (_, i) => `row ${i + 1}: order-${1000 + i}, $${(i * 37) % 500}.00`).join(
-          "\n",
-        ),
+        output: Array.from(
+          { length: 60 },
+          (_, i) => `row ${i + 1}: order-${1000 + i}, $${(i * 37) % 500}.00`,
+        ).join("\n"),
       }}
       defaultOpen
     />

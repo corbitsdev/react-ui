@@ -26,7 +26,12 @@ const SIZE_CLASS = {
 } as const;
 
 /** Which service an action goes through. */
-export function ProviderMark({ provider, logo, size = "sm", className }: ProviderMarkProps) {
+export function ProviderMark({
+  provider,
+  logo,
+  size = "sm",
+  className,
+}: ProviderMarkProps) {
   const label = provider.charAt(0).toUpperCase() + provider.slice(1);
 
   return (
@@ -62,6 +67,7 @@ export function ToolProviderMark({
   className?: string;
 }) {
   const [provider, ...rest] = part.toolName.split("__");
-  if (rest.length === 0 || provider === undefined || provider === "") return null;
+  if (rest.length === 0 || provider === undefined || provider === "")
+    return null;
   return <ProviderMark provider={provider} logo={logo} className={className} />;
 }

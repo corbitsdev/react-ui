@@ -6,7 +6,10 @@ import type * as React from "react";
 
 import { cn } from "../lib/utils.js";
 
-export type FileInputProps = Omit<React.ComponentProps<"input">, "type" | "onChange" | "className"> & {
+export type FileInputProps = Omit<
+  React.ComponentProps<"input">,
+  "type" | "onChange" | "className"
+> & {
   readonly onFiles: (files: FileList) => void;
   readonly label?: string;
   readonly hint?: string;
@@ -30,7 +33,14 @@ export type FileInputProps = Omit<React.ComponentProps<"input">, "type" | "onCha
  * still fires — the browser's change event will not repeat for an identical
  * value.
  */
-export function FileInput({ onFiles, label = "Choose files", hint, className, disabled, ...props }: FileInputProps) {
+export function FileInput({
+  onFiles,
+  label = "Choose files",
+  hint,
+  className,
+  disabled,
+  ...props
+}: FileInputProps) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -46,7 +56,8 @@ export function FileInput({ onFiles, label = "Choose files", hint, className, di
         if (disabled === true) return;
         event.preventDefault();
         setDragging(false);
-        if (event.dataTransfer.files.length > 0) onFiles(event.dataTransfer.files);
+        if (event.dataTransfer.files.length > 0)
+          onFiles(event.dataTransfer.files);
       }}
       className={cn(
         "flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-dashed border-input px-6 py-8 text-center transition-colors",
@@ -64,14 +75,17 @@ export function FileInput({ onFiles, label = "Choose files", hint, className, di
         disabled={disabled}
         className="sr-only"
         onChange={(event) => {
-          if (event.target.files !== null && event.target.files.length > 0) onFiles(event.target.files);
+          if (event.target.files !== null && event.target.files.length > 0)
+            onFiles(event.target.files);
           event.target.value = "";
         }}
         {...props}
       />
       <Upload className="size-5 text-muted-foreground" aria-hidden />
       <span className="text-sm font-medium">{label}</span>
-      <span className="text-xs text-muted-foreground">{hint ?? "or drag them here"}</span>
+      <span className="text-xs text-muted-foreground">
+        {hint ?? "or drag them here"}
+      </span>
     </label>
   );
 }

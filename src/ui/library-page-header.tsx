@@ -37,12 +37,17 @@ export function LibraryPageHeader({
   return (
     <div
       data-slot="library-page-header"
-      className={cn("flex min-w-0 flex-wrap items-center gap-[14px] px-4 pt-5 pb-[14px] sm:px-7", className)}
+      className={cn(
+        "flex min-w-0 flex-wrap items-center gap-[14px] px-4 pt-5 pb-[14px] sm:px-7",
+        className,
+      )}
     >
       <div className="flex min-w-0 shrink-0 flex-col gap-0.5">
         <h1 className={TITLE_CLASS[titleSize]}>{title}</h1>
         {subtitle === undefined || subtitle === "" ? null : (
-          <p className="truncate text-[12px] text-muted-foreground">{subtitle}</p>
+          <p className="truncate text-[12px] text-muted-foreground">
+            {subtitle}
+          </p>
         )}
       </div>
       {count === undefined ? null : (

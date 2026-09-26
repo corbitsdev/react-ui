@@ -88,7 +88,9 @@ function characterOf(primitive: WorkflowStepPrimitive): DisplayStepCharacter {
  * published library, where the tag vocabulary would become part of the
  * public surface.
  */
-export function deriveDisplayFlow(primitives: readonly WorkflowStepPrimitive[]): DisplayFlow {
+export function deriveDisplayFlow(
+  primitives: readonly WorkflowStepPrimitive[],
+): DisplayFlow {
   return {
     steps: primitives.map((primitive) => ({
       stepId: primitive.stepId,
@@ -142,7 +144,9 @@ const CHARACTER_PRIORITY: readonly DisplayStepCharacter[] = [
   "other",
 ];
 
-function aggregateCharacter(characters: readonly DisplayStepCharacter[]): DisplayStepCharacter {
+function aggregateCharacter(
+  characters: readonly DisplayStepCharacter[],
+): DisplayStepCharacter {
   for (const candidate of CHARACTER_PRIORITY) {
     if (characters.includes(candidate)) return candidate;
   }
@@ -155,14 +159,19 @@ function aggregateCharacter(characters: readonly DisplayStepCharacter[]): Displa
  * unknown id throws immediately rather than silently producing an empty or
  * partial group.
  */
-export function applyDisplayOverlay(flow: DisplayFlow, overlay: DisplayOverlay): OverlaidDisplayFlow {
+export function applyDisplayOverlay(
+  flow: DisplayFlow,
+  overlay: DisplayOverlay,
+): OverlaidDisplayFlow {
   const byId = new Map(flow.steps.map((step) => [step.stepId, step]));
   const groups: OverlaidDisplayStep[] = overlay.groups.map((group) => {
     const characters: DisplayStepCharacter[] = [];
     for (const stepId of group.steps) {
       const step = byId.get(stepId);
       if (step === undefined) {
-        throw new Error(`display overlay group ${JSON.stringify(group.key)} references unknown step ${JSON.stringify(stepId)}`);
+        throw new Error(
+          `display overlay group ${JSON.stringify(group.key)} references unknown step ${JSON.stringify(stepId)}`,
+        );
       }
       characters.push(step.character);
     }
@@ -171,7 +180,9 @@ export function applyDisplayOverlay(flow: DisplayFlow, overlay: DisplayOverlay):
       label: group.label,
       character: aggregateCharacter(characters),
       stepIds: group.steps,
-      ...(group.activityLabel !== undefined ? { activityLabel: group.activityLabel } : {}),
+      ...(group.activityLabel !== undefined
+        ? { activityLabel: group.activityLabel }
+        : {}),
     };
   });
   return { groups };
@@ -184,13 +195,16 @@ export function applyDisplayOverlay(flow: DisplayFlow, overlay: DisplayOverlay):
  */
 export function stepListFromDisplayFlow(
   steps: readonly DisplayFlowStep[],
-  statusById?: ReadonlyMap<string, StepDisplayStatus> | Record<string, StepDisplayStatus>,
+  statusById?:
+    | ReadonlyMap<string, StepDisplayStatus>
+    | Record<string, StepDisplayStatus>,
 ): StepListItem[] {
   const lookup =
     statusById instanceof Map
       ? (id: string) => statusById.get(id)
       : statusById !== undefined
-        ? (id: string) => (statusById as Record<string, StepDisplayStatus | undefined>)[id]
+        ? (id: string) =>
+            (statusById as Record<string, StepDisplayStatus | undefined>)[id]
         : () => undefined;
 
   return steps.map((step) => ({

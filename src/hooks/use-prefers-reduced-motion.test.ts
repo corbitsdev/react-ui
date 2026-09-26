@@ -15,8 +15,10 @@ function stubMatchMedia(initialMatches: boolean) {
     ({
       matches,
       media: query,
-      addEventListener: (_type: string, listener: Listener) => listeners.add(listener),
-      removeEventListener: (_type: string, listener: Listener) => listeners.delete(listener),
+      addEventListener: (_type: string, listener: Listener) =>
+        listeners.add(listener),
+      removeEventListener: (_type: string, listener: Listener) =>
+        listeners.delete(listener),
     }) as unknown as MediaQueryList) as typeof window.matchMedia;
 
   return {

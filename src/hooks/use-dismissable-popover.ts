@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, type RefObject } from "react";
 
-import { useControllableState, type ControllableStateAction } from "./use-controllable-state.js";
+import {
+  useControllableState,
+  type ControllableStateAction,
+} from "./use-controllable-state.js";
 
 export type UseDismissablePopoverOptions = {
   /** Controlled open flag. Supply this with `onOpenChange` to lift state to a parent. */
@@ -12,7 +15,10 @@ export type UseDismissablePopoverOptions = {
   readonly closeOnEscape?: boolean;
 };
 
-export type UseDismissablePopoverResult<Root extends HTMLElement, Trigger extends HTMLElement> = {
+export type UseDismissablePopoverResult<
+  Root extends HTMLElement,
+  Trigger extends HTMLElement,
+> = {
   readonly open: boolean;
   readonly setOpen: (action: ControllableStateAction<boolean>) => void;
   readonly rootRef: RefObject<Root | null>;
@@ -41,8 +47,15 @@ export type UseDismissablePopoverResult<Root extends HTMLElement, Trigger extend
 export function useDismissablePopover<
   Root extends HTMLElement = HTMLElement,
   Trigger extends HTMLElement = HTMLElement,
->(options: UseDismissablePopoverOptions = {}): UseDismissablePopoverResult<Root, Trigger> {
-  const { open: controlledOpen, onOpenChange, defaultOpen = false, closeOnEscape = true } = options;
+>(
+  options: UseDismissablePopoverOptions = {},
+): UseDismissablePopoverResult<Root, Trigger> {
+  const {
+    open: controlledOpen,
+    onOpenChange,
+    defaultOpen = false,
+    closeOnEscape = true,
+  } = options;
   const [open, setOpen] = useControllableState({
     value: controlledOpen,
     defaultValue: defaultOpen,

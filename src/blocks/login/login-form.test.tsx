@@ -37,7 +37,9 @@ describe("LoginForm default (sign-in) mode", () => {
 
   test("busy reads Signing in…", () => {
     const mounted = render(<LoginForm onSubmit={() => {}} busy />);
-    expect(mounted.container.querySelector("button[type=submit]")?.textContent).toBe("Signing in…");
+    expect(
+      mounted.container.querySelector("button[type=submit]")?.textContent,
+    ).toBe("Signing in…");
     mounted.unmount();
   });
 
@@ -51,7 +53,9 @@ describe("LoginForm default (sign-in) mode", () => {
 describe("LoginForm sign-up mode", () => {
   test("renders a name field", () => {
     const mounted = render(<LoginForm mode="sign-up" onSubmit={() => {}} />);
-    expect(mounted.container.querySelector('input[name="name"]')).not.toBeNull();
+    expect(
+      mounted.container.querySelector('input[name="name"]'),
+    ).not.toBeNull();
     mounted.unmount();
   });
 
@@ -63,27 +67,45 @@ describe("LoginForm sign-up mode", () => {
   });
 
   test("busy reads Signing up…", () => {
-    const mounted = render(<LoginForm mode="sign-up" onSubmit={() => {}} busy />);
-    expect(mounted.container.querySelector("button[type=submit]")?.textContent).toBe("Signing up…");
+    const mounted = render(
+      <LoginForm mode="sign-up" onSubmit={() => {}} busy />,
+    );
+    expect(
+      mounted.container.querySelector("button[type=submit]")?.textContent,
+    ).toBe("Signing up…");
     mounted.unmount();
   });
 
   test("submits the name alongside email and password", () => {
-    const submitted: { credentials: { name?: string; email: string; password: string } | null } = {
+    const submitted: {
+      credentials: { name?: string; email: string; password: string } | null;
+    } = {
       credentials: null,
     };
     const mounted = render(
-      <LoginForm mode="sign-up" onSubmit={(credentials) => (submitted.credentials = credentials)} />,
+      <LoginForm
+        mode="sign-up"
+        onSubmit={(credentials) => (submitted.credentials = credentials)}
+      />,
     );
     const form = mounted.container.querySelector("form");
-    const name = mounted.container.querySelector('input[name="name"]') as HTMLInputElement;
-    const email = mounted.container.querySelector('input[name="email"]') as HTMLInputElement;
-    const password = mounted.container.querySelector('input[name="password"]') as HTMLInputElement;
+    const name = mounted.container.querySelector(
+      'input[name="name"]',
+    ) as HTMLInputElement;
+    const email = mounted.container.querySelector(
+      'input[name="email"]',
+    ) as HTMLInputElement;
+    const password = mounted.container.querySelector(
+      'input[name="password"]',
+    ) as HTMLInputElement;
 
     // React controls these inputs; set the native value then dispatch input
     // through the DOM so React's change handler observes it.
     const setValue = (input: HTMLInputElement, value: string) => {
-      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      const setter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value",
+      )?.set;
       setter?.call(input, value);
       input.dispatchEvent(new Event("input", { bubbles: true }));
     };
@@ -93,7 +115,9 @@ describe("LoginForm sign-up mode", () => {
       setValue(password, "correct horse battery staple");
     });
     act(() => {
-      form?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      form?.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true }),
+      );
     });
 
     expect(submitted.credentials).toEqual({

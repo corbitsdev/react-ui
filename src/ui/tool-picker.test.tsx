@@ -8,8 +8,18 @@ import { ToolPicker } from "./tool-picker.js";
 const ITEMS: ComponentProps<typeof ToolPicker>["items"] = [
   { id: "slack-post", name: "Post message", package: "slack" },
   { id: "slack-react", name: "Add reaction", package: "slack" },
-  { id: "linear-create", name: "Create issue", package: "linear", status: "pending" },
-  { id: "linear-close", name: "Close issue", package: "linear", status: "disabled" },
+  {
+    id: "linear-create",
+    name: "Create issue",
+    package: "linear",
+    status: "pending",
+  },
+  {
+    id: "linear-close",
+    name: "Close issue",
+    package: "linear",
+    status: "disabled",
+  },
   { id: "gmail-send", name: "Send email", package: "google-drive" },
 ];
 
@@ -18,11 +28,22 @@ function mount(props: Partial<ComponentProps<typeof ToolPicker>> = {}) {
   document.body.appendChild(container);
   const root = createRoot(container);
   act(() => {
-    root.render(createElement(ToolPicker, { items: ITEMS, value: [], onChange: () => {}, ...props }));
+    root.render(
+      createElement(ToolPicker, {
+        items: ITEMS,
+        value: [],
+        onChange: () => {},
+        ...props,
+      }),
+    );
   });
   return {
-    options: () => [...container.querySelectorAll('[role="option"]')] as HTMLDivElement[],
-    optionByName: (name: string) => [...container.querySelectorAll('[role="option"]')].find((el) => el.textContent?.includes(name)) as HTMLDivElement,
+    options: () =>
+      [...container.querySelectorAll('[role="option"]')] as HTMLDivElement[],
+    optionByName: (name: string) =>
+      [...container.querySelectorAll('[role="option"]')].find((el) =>
+        el.textContent?.includes(name),
+      ) as HTMLDivElement,
     container,
     unmount: () => act(() => root.unmount()),
   };
@@ -31,7 +52,9 @@ function mount(props: Partial<ComponentProps<typeof ToolPicker>> = {}) {
 describe("ToolPicker", () => {
   test("groups items by package with humanized headings, not raw slugs", () => {
     const { container, unmount } = mount();
-    const headings = [...container.querySelectorAll('p[role="presentation"], p')].map((el) => el.textContent);
+    const headings = [
+      ...container.querySelectorAll('p[role="presentation"], p'),
+    ].map((el) => el.textContent);
     expect(headings).toContain("Slack");
     expect(headings).toContain("Linear");
     expect(headings).toContain("Google Drive");
@@ -44,7 +67,9 @@ describe("ToolPicker", () => {
     const { container, unmount } = mount({
       items: [{ id: "x", name: "Post message", package: "Slack" }],
     });
-    const headings = [...container.querySelectorAll("p")].map((el) => el.textContent);
+    const headings = [...container.querySelectorAll("p")].map(
+      (el) => el.textContent,
+    );
     expect(headings).toContain("Slack");
     unmount();
   });
@@ -58,7 +83,9 @@ describe("ToolPicker", () => {
       },
     });
     act(() => {
-      optionByName("Post message").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      optionByName("Post message").dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
     });
     expect(value).toEqual(["slack-post"]);
     unmount();
@@ -73,7 +100,9 @@ describe("ToolPicker", () => {
       },
     });
     act(() => {
-      optionByName("Post message").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      optionByName("Post message").dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
     });
     expect(value).toEqual([]);
     unmount();
@@ -89,7 +118,9 @@ describe("ToolPicker", () => {
       },
     });
     act(() => {
-      optionByName("Add reaction").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      optionByName("Add reaction").dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
     });
     expect(value).toEqual(["slack-post", "slack-react"]);
     unmount();
@@ -103,7 +134,9 @@ describe("ToolPicker", () => {
       },
     });
     act(() => {
-      optionByName("Close issue").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      optionByName("Close issue").dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
     });
     expect(called).toBe(false);
     unmount();
@@ -113,7 +146,10 @@ describe("ToolPicker", () => {
     const { container, options, unmount } = mount();
     const input = container.querySelector("input") as HTMLInputElement;
     act(() => {
-      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      const setter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value",
+      )?.set;
       setter?.call(input, "linear");
       input.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -139,7 +175,10 @@ describe("ToolPicker", () => {
     const { container, unmount } = mount();
     const input = container.querySelector("input") as HTMLInputElement;
     act(() => {
-      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      const setter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value",
+      )?.set;
       setter?.call(input, "zzzz-no-such-tool");
       input.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -153,18 +192,31 @@ describe("ToolPicker", () => {
     const { container, options, unmount } = mount();
     const input = container.querySelector("input") as HTMLInputElement;
     act(() => {
-      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      const setter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value",
+      )?.set;
       setter?.call(input, "linear");
       input.dispatchEvent(new Event("input", { bubbles: true }));
     });
     expect(options().length).toBe(2);
 
     act(() => {
-      input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+      input.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Escape",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
     });
     expect(options().length).toBe(5);
 
-    const second = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+    const second = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+      cancelable: true,
+    });
     act(() => {
       input.dispatchEvent(second);
     });

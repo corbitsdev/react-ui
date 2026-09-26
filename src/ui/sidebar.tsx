@@ -39,25 +39,45 @@ export function Sidebar({
   );
 }
 
-export function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
+export function SidebarHeader({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sidebar-header"
-      className={cn("flex min-h-14 items-center gap-2 border-b border-border px-3", className)}
+      className={cn(
+        "flex min-h-14 items-center gap-2 border-b border-border px-3",
+        className,
+      )}
       {...props}
     />
   );
 }
 
-export function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
+export function SidebarContent({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
-    <div data-slot="sidebar-content" className={cn("min-h-0 flex-1 overflow-y-auto py-2", className)} {...props} />
+    <div
+      data-slot="sidebar-content"
+      className={cn("min-h-0 flex-1 overflow-y-auto py-2", className)}
+      {...props}
+    />
   );
 }
 
-export function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {
+export function SidebarFooter({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
-    <div data-slot="sidebar-footer" className={cn("border-t border-border p-2", className)} {...props} />
+    <div
+      data-slot="sidebar-footer"
+      className={cn("border-t border-border p-2", className)}
+      {...props}
+    />
   );
 }
 
@@ -69,7 +89,12 @@ export function SidebarSection({
   ...props
 }: React.ComponentProps<"nav"> & { label: string }) {
   return (
-    <nav data-slot="sidebar-section" aria-label={label} className={cn("px-2 py-1", className)} {...props}>
+    <nav
+      data-slot="sidebar-section"
+      aria-label={label}
+      className={cn("px-2 py-1", className)}
+      {...props}
+    >
       <p className="px-2 py-1 text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase group-data-[collapsed=true]/sidebar:sr-only">
         {label}
       </p>
@@ -115,11 +140,16 @@ export function SidebarItem({
         {...props}
       >
         {icon === undefined ? null : (
-          <span className="grid size-4 shrink-0 place-items-center [&_svg]:size-4" aria-hidden>
+          <span
+            className="grid size-4 shrink-0 place-items-center [&_svg]:size-4"
+            aria-hidden
+          >
             {icon}
           </span>
         )}
-        <span className="min-w-0 flex-1 truncate group-data-[collapsed=true]/sidebar:sr-only">{children}</span>
+        <span className="min-w-0 flex-1 truncate group-data-[collapsed=true]/sidebar:sr-only">
+          {children}
+        </span>
         {count === undefined ? null : (
           <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground group-data-[collapsed=true]/sidebar:sr-only">
             {count}
@@ -139,7 +169,10 @@ export function SidebarCollapseToggle({
   onToggle,
   className,
   ...props
-}: Omit<React.ComponentProps<"button">, "onToggle"> & { collapsed: boolean; onToggle: () => void }) {
+}: Omit<React.ComponentProps<"button">, "onToggle"> & {
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
   const Icon = collapsed ? PanelLeftOpen : PanelLeftClose;
   return (
     <button

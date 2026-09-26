@@ -1,4 +1,10 @@
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "../../src/ui/card.js";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../../src/ui/card.js";
 import { Button } from "../../src/ui/button.js";
 
 export default { title: "Primitives / Card" };
@@ -9,7 +15,9 @@ export const Basic = () => (
       <CardTitle>Deploy schedule</CardTitle>
       <CardDescription>Runs every weekday at 9 am.</CardDescription>
     </CardHeader>
-    <p className="text-sm text-muted-foreground">Next run in 4 hours. Last run succeeded.</p>
+    <p className="text-sm text-muted-foreground">
+      Next run in 4 hours. Last run succeeded.
+    </p>
     <CardFooter>
       <Button variant="outline" size="sm">
         Edit

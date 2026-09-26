@@ -29,10 +29,17 @@ export type StatGridProps = {
  * a wider screen silently reorders what the reader compares side by side.
  */
 export function StatGrid({ children, columns = 4, className }: StatGridProps) {
-  return <div className={cn("grid gap-3", COLUMN_CLASS[columns], className)}>{children}</div>;
+  return (
+    <div className={cn("grid gap-3", COLUMN_CLASS[columns], className)}>
+      {children}
+    </div>
+  );
 }
 
-function statValueClass(accent: boolean | undefined, danger: boolean | undefined): string {
+function statValueClass(
+  accent: boolean | undefined,
+  danger: boolean | undefined,
+): string {
   if (danger === true) return "text-destructive";
   if (accent === true) return "text-primary-emphasis";
   return "text-foreground";
@@ -94,7 +101,10 @@ export function StatGridItem({
   const sparklineNode =
     sparkline ??
     (sparklineValues !== undefined && sparklineValues.length > 0 ? (
-      <Sparkline values={sparklineValues} summary={sparklineLabel ?? `${label} trend`} />
+      <Sparkline
+        values={sparklineValues}
+        summary={sparklineLabel ?? `${label} trend`}
+      />
     ) : null);
 
   const shell = cn(
@@ -105,7 +115,9 @@ export function StatGridItem({
 
   const body = (
     <>
-      <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-muted-foreground">{label}</span>
+      <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-muted-foreground">
+        {label}
+      </span>
       <div className="flex items-baseline gap-2">
         <span
           className={cn(
@@ -118,9 +130,13 @@ export function StatGridItem({
         </span>
         {delta}
       </div>
-      {sparklineNode === null ? null : <div className="mt-0.5">{sparklineNode}</div>}
+      {sparklineNode === null ? null : (
+        <div className="mt-0.5">{sparklineNode}</div>
+      )}
       {sub === undefined ? null : (
-        <span className="text-[10px] tracking-[0.08em] uppercase text-muted-foreground">{sub}</span>
+        <span className="text-[10px] tracking-[0.08em] uppercase text-muted-foreground">
+          {sub}
+        </span>
       )}
     </>
   );

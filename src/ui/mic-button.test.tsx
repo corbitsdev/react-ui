@@ -77,9 +77,15 @@ describe("MicButton", () => {
     expect(starting.button().className).not.toContain("bg-success");
     expect(listening.button().className).toContain("bg-success");
 
-    expect(idle.button().querySelector("svg")?.classList.contains("size-4")).toBe(true);
-    expect(starting.button().querySelector("svg")?.classList.contains("size-4")).toBe(true);
-    expect(listening.button().querySelector("svg")?.classList.contains("size-3.5")).toBe(true);
+    expect(
+      idle.button().querySelector("svg")?.classList.contains("size-4"),
+    ).toBe(true);
+    expect(
+      starting.button().querySelector("svg")?.classList.contains("size-4"),
+    ).toBe(true);
+    expect(
+      listening.button().querySelector("svg")?.classList.contains("size-3.5"),
+    ).toBe(true);
 
     idle.unmount();
     starting.unmount();
@@ -91,7 +97,9 @@ describe("MicButton", () => {
 
     expect(denied.button().getAttribute("aria-pressed")).toBeNull();
     expect(denied.button().getAttribute("aria-haspopup")).toBe("dialog");
-    expect(denied.button().getAttribute("aria-label")).toBe("Microphone blocked");
+    expect(denied.button().getAttribute("aria-label")).toBe(
+      "Microphone blocked",
+    );
 
     denied.unmount();
   });
@@ -100,14 +108,19 @@ describe("MicButton", () => {
     const unsupported = mount("unsupported", mock());
 
     expect(unsupported.button().disabled).toBe(true);
-    expect(unsupported.button().getAttribute("aria-label")).toBe("Dictation unavailable");
+    expect(unsupported.button().getAttribute("aria-label")).toBe(
+      "Dictation unavailable",
+    );
 
     unsupported.unmount();
   });
 
   test("mousedown does not steal focus from the field being dictated into", () => {
     const { button, unmount } = mount("idle", mock());
-    const event = new MouseEvent("mousedown", { bubbles: true, cancelable: true });
+    const event = new MouseEvent("mousedown", {
+      bubbles: true,
+      cancelable: true,
+    });
 
     button().dispatchEvent(event);
 

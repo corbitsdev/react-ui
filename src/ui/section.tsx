@@ -27,10 +27,21 @@ const TITLE_CLASS: Record<NonNullable<SectionProps["as"]>, string> = {
 };
 
 /** A titled block: heading, optional description and controls, then content. */
-export function Section({ title, description, action, count, as = "h2", children, className }: SectionProps) {
+export function Section({
+  title,
+  description,
+  action,
+  count,
+  as = "h2",
+  children,
+  className,
+}: SectionProps) {
   const Heading = as;
   return (
-    <section data-slot="section" className={cn("flex flex-col gap-3", className)}>
+    <section
+      data-slot="section"
+      className={cn("flex flex-col gap-3", className)}
+    >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -42,10 +53,14 @@ export function Section({ title, description, action, count, as = "h2", children
             )}
           </div>
           {description === undefined ? null : (
-            <p className="text-sm leading-snug text-muted-foreground">{description}</p>
+            <p className="text-sm leading-snug text-muted-foreground">
+              {description}
+            </p>
           )}
         </div>
-        {action === undefined ? null : <div className="flex shrink-0 items-center gap-2">{action}</div>}
+        {action === undefined ? null : (
+          <div className="flex shrink-0 items-center gap-2">{action}</div>
+        )}
       </div>
       {children}
     </section>

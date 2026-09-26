@@ -1,5 +1,12 @@
 import { Button } from "../../src/ui/button.js";
-import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "../../src/ui/menu.js";
+import {
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuLabel,
+  MenuSeparator,
+  MenuTrigger,
+} from "../../src/ui/menu.js";
 
 export default { title: "Primitives / Menu" };
 

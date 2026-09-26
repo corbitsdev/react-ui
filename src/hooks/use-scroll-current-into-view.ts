@@ -19,7 +19,9 @@ import { usePrefersReducedMotion } from "./use-prefers-reduced-motion.js";
  * theme's global reduced-motion block, so a `prefers-reduced-motion: reduce`
  * check here falls back to an instant jump.
  */
-export function useScrollCurrentIntoView<T extends HTMLElement>(currentKey: string | number): RefObject<T | null> {
+export function useScrollCurrentIntoView<T extends HTMLElement>(
+  currentKey: string | number,
+): RefObject<T | null> {
   const currentRef = useRef<T>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
 

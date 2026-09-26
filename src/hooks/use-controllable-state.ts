@@ -12,7 +12,8 @@ export type UseControllableStateOptions<T> = {
   readonly name: string;
 };
 
-const isProduction = typeof process !== "undefined" && process.env?.NODE_ENV === "production";
+const isProduction =
+  typeof process !== "undefined" && process.env?.NODE_ENV === "production";
 
 /**
  * The controlled-or-uncontrolled resolution every prop pair shaped like
@@ -53,7 +54,10 @@ export function useControllableState<T>(
 
   const setValue = useCallback(
     (action: ControllableStateAction<T>) => {
-      const resolved = typeof action === "function" ? (action as (previous: T) => T)(value) : action;
+      const resolved =
+        typeof action === "function"
+          ? (action as (previous: T) => T)(value)
+          : action;
       if (!isControlled) setUncontrolledValue(resolved);
       onChange?.(resolved);
     },

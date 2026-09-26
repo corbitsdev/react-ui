@@ -53,7 +53,16 @@ export function ChatThread({
   }, [messages]);
 
   if (messages.length === 0 && empty !== undefined) {
-    return <div className={cn("flex min-h-0 flex-1 items-center justify-center p-6", className)}>{empty}</div>;
+    return (
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 items-center justify-center p-6",
+          className,
+        )}
+      >
+        {empty}
+      </div>
+    );
   }
 
   return (
@@ -63,18 +72,27 @@ export function ChatThread({
         const node = event.currentTarget;
         // A few pixels of slack: sub-pixel layout means an exact comparison is
         // false on plenty of screens that are, visually, at the bottom.
-        pinnedRef.current = node.scrollHeight - node.scrollTop - node.clientHeight < 32;
+        pinnedRef.current =
+          node.scrollHeight - node.scrollTop - node.clientHeight < 32;
       }}
       // `log` + polite: new turns are announced without interrupting, which is
       // what an arriving reply is.
       role="log"
       aria-live="polite"
       aria-label="Conversation"
-      className={cn("flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4", className)}
+      className={cn(
+        "flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4",
+        className,
+      )}
     >
       {messages.map((message) =>
         message.role === "agent" ? (
-          <AgentTurn key={message.id} message={message} identity={identity} now={now}>
+          <AgentTurn
+            key={message.id}
+            message={message}
+            identity={identity}
+            now={now}
+          >
             {renderBody?.(message)}
           </AgentTurn>
         ) : (

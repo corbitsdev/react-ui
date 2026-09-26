@@ -79,7 +79,9 @@ export function SidebarItemRow({
       <div
         className={cn(
           "flex w-full items-center gap-2 rounded-[var(--sidebar-row-radius)] pr-1.5 text-sm transition-colors",
-          selected ? "bg-[var(--sidebar-row-selected-bg)] text-primary-emphasis" : "text-foreground hover:bg-muted",
+          selected
+            ? "bg-[var(--sidebar-row-selected-bg)] text-primary-emphasis"
+            : "text-foreground hover:bg-muted",
         )}
       >
         {/* The whole row's identity and selection live on this one button; the
@@ -92,12 +94,21 @@ export function SidebarItemRow({
           className="flex min-w-0 flex-1 items-center gap-2 rounded-[var(--sidebar-row-radius)] py-1.5 pl-2 text-left active:brightness-95"
         >
           {leading === undefined ? null : (
-            <span className="grid size-5 shrink-0 place-items-center [&_svg]:size-4" aria-hidden>
+            <span
+              className="grid size-5 shrink-0 place-items-center [&_svg]:size-4"
+              aria-hidden
+            >
               {leading}
             </span>
           )}
-          <span className={cn("min-w-0 flex-1 truncate", unread && "font-semibold")}>{name}</span>
-          {meta === undefined ? null : <span className="flex shrink-0 items-center gap-1.5">{meta}</span>}
+          <span
+            className={cn("min-w-0 flex-1 truncate", unread && "font-semibold")}
+          >
+            {name}
+          </span>
+          {meta === undefined ? null : (
+            <span className="flex shrink-0 items-center gap-1.5">{meta}</span>
+          )}
         </button>
         {action === undefined ? null : (
           <span className="shrink-0 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100">
