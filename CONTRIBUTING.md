@@ -5,6 +5,14 @@ registry and developed with [bun](https://bun.sh) as its package manager and tas
 Read [ARCHITECTURE.md](./ARCHITECTURE.md) first — most of the rules below only make sense
 once that is clear.
 
+## How it works
+
+Components never fetch; data arrives as props. The root entry is generated re-exports
+only, and the package is side-effect free apart from its CSS, so either import style
+tree-shakes. Tokens and keyframes live in `theme.css`; `styles.css` is the prebuilt sheet
+for hosts that do not run Tailwind. [PRODUCT.md](./PRODUCT.md) covers why the library
+exists and [IMPLEMENTATION.md](./IMPLEMENTATION.md) the toolchain and peers.
+
 ## Getting set up
 
 ```sh
@@ -184,3 +192,10 @@ Check your item in both modes and at 200% zoom before opening a change.
 - Run the gates locally and say so in the pull request: `dep-guard`, `typecheck`, `lint`,
   and `build` including the contrast gate. Nothing runs them for you yet.
 - Contributions are accepted under the repository's LGPL-2.1-only licence.
+
+## Commit messages
+
+Commit subjects and PR titles follow [Conventional Commits](https://www.conventionalcommits.org): `feat`, `fix`, `refactor`, `test`, `docs`, `build`, `ci`, `perf`, and `chore(release): x.y.z` for releases.
+Add `!` only for public API breaks: removed or renamed exports, changed signatures, newly required params. Peer and dependency range changes are `build(deps):` with no `!`.
+Keep subjects imperative, lowercase after the colon, 72 characters or less, and free of ticket IDs.
+Every PR links its issue with a `Closes <issue id>` line in the PR body.
