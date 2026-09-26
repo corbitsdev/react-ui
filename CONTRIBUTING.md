@@ -22,10 +22,13 @@ bun run build          # generate → SWC → tsc → Tailwind → the contrast 
 bun run typecheck      # tsc --noEmit
 bun run lint           # eslint .
 bun run dep-guard      # forbidden-import checks over src/
+bun run test:e2e       # pack, install into tests/e2e/host, run Playwright
 ```
 
-All four must be clean before a change lands. There is no CI in this repository yet, so
-running them locally is the only thing standing between a change and a release.
+`test:e2e` needs Chromium once: `bunx playwright install chromium`. Each scenario is a
+route in `tests/e2e/host/src/scenarios.tsx`, rendered against the packed tarball.
+
+All five must be clean before a change lands; CI runs them on every pull request.
 `typecheck` is not negotiable and `any` is not a way past it: the escapes that exist each
 carry a comment explaining why the type system leaves no alternative, and a new one needs
 the same.

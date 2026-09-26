@@ -1,2 +1,4 @@
 [test]
+# Playwright specs under tests/ also match bun's *.spec.* pattern.
+root = "./src"
 preload = ["./scripts/test-dom-setup.ts"]
