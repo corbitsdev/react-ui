@@ -12,6 +12,9 @@ contract — modules that are not exported are internal and may change in any re
 
 ### Breaking changes since 0.1.0
 
+- **Git installs are no longer supported.** The `prepare` hook that built `dist/` on a
+  `github:corbitsdev/react-ui#<sha>` install is gone, so such an install ships no build
+  output. Install from npm: `npm add @corbits/react-ui`.
 - **84 modules removed — every module no known consumer imports.** A usage audit across
   the workbench, portal, scout and solutions-builder codebases showed these surfaces were
   unreachable from any consumer, so they were deleted rather than carried as semver
