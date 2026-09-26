@@ -28,11 +28,12 @@ consumer's data layer, not in a component — data arrives as props.
 ```sh
 bun run build          # tsc (JS + types) → Tailwind
 bun run typecheck      # tsc --noEmit
-bun run lint           # eslint .
+bun run lint           # oxlint
+bun run format:check   # oxfmt --check (`bun run format` rewrites)
 bun run dep-guard      # forbidden-import checks over src/
 ```
 
-All four must be clean before a change lands. There is no CI in this repository yet, so
+All five must be clean before a change lands. There is no CI in this repository yet, so
 running them locally is the only thing standing between a change and a release.
 `typecheck` is not negotiable and `any` is not a way past it: the escapes that exist each
 carry a comment explaining why the type system leaves no alternative, and a new one needs

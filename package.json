@@ -34,7 +34,9 @@
     "build:css": "tailwindcss -i src/styles.css -o dist/styles.css && cp src/theme.css dist/theme.css",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
-    "lint": "eslint .",
+    "lint": "oxlint",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "dep-guard": "node scripts/dep-guard.mjs",
     "contrast-test": "node scripts/contrast-test.mjs",
     "stories": "ladle serve --host 127.0.0.1",
@@ -71,7 +73,6 @@
     }
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
     "@happy-dom/global-registrator": "^20.11.2",
     "@ladle/react": "^5.1.1",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -84,14 +85,14 @@
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
-    "eslint": "^9.39.1",
     "lucide-react": "^1.27.0",
+    "oxfmt": "^0.70.0",
+    "oxlint": "^1.85.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "sonner": "^2.0.7",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.2"
+    "typescript": "^5.9.3"
   },
   "exports": {
     ".": {
