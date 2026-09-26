@@ -6,7 +6,7 @@ React components for agent products: chat transcripts with reasoning and tool ca
 
 1. **Props in, markup out.** No component fetches, subscribes or holds a client. Your data layer stays yours, and every component renders the same in stories, tests and production.
 2. **Agent-shaped building blocks.** `ChatThread` renders a message as ordered parts (text, reasoning, tool calls), and `ApprovalCard`, `GateBlock` and `StepList` cover a run that waits on a person.
-3. **Pay for what you import.** Every component has its own subpath, the package is side-effect free apart from its CSS, and heavy peers (Radix dialog, dropdown-menu, tooltip, `sonner`) are optional.
+3. **Pay for what you import.** One root entry, the package is side-effect free apart from its CSS, and heavy peers (Radix dialog, dropdown-menu, tooltip, `sonner`) are optional.
 4. **Server Components ready.** Stateful modules ship `"use client"`, so a React Server Components app imports them directly. Outside RSC the directive is a no-op.
 
 ## Install
@@ -17,7 +17,7 @@ bun add @corbits/react-ui react react-dom lucide-react @radix-ui/react-slot
 
 Requires Node 24 or later. Tested on React 19; the peer range also accepts React 18.2+.
 
-Optional peers are needed only by the subpaths that import them. Those modules are not in the root barrel, so import them by subpath:
+Optional peers are needed only by the modules that import them. Those modules are not in the root entry, so import them by subpath:
 
 | Peer                            | Subpaths                                                      |
 | ------------------------------- | ------------------------------------------------------------- |
@@ -82,7 +82,7 @@ This renders the user message, a collapsed reasoning block, a finished tool call
 
 ## Usage
 
-Import from the root or from a subpath; both tree-shake to what you use:
+Import from the root; it tree-shakes to what you use. Only the optional-peer modules have their own subpath:
 
 ```tsx
 import { Button } from "@corbits/react-ui";
@@ -115,135 +115,135 @@ The theme names Red Hat Display and Space Mono but does not bundle them. Load th
 
 ### Components
 
-Subpaths are relative to `@corbits/react-ui/`. Rows marked "optional peer" are subpath-only; see [Install](#install).
+Everything imports from `@corbits/react-ui`, except rows marked "optional peer", which import from the subpath shown; see [Install](#install).
 
 #### Chat
 
-| Component             | Subpath                    | What it is                                                  |
-| --------------------- | -------------------------- | ----------------------------------------------------------- |
-| `ChatThread`          | `ui/chat-thread`           | Scrolling transcript of user and agent messages             |
-| `AgentTurn`           | `ui/agent-turn`            | One agent reply: reasoning, tool calls, answer, in order    |
-| `MessageBubble`       | `ui/message-bubble`        | One user or system message                                  |
-| `ChatInput`           | `ui/chat-input`            | Auto-growing message input with a send/stop button          |
-| `ChatComposer`        | `ui/chat-composer`         | `ChatInput` with suggestion chips for an empty conversation |
-| `ChatPanel`           | `ui/chat-panel`            | Docked chat frame with header and footer                    |
-| `PartsRenderer`       | `ui/parts-renderer`        | Renders a list of message parts                             |
-| `ReasoningBlock`      | `ui/reasoning-block`       | Collapsible thinking text                                   |
-| `ToolBlock`           | `ui/tool-block`            | A tool call's lifecycle: running, done, failed              |
-| `ToolNarrative`       | `ui/tool-narrative`        | What the agent did, as one expandable line                  |
-| `ToolPicker`          | `ui/tool-picker`           | Browse, search and select tools                             |
-| `QuickReplyChips`     | `ui/quick-reply-chips`     | Tappable suggested replies                                  |
-| `TypingIndicator`     | `ui/typing-indicator`      | Agent-is-typing dots                                        |
-| `ThinkingIndicator`   | `ui/thinking-indicator`    | Animated Corbits mark with a status label                   |
-| `ThinkingMark`        | `ui/thinking-mark`         | Decorative animated Corbits mark                            |
-| `ThinkingLabel`       | `ui/thinking-label`        | Rotating-verb status label                                  |
-| `ShimmerText`         | `ui/shimmer-text`          | Shimmer sweep over text                                     |
-| `MicButton`           | `ui/mic-button`            | Permission-aware microphone toggle                          |
-| `VoiceWaveform`       | `ui/voice-waveform`        | Live audio level bars                                       |
-| `DictationStatusLine` | `ui/dictation-status-line` | Composer dictation status row                               |
-| `MicPermissionDialog` | `ui/mic-permission-dialog` | Microphone permission prompt (optional peer)                |
+| Component             | What it is                                                               |
+| --------------------- | ------------------------------------------------------------------------ |
+| `ChatThread`          | Scrolling transcript of user and agent messages                          |
+| `AgentTurn`           | One agent reply: reasoning, tool calls, answer, in order                 |
+| `MessageBubble`       | One user or system message                                               |
+| `ChatInput`           | Auto-growing message input with a send/stop button                       |
+| `ChatComposer`        | `ChatInput` with suggestion chips for an empty conversation              |
+| `ChatPanel`           | Docked chat frame with header and footer                                 |
+| `PartsRenderer`       | Renders a list of message parts                                          |
+| `ReasoningBlock`      | Collapsible thinking text                                                |
+| `ToolBlock`           | A tool call's lifecycle: running, done, failed                           |
+| `ToolNarrative`       | What the agent did, as one expandable line                               |
+| `ToolPicker`          | Browse, search and select tools                                          |
+| `QuickReplyChips`     | Tappable suggested replies                                               |
+| `TypingIndicator`     | Agent-is-typing dots                                                     |
+| `ThinkingIndicator`   | Animated Corbits mark with a status label                                |
+| `ThinkingMark`        | Decorative animated Corbits mark                                         |
+| `ThinkingLabel`       | Rotating-verb status label                                               |
+| `ShimmerText`         | Shimmer sweep over text                                                  |
+| `MicButton`           | Permission-aware microphone toggle                                       |
+| `VoiceWaveform`       | Live audio level bars                                                    |
+| `DictationStatusLine` | Composer dictation status row                                            |
+| `MicPermissionDialog` | Microphone permission prompt (optional peer, `ui/mic-permission-dialog`) |
 
 #### Runs
 
-| Component           | Subpath                 | What it is                                        |
-| ------------------- | ----------------------- | ------------------------------------------------- |
-| `LiveRunBanner`     | `ui/live-run-banner`    | Status of a run in progress                       |
-| `LiveStatusLine`    | `ui/live-status-line`   | The single "what's happening now" line            |
-| `ApprovalCard`      | `ui/approval-card`      | Approve or reject a pending action                |
-| `GateBlock`         | `ui/gate-block`         | Chrome for a run parked on a human decision       |
-| `StepList`          | `ui/step-list`          | Vertical list of run steps and their status       |
-| `HorizontalStepper` | `ui/horizontal-stepper` | Horizontal step progress                          |
-| `ProgressChecklist` | `ui/progress-checklist` | Steps of a long operation and how far along it is |
-| `TraceWaterfall`    | `ui/trace-waterfall`    | Run-trace timeline, one row per span              |
-| `IntakeForm`        | `ui/intake-form`        | Inputs a workflow asks for before it runs         |
-| `RunNowButton`      | `ui/run-now-button`     | Run something immediately                         |
-| `ConfirmButton`     | `ui/confirm-button`     | Button that asks for a second click               |
-| `NowCards`          | `ui/now-cards`          | Attention band of items needing action            |
-| `NotificationsBell` | `ui/notifications-bell` | Bell with count and a panel slot                  |
+| Component           | What it is                                        |
+| ------------------- | ------------------------------------------------- |
+| `LiveRunBanner`     | Status of a run in progress                       |
+| `LiveStatusLine`    | The single "what's happening now" line            |
+| `ApprovalCard`      | Approve or reject a pending action                |
+| `GateBlock`         | Chrome for a run parked on a human decision       |
+| `StepList`          | Vertical list of run steps and their status       |
+| `HorizontalStepper` | Horizontal step progress                          |
+| `ProgressChecklist` | Steps of a long operation and how far along it is |
+| `TraceWaterfall`    | Run-trace timeline, one row per span              |
+| `IntakeForm`        | Inputs a workflow asks for before it runs         |
+| `RunNowButton`      | Run something immediately                         |
+| `ConfirmButton`     | Button that asks for a second click               |
+| `NowCards`          | Attention band of items needing action            |
+| `NotificationsBell` | Bell with count and a panel slot                  |
 
 #### Artifacts
 
-| Component        | Subpath              | What it is                                          |
-| ---------------- | -------------------- | --------------------------------------------------- |
-| `ArtifactBody`   | `ui/artifact-body`   | One artifact, drawn the way its kind implies        |
-| `ArtifactNotice` | `ui/artifact-notice` | "Nothing to draw here" message for artifact viewers |
-| `BlockCard`      | `ui/block-card`      | Generative-UI block frame                           |
-| `ResearchBody`   | `ui/research-body`   | Research brief and report                           |
-| `CompareBody`    | `ui/compare-body`    | Side-by-side comparison                             |
-| `EmbedBody`      | `ui/embed-body`      | Sandboxed third-party embed                         |
-| `CsvTable`       | `ui/csv-table`       | Capped preview of CSV text                          |
-| `QuoteCard`      | `ui/quote-card`      | A rotating quote                                    |
-| `ProfileCard`    | `ui/profile-card`    | Identity, status, actions and channels              |
+| Component        | What it is                                          |
+| ---------------- | --------------------------------------------------- |
+| `ArtifactBody`   | One artifact, drawn the way its kind implies        |
+| `ArtifactNotice` | "Nothing to draw here" message for artifact viewers |
+| `BlockCard`      | Generative-UI block frame                           |
+| `ResearchBody`   | Research brief and report                           |
+| `CompareBody`    | Side-by-side comparison                             |
+| `EmbedBody`      | Sandboxed third-party embed                         |
+| `CsvTable`       | Capped preview of CSV text                          |
+| `QuoteCard`      | A rotating quote                                    |
+| `ProfileCard`    | Identity, status, actions and channels              |
 
 #### Charts
 
-| Component         | Subpath                | What it is                                          |
-| ----------------- | ---------------------- | --------------------------------------------------- |
-| `ChartFrame`      | `ui/chart-frame`       | Caption, legend, plot, and the same data as a table |
-| `TimeSeriesChart` | `ui/time-series-chart` | Values over time                                    |
-| `BarChart`        | `ui/bar-chart`         | Vertical bars                                       |
-| `CategoryBars`    | `ui/category-bars`     | Dense horizontal category ranking                   |
-| `Sparkline`       | `ui/sparkline`         | Inline trend line                                   |
-| `TokenMosaic`     | `ui/token-mosaic`      | Shares of a whole as one stacked strip              |
-| `StatGrid`        | `ui/stat-grid`         | Grid of headline numbers                            |
-| `AnimatedNumber`  | `ui/animated-number`   | Number that counts to its new value                 |
+| Component         | What it is                                          |
+| ----------------- | --------------------------------------------------- |
+| `ChartFrame`      | Caption, legend, plot, and the same data as a table |
+| `TimeSeriesChart` | Values over time                                    |
+| `BarChart`        | Vertical bars                                       |
+| `CategoryBars`    | Dense horizontal category ranking                   |
+| `Sparkline`       | Inline trend line                                   |
+| `TokenMosaic`     | Shares of a whole as one stacked strip              |
+| `StatGrid`        | Grid of headline numbers                            |
+| `AnimatedNumber`  | Number that counts to its new value                 |
 
 #### Layout
 
-| Component           | Subpath                    | What it is                                   |
-| ------------------- | -------------------------- | -------------------------------------------- |
-| `PageShell`         | `ui/page-shell`            | Page margins and scroll ownership            |
-| `PagePanel`         | `ui/page-panel`            | Bordered page-content frame                  |
-| `TopBar`            | `ui/top-bar`               | Title, breadcrumbs and actions row           |
-| `Sidebar`           | `ui/sidebar`               | Collapsible navigation sidebar               |
-| `SidebarPanel`      | `ui/sidebar-panel`         | Sidebar with pins, body and footer           |
-| `SidebarItemRow`    | `ui/sidebar-item-row`      | One sidebar row                              |
-| `ListDetail`        | `ui/list-detail`           | Index on the left, open item on the right    |
-| `InspectorShell`    | `ui/inspector-shell`       | Side inspector rail                          |
-| `Section`           | `ui/section`               | Titled block of content                      |
-| `SettingsPanel`     | `ui/settings-panel`        | Settings frame with optional save            |
-| `LibraryPageHeader` | `ui/library-page-header`   | Title, count and controls for a library page |
-| `Card`              | `ui/card`                  | Bordered content card                        |
-| `EmptyState`        | `ui/empty-state`           | Title, description, icon and action          |
-| `RichEmptyState`    | `ui/rich-empty-state`      | Empty state with suggested next-step actions |
-| `BootScreen`        | `ui/boot-screen`           | Screen shown before the app loads            |
-| `DitherCanvas`      | `ui/dither-canvas`         | Animated dithered background                 |
-| `CorbitsMark`       | `ui/corbits-mark`          | Corbits logo                                 |
-| `AuthLayout`        | `blocks/login/auth-layout` | Sign-in page layout                          |
-| `LoginForm`         | `blocks/login/login-form`  | Sign-in and sign-up form, with optional SSO  |
+| Component           | What it is                                   |
+| ------------------- | -------------------------------------------- |
+| `PageShell`         | Page margins and scroll ownership            |
+| `PagePanel`         | Bordered page-content frame                  |
+| `TopBar`            | Title, breadcrumbs and actions row           |
+| `Sidebar`           | Collapsible navigation sidebar               |
+| `SidebarPanel`      | Sidebar with pins, body and footer           |
+| `SidebarItemRow`    | One sidebar row                              |
+| `ListDetail`        | Index on the left, open item on the right    |
+| `InspectorShell`    | Side inspector rail                          |
+| `Section`           | Titled block of content                      |
+| `SettingsPanel`     | Settings frame with optional save            |
+| `LibraryPageHeader` | Title, count and controls for a library page |
+| `Card`              | Bordered content card                        |
+| `EmptyState`        | Title, description, icon and action          |
+| `RichEmptyState`    | Empty state with suggested next-step actions |
+| `BootScreen`        | Screen shown before the app loads            |
+| `DitherCanvas`      | Animated dithered background                 |
+| `CorbitsMark`       | Corbits logo                                 |
+| `AuthLayout`        | Sign-in page layout                          |
+| `LoginForm`         | Sign-in and sign-up form, with optional SSO  |
 
 #### Controls
 
-| Component           | Subpath                 | What it is                                          |
-| ------------------- | ----------------------- | --------------------------------------------------- |
-| `Button`            | `ui/button`             | Button with variants and sizes                      |
-| `Input`             | `ui/input`              | Text input                                          |
-| `Textarea`          | `ui/textarea`           | Multi-line input                                    |
-| `Select`            | `ui/select`             | Native select                                       |
-| `Checkbox`          | `ui/checkbox`           | Checkbox                                            |
-| `SelectionCheckbox` | `ui/selection-checkbox` | Row-selection checkbox                              |
-| `Switch`            | `ui/switch`             | On/off toggle                                       |
-| `FileInput`         | `ui/file-input`         | File picker                                         |
-| `Tabs`              | `ui/tabs`               | Tab strip                                           |
-| `ViewToggle`        | `ui/view-toggle`        | Grid or rows segmented control                      |
-| `FilterBar`         | `ui/filter-bar`         | Row of filters with an active-filter summary        |
-| `FilterChip`        | `ui/filter-chip`        | One toggleable filter                               |
-| `KindCardGrid`      | `ui/kind-card-grid`     | Selectable card grid                                |
-| `BulkActionBar`     | `ui/bulk-action-bar`    | Actions for a multi-row selection                   |
-| `Table`             | `ui/table`              | Table primitives                                    |
-| `SortableTable`     | `ui/sortable-table`     | Table with sortable columns                         |
-| `Badge`             | `ui/badge`              | Status label                                        |
-| `StatusDot`         | `ui/status-dot`         | Colored status dot                                  |
-| `Avatar`            | `ui/avatar`             | Initials or image avatar                            |
-| `ProviderMark`      | `ui/provider-mark`      | Which service an action goes through                |
-| `Skeleton`          | `ui/skeleton`           | Loading placeholder                                 |
-| `Dialog`            | `ui/dialog`             | Modal dialog (optional peer)                        |
-| `CommandPalette`    | `ui/command-palette`    | Global search overlay (optional peer)               |
-| `Menu`              | `ui/menu`               | Dropdown menu (optional peer)                       |
-| `InfoTooltip`       | `ui/tooltip`            | Hover info tooltip (optional peer)                  |
-| `Toaster`           | `ui/toast`              | Toast host; call `toast()` anywhere (optional peer) |
-| `ThemeProvider`     | `ui/theme-provider`     | Persists light, dark or system mode and presets     |
-| `ThemeToggle`       | `ui/theme-toggle`       | Light, dark or system switch                        |
+| Component           | What it is                                                      |
+| ------------------- | --------------------------------------------------------------- |
+| `Button`            | Button with variants and sizes                                  |
+| `Input`             | Text input                                                      |
+| `Textarea`          | Multi-line input                                                |
+| `Select`            | Native select                                                   |
+| `Checkbox`          | Checkbox                                                        |
+| `SelectionCheckbox` | Row-selection checkbox                                          |
+| `Switch`            | On/off toggle                                                   |
+| `FileInput`         | File picker                                                     |
+| `Tabs`              | Tab strip                                                       |
+| `ViewToggle`        | Grid or rows segmented control                                  |
+| `FilterBar`         | Row of filters with an active-filter summary                    |
+| `FilterChip`        | One toggleable filter                                           |
+| `KindCardGrid`      | Selectable card grid                                            |
+| `BulkActionBar`     | Actions for a multi-row selection                               |
+| `Table`             | Table primitives                                                |
+| `SortableTable`     | Table with sortable columns                                     |
+| `Badge`             | Status label                                                    |
+| `StatusDot`         | Colored status dot                                              |
+| `Avatar`            | Initials or image avatar                                        |
+| `ProviderMark`      | Which service an action goes through                            |
+| `Skeleton`          | Loading placeholder                                             |
+| `Dialog`            | Modal dialog (optional peer, `ui/dialog`)                       |
+| `CommandPalette`    | Global search overlay (optional peer, `ui/command-palette`)     |
+| `Menu`              | Dropdown menu (optional peer, `ui/menu`)                        |
+| `InfoTooltip`       | Hover info tooltip (optional peer, `ui/tooltip`)                |
+| `Toaster`           | Toast host; call `toast()` anywhere (optional peer, `ui/toast`) |
+| `ThemeProvider`     | Persists light, dark or system mode and presets                 |
+| `ThemeToggle`       | Light, dark or system switch                                    |
 
 ## Using with Interchange
 
@@ -256,6 +256,7 @@ The host app owns the connection to the hub; components only take props.
 ## Upgrading from 0.1
 
 - Install from npm. Git installs (`github:corbitsdev/react-ui#<sha>`) no longer build `dist/`.
+- Per-module subpaths are gone: import from `@corbits/react-ui` (`import { Button } from "@corbits/react-ui"`).
 - `ui/dialog`, `ui/command-palette`, `ui/mic-permission-dialog`, `ui/menu`, `ui/tooltip` and `ui/toast` are subpath-only, and their peers are optional: `import { Toaster, toast } from "@corbits/react-ui/ui/toast"`. Install the peer for each subpath you keep.
 - `lib/csv`, `lib/url`, `lib/utils`, `lib/workflow-registry` and `ui/chat-dock-timing` are internal. Replace `cn` with `twMerge(clsx(...))`.
 - Stateful components ship `"use client"`. Client wrappers you wrote for them still work, and can go.
