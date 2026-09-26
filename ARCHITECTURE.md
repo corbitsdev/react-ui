@@ -5,19 +5,16 @@ consumer's `node_modules` and is picked up by a version bump. Why it exists is
 in [PRODUCT.md](./PRODUCT.md); toolchain, peers and publish layout are in
 [IMPLEMENTATION.md](./IMPLEMENTATION.md). Three properties shape the layout.
 
-**The public surface is a semver commitment.** Every subpath in `exports` is something
-we have promised not to break casually, so the map is *generated* from a triage list in
-`scripts/generate-exports.mjs` rather than hand-written — keeping a module internal is
-the cheap direction. `lib/chart-geometry` is internal: it is rendering machinery whose
+**The public surface is a semver commitment.** Everything `src/index.ts` re-exports, and
+every entry in `exports`, is something we have promised not to break casually. Both are
+hand-written; a module not listed is internal, and keeping a module internal is the cheap
+direction. Only modules that import an optional peer get their own subpath. `lib/chart-geometry` is internal: it is rendering machinery whose
 names appear in no public prop type. `lib/chart-palette` is public — a consumer painting
 its own data marks needs the same ramp, in the same order, under the same rules.
 
 **Tree-shaking is a requirement.** Output is per-file ESM — one `.js` and one `.d.ts`
 per source file, no bundling — and `sideEffects` is declared CSS-only. The root entry is
-re-exports only, so importing from the root and importing by subpath both bundle just
-what you used. They are not guaranteed byte-for-byte identical — a bundler may order or
-name things differently depending on the entry — but neither drags in a component you did
-not reference.
+re-exports only, so importing from the root bundles just what you used.
 
 **Abstraction has to earn its place.** No config indirection, no speculative extension
 points. There is no CLI, no component generator and no docs site, and that is deliberate.
@@ -28,7 +25,6 @@ points. There is no CLI, no component generator and no docs site, and that is de
 
 | Step | Tool | Output |
 | --- | --- | --- |
-| `generate` | `scripts/generate-exports.mjs` | `src/index.ts` and the `exports` map in `package.json` |
 | `build:js` | SWC | `dist/**/*.js`, one per source file |
 | `build:types` | `tsc -p tsconfig.build.json` | `dist/**/*.d.ts` |
 | `build:css` | Tailwind v4 CLI | `dist/styles.css`, plus `dist/theme.css` copied from source |
@@ -188,8 +184,7 @@ and numbers out, checkable without rendering anything).
 | `src/blocks/` | Multi-file compositions (`login`). |
 | `src/theme.css` | Tokens, keyframes, base layer. The only CSS source. |
 | `src/styles.css` | Two `@import`s. The entry Tailwind compiles into `dist/styles.css`. |
-| `src/index.ts` | The root barrel. **Generated** — do not edit. |
-| `scripts/generate-exports.mjs` | Writes `src/index.ts` and the `exports` map. Holds the internal-module triage list. |
+| `src/index.ts` | The root barrel. Hand-written: add a public module here. |
 | `scripts/contrast-test.mjs` | The theme gate. Reads `dist/styles.css`. |
 | `scripts/dep-guard.mjs` | The forbidden-import gates. |
 | `dist/` | Build output. Generated, not committed; the only thing `files` publishes. |

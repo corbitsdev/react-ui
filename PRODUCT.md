@@ -19,8 +19,7 @@ It is not a design-system starter, not a CLI, and not a template app.
 
 ## What a host can do
 
-- Import one module at a time (`@corbits/react-ui/ui/button`) or from the
-  root barrel, and bundle only what they used.
+- Import from the root (`@corbits/react-ui`) and bundle only what they used.
 - Render collection surfaces against *their* data. Components never fetch.
   Data arrives as props. Pieces that take no collection need no extra
   host wiring.
@@ -51,6 +50,6 @@ bundled. The stack falls through to system fonts unless the host loads them.
 
 LGPL-2.1-only. See [LICENSE](./LICENSE).
 
-The public surface is a semver commitment: every subpath in `exports` is
+The public surface is a semver commitment: everything the root re-exports, and every entry in `exports`, is
 something we have promised not to break casually. Until 1.0 a minor bump may
 still contain a breaking change; those are called out in [CHANGELOG.md](./CHANGELOG.md).

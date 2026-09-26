@@ -75,7 +75,7 @@ function reachableFrom(entry) {
 
 const barrel = join(ROOT, "index.ts");
 if (!sources.includes(barrel)) {
-  console.error("dep-guard: src/index.ts is missing — run `bun run generate` first");
+  console.error("dep-guard: src/index.ts is missing — the root barrel is hand-written");
   process.exit(1);
 }
 
@@ -85,7 +85,7 @@ for (const path of reachableFrom(barrel)) {
     if (source.includes(`"${peer}"`)) {
       violations.push(
         `${id(path)}: imports the optional peer ${peer} and is reachable from the root barrel — ` +
-          `add it to BARREL_EXCLUDED in scripts/generate-exports.mjs`,
+          `drop it from src/index.ts and give it its own "exports" entry`,
       );
     }
   }
