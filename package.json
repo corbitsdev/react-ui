@@ -35,7 +35,7 @@
     "build:css": "tailwindcss -i src/styles.css -o dist/styles.css && cp src/theme.css dist/theme.css",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
-    "test:e2e": "bun pm pack --quiet --filename tests/e2e/host/react-ui.tgz && playwright test -c tests/e2e",
+    "test:e2e": "playwright test",
     "lint": "eslint .",
     "dep-guard": "node scripts/dep-guard.mjs",
     "contrast-test": "node scripts/contrast-test.mjs",

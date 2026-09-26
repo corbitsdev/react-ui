@@ -9,6 +9,5 @@ scratch/
 build/
 .worktrees/
 .agent-state/
-tests/e2e/host/bun.lock
 test-results/
 playwright-report/

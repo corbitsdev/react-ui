@@ -22,11 +22,11 @@ bun run build          # generate → SWC → tsc → Tailwind → the contrast 
 bun run typecheck      # tsc --noEmit
 bun run lint           # eslint .
 bun run dep-guard      # forbidden-import checks over src/
-bun run test:e2e       # pack, install into tests/e2e/host, run Playwright
+bun run test:e2e       # pack, install into a Vite host, run Playwright
 ```
 
 `test:e2e` needs Chromium once: `bunx playwright install chromium`. Each scenario is a
-route in `tests/e2e/host/src/scenarios.tsx`, rendered against the packed tarball.
+route in `e2e/fixtures.tsx`, rendered against the packed tarball.
 The same run builds the Ladle stories and fails on any serious or critical axe
 violation in any story.
 
