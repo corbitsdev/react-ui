@@ -1,3 +1,5 @@
+"use client";
+
 import { useId, useRef } from "react";
 import type { ReactNode } from "react";
 

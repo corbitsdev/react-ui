@@ -1,3 +1,5 @@
+"use client";
+
 import { Check, Minus } from "lucide-react";
 import { useId } from "react";
 

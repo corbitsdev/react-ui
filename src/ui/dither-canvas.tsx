@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef } from "react";
 
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js";

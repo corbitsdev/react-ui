@@ -1,3 +1,5 @@
+"use client";
+
 import { useScrollCurrentIntoView } from "../hooks/use-scroll-current-into-view.js";
 import type { WorkflowStep, WorkflowStepStatus } from "../lib/workflow-run-progress.js";
 import { workflowStepGlyph, workflowStepLabelClass } from "../lib/workflow-run-progress.js";

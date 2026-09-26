@@ -1,3 +1,5 @@
+"use client";
+
 import { Toaster as Sonner, toast as sonnerToast } from "sonner";
 
 const TOAST_DURATION_MS = 1800;

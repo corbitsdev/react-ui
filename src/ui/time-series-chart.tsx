@@ -1,3 +1,5 @@
+"use client";
+
 import { useRef, useState } from "react";
 
 import { areaPath, formatCompact, linePath, niceTicks, scaleLinear } from "../lib/chart-geometry.js";

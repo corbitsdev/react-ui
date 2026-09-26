@@ -1,3 +1,5 @@
+"use client";
+
 import { Bell } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
