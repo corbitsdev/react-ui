@@ -80,7 +80,7 @@ This renders the user message, a collapsed reasoning block, a finished tool call
 - **Corbits** is the set of published packages around Interchange that turn an agent into a product. This package is the UI bucket: it runs in the host web app and plugs into the host's data layer, not into the hub or the sidecar.
 - It pairs with the hub modules whose data it renders, such as [`@corbits/artifacts`](https://github.com/corbitsdev/corbits-artifacts), [`@corbits/mailbox`](https://github.com/corbitsdev/corbits-mailbox) and [`@corbits/cron`](https://github.com/corbitsdev/corbits-cron).
 
-## Usage
+## Reference
 
 Import from the root; it tree-shakes to what you use. Only the optional-peer modules have their own subpath:
 
@@ -262,7 +262,6 @@ The host app owns the connection to the hub; components only take props.
 - Stateful components ship `"use client"`. Client wrappers you wrote for them still work, and can go.
 - 84 unused modules are removed, `ui/command` is removed, `ActivityBlock` is renamed `ReasoningBlock`, and `AuthLayout` no longer renders `DitherCanvas` by default.
 - With neither `.dark` nor `.light` on the root, the theme follows the OS. Hosts that toggle `.dark` must add `.light` for an explicit light choice, or mount `ThemeProvider`.
-- The full list is in the [changelog](https://github.com/corbitsdev/react-ui/blob/main/CHANGELOG.md).
 
 ## License
 
