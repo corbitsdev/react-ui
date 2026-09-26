@@ -26,7 +26,7 @@ consumer's data layer, not in a component — data arrives as props.
 ## Gates
 
 ```sh
-bun run build          # SWC → tsc → Tailwind → the contrast gate
+bun run build          # tsc (JS + types) → Tailwind
 bun run typecheck      # tsc --noEmit
 bun run lint           # eslint .
 bun run dep-guard      # forbidden-import checks over src/

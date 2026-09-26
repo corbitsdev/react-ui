@@ -21,26 +21,23 @@ points. There is no CLI, no component generator and no docs site, and that is de
 
 ## The build
 
-`bun run build` is four steps and a gate, joined by `&&`, in order:
+`bun run build` is three steps, joined by `&&`, in order:
 
 | Step | Tool | Output |
 | --- | --- | --- |
-| `build:js` | SWC | `dist/**/*.js`, one per source file |
-| `build:types` | `tsc -p tsconfig.build.json` | `dist/**/*.d.ts` |
+| `build:js` | `tsc -p tsconfig.build.json` | `dist/**/*.js` and `dist/**/*.d.ts`, one per source file |
 | `build:css` | Tailwind v4 CLI | `dist/styles.css`, plus `dist/theme.css` copied from source |
-| `contrast-test` | `scripts/contrast-test.mjs` | the gate — reads `dist/styles.css` |
 
-SWC does the JavaScript because it is fast and per-file; `tsc` does the declarations
-because SWC does not emit them. Nothing bundles, so nothing can merge two modules into
-one chunk. `prepack` runs the whole thing, so a failing gate cannot be packed or
-published.
+`tsc` emits the JavaScript and the declarations in one pass. Nothing bundles, so nothing
+can merge two modules into one chunk. `prepack` runs the build, so npm publishes a fresh
+`dist/`. The gates (`contrast-test`, `dep-guard`) run in CI after the build.
 
 Source imports are relative and carry `.js` extensions. There is no path alias, so the
 emitted files are valid ESM for Node as well as for every bundler.
 
 Every component module that calls a hook, creates a context, defines an inline event
 handler, or imports an optional peer (Radix dialog, dropdown-menu or tooltip, or
-`sonner`) starts with `"use client"`, and SWC carries the directive into `dist/`. A React Server Components consumer renders any
+`sonner`) starts with `"use client"`, and `tsc` carries the directive into `dist/`. A React Server Components consumer renders any
 component directly; stateless components stay server-renderable. Plain-React bundlers
 ignore the directive. `dep-guard` enforces the rule, and checks `dist/` after a build.
 
@@ -114,7 +111,7 @@ provider; every other component does not.
 
 ### Contrast is gated
 
-`contrast-test` is the last step of the build. It parses the **built** `dist/styles.css`
+`contrast-test` runs in CI after the build. It parses the **built** `dist/styles.css`
 for the `:root` and `.dark` custom properties and derives its pairs from token *names*,
 never from listed hexes, so a new `--warning` / `--warning-foreground` is covered on the
 next run with no edit. Six rules:
