@@ -7,6 +7,12 @@
 // on purpose and must be imported by their subpath. The barrel is a single
 // module: anything it re-exports is loaded by any root import, so one such
 // re-export would make the optional peer mandatory for everyone.
+//   @corbits/react-ui/ui/command-palette
+//   @corbits/react-ui/ui/dialog
+//   @corbits/react-ui/ui/menu
+//   @corbits/react-ui/ui/mic-permission-dialog
+//   @corbits/react-ui/ui/toast
+//   @corbits/react-ui/ui/tooltip
 
 export * from "./blocks/login/auth-layout.js";
 export * from "./blocks/login/login-form.js";
@@ -49,12 +55,10 @@ export * from "./ui/chat-input.js";
 export * from "./ui/chat-panel.js";
 export * from "./ui/chat-thread.js";
 export * from "./ui/checkbox.js";
-export * from "./ui/command-palette.js";
 export * from "./ui/compare-body.js";
 export * from "./ui/confirm-button.js";
 export * from "./ui/corbits-mark.js";
 export * from "./ui/csv-table.js";
-export * from "./ui/dialog.js";
 export * from "./ui/dictation-status-line.js";
 export * from "./ui/dither-canvas.js";
 export * from "./ui/embed-body.js";
@@ -72,10 +76,8 @@ export * from "./ui/library-page-header.js";
 export * from "./ui/list-detail.js";
 export * from "./ui/live-run-banner.js";
 export * from "./ui/live-status-line.js";
-export * from "./ui/menu.js";
 export * from "./ui/message-bubble.js";
 export * from "./ui/mic-button.js";
-export * from "./ui/mic-permission-dialog.js";
 export * from "./ui/notifications-bell.js";
 export * from "./ui/now-cards.js";
 export * from "./ui/page-panel.js";
@@ -114,12 +116,10 @@ export * from "./ui/thinking-indicator.js";
 export * from "./ui/thinking-label.js";
 export * from "./ui/thinking-mark.js";
 export * from "./ui/time-series-chart.js";
-export * from "./ui/toast.js";
 export * from "./ui/token-mosaic.js";
 export * from "./ui/tool-block.js";
 export * from "./ui/tool-narrative.js";
 export * from "./ui/tool-picker.js";
-export * from "./ui/tooltip.js";
 export * from "./ui/top-bar.js";
 export * from "./ui/trace-waterfall.js";
 export * from "./ui/typing-indicator.js";

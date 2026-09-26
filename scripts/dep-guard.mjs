@@ -17,7 +17,10 @@ import { dirname, join, relative, resolve } from "node:path";
 
 const ROOT = new URL("../src", import.meta.url).pathname;
 
-const OPTIONAL_PEERS = [];
+const PKG = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+const OPTIONAL_PEERS = Object.keys(PKG.peerDependenciesMeta).filter(
+  (peer) => PKG.peerDependenciesMeta[peer].optional,
+);
 
 const RULES = [
   { label: "@workbench/*", pattern: /["'](@workbench\/[^"']*)["']/g, allow: () => false },
