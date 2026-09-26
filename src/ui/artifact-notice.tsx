@@ -21,7 +21,7 @@ export function ArtifactNotice({
   /** Overrides the pending/empty wording — use for a specific failure. */
   message,
 }: {
-  readonly pending?: boolean;
+  readonly pending?: boolean | undefined;
   readonly message?: string;
 }) {
   if (message !== undefined) {

@@ -54,7 +54,7 @@ export function DialogContent({
   side = "center",
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
-  side?: DialogSide;
+  side?: DialogSide | undefined;
 }) {
   return (
     <DialogPrimitive.Portal>

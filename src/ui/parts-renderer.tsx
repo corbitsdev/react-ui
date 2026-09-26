@@ -76,7 +76,7 @@ function ReasoningPartView({
   durationMs,
 }: {
   text: string;
-  durationMs?: number;
+  durationMs?: number | undefined;
 }) {
   const [open, setOpen] = useState(false);
   if (text.trim().length === 0) return null;
@@ -132,7 +132,7 @@ function FilePartView({
 }: {
   name: string;
   mediaType: string;
-  url?: string;
+  url?: string | undefined;
 }) {
   const content = (
     <>

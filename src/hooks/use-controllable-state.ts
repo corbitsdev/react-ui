@@ -4,10 +4,10 @@ export type ControllableStateAction<T> = T | ((previous: T) => T);
 
 export type UseControllableStateOptions<T> = {
   /** Controlled value. Supply this with `onChange` to lift state to a parent. */
-  readonly value?: T;
+  readonly value?: T | undefined;
   /** Seeds the hook's own state when `value` is not supplied. */
   readonly defaultValue: T;
-  readonly onChange?: (value: T) => void;
+  readonly onChange?: ((value: T) => void) | undefined;
   /** Identifies the caller in the dev-mode controlled/uncontrolled warning below. */
   readonly name: string;
 };

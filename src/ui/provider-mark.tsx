@@ -17,7 +17,7 @@ export type ProviderMarkProps = {
    */
   readonly logo?: ReactNode;
   readonly size?: "sm" | "md";
-  readonly className?: string;
+  readonly className?: string | undefined;
 };
 
 const SIZE_CLASS = {
