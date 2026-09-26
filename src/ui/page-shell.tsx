@@ -28,14 +28,31 @@ const WIDTH_CLASS = {
  * a titled block *within* a page — and it is not `Card`, which is a surface.
  * This is the page's outer boundary and it deliberately draws nothing.
  */
-export function PageShell({ scroll = true, width = "wide", className, children, ...props }: PageShellProps) {
+export function PageShell({
+  scroll = true,
+  width = "wide",
+  className,
+  children,
+  ...props
+}: PageShellProps) {
   return (
     <div
       data-slot="page-shell"
-      className={cn("flex h-full flex-col", scroll ? "overflow-y-auto" : "overflow-hidden", className)}
+      className={cn(
+        "flex h-full flex-col",
+        scroll ? "overflow-y-auto" : "overflow-hidden",
+        className,
+      )}
       {...props}
     >
-      <div className={cn("flex min-h-0 flex-1 flex-col gap-6 px-4 py-6", WIDTH_CLASS[width])}>{children}</div>
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col gap-6 px-4 py-6",
+          WIDTH_CLASS[width],
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 }

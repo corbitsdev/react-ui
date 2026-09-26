@@ -27,31 +27,46 @@ describe("Textarea", () => {
   });
 
   test("disabled disables the control", () => {
-    const { textarea, unmount } = mount({ disabled: true, defaultValue: "locked" });
+    const { textarea, unmount } = mount({
+      disabled: true,
+      defaultValue: "locked",
+    });
     expect(textarea().disabled).toBe(true);
     unmount();
   });
 
   test("aria-invalid passes through to the control", () => {
-    const { textarea, unmount } = mount({ "aria-invalid": true, defaultValue: "bad" });
+    const { textarea, unmount } = mount({
+      "aria-invalid": true,
+      defaultValue: "bad",
+    });
     expect(textarea().getAttribute("aria-invalid")).toBe("true");
     unmount();
   });
 
   test("without autoResize, the control keeps a fixed height", () => {
-    const { textarea, unmount } = mount({ defaultValue: "line one\nline two\nline three" });
+    const { textarea, unmount } = mount({
+      defaultValue: "line one\nline two\nline three",
+    });
     expect(textarea().style.height).toBe("");
     unmount();
   });
 
   test("autoResize sets an explicit pixel height after mount", () => {
-    const { textarea, unmount } = mount({ autoResize: true, defaultValue: "line one\nline two" });
+    const { textarea, unmount } = mount({
+      autoResize: true,
+      defaultValue: "line one\nline two",
+    });
     expect(textarea().style.height.endsWith("px")).toBe(true);
     unmount();
   });
 
   test("autoResize recalculates height on input", () => {
-    const { textarea, unmount } = mount({ autoResize: true, defaultValue: "", onChange: () => {} });
+    const { textarea, unmount } = mount({
+      autoResize: true,
+      defaultValue: "",
+      onChange: () => {},
+    });
     const node = textarea();
     act(() => {
       node.value = "line one\nline two\nline three\nline four";
@@ -76,11 +91,21 @@ describe("Textarea", () => {
   }
 
   test("autoResize caps height at maxHeight and switches to scrollable overflow", () => {
-    const { textarea, unmount } = mount({ autoResize: true, defaultValue: "", onChange: () => {} });
+    const { textarea, unmount } = mount({
+      autoResize: true,
+      defaultValue: "",
+      onChange: () => {},
+    });
     const node = textarea();
-    Object.defineProperty(node, "scrollHeight", { value: 800, configurable: true });
+    Object.defineProperty(node, "scrollHeight", {
+      value: 800,
+      configurable: true,
+    });
     act(() => {
-      setValue(node, Array.from({ length: 40 }, (_, i) => `line ${i}`).join("\n"));
+      setValue(
+        node,
+        Array.from({ length: 40 }, (_, i) => `line ${i}`).join("\n"),
+      );
     });
     expect(node.style.height).toBe("200px");
     expect(node.className).toContain("overflow-y-auto");
@@ -89,9 +114,17 @@ describe("Textarea", () => {
   });
 
   test("a custom maxHeight caps the resize at that value", () => {
-    const { textarea, unmount } = mount({ autoResize: true, maxHeight: 80, defaultValue: "", onChange: () => {} });
+    const { textarea, unmount } = mount({
+      autoResize: true,
+      maxHeight: 80,
+      defaultValue: "",
+      onChange: () => {},
+    });
     const node = textarea();
-    Object.defineProperty(node, "scrollHeight", { value: 400, configurable: true });
+    Object.defineProperty(node, "scrollHeight", {
+      value: 400,
+      configurable: true,
+    });
     act(() => {
       setValue(node, "a lot of content");
     });

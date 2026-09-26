@@ -18,6 +18,7 @@ export const Tones = () => (
 
 export const ExtraSmall = () => (
   <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-    <StatusDot label="Agent active" tone="emphasis" size="xs" live /> Agent active
+    <StatusDot label="Agent active" tone="emphasis" size="xs" live /> Agent
+    active
   </span>
 );

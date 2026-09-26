@@ -25,14 +25,22 @@ describe("ResearchBody", () => {
       topic: "Test topic",
       sourceCount: 1,
       itemCount: 1,
-      citations: [{ url: "javascript:alert(1)", title: "Malicious citation", source: "Untrusted feed" }],
+      citations: [
+        {
+          url: "javascript:alert(1)",
+          title: "Malicious citation",
+          source: "Untrusted feed",
+        },
+      ],
     };
 
     const { container, unmount } = mount(brief);
 
     expect(container.textContent).toContain("Malicious citation");
     const anchors = Array.from(container.querySelectorAll("a"));
-    expect(anchors.some((a) => a.getAttribute("href")?.startsWith("javascript:"))).toBe(false);
+    expect(
+      anchors.some((a) => a.getAttribute("href")?.startsWith("javascript:")),
+    ).toBe(false);
     expect(anchors).toHaveLength(0);
 
     unmount();
@@ -43,7 +51,13 @@ describe("ResearchBody", () => {
       topic: "Test topic",
       sourceCount: 1,
       itemCount: 1,
-      citations: [{ url: "https://example.com/report", title: "Safe citation", source: "Trusted feed" }],
+      citations: [
+        {
+          url: "https://example.com/report",
+          title: "Safe citation",
+          source: "Trusted feed",
+        },
+      ],
     };
 
     const { container, unmount } = mount(brief);
@@ -59,7 +73,13 @@ describe("ResearchBody", () => {
       topic: "Test topic",
       sourceCount: 1,
       itemCount: 1,
-      quotes: [{ quote: "A quoted line.", source: "Untrusted feed", url: "javascript:alert(1)" }],
+      quotes: [
+        {
+          quote: "A quoted line.",
+          source: "Untrusted feed",
+          url: "javascript:alert(1)",
+        },
+      ],
     };
 
     const { container, unmount } = mount(brief);
@@ -78,7 +98,13 @@ describe("ResearchBody", () => {
         {
           id: "c1",
           title: "Cluster",
-          items: [{ url: "javascript:alert(1)", title: "Item", source: "Untrusted feed" }],
+          items: [
+            {
+              url: "javascript:alert(1)",
+              title: "Item",
+              source: "Untrusted feed",
+            },
+          ],
         },
       ],
     };

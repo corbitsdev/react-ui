@@ -70,7 +70,11 @@ export const DisabledWithDescription = () => (
 
 export const InvalidWithDescription = () => (
   <div className="flex flex-col gap-1.5">
-    <Select aria-invalid aria-describedby="model-select-error" defaultValue="sonnet">
+    <Select
+      aria-invalid
+      aria-describedby="model-select-error"
+      defaultValue="sonnet"
+    >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
@@ -85,7 +89,12 @@ export const InvalidWithDescription = () => (
 
 export const DisabledInvalid = () => (
   <div className="flex flex-col gap-1.5">
-    <Select disabled aria-invalid aria-describedby="model-select-disabled-error" defaultValue="sonnet">
+    <Select
+      disabled
+      aria-invalid
+      aria-describedby="model-select-disabled-error"
+      defaultValue="sonnet"
+    >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}

@@ -19,7 +19,9 @@ function mount(label: string) {
 
 describe("InfoTooltip", () => {
   test("the trigger is a focusable button", () => {
-    const { trigger, unmount } = mount("Positioned by event order, not real timing.");
+    const { trigger, unmount } = mount(
+      "Positioned by event order, not real timing.",
+    );
     const button = trigger();
     expect(button).not.toBeNull();
     expect(button.tagName).toBe("BUTTON");
@@ -28,7 +30,9 @@ describe("InfoTooltip", () => {
   });
 
   test("focusing the trigger associates and reveals the tooltip content", async () => {
-    const { trigger, unmount } = mount("Positioned by event order, not real timing.");
+    const { trigger, unmount } = mount(
+      "Positioned by event order, not real timing.",
+    );
     const button = trigger();
 
     act(() => {
@@ -43,12 +47,16 @@ describe("InfoTooltip", () => {
     expect(describedBy).not.toBeNull();
     const content = document.getElementById(describedBy as string);
     expect(content).not.toBeNull();
-    expect(content?.textContent).toContain("Positioned by event order, not real timing.");
+    expect(content?.textContent).toContain(
+      "Positioned by event order, not real timing.",
+    );
     unmount();
   });
 
   test("Escape dismisses the tooltip", async () => {
-    const { trigger, unmount } = mount("Positioned by event order, not real timing.");
+    const { trigger, unmount } = mount(
+      "Positioned by event order, not real timing.",
+    );
     const button = trigger();
 
     act(() => {
@@ -63,7 +71,13 @@ describe("InfoTooltip", () => {
     expect(document.getElementById(contentIdWhileOpen)).not.toBeNull();
 
     act(() => {
-      button.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+      button.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Escape",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
     });
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));

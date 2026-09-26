@@ -24,10 +24,10 @@ Why the library exists lives in [PRODUCT.md](./PRODUCT.md).
 
 Development uses **bun**. `bun run build` is three steps, joined by `&&`:
 
-| Step | Tool | Output |
-| --- | --- | --- |
-| `build:js` | `tsc -p tsconfig.build.json` | `dist/**/*.js` and `dist/**/*.d.ts`, one per source file |
-| `build:css` | Tailwind v4 CLI | `dist/styles.css`, plus `dist/theme.css` copied from source |
+| Step        | Tool                         | Output                                                      |
+| ----------- | ---------------------------- | ----------------------------------------------------------- |
+| `build:js`  | `tsc -p tsconfig.build.json` | `dist/**/*.js` and `dist/**/*.d.ts`, one per source file    |
+| `build:css` | Tailwind v4 CLI              | `dist/styles.css`, plus `dist/theme.css` copied from source |
 
 Source imports are relative and carry `.js` extensions. There is no path
 alias. `prepack` runs the build. CI runs `contrast-test` (reads `dist/styles.css`)

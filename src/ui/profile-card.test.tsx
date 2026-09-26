@@ -32,7 +32,13 @@ describe("ProfileCard href safety", () => {
       <ProfileCard
         name="Test"
         initials="T"
-        sharedChannels={[{ id: "c1", name: "general", href: "data:text/html,<script>alert(1)</script>" }]}
+        sharedChannels={[
+          {
+            id: "c1",
+            name: "general",
+            href: "data:text/html,<script>alert(1)</script>",
+          },
+        ]}
       />,
     );
     expect(mounted.container.querySelector("a")).toBeNull();
@@ -58,7 +64,9 @@ describe("ProfileCard href safety", () => {
       <ProfileCard
         name="Test"
         initials="T"
-        sharedChannels={[{ id: "c1", name: "general", href: "javascript:alert(1)" }]}
+        sharedChannels={[
+          { id: "c1", name: "general", href: "javascript:alert(1)" },
+        ]}
       />,
     );
     expect(mounted.container.querySelector("a")).toBeNull();
@@ -70,7 +78,9 @@ describe("ProfileCard href safety", () => {
       <ProfileCard
         name="Test"
         initials="T"
-        sharedChannels={[{ id: "c1", name: "general", href: "https://example.com/c/general" }]}
+        sharedChannels={[
+          { id: "c1", name: "general", href: "https://example.com/c/general" },
+        ]}
       />,
     );
     const anchor = mounted.container.querySelector("a");
@@ -84,7 +94,9 @@ describe("ProfileCard href safety", () => {
       <ProfileCard
         name="Test"
         initials="T"
-        pinnedSkills={[{ id: "s1", name: "sql", href: "http://example.com/skills/sql" }]}
+        pinnedSkills={[
+          { id: "s1", name: "sql", href: "http://example.com/skills/sql" },
+        ]}
       />,
     );
     const anchor = mounted.container.querySelector("a");
@@ -94,7 +106,11 @@ describe("ProfileCard href safety", () => {
 
   test("a channel with no href renders as plain text, not a link", () => {
     const mounted = render(
-      <ProfileCard name="Test" initials="T" sharedChannels={[{ id: "c1", name: "general" }]} />,
+      <ProfileCard
+        name="Test"
+        initials="T"
+        sharedChannels={[{ id: "c1", name: "general" }]}
+      />,
     );
     expect(mounted.container.querySelector("a")).toBeNull();
     expect(mounted.container.textContent).toContain("#general");
@@ -103,7 +119,11 @@ describe("ProfileCard href safety", () => {
 
   test("a skill with no href renders as a plain badge, not a link", () => {
     const mounted = render(
-      <ProfileCard name="Test" initials="T" pinnedSkills={[{ id: "s1", name: "sql" }]} />,
+      <ProfileCard
+        name="Test"
+        initials="T"
+        pinnedSkills={[{ id: "s1", name: "sql" }]}
+      />,
     );
     expect(mounted.container.querySelector("a")).toBeNull();
     expect(mounted.container.textContent).toContain("sql");
@@ -118,7 +138,9 @@ describe("ProfileCard actions", () => {
       <ProfileCard
         name="Test"
         initials="T"
-        actions={[{ id: "a1", label: "Message", onClick: () => (clicked += 1) }]}
+        actions={[
+          { id: "a1", label: "Message", onClick: () => (clicked += 1) },
+        ]}
       />,
     );
     const button = mounted.container.querySelector("button");
@@ -139,7 +161,9 @@ describe("ProfileCard actions", () => {
 
 describe("ProfileCard conditional sections", () => {
   test("statusLabel renders a badge; omitting it renders none", () => {
-    const withStatus = render(<ProfileCard name="Test" initials="T" statusLabel="Online" />);
+    const withStatus = render(
+      <ProfileCard name="Test" initials="T" statusLabel="Online" />,
+    );
     expect(withStatus.container.textContent).toContain("Online");
     withStatus.unmount();
 
@@ -149,7 +173,9 @@ describe("ProfileCard conditional sections", () => {
   });
 
   test("subtitle renders when present and is absent otherwise", () => {
-    const withSubtitle = render(<ProfileCard name="Test" initials="T" subtitle="Engineering" />);
+    const withSubtitle = render(
+      <ProfileCard name="Test" initials="T" subtitle="Engineering" />,
+    );
     expect(withSubtitle.container.textContent).toContain("Engineering");
     withSubtitle.unmount();
 
@@ -160,9 +186,15 @@ describe("ProfileCard conditional sections", () => {
 
   test("footer renders arbitrary content when present and is absent otherwise", () => {
     const withFooter = render(
-      <ProfileCard name="Test" initials="T" footer={<span>Joined 2024</span>} />,
+      <ProfileCard
+        name="Test"
+        initials="T"
+        footer={<span>Joined 2024</span>}
+      />,
     );
-    expect(withFooter.container.querySelector("footer")?.textContent).toBe("Joined 2024");
+    expect(withFooter.container.querySelector("footer")?.textContent).toBe(
+      "Joined 2024",
+    );
     withFooter.unmount();
 
     const withoutFooter = render(<ProfileCard name="Test" initials="T" />);
@@ -171,7 +203,14 @@ describe("ProfileCard conditional sections", () => {
   });
 
   test("empty sharedChannels/pinnedSkills render neither section", () => {
-    const mounted = render(<ProfileCard name="Test" initials="T" sharedChannels={[]} pinnedSkills={[]} />);
+    const mounted = render(
+      <ProfileCard
+        name="Test"
+        initials="T"
+        sharedChannels={[]}
+        pinnedSkills={[]}
+      />,
+    );
     expect(mounted.container.textContent).not.toContain("Shared channels");
     expect(mounted.container.textContent).not.toContain("Pinned skills");
     mounted.unmount();

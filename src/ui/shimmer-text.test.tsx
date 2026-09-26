@@ -6,7 +6,9 @@ import { ShimmerText } from "./shimmer-text.js";
 
 describe("ShimmerText", () => {
   test("reduced-motion and forced-colors fall back to solid muted text without clip", () => {
-    const html = renderToStaticMarkup(createElement(ShimmerText, { children: "Thinking" }));
+    const html = renderToStaticMarkup(
+      createElement(ShimmerText, { children: "Thinking" }),
+    );
     expect(html).toContain("motion-reduce:text-muted-foreground");
     expect(html).toContain("motion-reduce:bg-none");
     expect(html).toContain("motion-reduce:bg-clip-border");

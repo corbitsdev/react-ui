@@ -77,7 +77,9 @@ export function QuoteCard({ quotes, storageKey, className }: QuoteCardProps) {
       {quote.author === undefined ? null : (
         <figcaption className="mt-4 flex items-center gap-3">
           <span aria-hidden className="h-px flex-1 bg-border" />
-          <cite className="text-xs text-muted-foreground not-italic">{quote.author}</cite>
+          <cite className="text-xs text-muted-foreground not-italic">
+            {quote.author}
+          </cite>
         </figcaption>
       )}
     </figure>

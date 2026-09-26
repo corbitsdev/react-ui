@@ -8,7 +8,9 @@ const BARS = 24;
 
 export const Static = () => (
   <div className="p-4 text-primary-emphasis">
-    <VoiceWaveform levels={Array.from({ length: BARS }, (_, i) => (i % 5) / 5)} />
+    <VoiceWaveform
+      levels={Array.from({ length: BARS }, (_, i) => (i % 5) / 5)}
+    />
   </div>
 );
 

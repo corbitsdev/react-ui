@@ -2,7 +2,14 @@ import { Check } from "lucide-react";
 
 import { cn } from "../lib/utils.js";
 import { ArtifactNotice } from "./artifact-notice.js";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table.js";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./table.js";
 
 export type ComparisonVariant = {
   readonly id: string;
@@ -84,7 +91,9 @@ export function CompareBody({
   return (
     <div className={cn("flex flex-col gap-6", className)}>
       {rationale === undefined ? null : (
-        <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">{rationale}</p>
+        <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+          {rationale}
+        </p>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -108,7 +117,9 @@ export function CompareBody({
                   </span>
                 ) : null}
               </div>
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{variant.content}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                {variant.content}
+              </p>
             </section>
           );
         })}
@@ -133,7 +144,10 @@ export function CompareBody({
                 {variants.map((variant) => {
                   const score = criterion.scores[variant.id];
                   return (
-                    <TableCell key={variant.id} className="text-right font-mono tabular-nums">
+                    <TableCell
+                      key={variant.id}
+                      className="text-right font-mono tabular-nums"
+                    >
                       {score === undefined ? "—" : score.toLocaleString()}
                     </TableCell>
                   );
@@ -148,13 +162,23 @@ export function CompareBody({
 }
 
 /** The JSON-string entry point, for when the payload arrives as artifact content. */
-export function CompareBodyFromJson({ content, pending }: { readonly content: string; readonly pending?: boolean }) {
+export function CompareBodyFromJson({
+  content,
+  pending,
+}: {
+  readonly content: string;
+  readonly pending?: boolean;
+}) {
   if (content.trim() === "") return <ArtifactNotice pending={pending} />;
   const comparison = parseComparison(content);
   if (comparison === null) {
     // The payload is not a comparison. Showing it verbatim beats an error: the
     // content is still the artifact, and the user can read it.
-    return <pre className="overflow-auto rounded-md border border-border bg-muted p-3 font-mono text-xs">{content}</pre>;
+    return (
+      <pre className="overflow-auto rounded-md border border-border bg-muted p-3 font-mono text-xs">
+        {content}
+      </pre>
+    );
   }
   return <CompareBody comparison={comparison} />;
 }

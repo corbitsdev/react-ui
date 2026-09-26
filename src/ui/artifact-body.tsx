@@ -1,6 +1,10 @@
 import { Download } from "lucide-react";
 
-import { type Artifact, type ArtifactForm, artifactForm } from "../lib/artifact.js";
+import {
+  type Artifact,
+  type ArtifactForm,
+  artifactForm,
+} from "../lib/artifact.js";
 import { toSafeHref } from "../lib/url.js";
 import { cn } from "../lib/utils.js";
 import { ArtifactNotice } from "./artifact-notice.js";
@@ -48,13 +52,22 @@ export function ArtifactBody({ artifact, form, className }: ArtifactBodyProps) {
         // The thumbnail URL, not the content: an image artifact's bytes live
         // behind a route, and `content` for one is either empty or a caption.
         const src = toSafeHref(artifact.thumbnailUrl ?? artifact.downloadUrl);
-        if (src === undefined) return <ArtifactNotice pending={artifact.pending} />;
+        if (src === undefined)
+          return <ArtifactNotice pending={artifact.pending} />;
         return (
           <figure className="flex flex-col gap-3">
             {/* A plain <img>, not `next/image`: this file is copied into
                 whatever app installs it, and half of those are not Next apps. */}
-            <img src={src} alt={artifact.title} className="max-h-[480px] max-w-full rounded-lg border border-border" />
-            {blank ? null : <figcaption className="text-xs text-muted-foreground">{content}</figcaption>}
+            <img
+              src={src}
+              alt={artifact.title}
+              className="max-h-[480px] max-w-full rounded-lg border border-border"
+            />
+            {blank ? null : (
+              <figcaption className="text-xs text-muted-foreground">
+                {content}
+              </figcaption>
+            )}
           </figure>
         );
       }
@@ -62,10 +75,16 @@ export function ArtifactBody({ artifact, form, className }: ArtifactBodyProps) {
       case "download": {
         const downloadUrl = toSafeHref(artifact.downloadUrl);
         if (downloadUrl === undefined) {
-          return <ArtifactNotice message="This file has no download location, so it cannot be retrieved." />;
+          return (
+            <ArtifactNotice message="This file has no download location, so it cannot be retrieved." />
+          );
         }
         return (
-          <a href={downloadUrl} download className={buttonVariants({ variant: "outline", size: "sm" })}>
+          <a
+            href={downloadUrl}
+            download
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
             <Download aria-hidden />
             Download {artifact.title}
           </a>
@@ -77,7 +96,9 @@ export function ArtifactBody({ artifact, form, className }: ArtifactBodyProps) {
           <EmbedBody
             url={content.trim()}
             title={artifact.title}
-            {...(artifact.downloadUrl === undefined ? {} : { downloadUrl: artifact.downloadUrl })}
+            {...(artifact.downloadUrl === undefined
+              ? {}
+              : { downloadUrl: artifact.downloadUrl })}
           />
         );
 
@@ -90,7 +111,10 @@ export function ArtifactBody({ artifact, form, className }: ArtifactBodyProps) {
               <a
                 href={downloadUrl}
                 download
-                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "self-start")}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "self-start",
+                )}
               >
                 <Download aria-hidden />
                 Download
@@ -102,7 +126,14 @@ export function ArtifactBody({ artifact, form, className }: ArtifactBodyProps) {
       }
 
       case "comparison":
-        return <CompareBodyFromJson content={content} {...(artifact.pending === undefined ? {} : { pending: artifact.pending })} />;
+        return (
+          <CompareBodyFromJson
+            content={content}
+            {...(artifact.pending === undefined
+              ? {}
+              : { pending: artifact.pending })}
+          />
+        );
 
       case "research": {
         if (blank) return <ArtifactNotice pending={artifact.pending} />;
@@ -110,7 +141,12 @@ export function ArtifactBody({ artifact, form, className }: ArtifactBodyProps) {
         // Unparseable is not a failure worth an error card — the payload is
         // still the artifact, so fall through to prose and let it be read.
         if (parsed === null) return <Prose text={content} />;
-        return <ResearchBody brief={parsed.brief} {...(parsed.body === undefined ? {} : { body: parsed.body })} />;
+        return (
+          <ResearchBody
+            brief={parsed.brief}
+            {...(parsed.body === undefined ? {} : { body: parsed.body })}
+          />
+        );
       }
 
       case "prose":
@@ -132,5 +168,9 @@ export function ArtifactBody({ artifact, form, className }: ArtifactBodyProps) {
  * on a wide screen is unreadable regardless of how good the type is.
  */
 function Prose({ text }: { readonly text: string }) {
-  return <div className="max-w-prose text-sm leading-relaxed whitespace-pre-wrap">{text}</div>;
+  return (
+    <div className="max-w-prose text-sm leading-relaxed whitespace-pre-wrap">
+      {text}
+    </div>
+  );
 }

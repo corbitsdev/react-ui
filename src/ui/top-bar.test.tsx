@@ -27,7 +27,9 @@ function mount(children: React.ReactNode) {
 
 describe("TopBarBreadcrumbs", () => {
   test("defaults to plain anchors for every crumb but the last", () => {
-    const { container, unmount } = mount(createElement(TopBarBreadcrumbs, { crumbs }));
+    const { container, unmount } = mount(
+      createElement(TopBarBreadcrumbs, { crumbs }),
+    );
 
     const anchors = container.querySelectorAll("a");
     expect(anchors.length).toBe(2);
@@ -46,7 +48,10 @@ describe("TopBarBreadcrumbs", () => {
   test("the last crumb is never a link, even when it carries an href", () => {
     const { container, unmount } = mount(
       createElement(TopBarBreadcrumbs, {
-        crumbs: [{ label: "Workspace", href: "/workspace" }, { label: "Settings", href: "/workspace/settings" }],
+        crumbs: [
+          { label: "Workspace", href: "/workspace" },
+          { label: "Settings", href: "/workspace/settings" },
+        ],
       }),
     );
 
@@ -61,17 +66,27 @@ describe("TopBarBreadcrumbs", () => {
 
   test("renders non-last crumbs through an injected linkComponent instead of <a>", () => {
     function FakeLink({ href, className, children }: BreadcrumbLinkProps) {
-      return createElement("button", { "data-fake-link": href, className }, children);
+      return createElement(
+        "button",
+        { "data-fake-link": href, className },
+        children,
+      );
     }
 
-    const { container, unmount } = mount(createElement(TopBarBreadcrumbs, { crumbs, linkComponent: FakeLink }));
+    const { container, unmount } = mount(
+      createElement(TopBarBreadcrumbs, { crumbs, linkComponent: FakeLink }),
+    );
 
     expect(container.querySelectorAll("a").length).toBe(0);
     const fakeLinks = container.querySelectorAll("[data-fake-link]");
     expect(fakeLinks.length).toBe(2);
     expect(fakeLinks[0]?.getAttribute("data-fake-link")).toBe("/workspace");
-    expect(fakeLinks[1]?.getAttribute("data-fake-link")).toBe("/workspace/project");
-    expect(fakeLinks[0]?.className).toBe("truncate text-muted-foreground hover:text-foreground");
+    expect(fakeLinks[1]?.getAttribute("data-fake-link")).toBe(
+      "/workspace/project",
+    );
+    expect(fakeLinks[0]?.className).toBe(
+      "truncate text-muted-foreground hover:text-foreground",
+    );
 
     const last = container.querySelector('[aria-current="page"]');
     expect(last?.tagName).toBe("SPAN");

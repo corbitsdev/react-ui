@@ -103,7 +103,9 @@ describe("Dialog craft defaults", () => {
     const body = document.querySelector('[data-slot="dialog-body"]');
     const footer = document.querySelector('[data-slot="dialog-footer"]');
     const title = document.querySelector('[data-slot="dialog-content"] h2');
-    const description = document.querySelector('[data-slot="dialog-content"] p');
+    const description = document.querySelector(
+      '[data-slot="dialog-content"] p',
+    );
 
     expect(header?.className).toContain("shrink-0");
     expect(header?.className).toContain("gap-1");
@@ -133,7 +135,9 @@ describe("Dialog craft defaults", () => {
 
   test("close control is a stable hit target with hover and focus chrome", () => {
     const mounted = openDialog();
-    const close = document.querySelector('[data-slot="dialog-content"] > button[aria-label="Close"]');
+    const close = document.querySelector(
+      '[data-slot="dialog-content"] > button[aria-label="Close"]',
+    );
     expect(close).not.toBeNull();
     const className = close?.getAttribute("class") ?? "";
     expect(className).toContain("size-[1.8rem]");
@@ -142,7 +146,9 @@ describe("Dialog craft defaults", () => {
     expect(className).toContain("hover:bg-foreground/5");
     expect(className).toContain("hover:text-foreground");
     expect(className).toContain("focus-visible:outline-none");
-    expect(className).toContain("focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--primary)_22%,transparent)]");
+    expect(className).toContain(
+      "focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--primary)_22%,transparent)]",
+    );
     // Legacy opacity-only hover is gone — polish is color/background.
     expect(className).not.toContain("opacity-70");
     expect(className).not.toContain("hover:opacity-100");

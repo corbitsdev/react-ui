@@ -22,7 +22,10 @@ export type IntakeField = {
   readonly help?: string;
   readonly placeholder?: string;
   /** For `select` only. Ignored otherwise. */
-  readonly options?: readonly { readonly value: string; readonly label: string }[];
+  readonly options?: readonly {
+    readonly value: string;
+    readonly label: string;
+  }[];
 };
 
 export type IntakeFormProps = {
@@ -53,13 +56,21 @@ export function intakeFieldsComplete(
  * host owns the values, so the same form backs a one-off run and a saved
  * schedule without this file knowing which.
  */
-export function IntakeForm({ fields, values, onChange, idPrefix, disabled = false, className }: IntakeFormProps) {
+export function IntakeForm({
+  fields,
+  values,
+  onChange,
+  idPrefix,
+  disabled = false,
+  className,
+}: IntakeFormProps) {
   const generatedPrefix = useId();
   const prefix = idPrefix ?? generatedPrefix;
 
   if (fields.length === 0) return null;
 
-  const set = (name: string, value: unknown) => onChange({ ...values, [name]: value });
+  const set = (name: string, value: unknown) =>
+    onChange({ ...values, [name]: value });
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
@@ -124,13 +135,22 @@ export function IntakeForm({ fields, values, onChange, idPrefix, disabled = fals
                   <Input
                     id={id}
                     type={field.type === "number" ? "number" : "text"}
-                    value={typeof value === "string" || typeof value === "number" ? String(value) : ""}
+                    value={
+                      typeof value === "string" || typeof value === "number"
+                        ? String(value)
+                        : ""
+                    }
                     placeholder={field.placeholder}
                     required={field.required}
                     disabled={disabled}
                     aria-describedby={helpId}
                     onChange={(event) =>
-                      set(field.name, field.type === "number" ? event.target.valueAsNumber : event.target.value)
+                      set(
+                        field.name,
+                        field.type === "number"
+                          ? event.target.valueAsNumber
+                          : event.target.value,
+                      )
                     }
                   />
                 )}

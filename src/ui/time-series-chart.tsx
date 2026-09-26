@@ -2,8 +2,18 @@
 
 import { useRef, useState } from "react";
 
-import { areaPath, formatCompact, linePath, niceTicks, scaleLinear } from "../lib/chart-geometry.js";
-import { CHART_SERIES_SLOTS, seriesColor, seriesDash } from "../lib/chart-palette.js";
+import {
+  areaPath,
+  formatCompact,
+  linePath,
+  niceTicks,
+  scaleLinear,
+} from "../lib/chart-geometry.js";
+import {
+  CHART_SERIES_SLOTS,
+  seriesColor,
+  seriesDash,
+} from "../lib/chart-palette.js";
 import { cn } from "../lib/utils.js";
 import { ChartFrame } from "./chart-frame.js";
 
@@ -94,7 +104,8 @@ export function TimeSeriesChart({
   const stepX = labels.length > 1 ? plotWidth / (labels.length - 1) : 0;
 
   const xAt = (index: number) => PAD_LEFT + index * stepX;
-  const yAt = (value: number) => PAD_TOP + plotHeight - scaleLinear(value, axisMax, plotHeight);
+  const yAt = (value: number) =>
+    PAD_TOP + plotHeight - scaleLinear(value, axisMax, plotHeight);
 
   function indexFromClientX(clientX: number): number {
     const box = svgRef.current?.getBoundingClientRect();
@@ -131,7 +142,10 @@ export function TimeSeriesChart({
       }))}
       table={{
         columns: ["Period", ...drawn.map((entry) => entry.label)],
-        rows: labels.map((label, index) => [label, ...drawn.map((entry) => format(entry.values[index] ?? 0))]),
+        rows: labels.map((label, index) => [
+          label,
+          ...drawn.map((entry) => format(entry.values[index] ?? 0)),
+        ]),
       }}
       className={className}
     >
@@ -185,7 +199,11 @@ export function TimeSeriesChart({
               width, and the tooltip names the period being read anyway. */}
           {labels.length === 0 ? null : (
             <>
-              <text x={PAD_LEFT} y={HEIGHT - 6} className="fill-muted-foreground text-[10px]">
+              <text
+                x={PAD_LEFT}
+                y={HEIGHT - 6}
+                className="fill-muted-foreground text-[10px]"
+              >
                 {labels[0]}
               </text>
               <text
@@ -215,7 +233,10 @@ export function TimeSeriesChart({
                 <path
                   key={entry.label}
                   d={areaPath(
-                    entry.values.map((value, pointIndex) => ({ x: xAt(pointIndex), y: yAt(value) })),
+                    entry.values.map((value, pointIndex) => ({
+                      x: xAt(pointIndex),
+                      y: yAt(value),
+                    })),
                     yAt(0),
                   )}
                   fill={seriesColor(index)}
@@ -227,7 +248,12 @@ export function TimeSeriesChart({
           {drawn.map((entry, index) => (
             <path
               key={entry.label}
-              d={linePath(entry.values.map((value, pointIndex) => ({ x: xAt(pointIndex), y: yAt(value) })))}
+              d={linePath(
+                entry.values.map((value, pointIndex) => ({
+                  x: xAt(pointIndex),
+                  y: yAt(value),
+                })),
+              )}
               fill="none"
               stroke={seriesColor(index)}
               strokeDasharray={seriesDash(index)}
@@ -260,7 +286,11 @@ export function TimeSeriesChart({
             <ul className="mt-1 flex flex-col gap-0.5">
               {drawn.map((entry, index) => (
                 <li key={entry.label} className="flex items-center gap-1.5">
-                  <svg aria-hidden viewBox="0 0 20 4" className="h-1 w-5 shrink-0 overflow-visible">
+                  <svg
+                    aria-hidden
+                    viewBox="0 0 20 4"
+                    className="h-1 w-5 shrink-0 overflow-visible"
+                  >
                     <line
                       x1={0}
                       y1={2}
@@ -272,7 +302,9 @@ export function TimeSeriesChart({
                     />
                   </svg>
                   <span className="text-muted-foreground">{entry.label}</span>
-                  <span className="ml-auto pl-3 font-mono tabular-nums">{format(entry.values[active] ?? 0)}</span>
+                  <span className="ml-auto pl-3 font-mono tabular-nums">
+                    {format(entry.values[active] ?? 0)}
+                  </span>
                 </li>
               ))}
             </ul>

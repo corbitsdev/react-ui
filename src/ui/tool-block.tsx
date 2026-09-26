@@ -56,7 +56,10 @@ const STATE_TEXT: Record<ToolBlockState["status"], string> = {
  * it orange too would stack two "look here" signals on a state that isn't
  * actually asking for anything.
  */
-const STATE_TONE: Record<ToolBlockState["status"], "neutral" | "emphasis" | "danger"> = {
+const STATE_TONE: Record<
+  ToolBlockState["status"],
+  "neutral" | "emphasis" | "danger"
+> = {
   pending: "neutral",
   running: "neutral",
   "output-available": "neutral",
@@ -147,10 +150,15 @@ export function ToolBlock({
   });
   const detailText = stateDetailText(state);
   const hasDetail = input !== undefined || detailText !== undefined;
-  const displayLabel = label !== undefined && label.length > 0 ? label : humaniseToolName(name);
+  const displayLabel =
+    label !== undefined && label.length > 0 ? label : humaniseToolName(name);
 
   return (
-    <div data-slot="tool-block" data-status={state.status} className={cn("text-xs", className)}>
+    <div
+      data-slot="tool-block"
+      data-status={state.status}
+      className={cn("text-xs", className)}
+    >
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -172,7 +180,9 @@ export function ToolBlock({
           // silent — announcing every "Working" -> "Done" tick here would be
           // spam.
           role={state.status === "approval-requested" ? "status" : undefined}
-          aria-live={state.status === "approval-requested" ? "polite" : undefined}
+          aria-live={
+            state.status === "approval-requested" ? "polite" : undefined
+          }
         >
           <StatusDot
             label={STATE_TEXT[state.status]}
@@ -183,7 +193,10 @@ export function ToolBlock({
         <span className="min-w-0 flex-1 truncate">{displayLabel}</span>
         {hasDetail ? (
           <ChevronRight
-            className={cn("size-3.5 shrink-0 transition-transform duration-200 ease-out", open && "rotate-90")}
+            className={cn(
+              "size-3.5 shrink-0 transition-transform duration-200 ease-out",
+              open && "rotate-90",
+            )}
             aria-hidden
           />
         ) : null}
@@ -191,8 +204,12 @@ export function ToolBlock({
 
       {open && hasDetail ? (
         <div className="mt-1 ml-4 flex flex-col gap-2 border-l border-border pl-3 [animation:corbits-rail-block-in_200ms_var(--ease-out)_both]">
-          {input === undefined ? null : <Detail title="Input">{JSON.stringify(input, null, 2)}</Detail>}
-          {detailText === undefined ? null : <Detail title={stateDetailTitle(state)}>{detailText}</Detail>}
+          {input === undefined ? null : (
+            <Detail title="Input">{JSON.stringify(input, null, 2)}</Detail>
+          )}
+          {detailText === undefined ? null : (
+            <Detail title={stateDetailTitle(state)}>{detailText}</Detail>
+          )}
         </div>
       ) : null}
     </div>
@@ -202,7 +219,9 @@ export function ToolBlock({
 function Detail({ title, children }: { title: string; children: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <p className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{title}</p>
+      <p className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+        {title}
+      </p>
       {/* Scrolls in its own box: a long tool result must never make the page
           scroll sideways. */}
       <pre className="max-h-48 overflow-auto rounded-md bg-muted p-2 font-mono text-[11px] whitespace-pre-wrap">

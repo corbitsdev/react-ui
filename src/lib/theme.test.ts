@@ -136,7 +136,9 @@ describe("zero-JS prefers-color-scheme dark", () => {
   test("the media-query :root block matches .dark (tokens + color-scheme) so they cannot drift", () => {
     const dark = declarations(ruleBodyAfter(theme, "\n.dark {"));
     const media = ruleBodyAfter(theme, "@media (prefers-color-scheme: dark)");
-    const mediaRoot = declarations(ruleBodyAfter(media, ":root:not(.dark):not(.light)"));
+    const mediaRoot = declarations(
+      ruleBodyAfter(media, ":root:not(.dark):not(.light)"),
+    );
     expect(mediaRoot).toEqual(dark);
     expect(mediaRoot["color-scheme"]).toBe("dark");
   });

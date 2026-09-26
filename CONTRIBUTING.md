@@ -47,7 +47,7 @@ Two things follow:
 
 - **Change tokens in `src/theme.css`, then run `bun run build`.** Editing `dist/` changes
   nothing — it is generated output and is gitignored.
-- **Do not add hex pairs to the test.** The pairs are derived from token *names*. If a
+- **Do not add hex pairs to the test.** The pairs are derived from token _names_. If a
   token you added is not covered, the fix is a naming rule in `checksFor`, not a
   hardcoded pair.
 
@@ -63,7 +63,7 @@ secret is a guard nobody can comply with.
 
 1. **No `@workbench/*`.** A published file that imports an unpublished scope is
    uninstallable for everyone outside the project that defines it, and the failure lands
-   in the *consumer's* install, where they cannot fix it.
+   in the _consumer's_ install, where they cannot fix it.
 2. **Nothing reachable from the root barrel imports an optional peer.** Re-exporting a
    module that statically imports an optional peer makes that peer mandatory for every
    root import, so such a module must be kept out of the barrel and given its own `exports` entry.
@@ -82,7 +82,7 @@ around it.
 2. If it is public API, add `export * from "./<dir>/<name>.js";` to `src/index.ts`.
    Machinery stays unlisted: keeping something internal is cheap; taking an export back
    after it ships is not.
-3. If it is public but statically imports an *optional* peer, leave it out of
+3. If it is public but statically imports an _optional_ peer, leave it out of
    `src/index.ts` and add a `./<dir>/<name>` entry to `exports` in `package.json` instead.
    `dep-guard` fails if it reaches the barrel.
 4. If a `ui/` or `blocks/` module calls a hook, creates a context, defines an inline
@@ -167,7 +167,7 @@ not a follow-up.
   accessible name; an icon-only button needs `aria-label`.
 - **Colour is never the only channel.** Anything encoded in colour is encoded a second way
   too — a shape, an icon, a dash pattern, a label. Charts are the sharp case: the
-  palette's dark-mode separation is compliant only *because* every chart ships a legend,
+  palette's dark-mode separation is compliant only _because_ every chart ships a legend,
   direct labels and a data table.
 - Respect `prefers-reduced-motion` for anything that animates.
 
@@ -181,12 +181,12 @@ Check your item in both modes and at 200% zoom before opening a change.
   major version.
 - **The minimum that works.** No wrapper that only forwards props, no config indirection,
   no speculative extension point. No CLI, no component generator, no docs site.
-- Comments explain *why*. The code already says what.
+- Comments explain _why_. The code already says what.
 
 ## Pull requests
 
 - Keep commits focused, and keep the diff to the change you are describing.
-- Explain *why* in the commit message; the code already says what.
+- Explain _why_ in the commit message; the code already says what.
 - Run the gates locally and say so in the pull request: `dep-guard`, `typecheck`, `lint`,
   and `build` including the contrast gate. Nothing runs them for you yet.
 - Contributions are accepted under the repository's LGPL-2.1-only licence.

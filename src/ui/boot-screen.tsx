@@ -27,28 +27,46 @@ export type BootScreenProps = {
  * to a still frame under the theme's reduced-motion rule with nothing to do
  * here.
  */
-export function BootScreen({ message, brand, footer, className }: BootScreenProps) {
+export function BootScreen({
+  message,
+  brand,
+  footer,
+  className,
+}: BootScreenProps) {
   const messageId = useId();
 
   return (
     <div
       role="status"
       aria-labelledby={messageId}
-      className={cn("absolute inset-0 overflow-hidden bg-background text-foreground", className)}
+      className={cn(
+        "absolute inset-0 overflow-hidden bg-background text-foreground",
+        className,
+      )}
     >
-      {brand === undefined ? null : <div className="absolute top-6 left-7">{brand}</div>}
+      {brand === undefined ? null : (
+        <div className="absolute top-6 left-7">{brand}</div>
+      )}
 
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
-        <span aria-hidden className="h-0.5 w-24 overflow-hidden rounded-full bg-muted">
+        <span
+          aria-hidden
+          className="h-0.5 w-24 overflow-hidden rounded-full bg-muted"
+        >
           <span className="block h-full w-1/3 rounded-full bg-primary [animation:corbits-boot-sweep_1.4s_ease-in-out_infinite]" />
         </span>
-        <p id={messageId} className="max-w-[32ch] text-center text-xs leading-relaxed text-muted-foreground">
+        <p
+          id={messageId}
+          className="max-w-[32ch] text-center text-xs leading-relaxed text-muted-foreground"
+        >
           {message}
         </p>
       </div>
 
       {footer === undefined ? null : (
-        <div className="absolute bottom-6 left-7 font-mono text-[11px] text-muted-foreground">{footer}</div>
+        <div className="absolute bottom-6 left-7 font-mono text-[11px] text-muted-foreground">
+          {footer}
+        </div>
       )}
     </div>
   );

@@ -128,9 +128,11 @@ export function capCsv(parsed: ParsedCsv): CappedCsv {
   const rowsTruncated = totalRows > CSV_ROW_CAP;
 
   return {
-    headers: columnsTruncated ? parsed.headers.slice(0, CSV_COLUMN_CAP) : parsed.headers,
-    rows: (rowsTruncated ? parsed.rows.slice(0, CSV_ROW_CAP) : parsed.rows).map((row) =>
-      columnsTruncated ? row.slice(0, CSV_COLUMN_CAP) : row,
+    headers: columnsTruncated
+      ? parsed.headers.slice(0, CSV_COLUMN_CAP)
+      : parsed.headers,
+    rows: (rowsTruncated ? parsed.rows.slice(0, CSV_ROW_CAP) : parsed.rows).map(
+      (row) => (columnsTruncated ? row.slice(0, CSV_COLUMN_CAP) : row),
     ),
     totalRows,
     totalColumns,

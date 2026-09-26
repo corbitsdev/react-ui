@@ -274,7 +274,11 @@
    a `.dark` override of their own. */
 :root {
   --sidebar-row-radius: var(--radius);
-  --sidebar-row-selected-bg: color-mix(in srgb, var(--primary) 10%, transparent);
+  --sidebar-row-selected-bg: color-mix(
+    in srgb,
+    var(--primary) 10%,
+    transparent
+  );
 }
 
 @theme inline {
@@ -603,26 +607,59 @@
 
 /* Ridge-study motion: keep geometry and timing in the original 100 x 70 space. */
 @keyframes corbits-thinking-sweep {
-  0% { transform: translateX(8px); opacity: 0; }
-  8%, 86% { opacity: 1; }
-  100% { transform: translateX(130px); opacity: 0; }
+  0% {
+    transform: translateX(8px);
+    opacity: 0;
+  }
+  8%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(130px);
+    opacity: 0;
+  }
 }
 @keyframes corbits-thinking-rise {
-  0% { transform: translateY(88px); }
-  100% { transform: translateY(-30px); }
+  0% {
+    transform: translateY(88px);
+  }
+  100% {
+    transform: translateY(-30px);
+  }
 }
 @keyframes corbits-thinking-wave {
-  0% { transform: scale(.03); opacity: 0; }
-  10% { opacity: 1; }
-  75% { opacity: .9; }
-  100% { transform: scale(1.35); opacity: 0; }
+  0% {
+    transform: scale(0.03);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   /* Static poses land the gradient mid-stroke. These offsets mirror the SVG
      geometry in thinking-mark.tsx — change the rect/circle geometry there and
      these poses have to be re-picked to match. */
-  .corbits-thinking-silk, .corbits-thinking-strata, .corbits-thinking-echo { animation: none; }
-  .corbits-thinking-silk { transform: translateX(44px); }
-  .corbits-thinking-strata { transform: translateY(30px); }
-  .corbits-thinking-echo { transform: scale(.6); }
+  .corbits-thinking-silk,
+  .corbits-thinking-strata,
+  .corbits-thinking-echo {
+    animation: none;
+  }
+  .corbits-thinking-silk {
+    transform: translateX(44px);
+  }
+  .corbits-thinking-strata {
+    transform: translateY(30px);
+  }
+  .corbits-thinking-echo {
+    transform: scale(0.6);
+  }
 }

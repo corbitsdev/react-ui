@@ -30,7 +30,8 @@ export type CheckboxProps = {
   readonly className?: string;
 };
 
-const CONTROL_CLASS = "relative mt-0.5 flex size-4 shrink-0 items-center justify-center";
+const CONTROL_CLASS =
+  "relative mt-0.5 flex size-4 shrink-0 items-center justify-center";
 
 export function Checkbox({
   checked,
@@ -46,7 +47,8 @@ export function Checkbox({
 }: CheckboxProps) {
   const generatedId = useId();
   const checkboxId = id ?? generatedId;
-  const descriptionId = description === undefined ? undefined : `${checkboxId}-description`;
+  const descriptionId =
+    description === undefined ? undefined : `${checkboxId}-description`;
   const ref = useRef<HTMLInputElement>(null);
   const isBare = label === undefined;
 
@@ -87,13 +89,20 @@ export function Checkbox({
   return (
     <label
       htmlFor={checkboxId}
-      className={cn("flex items-start gap-2", disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer", className)}
+      className={cn(
+        "flex items-start gap-2",
+        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+        className,
+      )}
     >
       {control}
       <span className="flex flex-col gap-0.5">
         <span className="text-sm font-medium">{label}</span>
         {description === undefined ? null : (
-          <span id={descriptionId} className="text-xs leading-relaxed text-muted-foreground">
+          <span
+            id={descriptionId}
+            className="text-xs leading-relaxed text-muted-foreground"
+          >
             {description}
           </span>
         )}

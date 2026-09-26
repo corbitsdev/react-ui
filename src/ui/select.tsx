@@ -5,7 +5,11 @@ import { cn } from "../lib/utils.js";
 
 // Same border/focus-ring/disabled treatment as `Input`; the chevron is a
 // decorative overlay since a native `<select>` cannot be given its own icon.
-export function Select({ className, children, ...props }: React.ComponentProps<"select">) {
+export function Select({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"select">) {
   return (
     <div className="group relative">
       <select

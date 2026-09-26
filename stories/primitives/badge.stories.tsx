@@ -23,7 +23,13 @@ export const Tones = () => (
   </div>
 );
 
-const STATUS_TONES: readonly WorkflowStatusTone[] = ["running", "awaiting", "done", "paused", "fail"];
+const STATUS_TONES: readonly WorkflowStatusTone[] = [
+  "running",
+  "awaiting",
+  "done",
+  "paused",
+  "fail",
+];
 
 /** A workflow status chip is `Badge` plus a leading `StatusDot` — the tone
  * and pulsing rule come from the internal `lib/workflow-registry` mapping
@@ -32,7 +38,11 @@ export const WorkflowStatus = () => (
   <div className="flex flex-wrap items-center gap-2">
     {STATUS_TONES.map((tone) => (
       <Badge key={tone} tone={WORKFLOW_STATUS_BADGE_TONE[tone]}>
-        <StatusDot label="" tone={WORKFLOW_STATUS_DOT_TONE[tone]} live={workflowStatusLive(tone)} />
+        <StatusDot
+          label=""
+          tone={WORKFLOW_STATUS_DOT_TONE[tone]}
+          live={workflowStatusLive(tone)}
+        />
         {WORKFLOW_STATUS_LABEL[tone]}
       </Badge>
     ))}

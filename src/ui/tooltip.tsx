@@ -26,7 +26,12 @@ export type InfoTooltipProps = {
  * it is in the tab order, Radix associates the note by id, and tapping it
  * opens the tooltip on touch devices.
  */
-export function InfoTooltip({ label, triggerLabel, defaultOpen, className }: InfoTooltipProps) {
+export function InfoTooltip({
+  label,
+  triggerLabel,
+  defaultOpen,
+  className,
+}: InfoTooltipProps) {
   return (
     <TooltipPrimitive.Provider delayDuration={200}>
       <TooltipPrimitive.Root defaultOpen={defaultOpen}>

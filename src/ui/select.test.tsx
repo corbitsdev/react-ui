@@ -22,14 +22,24 @@ const options = createElement("option", { value: "a" }, "A");
 
 describe("Select", () => {
   test("renders a native select carrying passed-through props", () => {
-    const { select, unmount } = mount({ value: "a", onChange: () => {}, disabled: false, children: options });
+    const { select, unmount } = mount({
+      value: "a",
+      onChange: () => {},
+      disabled: false,
+      children: options,
+    });
     expect(select().tagName).toBe("SELECT");
     expect(select().value).toBe("a");
     unmount();
   });
 
   test("disabled disables the underlying control", () => {
-    const { select, unmount } = mount({ value: "a", onChange: () => {}, disabled: true, children: options });
+    const { select, unmount } = mount({
+      value: "a",
+      onChange: () => {},
+      disabled: true,
+      children: options,
+    });
     expect(select().disabled).toBe(true);
     unmount();
   });
@@ -54,7 +64,10 @@ describe("Select", () => {
       onChange: (event) => {
         received = event.target.value;
       },
-      children: [createElement("option", { key: "a", value: "a" }, "A"), createElement("option", { key: "b", value: "b" }, "B")],
+      children: [
+        createElement("option", { key: "a", value: "a" }, "A"),
+        createElement("option", { key: "b", value: "b" }, "B"),
+      ],
     });
     const node = select();
     act(() => {

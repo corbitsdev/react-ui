@@ -16,7 +16,12 @@ import type { DisplayStepCharacter } from "./workflow-display-flow.js";
  */
 export type WorkflowScope = "personal" | "tenant";
 
-export type WorkflowStatusTone = "running" | "awaiting" | "done" | "paused" | "fail";
+export type WorkflowStatusTone =
+  | "running"
+  | "awaiting"
+  | "done"
+  | "paused"
+  | "fail";
 
 export const WORKFLOW_STATUS_LABEL: Record<WorkflowStatusTone, string> = {
   running: "Running",
@@ -27,16 +32,20 @@ export const WORKFLOW_STATUS_LABEL: Record<WorkflowStatusTone, string> = {
 };
 
 /** Badge tone for a status chip composed as `<Badge tone={...}><StatusDot .../>{label}</Badge>`. */
-export const WORKFLOW_STATUS_BADGE_TONE: Record<WorkflowStatusTone, BadgeTone> = {
-  running: "info",
-  awaiting: "accent",
-  done: "success",
-  paused: "neutral",
-  fail: "danger",
-};
+export const WORKFLOW_STATUS_BADGE_TONE: Record<WorkflowStatusTone, BadgeTone> =
+  {
+    running: "info",
+    awaiting: "accent",
+    done: "success",
+    paused: "neutral",
+    fail: "danger",
+  };
 
 /** Dot tone for the same chip — see `status-dot.tsx` for why only three exist. */
-export const WORKFLOW_STATUS_DOT_TONE: Record<WorkflowStatusTone, StatusDotTone> = {
+export const WORKFLOW_STATUS_DOT_TONE: Record<
+  WorkflowStatusTone,
+  StatusDotTone
+> = {
   running: "emphasis",
   awaiting: "emphasis",
   done: "neutral",

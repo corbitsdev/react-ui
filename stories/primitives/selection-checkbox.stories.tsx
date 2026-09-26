@@ -1,5 +1,13 @@
 import { SelectionCheckbox } from "../../src/ui/selection-checkbox.js";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "../../src/ui/table.js";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../src/ui/table.js";
 import { useListSelection } from "../../src/hooks/use-list-selection.js";
 
 export default { title: "Primitives / SelectionCheckbox" };
@@ -20,7 +28,10 @@ export const RevealOnHover = () => {
 
   return (
     <Table>
-      <TableCaption>Hover or focus a row to reveal its checkbox — a touch device shows it always.</TableCaption>
+      <TableCaption>
+        Hover or focus a row to reveal its checkbox — a touch device shows it
+        always.
+      </TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead className="w-8" />
@@ -34,7 +45,9 @@ export const RevealOnHover = () => {
             <TableCell>
               <SelectionCheckbox
                 checked={selection.isSelected(row.id)}
-                onToggle={({ shiftKey }) => selection.toggle(row.id, { shiftKey })}
+                onToggle={({ shiftKey }) =>
+                  selection.toggle(row.id, { shiftKey })
+                }
                 rowLabel={row.name}
               />
             </TableCell>
@@ -49,8 +62,18 @@ export const RevealOnHover = () => {
 
 export const Checked = () => (
   <div className="flex items-center gap-4">
-    <SelectionCheckbox checked={false} onToggle={() => {}} rowLabel="Nightly backfill" className="opacity-100" />
-    <SelectionCheckbox checked onToggle={() => {}} rowLabel="Invoice sync" className="opacity-100" />
+    <SelectionCheckbox
+      checked={false}
+      onToggle={() => {}}
+      rowLabel="Nightly backfill"
+      className="opacity-100"
+    />
+    <SelectionCheckbox
+      checked
+      onToggle={() => {}}
+      rowLabel="Invoice sync"
+      className="opacity-100"
+    />
   </div>
 );
 
@@ -64,7 +87,17 @@ export const Indeterminate = () => (
       ariaLabel="Select all runs"
       className="opacity-100"
     />
-    <SelectionCheckbox checked onToggle={() => {}} rowLabel="Nightly backfill" className="opacity-100" />
-    <SelectionCheckbox checked={false} onToggle={() => {}} rowLabel="Invoice sync" className="opacity-100" />
+    <SelectionCheckbox
+      checked
+      onToggle={() => {}}
+      rowLabel="Nightly backfill"
+      className="opacity-100"
+    />
+    <SelectionCheckbox
+      checked={false}
+      onToggle={() => {}}
+      rowLabel="Invoice sync"
+      className="opacity-100"
+    />
   </div>
 );

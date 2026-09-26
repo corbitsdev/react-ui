@@ -39,22 +39,37 @@ export type AuthLayoutProps = {
  * *without* the retracting toolbar, so a `100vh` sign-in page is reliably a
  * little too tall and the button sits just under the fold.
  */
-export function AuthLayout({ brand, children, panel, aside, className }: AuthLayoutProps) {
+export function AuthLayout({
+  brand,
+  children,
+  panel,
+  aside,
+  className,
+}: AuthLayoutProps) {
   return (
-    <div className={cn("grid min-h-svh bg-background lg:grid-cols-2", className)}>
+    <div
+      className={cn("grid min-h-svh bg-background lg:grid-cols-2", className)}
+    >
       <main className="relative flex flex-col">
         {brand === undefined ? null : (
-          <div className="flex items-center gap-2.5 p-6 text-base font-semibold tracking-tight md:p-8">{brand}</div>
+          <div className="flex items-center gap-2.5 p-6 text-base font-semibold tracking-tight md:p-8">
+            {brand}
+          </div>
         )}
         <div className="flex flex-1 items-center justify-center px-6 pb-16 md:px-10">
           <div className="w-full max-w-sm">{children}</div>
         </div>
       </main>
 
-      <div aria-hidden className="relative hidden overflow-hidden bg-card lg:block">
+      <div
+        aria-hidden
+        className="relative hidden overflow-hidden bg-card lg:block"
+      >
         {panel}
         {aside === undefined ? null : (
-          <div className="absolute inset-0 flex items-center justify-center p-12">{aside}</div>
+          <div className="absolute inset-0 flex items-center justify-center p-12">
+            {aside}
+          </div>
         )}
       </div>
     </div>

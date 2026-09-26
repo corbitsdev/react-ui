@@ -46,7 +46,14 @@ export type SelectionCheckboxProps = {
  * reveal below, where the control needs to participate in hover/focus state
  * that belongs to an ancestor it does not render.
  */
-export function SelectionCheckbox({ checked, onToggle, rowLabel, ariaLabel, id, className }: SelectionCheckboxProps) {
+export function SelectionCheckbox({
+  checked,
+  onToggle,
+  rowLabel,
+  ariaLabel,
+  id,
+  className,
+}: SelectionCheckboxProps) {
   const generatedId = useId();
   const checkboxId = id ?? generatedId;
   const isOn = checked !== false;
@@ -73,13 +80,17 @@ export function SelectionCheckbox({ checked, onToggle, rowLabel, ariaLabel, id, 
         // header checkbox flips between indeterminate and checked/unchecked
         // as rows come and go, and it should not re-pop on every one of
         // those incidental transitions.
-        checked === true && "motion-safe:[animation:corbits-selection-pop_220ms_var(--ease-out)_both]",
+        checked === true &&
+          "motion-safe:[animation:corbits-selection-pop_220ms_var(--ease-out)_both]",
         className,
       )}
     >
       <Check
         aria-hidden
-        className={cn("size-3 text-primary-foreground transition-transform", checked === true ? "scale-100" : "scale-0")}
+        className={cn(
+          "size-3 text-primary-foreground transition-transform",
+          checked === true ? "scale-100" : "scale-0",
+        )}
       />
       <Minus
         aria-hidden

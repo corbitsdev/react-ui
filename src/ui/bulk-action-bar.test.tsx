@@ -9,7 +9,13 @@ function mount(count: number, onClear: () => void) {
   document.body.appendChild(container);
   const root = createRoot(container);
   act(() => {
-    root.render(createElement(BulkActionBar, { count, onClear, children: createElement("button", null, "Archive") }));
+    root.render(
+      createElement(BulkActionBar, {
+        count,
+        onClear,
+        children: createElement("button", null, "Archive"),
+      }),
+    );
   });
   return {
     group: () => container.querySelector("[role='group']"),
@@ -21,7 +27,11 @@ function mount(count: number, onClear: () => void) {
     rerender: (nextCount: number) =>
       act(() => {
         root.render(
-          createElement(BulkActionBar, { count: nextCount, onClear, children: createElement("button", null, "Archive") }),
+          createElement(BulkActionBar, {
+            count: nextCount,
+            onClear,
+            children: createElement("button", null, "Archive"),
+          }),
         );
       }),
     unmount: () => act(() => root.unmount()),
@@ -62,15 +72,17 @@ describe("BulkActionBar", () => {
         }),
       );
     });
-    expect(container.querySelector("[role='group']")?.getAttribute("aria-label")).toBe(
-      "Actions for 1 selected artifact",
-    );
+    expect(
+      container.querySelector("[role='group']")?.getAttribute("aria-label"),
+    ).toBe("Actions for 1 selected artifact");
     act(() => root.unmount());
   });
 
   test("the count label is announced via aria-live", () => {
     const { container, unmount } = mount(2, () => {});
-    expect(container.querySelector("[aria-live='polite']")?.textContent).toBe("2 selected");
+    expect(container.querySelector("[aria-live='polite']")?.textContent).toBe(
+      "2 selected",
+    );
     unmount();
   });
 
@@ -82,7 +94,9 @@ describe("BulkActionBar", () => {
     // The centering class is unconditional — not gated behind `motion-safe:`
     // — so a reduced-motion viewer (who never runs the entrance animation
     // at all) still ends up centered rather than pinned at the midpoint.
-    expect(positioningWrapper()?.className).not.toContain("motion-safe:-translate-x-1/2");
+    expect(positioningWrapper()?.className).not.toContain(
+      "motion-safe:-translate-x-1/2",
+    );
     expect(group()?.className).not.toContain("translate-x");
     unmount();
   });
@@ -93,7 +107,9 @@ describe("BulkActionBar", () => {
       cleared = true;
     });
     act(() => {
-      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+      );
     });
     expect(cleared).toBe(true);
     unmount();
@@ -106,7 +122,9 @@ describe("BulkActionBar", () => {
     });
     rerender(0);
     act(() => {
-      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+      );
     });
     expect(cleared).toBe(false);
     unmount();
@@ -118,10 +136,17 @@ describe("BulkActionBar", () => {
       cleared = true;
     });
     act(() => {
-      const event = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+      const event = new KeyboardEvent("keydown", {
+        key: "Escape",
+        bubbles: true,
+        cancelable: true,
+      });
       // Simulates a dialog/input above the bar that already claimed this
       // Escape press before it reaches the bar's window listener.
-      window.addEventListener("keydown", (e) => e.preventDefault(), { once: true, capture: true });
+      window.addEventListener("keydown", (e) => e.preventDefault(), {
+        once: true,
+        capture: true,
+      });
       window.dispatchEvent(event);
     });
     expect(cleared).toBe(false);

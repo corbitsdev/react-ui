@@ -56,7 +56,10 @@ export function ListDetail({
 
       <section
         aria-label={detailLabel}
-        className={cn("min-h-0 min-w-0 flex-1 overflow-y-auto", !open && "hidden lg:block")}
+        className={cn(
+          "min-h-0 min-w-0 flex-1 overflow-y-auto",
+          !open && "hidden lg:block",
+        )}
       >
         {open ? (
           <>
@@ -71,7 +74,12 @@ export function ListDetail({
             {detail}
           </>
         ) : (
-          (placeholder ?? <EmptyState title="Nothing selected" description="Pick something from the list." />)
+          (placeholder ?? (
+            <EmptyState
+              title="Nothing selected"
+              description="Pick something from the list."
+            />
+          ))
         )}
       </section>
     </div>

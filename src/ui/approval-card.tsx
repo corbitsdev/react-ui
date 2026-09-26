@@ -27,7 +27,11 @@ export type ApprovalRequest = {
   readonly actionKey?: string;
 };
 
-export type ApprovalState = "idle" | "approving" | "rejecting" | "allowing-always";
+export type ApprovalState =
+  | "idle"
+  | "approving"
+  | "rejecting"
+  | "allowing-always";
 
 export type ApprovalCardProps = {
   readonly request: ApprovalRequest;
@@ -68,16 +72,22 @@ export function ApprovalCard({
   children,
 }: ApprovalCardProps) {
   const busy = state !== "idle";
-  const canAllowAlways = onAllowAlways !== undefined && request.actionKey !== undefined;
+  const canAllowAlways =
+    onAllowAlways !== undefined && request.actionKey !== undefined;
 
   return (
     <section
       aria-label={`Approval requested: ${request.headline}`}
-      className={cn("flex flex-col gap-3 rounded-lg border border-primary-emphasis bg-card p-4", className)}
+      className={cn(
+        "flex flex-col gap-3 rounded-lg border border-primary-emphasis bg-card p-4",
+        className,
+      )}
     >
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone="accent">Needs your approval</Badge>
-        <span className="text-xs text-muted-foreground">Requested by {request.requestedBy}</span>
+        <span className="text-xs text-muted-foreground">
+          Requested by {request.requestedBy}
+        </span>
       </div>
 
       <p className="text-sm font-semibold">{request.headline}</p>
@@ -129,7 +139,12 @@ function ApprovalDetailRow({ detail }: { detail: ApprovalDetail }) {
     <div className="grid grid-cols-[minmax(0,8rem)_1fr] gap-2">
       <dt className="truncate text-muted-foreground">{detail.label}</dt>
       <dd className="min-w-0">
-        <span className={cn("block break-words whitespace-pre-wrap", long && !expanded && "line-clamp-2")}>
+        <span
+          className={cn(
+            "block break-words whitespace-pre-wrap",
+            long && !expanded && "line-clamp-2",
+          )}
+        >
           {detail.value}
         </span>
         {long ? (

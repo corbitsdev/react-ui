@@ -112,7 +112,9 @@ const wideRows = [
 
 export const WideContent = () => (
   <Table>
-    <TableCaption>Enough columns to force horizontal scroll on a narrow viewport.</TableCaption>
+    <TableCaption>
+      Enough columns to force horizontal scroll on a narrow viewport.
+    </TableCaption>
     <TableHeader>
       <TableRow>
         {wideColumns.map((column) => (

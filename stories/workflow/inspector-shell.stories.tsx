@@ -24,10 +24,16 @@ export const WithContent = () => (
           eyebrow={
             <>
               <Badge tone={WORKFLOW_STATUS_BADGE_TONE.running}>
-                <StatusDot label="" tone={WORKFLOW_STATUS_DOT_TONE.running} live={workflowStatusLive("running")} />
+                <StatusDot
+                  label=""
+                  tone={WORKFLOW_STATUS_DOT_TONE.running}
+                  live={workflowStatusLive("running")}
+                />
                 Running
               </Badge>
-              <Badge tone={WORKFLOW_SCOPE_BADGE_TONE.personal}>{workflowScopeLabel("personal")}</Badge>
+              <Badge tone={WORKFLOW_SCOPE_BADGE_TONE.personal}>
+                {workflowScopeLabel("personal")}
+              </Badge>
             </>
           }
           title="Nightly digest to Sales"
@@ -47,6 +53,13 @@ export const WithContent = () => (
 
 export const Empty = () => (
   <div className="h-96 w-80">
-    <InspectorShell empty={<InspectorEmpty title="No run selected" description="Pick a run from the list to see its details here." />} />
+    <InspectorShell
+      empty={
+        <InspectorEmpty
+          title="No run selected"
+          description="Pick a run from the list to see its details here."
+        />
+      }
+    />
   </div>
 );

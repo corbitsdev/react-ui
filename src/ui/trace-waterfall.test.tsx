@@ -73,7 +73,9 @@ describe("TraceWaterfall", () => {
     const marker = container.querySelector(".rotate-45");
     expect(marker).not.toBeNull();
     expect((marker as HTMLElement).style.left).toBe("30%");
-    expect((marker as HTMLElement).textContent ?? "").toMatch(/approximate|not a measured duration/i);
+    expect((marker as HTMLElement).textContent ?? "").toMatch(
+      /approximate|not a measured duration/i,
+    );
     unmount();
   });
 
@@ -93,9 +95,13 @@ describe("TraceWaterfall", () => {
     const text = container.textContent ?? "";
     expect(text).toContain("—");
 
-    const tableCells = Array.from(container.querySelectorAll("table td")).map((cell) => cell.textContent);
+    const tableCells = Array.from(container.querySelectorAll("table td")).map(
+      (cell) => cell.textContent,
+    );
     expect(tableCells).toContain("—");
-    expect(tableCells.some((cell) => cell === "0ms" || cell === "")).toBe(false);
+    expect(tableCells.some((cell) => cell === "0ms" || cell === "")).toBe(
+      false,
+    );
     unmount();
   });
 
@@ -111,7 +117,9 @@ describe("TraceWaterfall", () => {
         phase: "ok",
       },
     ]);
-    const tableCells = Array.from(container.querySelectorAll("table td")).map((cell) => cell.textContent);
+    const tableCells = Array.from(container.querySelectorAll("table td")).map(
+      (cell) => cell.textContent,
+    );
     expect(tableCells).toContain("1.2s");
     unmount();
   });
