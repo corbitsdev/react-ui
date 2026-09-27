@@ -8,7 +8,10 @@ import { ThinkingLabel } from "./thinking-label.js";
 type Restore = () => void;
 type Listener = (event: { matches: boolean }) => void;
 
-function stubMatchMedia(initialReducedMotion: boolean): { restore: Restore; set: (value: boolean) => void } {
+function stubMatchMedia(initialReducedMotion: boolean): {
+  restore: Restore;
+  set: (value: boolean) => void;
+} {
   let matches = initialReducedMotion;
   const listeners = new Set<Listener>();
   const original = window.matchMedia;
@@ -18,8 +21,10 @@ function stubMatchMedia(initialReducedMotion: boolean): { restore: Restore; set:
         return matches && query.includes("prefers-reduced-motion");
       },
       media: query,
-      addEventListener: (_type: string, listener: Listener) => listeners.add(listener),
-      removeEventListener: (_type: string, listener: Listener) => listeners.delete(listener),
+      addEventListener: (_type: string, listener: Listener) =>
+        listeners.add(listener),
+      removeEventListener: (_type: string, listener: Listener) =>
+        listeners.delete(listener),
     }) as unknown as MediaQueryList) as typeof window.matchMedia;
   return {
     set: (value: boolean) => {
@@ -71,7 +76,8 @@ function mount(props: { verbs: readonly string[]; intervalMs?: number }) {
     container,
     // Every verb stays mounted in the stacked grid — the visible one is the
     // cell carrying opacity-100.
-    visible: () => container.querySelector('[aria-hidden] .opacity-100')?.textContent ?? "",
+    visible: () =>
+      container.querySelector("[aria-hidden] .opacity-100")?.textContent ?? "",
     text: () => container.textContent ?? "",
     status: () => container.querySelector('[role="status"]'),
     unmount: () => {
@@ -88,7 +94,9 @@ describe("ThinkingLabel", () => {
   });
 
   test("empty verbs render nothing", () => {
-    const html = renderToStaticMarkup(createElement(ThinkingLabel, { verbs: [] }));
+    const html = renderToStaticMarkup(
+      createElement(ThinkingLabel, { verbs: [] }),
+    );
     expect(html).toBe("");
   });
 
@@ -129,7 +137,10 @@ describe("ThinkingLabel", () => {
     const interval = stubInterval();
     restores.push(interval.restore);
 
-    const handle = mount({ verbs: ["Reading", "Thinking", "Writing"], intervalMs: 50 });
+    const handle = mount({
+      verbs: ["Reading", "Thinking", "Writing"],
+      intervalMs: 50,
+    });
     expect(interval.calls).toHaveLength(1);
     expect(interval.calls[0]?.ms).toBe(50);
     expect(handle.visible()).toBe("Reading");

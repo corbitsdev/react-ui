@@ -30,7 +30,9 @@ function render(node: React.ReactElement): Mounted {
 describe("PartsRenderer", () => {
   test("renders nothing for an empty parts array", () => {
     const mounted = render(<PartsRenderer parts={[]} />);
-    expect(mounted.container.querySelector("[data-slot='parts-renderer']")).toBeNull();
+    expect(
+      mounted.container.querySelector("[data-slot='parts-renderer']"),
+    ).toBeNull();
     mounted.unmount();
   });
 
@@ -42,17 +44,29 @@ describe("PartsRenderer", () => {
   });
 
   test("renders a reasoning part collapsed, with its duration in the summary", () => {
-    const parts: Part[] = [{ kind: "reasoning", text: "Considering two approaches.", durationMs: 2300 }];
+    const parts: Part[] = [
+      {
+        kind: "reasoning",
+        text: "Considering two approaches.",
+        durationMs: 2300,
+      },
+    ];
     const mounted = render(<PartsRenderer parts={parts} />);
-    const details = mounted.container.querySelector("[data-slot='reasoning-part']");
+    const details = mounted.container.querySelector(
+      "[data-slot='reasoning-part']",
+    );
     expect(details?.hasAttribute("open")).toBe(false);
     expect(mounted.container.textContent).toContain("Thought for 2.3s");
-    expect(mounted.container.textContent).toContain("Considering two approaches.");
+    expect(mounted.container.textContent).toContain(
+      "Considering two approaches.",
+    );
     mounted.unmount();
   });
 
   test("reasoning part omits the duration clause when duration is unknown", () => {
-    const parts: Part[] = [{ kind: "reasoning", text: "Still working it out." }];
+    const parts: Part[] = [
+      { kind: "reasoning", text: "Still working it out." },
+    ];
     const mounted = render(<PartsRenderer parts={parts} />);
     expect(mounted.container.textContent).toContain("Thought");
     expect(mounted.container.textContent).not.toContain("Thought for");
@@ -70,13 +84,22 @@ describe("PartsRenderer", () => {
       },
     ];
     const mounted = render(<PartsRenderer parts={parts} />);
-    const toolBlock = mounted.container.querySelector("[data-slot='tool-block']");
+    const toolBlock = mounted.container.querySelector(
+      "[data-slot='tool-block']",
+    );
     expect(toolBlock?.getAttribute("data-status")).toBe("output-available");
     mounted.unmount();
   });
 
   test("renders a file part as an attachment chip, linked when a url is present", () => {
-    const parts: Part[] = [{ kind: "file", name: "report.pdf", mediaType: "application/pdf", url: "https://x/1" }];
+    const parts: Part[] = [
+      {
+        kind: "file",
+        name: "report.pdf",
+        mediaType: "application/pdf",
+        url: "https://x/1",
+      },
+    ];
     const mounted = render(<PartsRenderer parts={parts} />);
     const chip = mounted.container.querySelector("[data-slot='file-part']");
     expect(chip?.tagName).toBe("A");
@@ -86,7 +109,9 @@ describe("PartsRenderer", () => {
   });
 
   test("renders a file part with no url as an inert chip", () => {
-    const parts: Part[] = [{ kind: "file", name: "notes.txt", mediaType: "text/plain" }];
+    const parts: Part[] = [
+      { kind: "file", name: "notes.txt", mediaType: "text/plain" },
+    ];
     const mounted = render(<PartsRenderer parts={parts} />);
     const chip = mounted.container.querySelector("[data-slot='file-part']");
     expect(chip?.tagName).toBe("SPAN");
@@ -96,16 +121,21 @@ describe("PartsRenderer", () => {
   test("renders an event part as an inline system line", () => {
     const parts: Part[] = [{ kind: "event", event: "channel.agent-joined" }];
     const mounted = render(<PartsRenderer parts={parts} />);
-    expect(mounted.container.querySelector("[data-slot='event-part']")?.textContent).toContain(
-      "channel agent joined",
-    );
+    expect(
+      mounted.container.querySelector("[data-slot='event-part']")?.textContent,
+    ).toContain("channel agent joined");
     mounted.unmount();
   });
 
   test("renders an unknown block type as a labeled fallback card with its raw payload", () => {
-    const parts: Part[] = [{ kind: "block", block: { type: "poll", data: { title: "Ship it?" } } }];
+    const parts: Part[] = [
+      { kind: "block", block: { type: "poll", data: { title: "Ship it?" } } },
+    ];
     const mounted = render(<PartsRenderer parts={parts} />);
-    expect(mounted.container.querySelector("[data-slot='block-card-title']")?.textContent).toBe("poll");
+    expect(
+      mounted.container.querySelector("[data-slot='block-card-title']")
+        ?.textContent,
+    ).toBe("poll");
     expect(mounted.container.textContent).toContain("Ship it?");
     mounted.unmount();
   });
@@ -113,7 +143,9 @@ describe("PartsRenderer", () => {
   test("renders an unrecognized part kind as a neutral fallback instead of nothing", () => {
     const parts = [{ kind: "poll-vote", choice: "yes" }] as unknown as Part[];
     const mounted = render(<PartsRenderer parts={parts} />);
-    const fallback = mounted.container.querySelector("[data-slot='unknown-part']");
+    const fallback = mounted.container.querySelector(
+      "[data-slot='unknown-part']",
+    );
     expect(fallback).not.toBeNull();
     expect(fallback?.textContent).toContain("poll-vote");
     mounted.unmount();
@@ -122,12 +154,21 @@ describe("PartsRenderer", () => {
   test("renders interleaved parts in the given order", () => {
     const parts: Part[] = [
       { kind: "reasoning", text: "thinking" },
-      { kind: "tool-trace", toolCallId: "c1", name: "search", status: "running" },
+      {
+        kind: "tool-trace",
+        toolCallId: "c1",
+        name: "search",
+        status: "running",
+      },
       { kind: "text", text: "answer" },
     ];
     const mounted = render(<PartsRenderer parts={parts} />);
-    const root = mounted.container.querySelector("[data-slot='parts-renderer']");
-    const kinds = Array.from(root?.children ?? []).map((child) => child.getAttribute("data-slot"));
+    const root = mounted.container.querySelector(
+      "[data-slot='parts-renderer']",
+    );
+    const kinds = Array.from(root?.children ?? []).map((child) =>
+      child.getAttribute("data-slot"),
+    );
     expect(kinds).toEqual(["reasoning-part", "tool-block", null]);
     mounted.unmount();
   });

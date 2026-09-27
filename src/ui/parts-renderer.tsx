@@ -32,11 +32,17 @@ export function toolTraceToBlockState(part: PartToolTrace): ToolBlockState {
     case "running":
       return { status: "running" };
     case "output-available":
-      return { status: "output-available", output: stringifyOutput(part.output) };
+      return {
+        status: "output-available",
+        output: stringifyOutput(part.output),
+      };
     case "error":
       return { status: "error", message: stringifyOutput(part.output) };
     case "approval-requested":
-      return { status: "approval-requested", reason: stringifyOutput(part.output) };
+      return {
+        status: "approval-requested",
+        reason: stringifyOutput(part.output),
+      };
     case "output-denied":
       return { status: "output-denied", reason: stringifyOutput(part.output) };
   }
@@ -50,7 +56,11 @@ function stringifyOutput(output: unknown): string {
 
 function TextPartView({ text }: { text: string }) {
   if (text.trim().length === 0) return null;
-  return <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{text}</p>;
+  return (
+    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+      {text}
+    </p>
+  );
 }
 
 /**
@@ -61,7 +71,13 @@ function TextPartView({ text }: { text: string }) {
  * `<details>`, not a div with state — it gets disclosure semantics, keyboard
  * behaviour and find-in-page expansion from the browser for free.
  */
-function ReasoningPartView({ text, durationMs }: { text: string; durationMs?: number }) {
+function ReasoningPartView({
+  text,
+  durationMs,
+}: {
+  text: string;
+  durationMs?: number;
+}) {
   const [open, setOpen] = useState(false);
   if (text.trim().length === 0) return null;
 
@@ -69,7 +85,9 @@ function ReasoningPartView({ text, durationMs }: { text: string; durationMs?: nu
     <details
       data-slot="reasoning-part"
       open={open}
-      onToggle={(event) => setOpen((event.currentTarget as HTMLDetailsElement).open)}
+      onToggle={(event) =>
+        setOpen((event.currentTarget as HTMLDetailsElement).open)
+      }
       className="text-xs"
     >
       <summary
@@ -82,10 +100,16 @@ function ReasoningPartView({ text, durationMs }: { text: string; durationMs?: nu
         )}
       >
         <ChevronRight
-          className={cn("size-3.5 shrink-0 transition-transform duration-200 ease-out", open && "rotate-90")}
+          className={cn(
+            "size-3.5 shrink-0 transition-transform duration-200 ease-out",
+            open && "rotate-90",
+          )}
           aria-hidden
         />
-        <span>Thought{durationMs === undefined ? "" : ` for ${formatDuration(durationMs)}`}</span>
+        <span>
+          Thought
+          {durationMs === undefined ? "" : ` for ${formatDuration(durationMs)}`}
+        </span>
       </summary>
       {/* Keyed on `open` so the entrance animation replays every time the
           disclosure opens, not just the first time — the node persists
@@ -101,7 +125,15 @@ function ReasoningPartView({ text, durationMs }: { text: string; durationMs?: nu
   );
 }
 
-function FilePartView({ name, mediaType, url }: { name: string; mediaType: string; url?: string }) {
+function FilePartView({
+  name,
+  mediaType,
+  url,
+}: {
+  name: string;
+  mediaType: string;
+  url?: string;
+}) {
   const content = (
     <>
       <Paperclip className="size-3.5 shrink-0" aria-hidden />
@@ -137,7 +169,10 @@ function FilePartView({ name, mediaType, url }: { name: string; mediaType: strin
 function EventPartView({ event }: { event: string }) {
   const label = event.replace(/[.-]+/g, " ");
   return (
-    <div data-slot="event-part" className="flex items-center gap-2 py-1 text-xs text-muted-foreground italic">
+    <div
+      data-slot="event-part"
+      className="flex items-center gap-2 py-1 text-xs text-muted-foreground italic"
+    >
       <span>{label}</span>
     </div>
   );
@@ -194,14 +229,23 @@ export function PartsRenderer({ parts, className }: PartsRendererProps) {
   if (parts.length === 0) return null;
 
   return (
-    <div data-slot="parts-renderer" className={cn("flex flex-col gap-1.5", className)}>
+    <div
+      data-slot="parts-renderer"
+      className={cn("flex flex-col gap-1.5", className)}
+    >
       {parts.map((part, index) => {
         const key = `${part.kind}-${index}`;
         switch (part.kind) {
           case "text":
             return <TextPartView key={key} text={part.text} />;
           case "reasoning":
-            return <ReasoningPartView key={key} text={part.text} durationMs={part.durationMs} />;
+            return (
+              <ReasoningPartView
+                key={key}
+                text={part.text}
+                durationMs={part.durationMs}
+              />
+            );
           case "tool-trace":
             return (
               <ToolBlock
@@ -212,13 +256,31 @@ export function PartsRenderer({ parts, className }: PartsRendererProps) {
               />
             );
           case "file":
-            return <FilePartView key={key} name={part.name} mediaType={part.mediaType} url={part.url} />;
+            return (
+              <FilePartView
+                key={key}
+                name={part.name}
+                mediaType={part.mediaType}
+                url={part.url}
+              />
+            );
           case "event":
             return <EventPartView key={key} event={part.event} />;
           case "block":
-            return <BlockPartFallback key={key} type={part.block.type} data={part.block.data} />;
+            return (
+              <BlockPartFallback
+                key={key}
+                type={part.block.type}
+                data={part.block.data}
+              />
+            );
           default:
-            return <UnknownPartFallback key={key} kind={(part as { kind: string }).kind} />;
+            return (
+              <UnknownPartFallback
+                key={key}
+                kind={(part as { kind: string }).kind}
+              />
+            );
         }
       })}
     </div>

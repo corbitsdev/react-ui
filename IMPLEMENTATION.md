@@ -24,16 +24,16 @@ Why the library exists lives in [PRODUCT.md](./PRODUCT.md).
 
 Development uses **bun**. `bun run build` is three steps, joined by `&&`:
 
-| Step | Tool | Output |
-| --- | --- | --- |
-| `build:js` | `tsc -p tsconfig.build.json` | `dist/**/*.js` and `dist/**/*.d.ts`, one per source file |
-| `build:css` | Tailwind v4 CLI | `dist/styles.css`, plus `dist/theme.css` copied from source |
+| Step        | Tool                         | Output                                                      |
+| ----------- | ---------------------------- | ----------------------------------------------------------- |
+| `build:js`  | `tsc -p tsconfig.build.json` | `dist/**/*.js` and `dist/**/*.d.ts`, one per source file    |
+| `build:css` | Tailwind v4 CLI              | `dist/styles.css`, plus `dist/theme.css` copied from source |
 
 Source imports are relative and carry `.js` extensions. There is no path
 alias. `prepack` runs the build. CI runs `contrast-test` (reads `dist/styles.css`)
 and `dep-guard` after it.
 
-Other scripts: `bun run typecheck`, `bun run lint` (eslint),
+Other scripts: `bun run typecheck`, `bun run lint` (oxlint), `bun run format` / `format:check` (oxfmt),
 `bun run dep-guard` (`scripts/dep-guard.mjs` — fails if any file imports
 `@workbench/*`), `bun test`, `bun run stories` / `stories:build`
 ([Ladle](https://ladle.dev) over `stories/`).

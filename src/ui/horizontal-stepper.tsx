@@ -1,8 +1,14 @@
 "use client";
 
 import { useScrollCurrentIntoView } from "../hooks/use-scroll-current-into-view.js";
-import type { WorkflowStep, WorkflowStepStatus } from "../lib/workflow-run-progress.js";
-import { workflowStepGlyph, workflowStepLabelClass } from "../lib/workflow-run-progress.js";
+import type {
+  WorkflowStep,
+  WorkflowStepStatus,
+} from "../lib/workflow-run-progress.js";
+import {
+  workflowStepGlyph,
+  workflowStepLabelClass,
+} from "../lib/workflow-run-progress.js";
 import { cn } from "../lib/utils.js";
 
 // Above this many steps, an even split can't give every label readable room,
@@ -30,9 +36,14 @@ export type HorizontalStepperProps = {
  * change, so a run with more steps than fit on screen never leaves the
  * active one off to the side unannounced.
  */
-export function HorizontalStepper({ steps, className }: HorizontalStepperProps) {
+export function HorizontalStepper({
+  steps,
+  className,
+}: HorizontalStepperProps) {
   const currentStep = steps.find((step) => step.status === "current");
-  const currentRef = useScrollCurrentIntoView<HTMLLIElement>(currentStep?.number ?? -1);
+  const currentRef = useScrollCurrentIntoView<HTMLLIElement>(
+    currentStep?.number ?? -1,
+  );
   const compress = steps.length > LABEL_VISIBLE_STEP_THRESHOLD;
 
   return (
@@ -48,7 +59,11 @@ export function HorizontalStepper({ steps, className }: HorizontalStepperProps) 
             aria-current={step.status === "current" ? "step" : undefined}
             className={cn(
               "flex min-w-0 items-center gap-2 last:flex-initial md:gap-3",
-              compress ? (step.status === "current" ? "flex-[8_1_0%]" : "flex-1") : "flex-1",
+              compress
+                ? step.status === "current"
+                  ? "flex-[8_1_0%]"
+                  : "flex-1"
+                : "flex-1",
             )}
           >
             <span className="relative flex size-8 shrink-0 items-center justify-center">
@@ -58,7 +73,12 @@ export function HorizontalStepper({ steps, className }: HorizontalStepperProps) 
                   className="absolute inset-0 rounded-full bg-primary/30 motion-safe:[animation:corbits-status-pulse_1.8s_ease-out_infinite]"
                 />
               ) : null}
-              <span className={cn("relative flex size-8 items-center justify-center rounded-full text-sm font-medium transition-colors", pillClass(step.status))}>
+              <span
+                className={cn(
+                  "relative flex size-8 items-center justify-center rounded-full text-sm font-medium transition-colors",
+                  pillClass(step.status),
+                )}
+              >
                 {workflowStepGlyph(step.status, step.number)}
               </span>
             </span>
@@ -67,14 +87,21 @@ export function HorizontalStepper({ steps, className }: HorizontalStepperProps) 
               title={step.label}
               className={cn(
                 "min-w-0 flex-1 truncate text-sm font-medium",
-                compress && step.status !== "current" ? "sr-only" : workflowStepLabelClass(step.status),
+                compress && step.status !== "current"
+                  ? "sr-only"
+                  : workflowStepLabelClass(step.status),
               )}
             >
               {step.label}
             </span>
 
             {index === steps.length - 1 ? null : (
-              <span className={cn("h-0.5 shrink-0 overflow-hidden rounded-full bg-border", compress ? "min-w-2 flex-1" : "w-4 md:w-6")}>
+              <span
+                className={cn(
+                  "h-0.5 shrink-0 overflow-hidden rounded-full bg-border",
+                  compress ? "min-w-2 flex-1" : "w-4 md:w-6",
+                )}
+              >
                 <span
                   data-filled={step.status === "completed"}
                   className="block h-full w-full origin-left rounded-full bg-success transition-transform duration-300 ease-out data-[filled=false]:scale-x-0 data-[filled=true]:scale-x-100"

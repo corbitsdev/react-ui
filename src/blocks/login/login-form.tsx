@@ -32,7 +32,11 @@ export type LoginFormProps = {
   readonly providers?: readonly AuthProvider[];
   readonly onProvider?: (id: string) => void;
   /** Omit to render an SSO-only page with no email fields at all. */
-  readonly onSubmit?: (credentials: { readonly name?: string; readonly email: string; readonly password: string }) => void;
+  readonly onSubmit?: (credentials: {
+    readonly name?: string;
+    readonly email: string;
+    readonly password: string;
+  }) => void;
   /** True while a sign-in or sign-up is in flight. Disables every control. */
   readonly busy?: boolean;
   /** A failure to show. Announced, not just drawn. */
@@ -82,7 +86,9 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)}>
-      <h1 className="text-3xl leading-none font-semibold tracking-tight text-balance">{heading}</h1>
+      <h1 className="text-3xl leading-none font-semibold tracking-tight text-balance">
+        {heading}
+      </h1>
 
       {error === null ? null : (
         <p
@@ -99,7 +105,9 @@ export function LoginForm({
           className="flex flex-col gap-4"
           onSubmit={(event) => {
             event.preventDefault();
-            onSubmit(isSignUp ? { name, email, password } : { email, password });
+            onSubmit(
+              isSignUp ? { name, email, password } : { email, password },
+            );
           }}
         >
           {!isSignUp ? null : (
@@ -154,7 +162,9 @@ export function LoginForm({
       {onSubmit === undefined || providers.length === 0 ? null : (
         <div className="flex items-center gap-3">
           <span aria-hidden className="h-px flex-1 bg-border" />
-          <span className="text-xs tracking-wider text-muted-foreground uppercase">or</span>
+          <span className="text-xs tracking-wider text-muted-foreground uppercase">
+            or
+          </span>
           <span aria-hidden className="h-px flex-1 bg-border" />
         </div>
       )}
@@ -173,7 +183,9 @@ export function LoginForm({
         </Button>
       ))}
 
-      {footer === undefined ? null : <div className="text-sm text-muted-foreground">{footer}</div>}
+      {footer === undefined ? null : (
+        <div className="text-sm text-muted-foreground">{footer}</div>
+      )}
     </div>
   );
 }

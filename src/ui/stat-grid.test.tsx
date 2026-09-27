@@ -26,12 +26,23 @@ function render(node: React.ReactElement): Mounted {
   };
 }
 
-const SHARED_LAYOUT = ["flex", "flex-col", "gap-1.5", "rounded-lg", "border", "border-border", "bg-card", "p-4"];
+const SHARED_LAYOUT = [
+  "flex",
+  "flex-col",
+  "gap-1.5",
+  "rounded-lg",
+  "border",
+  "border-border",
+  "bg-card",
+  "p-4",
+];
 
 describe("StatGridItem interaction", () => {
   test("static tile is a non-interactive div with shared layout classes", () => {
     const mounted = render(<StatGridItem label="Runs" value="42" />);
-    const tile = mounted.container.querySelector('[data-slot="stat-grid-item"]');
+    const tile = mounted.container.querySelector(
+      '[data-slot="stat-grid-item"]',
+    );
     expect(tile).not.toBeNull();
     expect(tile?.tagName).toBe("DIV");
     expect(mounted.container.querySelector("button")).toBeNull();
@@ -48,8 +59,12 @@ describe("StatGridItem interaction", () => {
 
   test("interactive tile is a button with the same layout and click activation", () => {
     const onClick = mock(() => {});
-    const mounted = render(<StatGridItem label="Runs" value="42" onClick={onClick} />);
-    const tile = mounted.container.querySelector('[data-slot="stat-grid-item"]');
+    const mounted = render(
+      <StatGridItem label="Runs" value="42" onClick={onClick} />,
+    );
+    const tile = mounted.container.querySelector(
+      '[data-slot="stat-grid-item"]',
+    );
     expect(tile).not.toBeNull();
     expect(tile?.tagName).toBe("BUTTON");
     expect(tile?.getAttribute("type")).toBe("button");
@@ -74,10 +89,17 @@ describe("StatGridItem interaction", () => {
 
   test("emphasis padding is shared by static and interactive shells", () => {
     const staticMount = render(<StatGridItem label="A" value="1" emphasis />);
-    const interactiveMount = render(<StatGridItem label="B" value="2" emphasis onClick={() => {}} />);
-    const staticClass = staticMount.container.querySelector('[data-slot="stat-grid-item"]')?.getAttribute("class") ?? "";
+    const interactiveMount = render(
+      <StatGridItem label="B" value="2" emphasis onClick={() => {}} />,
+    );
+    const staticClass =
+      staticMount.container
+        .querySelector('[data-slot="stat-grid-item"]')
+        ?.getAttribute("class") ?? "";
     const interactiveClass =
-      interactiveMount.container.querySelector('[data-slot="stat-grid-item"]')?.getAttribute("class") ?? "";
+      interactiveMount.container
+        .querySelector('[data-slot="stat-grid-item"]')
+        ?.getAttribute("class") ?? "";
     expect(staticClass).toContain("p-5");
     expect(staticClass).toContain("shadow-sm");
     expect(interactiveClass).toContain("p-5");
@@ -93,7 +115,9 @@ describe("StatGridItem interaction", () => {
         <StatGridItem label="Clickable" value="2" onClick={() => {}} />
       </StatGrid>,
     );
-    const tiles = mounted.container.querySelectorAll('[data-slot="stat-grid-item"]');
+    const tiles = mounted.container.querySelectorAll(
+      '[data-slot="stat-grid-item"]',
+    );
     expect(tiles.length).toBe(2);
     expect(tiles[0]?.tagName).toBe("DIV");
     expect(tiles[1]?.tagName).toBe("BUTTON");

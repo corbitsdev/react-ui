@@ -34,7 +34,13 @@ const HEIGHT = 24;
  */
 export function Sparkline({ values, summary, className }: SparklineProps) {
   if (values.length < 2) {
-    return <span className={cn("inline-block", className)} role="img" aria-label={summary} />;
+    return (
+      <span
+        className={cn("inline-block", className)}
+        role="img"
+        aria-label={summary}
+      />
+    );
   }
 
   const min = Math.min(...values);
@@ -46,7 +52,10 @@ export function Sparkline({ values, summary, className }: SparklineProps) {
     x: index * stepX,
     // A flat series has no span to scale against; centre it rather than
     // dividing by zero.
-    y: span === 0 ? HEIGHT / 2 : HEIGHT - scaleLinear(value - min, span, HEIGHT - 4) - 2,
+    y:
+      span === 0
+        ? HEIGHT / 2
+        : HEIGHT - scaleLinear(value - min, span, HEIGHT - 4) - 2,
   }));
   const last = points[points.length - 1];
 
@@ -58,11 +67,25 @@ export function Sparkline({ values, summary, className }: SparklineProps) {
       aria-label={summary}
       focusable="false"
     >
-      <path d={linePath(points)} fill="none" stroke={seriesColor(0)} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d={linePath(points)}
+        fill="none"
+        stroke={seriesColor(0)}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       {last === undefined ? null : (
         // The end dot marks "now" — which end is the current period is
         // otherwise ambiguous on a shape with no axis.
-        <circle cx={last.x} cy={last.y} r={2.5} fill={seriesColor(0)} stroke="var(--card)" strokeWidth={2} />
+        <circle
+          cx={last.x}
+          cy={last.y}
+          r={2.5}
+          fill={seriesColor(0)}
+          stroke="var(--card)"
+          strokeWidth={2}
+        />
       )}
     </svg>
   );

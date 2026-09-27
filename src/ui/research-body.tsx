@@ -46,7 +46,9 @@ export type ResearchBrief = {
  * render site, so validating it here would only reject briefs this component
  * draws correctly.
  */
-export function parseResearchArtifact(json: string): { brief: ResearchBrief; body?: string } | null {
+export function parseResearchArtifact(
+  json: string,
+): { brief: ResearchBrief; body?: string } | null {
   let raw: unknown;
   try {
     raw = JSON.parse(json);
@@ -64,7 +66,9 @@ export function parseResearchArtifact(json: string): { brief: ResearchBrief; bod
     return null;
   }
   const body = typeof candidate.body === "string" ? candidate.body : undefined;
-  return body === undefined ? { brief: candidate as ResearchBrief } : { brief: candidate as ResearchBrief, body };
+  return body === undefined
+    ? { brief: candidate as ResearchBrief }
+    : { brief: candidate as ResearchBrief, body };
 }
 
 /**
@@ -72,7 +76,9 @@ export function parseResearchArtifact(json: string): { brief: ResearchBrief; bod
  * two sources. Both the numbering the reader sees and any export they take must
  * agree on the count, so dedupe once, here, at the point of render.
  */
-function dedupeByUrl(sources: readonly ResearchSource[]): readonly ResearchSource[] {
+function dedupeByUrl(
+  sources: readonly ResearchSource[],
+): readonly ResearchSource[] {
   const seen = new Set<string>();
   return sources.filter((source) => {
     if (seen.has(source.url)) return false;
@@ -119,26 +125,37 @@ export function ResearchBody({
         <section className="flex flex-col gap-3" aria-label="Themes">
           <h3 className="text-sm font-semibold">Themes</h3>
           {brief.clusters.map((cluster) => (
-            <article key={cluster.id} className="flex flex-col gap-2 rounded-lg border border-border p-4">
+            <article
+              key={cluster.id}
+              className="flex flex-col gap-2 rounded-lg border border-border p-4"
+            >
               <div className="flex items-start justify-between gap-3">
-                <h4 className="text-sm leading-snug font-semibold">{cluster.title}</h4>
-                {cluster.sources === undefined || cluster.sources.length === 0 ? null : (
+                <h4 className="text-sm leading-snug font-semibold">
+                  {cluster.title}
+                </h4>
+                {cluster.sources === undefined ||
+                cluster.sources.length === 0 ? null : (
                   <span className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
                     {cluster.sources.join(", ")}
                   </span>
                 )}
               </div>
               {cluster.summary === undefined ? null : (
-                <p className="text-xs leading-relaxed text-muted-foreground">{cluster.summary}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {cluster.summary}
+                </p>
               )}
-              {cluster.items === undefined || cluster.items.length === 0 ? null : (
+              {cluster.items === undefined ||
+              cluster.items.length === 0 ? null : (
                 <ul className="flex flex-col gap-1.5">
                   {cluster.items.map((item) => {
                     const href = toSafeHref(item.url);
                     return (
                       <li key={item.url} className="min-w-0">
                         {href === undefined ? (
-                          <span className="text-xs leading-snug text-muted-foreground">{item.title ?? item.url}</span>
+                          <span className="text-xs leading-snug text-muted-foreground">
+                            {item.title ?? item.url}
+                          </span>
                         ) : (
                           <a
                             href={href}
@@ -169,8 +186,13 @@ export function ResearchBody({
               // with an attribution is exactly what the element pair is for, and
               // it is what makes the attribution reachable from the quote for a
               // screen reader instead of being a loose line of text after it.
-              <figure key={`${quote.source}-${quote.quote.slice(0, 32)}`} className="border-l-2 border-border pl-4">
-                <blockquote className="text-sm leading-relaxed italic">{quote.quote}</blockquote>
+              <figure
+                key={`${quote.source}-${quote.quote.slice(0, 32)}`}
+                className="border-l-2 border-border pl-4"
+              >
+                <blockquote className="text-sm leading-relaxed italic">
+                  {quote.quote}
+                </blockquote>
                 <figcaption className="mt-1 text-xs text-muted-foreground">
                   {quote.author === undefined ? "" : `${quote.author} · `}
                   {quote.source}
@@ -201,11 +223,18 @@ export function ResearchBody({
             {citations.map((citation, index) => {
               const href = toSafeHref(citation.url);
               return (
-                <li key={citation.url} className="flex items-baseline gap-3 text-xs">
-                  <span className="w-6 shrink-0 text-right font-mono text-muted-foreground tabular-nums">{index + 1}</span>
+                <li
+                  key={citation.url}
+                  className="flex items-baseline gap-3 text-xs"
+                >
+                  <span className="w-6 shrink-0 text-right font-mono text-muted-foreground tabular-nums">
+                    {index + 1}
+                  </span>
                   <span className="min-w-0 leading-relaxed">
                     {href === undefined ? (
-                      <span className="break-words">{citation.title ?? citation.url}</span>
+                      <span className="break-words">
+                        {citation.title ?? citation.url}
+                      </span>
                     ) : (
                       <a
                         href={href}
@@ -216,7 +245,10 @@ export function ResearchBody({
                         {citation.title ?? citation.url}
                       </a>
                     )}
-                    <span className="text-muted-foreground"> · {citation.source}</span>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      · {citation.source}
+                    </span>
                   </span>
                 </li>
               );
@@ -232,11 +264,14 @@ export function ResearchBody({
       <header className="flex flex-col gap-1.5">
         <h2 className="text-base leading-snug font-semibold">{brief.topic}</h2>
         <p className="font-mono text-xs text-muted-foreground tabular-nums">
-          {brief.sourceCount.toLocaleString()} sources · {brief.itemCount.toLocaleString()} items
+          {brief.sourceCount.toLocaleString()} sources ·{" "}
+          {brief.itemCount.toLocaleString()} items
           {brief.range === undefined ? "" : ` · ${brief.range}`}
         </p>
         {brief.leadInsight === undefined ? null : (
-          <p className="max-w-prose text-sm leading-relaxed">{brief.leadInsight}</p>
+          <p className="max-w-prose text-sm leading-relaxed">
+            {brief.leadInsight}
+          </p>
         )}
       </header>
 
@@ -244,7 +279,9 @@ export function ResearchBody({
         data
       ) : (
         <>
-          <div className="max-w-prose text-sm leading-relaxed whitespace-pre-wrap">{report}</div>
+          <div className="max-w-prose text-sm leading-relaxed whitespace-pre-wrap">
+            {report}
+          </div>
           <details className="group border-t border-border pt-4">
             <summary className="cursor-pointer text-sm font-semibold text-muted-foreground hover:text-foreground">
               Sources &amp; data ({brief.sourceCount.toLocaleString()} sources ·{" "}

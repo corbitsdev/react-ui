@@ -34,21 +34,29 @@ function toggleButton(container: HTMLElement): HTMLButtonElement {
 
 describe("ToolBlock", () => {
   test("humanises a raw tool name when no label is given", () => {
-    const mounted = render(<ToolBlock name="slack__post_message" state={{ status: "pending" }} />);
+    const mounted = render(
+      <ToolBlock name="slack__post_message" state={{ status: "pending" }} />,
+    );
     expect(mounted.container.textContent).toContain("Post message (Slack)");
     mounted.unmount();
   });
 
   test("prefers an explicit label over the humanised name", () => {
     const mounted = render(
-      <ToolBlock name="slack__post_message" label="Posted to #general" state={{ status: "pending" }} />,
+      <ToolBlock
+        name="slack__post_message"
+        label="Posted to #general"
+        state={{ status: "pending" }}
+      />,
     );
     expect(mounted.container.textContent).toContain("Posted to #general");
     mounted.unmount();
   });
 
   test("pending and running states start collapsed with no detail toggle", () => {
-    const mounted = render(<ToolBlock name="search" state={{ status: "running" }} />);
+    const mounted = render(
+      <ToolBlock name="search" state={{ status: "running" }} />,
+    );
     const button = toggleButton(mounted.container);
     expect(button.getAttribute("aria-expanded")).toBe("false");
     expect(button.disabled).toBe(true);
@@ -56,7 +64,12 @@ describe("ToolBlock", () => {
   });
 
   test("output-available starts collapsed but expands on click", () => {
-    const mounted = render(<ToolBlock name="search" state={{ status: "output-available", output: "3 results" }} />);
+    const mounted = render(
+      <ToolBlock
+        name="search"
+        state={{ status: "output-available", output: "3 results" }}
+      />,
+    );
     const button = toggleButton(mounted.container);
     expect(button.getAttribute("aria-expanded")).toBe("false");
     act(() => button.click());
@@ -67,15 +80,26 @@ describe("ToolBlock", () => {
 
   test.each([
     ["error", { status: "error", message: "timed out" } as const, "timed out"],
-    ["approval-requested", { status: "approval-requested", reason: "writes to prod" } as const, "writes to prod"],
-    ["output-denied", { status: "output-denied", reason: "not authorised" } as const, "not authorised"],
-  ])("%s state opens by default and shows its detail", (_label, state, expectedText) => {
-    const mounted = render(<ToolBlock name="deploy" state={state} />);
-    const button = toggleButton(mounted.container);
-    expect(button.getAttribute("aria-expanded")).toBe("true");
-    expect(mounted.container.textContent).toContain(expectedText);
-    mounted.unmount();
-  });
+    [
+      "approval-requested",
+      { status: "approval-requested", reason: "writes to prod" } as const,
+      "writes to prod",
+    ],
+    [
+      "output-denied",
+      { status: "output-denied", reason: "not authorised" } as const,
+      "not authorised",
+    ],
+  ])(
+    "%s state opens by default and shows its detail",
+    (_label, state, expectedText) => {
+      const mounted = render(<ToolBlock name="deploy" state={state} />);
+      const button = toggleButton(mounted.container);
+      expect(button.getAttribute("aria-expanded")).toBe("true");
+      expect(mounted.container.textContent).toContain(expectedText);
+      mounted.unmount();
+    },
+  );
 
   test("shows input JSON alongside output when both are present", () => {
     const mounted = render(
@@ -92,15 +116,21 @@ describe("ToolBlock", () => {
   });
 
   test("carries its status as a data attribute for state-based styling", () => {
-    const mounted = render(<ToolBlock name="search" state={{ status: "running" }} />);
+    const mounted = render(
+      <ToolBlock name="search" state={{ status: "running" }} />,
+    );
     const root = mounted.container.querySelector("[data-slot='tool-block']");
     expect(root?.getAttribute("data-status")).toBe("running");
     mounted.unmount();
   });
 
   test("announces approval-requested as a polite status region", () => {
-    const mounted = render(<ToolBlock name="deploy" state={{ status: "approval-requested" }} />);
-    const status = mounted.container.querySelector("[data-slot='tool-block-status']");
+    const mounted = render(
+      <ToolBlock name="deploy" state={{ status: "approval-requested" }} />,
+    );
+    const status = mounted.container.querySelector(
+      "[data-slot='tool-block-status']",
+    );
     expect(status?.getAttribute("role")).toBe("status");
     expect(status?.getAttribute("aria-live")).toBe("polite");
     mounted.unmount();
@@ -114,7 +144,9 @@ describe("ToolBlock", () => {
     ["output-denied", { status: "output-denied" } as const],
   ])("%s state carries no status-region announcement", (_label, state) => {
     const mounted = render(<ToolBlock name="deploy" state={state} />);
-    const status = mounted.container.querySelector("[data-slot='tool-block-status']");
+    const status = mounted.container.querySelector(
+      "[data-slot='tool-block-status']",
+    );
     expect(status?.getAttribute("role")).toBeNull();
     expect(status?.getAttribute("aria-live")).toBeNull();
     mounted.unmount();

@@ -8,7 +8,10 @@ import { cn } from "../lib/utils.js";
 import { ChatInput, type ChatInputProps } from "./chat-input.js";
 import { QuickReplyChips } from "./quick-reply-chips.js";
 
-export type ChatComposerProps = Omit<ChatInputProps, "working" | "disabled" | "textareaRef"> & {
+export type ChatComposerProps = Omit<
+  ChatInputProps,
+  "working" | "disabled" | "textareaRef"
+> & {
   /** Suggestion chips shown above the input while the conversation is empty. */
   readonly suggestions?: readonly QuickReply[];
   readonly onSuggestionSelect?: (reply: QuickReply) => void;
@@ -41,14 +44,20 @@ export function ChatComposer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   useDelayedAutofocus(textareaRef, autoFocusOn);
 
-  const showSuggestions = suggestions.length > 0 && onSuggestionSelect !== undefined;
+  const showSuggestions =
+    suggestions.length > 0 && onSuggestionSelect !== undefined;
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       {showSuggestions ? (
         <QuickReplyChips replies={suggestions} onSelect={onSuggestionSelect} />
       ) : null}
-      <ChatInput {...inputProps} working={busy} disabled={busy} textareaRef={textareaRef} />
+      <ChatInput
+        {...inputProps}
+        working={busy}
+        disabled={busy}
+        textareaRef={textareaRef}
+      />
     </div>
   );
 }

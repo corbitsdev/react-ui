@@ -26,7 +26,8 @@ export type ClassifiedRunError = {
   readonly raw: string;
 };
 
-const PROVIDER_API_ERROR = /^([A-Za-z][A-Za-z0-9]*(?: [A-Za-z0-9]+){0,2}) API error: (\d{3})/;
+const PROVIDER_API_ERROR =
+  /^([A-Za-z][A-Za-z0-9]*(?: [A-Za-z0-9]+){0,2}) API error: (\d{3})/;
 const ANY_API_ERROR = /\bAPI error: (\d{3})/;
 const GENERIC_PROVIDER_LABEL = "An external service";
 
@@ -44,10 +45,18 @@ const NETWORK_PATTERNS = [
 const INTERNAL_MESSAGE =
   "Something went wrong inside this workflow run. Try running it again; if it keeps failing, contact your workspace admin.";
 
-const NETWORK_MESSAGE = "A service this workflow depends on couldn't be reached. Try running it again in a moment.";
+const NETWORK_MESSAGE =
+  "A service this workflow depends on couldn't be reached. Try running it again in a moment.";
 
-function classifyProviderError(provider: string, status: number, raw: string): ClassifiedRunError {
-  const credentialRef = provider === GENERIC_PROVIDER_LABEL ? "credential's" : `${provider} credential's`;
+function classifyProviderError(
+  provider: string,
+  status: number,
+  raw: string,
+): ClassifiedRunError {
+  const credentialRef =
+    provider === GENERIC_PROVIDER_LABEL
+      ? "credential's"
+      : `${provider} credential's`;
   if (status === 401 || status === 403) {
     return {
       kind: "external-auth",
@@ -79,11 +88,19 @@ function classifyProviderError(provider: string, status: number, raw: string): C
 export function classifyRunError(raw: string): ClassifiedRunError {
   const providerMatch = PROVIDER_API_ERROR.exec(raw);
   if (providerMatch?.[1] !== undefined && providerMatch[2] !== undefined) {
-    return classifyProviderError(providerMatch[1], Number(providerMatch[2]), raw);
+    return classifyProviderError(
+      providerMatch[1],
+      Number(providerMatch[2]),
+      raw,
+    );
   }
   const anyApiErrorMatch = ANY_API_ERROR.exec(raw);
   if (anyApiErrorMatch?.[1] !== undefined) {
-    return classifyProviderError(GENERIC_PROVIDER_LABEL, Number(anyApiErrorMatch[1]), raw);
+    return classifyProviderError(
+      GENERIC_PROVIDER_LABEL,
+      Number(anyApiErrorMatch[1]),
+      raw,
+    );
   }
   if (NETWORK_PATTERNS.some((pattern) => pattern.test(raw))) {
     return { kind: "network", userMessage: NETWORK_MESSAGE, raw };

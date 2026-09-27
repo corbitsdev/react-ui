@@ -29,7 +29,8 @@ function render(node: React.ReactElement): Mounted {
 describe("Button link variant", () => {
   test("carries the underline treatment and no fill or border", () => {
     const mounted = render(<Button variant="link">Learn more</Button>);
-    const className = mounted.container.querySelector("button")?.getAttribute("class") ?? "";
+    const className =
+      mounted.container.querySelector("button")?.getAttribute("class") ?? "";
     expect(className).toContain("text-primary-emphasis");
     expect(className).toContain("hover:underline");
     expect(className).not.toContain("bg-primary");

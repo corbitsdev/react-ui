@@ -53,12 +53,17 @@ export function SettingsPanel({
     <section
       data-slot="settings-panel"
       aria-label={title}
-      className={cn("flex flex-col gap-4 rounded-lg border border-border bg-card p-5 text-card-foreground", className)}
+      className={cn(
+        "flex flex-col gap-4 rounded-lg border border-border bg-card p-5 text-card-foreground",
+        className,
+      )}
     >
       <div className="flex flex-col gap-1">
         <h3 className="text-sm font-semibold">{title}</h3>
         {description === undefined ? null : (
-          <p className="text-sm leading-snug text-muted-foreground">{description}</p>
+          <p className="text-sm leading-snug text-muted-foreground">
+            {description}
+          </p>
         )}
       </div>
 
@@ -76,14 +81,26 @@ export function SettingsPanel({
             {saving ? "Saving…" : "Save changes"}
           </Button>
           {onReset === undefined || !dirty ? null : (
-            <Button variant="ghost" size="sm" onClick={onReset} disabled={saving}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onReset}
+              disabled={saving}
+            >
               Discard
             </Button>
           )}
           {/* aria-live so the outcome reaches a screen reader without moving
               focus — the user is still in the controls above. */}
-          <p aria-live="polite" className="ml-auto text-xs text-muted-foreground">
-            {dirty ? "Unsaved changes" : savedAt === null ? "" : `Saved ${savedAt}`}
+          <p
+            aria-live="polite"
+            className="ml-auto text-xs text-muted-foreground"
+          >
+            {dirty
+              ? "Unsaved changes"
+              : savedAt === null
+                ? ""
+                : `Saved ${savedAt}`}
           </p>
         </div>
       )}

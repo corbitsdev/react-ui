@@ -25,8 +25,16 @@ export function TokenMosaic({ parts, label, className }: TokenMosaicProps) {
   const segments = buildMosaic(parts);
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <div className="flex h-2.5 w-full overflow-hidden rounded-[3px] bg-muted" role="img" aria-label={label}>
-        <svg className="h-full w-full" viewBox="0 0 100 10" preserveAspectRatio="none">
+      <div
+        className="flex h-2.5 w-full overflow-hidden rounded-[3px] bg-muted"
+        role="img"
+        aria-label={label}
+      >
+        <svg
+          className="h-full w-full"
+          viewBox="0 0 100 10"
+          preserveAspectRatio="none"
+        >
           {renderSegmentRects(segments)}
         </svg>
       </div>
@@ -36,7 +44,11 @@ export function TokenMosaic({ parts, label, className }: TokenMosaicProps) {
             key={segment.label}
             className="flex items-center gap-1.5 font-mono text-[11px] tracking-[0.08em] uppercase text-muted-foreground"
           >
-            <span aria-hidden className="size-2 rounded-[1px]" style={{ backgroundColor: seriesColor(index) }} />
+            <span
+              aria-hidden
+              className="size-2 rounded-[1px]"
+              style={{ backgroundColor: seriesColor(index) }}
+            />
             {segment.label} {formatCompact(segment.value)}
           </span>
         ))}
@@ -45,11 +57,20 @@ export function TokenMosaic({ parts, label, className }: TokenMosaicProps) {
   );
 }
 
-function renderSegmentRects(segments: readonly { label: string; pct: number }[]) {
+function renderSegmentRects(
+  segments: readonly { label: string; pct: number }[],
+) {
   let x = 0;
   return segments.map((segment, index) => {
     const rect = (
-      <rect key={segment.label} x={x} y={0} width={segment.pct} height={10} fill={seriesColor(index)} />
+      <rect
+        key={segment.label}
+        x={x}
+        y={0}
+        width={segment.pct}
+        height={10}
+        fill={seriesColor(index)}
+      />
     );
     x += segment.pct;
     return rect;

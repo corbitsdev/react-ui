@@ -53,7 +53,12 @@ const PHASE_LABEL: Record<TracePhase, string> = {
  * doesn't have. Failed spans surface their error under the row. The
  * accessible table carries the same numbers for non-visual readers.
  */
-export function TraceWaterfall({ title, description, spans, className }: TraceWaterfallProps) {
+export function TraceWaterfall({
+  title,
+  description,
+  spans,
+  className,
+}: TraceWaterfallProps) {
   return (
     <ChartFrame
       title={title}
@@ -74,13 +79,18 @@ export function TraceWaterfall({ title, description, spans, className }: TraceWa
         {spans.map((span) => {
           const isOrdinal = span.timingSource === "ordinal";
           const left = clamp01(span.start) * 100;
-          const width = Math.max(0.5, (clamp01(span.end) - clamp01(span.start)) * 100);
+          const width = Math.max(
+            0.5,
+            (clamp01(span.end) - clamp01(span.start)) * 100,
+          );
           return (
             <div key={span.id} className="flex flex-col gap-0.5">
               <div className="grid grid-cols-[minmax(7rem,11rem)_1fr_minmax(4.5rem,6rem)] items-center gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-xs font-semibold">{span.label}</p>
-                  <p className="truncate text-[10px] text-muted-foreground">{span.kind}</p>
+                  <p className="truncate text-[10px] text-muted-foreground">
+                    {span.kind}
+                  </p>
                 </div>
                 <div className="relative h-4 w-full bg-muted">
                   {isOrdinal ? (
@@ -92,7 +102,8 @@ export function TraceWaterfall({ title, description, spans, className }: TraceWa
                       style={{ left: `${left}%` }}
                     >
                       <span className="sr-only">
-                        Approximate position by event order, not a measured duration
+                        Approximate position by event order, not a measured
+                        duration
                       </span>
                     </span>
                   ) : (
@@ -108,7 +119,9 @@ export function TraceWaterfall({ title, description, spans, className }: TraceWa
                   )}
                 </div>
                 <div className="text-right font-mono text-[11px] leading-tight">
-                  <p className="font-semibold">{durationText(span.durationLabel)}</p>
+                  <p className="font-semibold">
+                    {durationText(span.durationLabel)}
+                  </p>
                   {span.tokensLabel === undefined ? null : (
                     <p className="text-muted-foreground">{span.tokensLabel}</p>
                   )}

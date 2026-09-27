@@ -62,7 +62,10 @@ export function ProfileCard({
   return (
     <article
       data-slot="profile-card"
-      className={cn("flex flex-col gap-4 border border-border bg-card p-4", className)}
+      className={cn(
+        "flex flex-col gap-4 border border-border bg-card p-4",
+        className,
+      )}
     >
       <header className="flex items-start gap-3">
         <Avatar
@@ -75,7 +78,9 @@ export function ProfileCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="truncate text-base font-semibold">{name}</h2>
-            {statusLabel === undefined ? null : <Badge tone={statusTone}>{statusLabel}</Badge>}
+            {statusLabel === undefined ? null : (
+              <Badge tone={statusTone}>{statusLabel}</Badge>
+            )}
           </div>
           {subtitle === undefined ? null : (
             <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
@@ -112,7 +117,10 @@ export function ProfileCard({
                   {href === undefined ? (
                     <span className="text-sm">#{channel.name}</span>
                   ) : (
-                    <a href={href} className="text-sm text-foreground hover:underline">
+                    <a
+                      href={href}
+                      className="text-sm text-foreground hover:underline"
+                    >
                       #{channel.name}
                     </a>
                   )}
@@ -145,7 +153,9 @@ export function ProfileCard({
         </section>
       )}
 
-      {footer === undefined ? null : <footer className="border-t border-border pt-3">{footer}</footer>}
+      {footer === undefined ? null : (
+        <footer className="border-t border-border pt-3">{footer}</footer>
+      )}
     </article>
   );
 }

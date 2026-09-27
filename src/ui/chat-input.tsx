@@ -80,7 +80,10 @@ export function ChatInput({
 
   return (
     <form
-      className={cn("flex flex-col gap-2 rounded-lg border border-input bg-background p-2", className)}
+      className={cn(
+        "flex flex-col gap-2 rounded-lg border border-input bg-background p-2",
+        className,
+      )}
       onSubmit={(event) => {
         event.preventDefault();
         submit();

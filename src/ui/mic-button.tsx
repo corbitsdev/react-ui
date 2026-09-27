@@ -4,7 +4,12 @@ import { Mic, MicOff, Square } from "lucide-react";
 
 import { cn } from "../lib/utils.js";
 
-export type DictationState = "idle" | "starting" | "listening" | "denied" | "unsupported";
+export type DictationState =
+  | "idle"
+  | "starting"
+  | "listening"
+  | "denied"
+  | "unsupported";
 
 export type MicButtonProps = {
   readonly state: DictationState;
@@ -48,7 +53,12 @@ function labelFor(state: DictationState): string {
  * `unsupported` is disabled. `denied` stays clickable so the host can open
  * `MicPermissionDialog` from `onToggle`.
  */
-export function MicButton({ state, onToggle, disabled = false, className }: MicButtonProps) {
+export function MicButton({
+  state,
+  onToggle,
+  disabled = false,
+  className,
+}: MicButtonProps) {
   const listening = state === "listening";
   const denied = state === "denied";
   const unusable = disabled || state === "unsupported";
@@ -77,7 +87,10 @@ export function MicButton({ state, onToggle, disabled = false, className }: MicB
         className,
       )}
     >
-      <Glyph className={listening ? "size-3.5 fill-current" : "size-4"} aria-hidden />
+      <Glyph
+        className={listening ? "size-3.5 fill-current" : "size-4"}
+        aria-hidden
+      />
     </button>
   );
 }

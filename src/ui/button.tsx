@@ -28,7 +28,8 @@ const buttonVariantsBase = cva(
         outline: "border border-input bg-transparent hover:bg-muted",
         ghost: "hover:bg-muted",
         link: "text-primary-emphasis underline-offset-4 hover:underline",
-        destructive: "bg-destructive text-destructive-foreground hover:opacity-90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:opacity-90",
       },
       size: {
         sm: "h-8 px-3",
@@ -39,7 +40,13 @@ const buttonVariantsBase = cva(
     },
     // link reads as inline text, not a control — it opts out of every size's
     // fixed height/padding rather than getting a box of its own.
-    compoundVariants: [{ variant: "link", size: ["sm", "md", "lg", "icon"], class: "h-auto px-0" }],
+    compoundVariants: [
+      {
+        variant: "link",
+        size: ["sm", "md", "lg", "icon"],
+        class: "h-auto px-0",
+      },
+    ],
     defaultVariants: { variant: "primary", size: "md" },
   },
 );
@@ -48,16 +55,30 @@ const buttonVariantsBase = cva(
 // strings with no dedup, so the compound override above only wins once
 // tailwind-merge resolves the h-*/px-* conflicts — hence the wrapper instead
 // of exporting buttonVariantsBase directly.
-function buttonVariants(props?: VariantProps<typeof buttonVariantsBase>): string {
+function buttonVariants(
+  props?: VariantProps<typeof buttonVariantsBase>,
+): string {
   return twMerge(buttonVariantsBase(props));
 }
 
 export type ButtonProps = React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariantsBase> & { asChild?: boolean };
 
-export function Button({ className, variant, size, asChild = false, ...props }: ButtonProps) {
+export function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  ...props
+}: ButtonProps) {
   const Comp = asChild ? Slot : "button";
-  return <Comp data-slot="button" className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+  return (
+    <Comp
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size }), className)}
+      {...props}
+    />
+  );
 }
 
 export { buttonVariants };

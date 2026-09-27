@@ -3,7 +3,9 @@ import { ConfirmButton } from "../../src/ui/confirm-button.js";
 export default { title: "Primitives / Confirm button" };
 
 export const Basic = () => (
-  <ConfirmButton onConfirm={() => alert("Revoked")}>Revoke access</ConfirmButton>
+  <ConfirmButton onConfirm={() => alert("Revoked")}>
+    Revoke access
+  </ConfirmButton>
 );
 
 // `defaultArmed` only seeds the initial state (uncontrolled), so this shows

@@ -7,9 +7,19 @@ const DOT_DELAY_MS = [0, 160, 320] as const;
  * yet. `role="status"` with a text label, because the dots carry no words a
  * screen reader can read — the label is the only accessible content here.
  */
-export function TypingIndicator({ label = "Thinking", className }: { label?: string; className?: string }) {
+export function TypingIndicator({
+  label = "Thinking",
+  className,
+}: {
+  label?: string;
+  className?: string;
+}) {
   return (
-    <div role="status" aria-label={label} className={cn("flex items-center gap-1 px-1 py-2", className)}>
+    <div
+      role="status"
+      aria-label={label}
+      className={cn("flex items-center gap-1 px-1 py-2", className)}
+    >
       {DOT_DELAY_MS.map((delay) => (
         <span
           key={delay}

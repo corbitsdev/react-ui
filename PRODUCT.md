@@ -20,7 +20,7 @@ It is not a design-system starter, not a CLI, and not a template app.
 ## What a host can do
 
 - Import from the root (`@corbits/react-ui`) and bundle only what they used.
-- Render collection surfaces against *their* data. Components never fetch.
+- Render collection surfaces against _their_ data. Components never fetch.
   Data arrives as props. Pieces that take no collection need no extra
   host wiring.
 - Style with a single prebuilt sheet (`@corbits/react-ui/styles.css`) and no

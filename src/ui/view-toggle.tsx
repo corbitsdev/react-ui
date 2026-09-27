@@ -6,7 +6,11 @@ import { cn } from "../lib/utils.js";
 
 export type ViewMode = "grid" | "rows";
 
-const OPTIONS: readonly { mode: ViewMode; label: string; Icon: typeof LayoutGrid }[] = [
+const OPTIONS: readonly {
+  mode: ViewMode;
+  label: string;
+  Icon: typeof LayoutGrid;
+}[] = [
   { mode: "grid", label: "Grid view", Icon: LayoutGrid },
   { mode: "rows", label: "Rows view", Icon: Rows3 },
 ];
@@ -35,7 +39,10 @@ export function ViewToggle({
     <div
       role="group"
       aria-label="View"
-      className={cn("flex items-center gap-0.5 rounded-md border border-border p-0.5", className)}
+      className={cn(
+        "flex items-center gap-0.5 rounded-md border border-border p-0.5",
+        className,
+      )}
     >
       {OPTIONS.map(({ mode: option, label, Icon }) => {
         const active = mode === option;
@@ -48,7 +55,9 @@ export function ViewToggle({
             onClick={() => onChange(option)}
             className={cn(
               "grid size-7 place-items-center rounded-sm transition-colors",
-              active ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground",
+              active
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <Icon className="size-4" aria-hidden />

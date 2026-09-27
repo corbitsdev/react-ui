@@ -1,10 +1,16 @@
 import { Check, X } from "lucide-react";
 
-import type { StepDisplayStatus, StepListItem } from "../lib/workflow-registry.js";
+import type {
+  StepDisplayStatus,
+  StepListItem,
+} from "../lib/workflow-registry.js";
 import { cn } from "../lib/utils.js";
 import { StatusDot } from "./status-dot.js";
 
-export type { StepDisplayStatus, StepListItem } from "../lib/workflow-registry.js";
+export type {
+  StepDisplayStatus,
+  StepListItem,
+} from "../lib/workflow-registry.js";
 
 const STATE_LABEL: Record<StepDisplayStatus, string> = {
   pending: "Pending",
@@ -38,16 +44,37 @@ export function StepListRow({ step, className }: StepListRowProps) {
   return (
     <li
       data-step-status={step.status}
-      className={cn("grid grid-cols-[20px_minmax(0,1fr)_auto] items-start gap-2 py-1.5", className)}
+      className={cn(
+        "grid grid-cols-[20px_minmax(0,1fr)_auto] items-start gap-2 py-1.5",
+        className,
+      )}
     >
-      <span aria-hidden className={cn("mt-0.5 grid size-5 place-items-center rounded-sm border text-[10px] font-semibold", MARK_CLASS[step.status])}>
-        {step.status === "done" ? <Check className="size-3" /> : step.status === "failed" ? <X className="size-3" /> : step.status === "active" ? (
+      <span
+        aria-hidden
+        className={cn(
+          "mt-0.5 grid size-5 place-items-center rounded-sm border text-[10px] font-semibold",
+          MARK_CLASS[step.status],
+        )}
+      >
+        {step.status === "done" ? (
+          <Check className="size-3" />
+        ) : step.status === "failed" ? (
+          <X className="size-3" />
+        ) : step.status === "active" ? (
           <StatusDot label="" tone="emphasis" live />
         ) : null}
       </span>
       <span className="min-w-0">
-        <span className={cn("block truncate text-sm", LABEL_CLASS[step.status])}>{step.name}</span>
-        {step.meta === undefined ? null : <span className="block truncate text-xs text-muted-foreground">{step.meta}</span>}
+        <span
+          className={cn("block truncate text-sm", LABEL_CLASS[step.status])}
+        >
+          {step.name}
+        </span>
+        {step.meta === undefined ? null : (
+          <span className="block truncate text-xs text-muted-foreground">
+            {step.meta}
+          </span>
+        )}
       </span>
       <span className="shrink-0 text-[10.5px] font-bold uppercase tracking-[0.05em] text-muted-foreground">
         {STATE_LABEL[step.status]}
@@ -72,7 +99,11 @@ export type StepListProps = {
 export function StepList({ steps, label = "Steps", className }: StepListProps) {
   if (steps.length === 0) return null;
   return (
-    <ol aria-label={label} aria-live="polite" className={cn("flex flex-col", className)}>
+    <ol
+      aria-label={label}
+      aria-live="polite"
+      className={cn("flex flex-col", className)}
+    >
       {steps.map((step) => (
         <StepListRow key={step.id} step={step} />
       ))}

@@ -29,7 +29,11 @@ function render(node: React.ReactElement): Mounted {
 describe("RichEmptyState action size", () => {
   test("defaults its action button to size md", () => {
     const mounted = render(
-      <RichEmptyState title="Empty" description="Nothing here" actions={[{ label: "Go", variant: "primary" }]} />,
+      <RichEmptyState
+        title="Empty"
+        description="Nothing here"
+        actions={[{ label: "Go", variant: "primary" }]}
+      />,
     );
     const button = mounted.container.querySelector("[data-slot='button']");
     expect(button?.getAttribute("class") ?? "").toContain("h-9");

@@ -5,7 +5,11 @@ export default { title: "Workflow / Gate block" };
 
 export const Choice = () => (
   <GateBlock
-    gate={{ kind: "choice", title: "Send the renewal offer?", prompt: "The customer's plan expires in 3 days." }}
+    gate={{
+      kind: "choice",
+      title: "Send the renewal offer?",
+      prompt: "The customer's plan expires in 3 days.",
+    }}
     footer={
       <>
         <Button size="sm">Send it</Button>
@@ -18,7 +22,9 @@ export const Choice = () => (
 );
 
 export const ReviewList = () => (
-  <GateBlock gate={{ kind: "reviewList", title: "Review the flagged invoices" }}>
+  <GateBlock
+    gate={{ kind: "reviewList", title: "Review the flagged invoices" }}
+  >
     <ul className="flex flex-col gap-1 text-sm">
       <li>Acme Robotics — $4,200, 62 days overdue</li>
       <li>Blue Harbor Logistics — $1,180, 40 days overdue</li>
@@ -27,5 +33,11 @@ export const ReviewList = () => (
 );
 
 export const Form = () => (
-  <GateBlock gate={{ kind: "form", title: "Confirm the shipping address", prompt: "We could not verify this address automatically." }} />
+  <GateBlock
+    gate={{
+      kind: "form",
+      title: "Confirm the shipping address",
+      prompt: "We could not verify this address automatically.",
+    }}
+  />
 );

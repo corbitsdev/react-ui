@@ -17,13 +17,28 @@ export const Default = () => {
 };
 
 export const Focus = () => (
-  <Checkbox label="Auto-approve safe actions" checked={false} onCheckedChange={() => {}} id="focus-demo" />
+  <Checkbox
+    label="Auto-approve safe actions"
+    checked={false}
+    onCheckedChange={() => {}}
+    id="focus-demo"
+  />
 );
 
 export const Disabled = () => (
   <div className="flex flex-col gap-3">
-    <Checkbox label="Disabled unchecked" checked={false} onCheckedChange={() => {}} disabled />
-    <Checkbox label="Disabled checked" checked onCheckedChange={() => {}} disabled />
+    <Checkbox
+      label="Disabled unchecked"
+      checked={false}
+      onCheckedChange={() => {}}
+      disabled
+    />
+    <Checkbox
+      label="Disabled checked"
+      checked
+      onCheckedChange={() => {}}
+      disabled
+    />
   </div>
 );
 
@@ -88,7 +103,11 @@ export const Indeterminate = () => {
             label={`Item ${index + 1}`}
             checked={checked}
             onCheckedChange={(next) =>
-              setItems(items.map((value, itemIndex) => (itemIndex === index ? next : value)))
+              setItems(
+                items.map((value, itemIndex) =>
+                  itemIndex === index ? next : value,
+                ),
+              )
             }
           />
         ))}

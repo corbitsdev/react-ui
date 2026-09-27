@@ -75,4 +75,10 @@ export type PartEvent = {
   readonly data?: unknown;
 };
 
-export type Part = PartText | PartReasoning | PartToolTrace | PartBlock | PartFile | PartEvent;
+export type Part =
+  | PartText
+  | PartReasoning
+  | PartToolTrace
+  | PartBlock
+  | PartFile
+  | PartEvent;

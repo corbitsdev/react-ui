@@ -29,7 +29,9 @@ function render(node: React.ReactElement): Mounted {
 describe("SidebarItemRow theming tokens", () => {
   test("selected row's background reads the --sidebar-row-selected-bg token, not a hardcoded utility", () => {
     const mounted = render(<SidebarItemRow name="general" selected />);
-    const row = mounted.container.querySelector("[data-slot='sidebar-item-row'] > div");
+    const row = mounted.container.querySelector(
+      "[data-slot='sidebar-item-row'] > div",
+    );
     const className = row?.getAttribute("class") ?? "";
     expect(className).toContain("bg-[var(--sidebar-row-selected-bg)]");
     expect(className).not.toContain("bg-primary/10");
@@ -38,10 +40,16 @@ describe("SidebarItemRow theming tokens", () => {
 
   test("row and its button read the --sidebar-row-radius token, not a hardcoded rounded-md", () => {
     const mounted = render(<SidebarItemRow name="general" />);
-    const row = mounted.container.querySelector("[data-slot='sidebar-item-row'] > div");
+    const row = mounted.container.querySelector(
+      "[data-slot='sidebar-item-row'] > div",
+    );
     const button = mounted.container.querySelector("button");
-    expect(row?.getAttribute("class") ?? "").toContain("rounded-[var(--sidebar-row-radius)]");
-    expect(button?.getAttribute("class") ?? "").toContain("rounded-[var(--sidebar-row-radius)]");
+    expect(row?.getAttribute("class") ?? "").toContain(
+      "rounded-[var(--sidebar-row-radius)]",
+    );
+    expect(button?.getAttribute("class") ?? "").toContain(
+      "rounded-[var(--sidebar-row-radius)]",
+    );
     expect(row?.getAttribute("class") ?? "").not.toContain("rounded-md");
     mounted.unmount();
   });

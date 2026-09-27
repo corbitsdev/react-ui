@@ -66,14 +66,17 @@ export function AnimatedNumber({
     return () => cancelAnimationFrame(frameRef.current);
   }, [value, durationMs, reduce]);
 
-  const text = format === undefined ? display.toFixed(decimals) : format(display);
+  const text =
+    format === undefined ? display.toFixed(decimals) : format(display);
 
   return (
     <span className={cn("tabular-nums", className)}>
       {/* The settled value is what assistive tech reads — announcing every
           interpolated frame would be unusable. */}
       <span aria-hidden>{text}</span>
-      <span className="sr-only">{format === undefined ? value.toFixed(decimals) : format(value)}</span>
+      <span className="sr-only">
+        {format === undefined ? value.toFixed(decimals) : format(value)}
+      </span>
     </span>
   );
 }

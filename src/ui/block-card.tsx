@@ -19,7 +19,13 @@ export type BlockCardProps = {
  */
 export function BlockCard({ title, children, className }: BlockCardProps) {
   return (
-    <div data-slot="block-card" className={cn("overflow-hidden rounded-none border border-border bg-card", className)}>
+    <div
+      data-slot="block-card"
+      className={cn(
+        "overflow-hidden rounded-none border border-border bg-card",
+        className,
+      )}
+    >
       <div
         data-slot="block-card-header"
         className="flex items-center gap-2 border-b border-border px-3.5 py-2.5 text-xs font-bold tracking-[0.02em] text-primary-emphasis"
@@ -63,11 +69,17 @@ export function RiskBadge({ level, label, note, className }: RiskBadgeProps) {
     <span
       data-slot="risk-badge"
       data-risk={level}
-      className={cn("inline-flex items-center gap-1.5 text-xs font-bold [&_svg]:size-3.5", RISK_TONE_CLASS[level], className)}
+      className={cn(
+        "inline-flex items-center gap-1.5 text-xs font-bold [&_svg]:size-3.5",
+        RISK_TONE_CLASS[level],
+        className,
+      )}
     >
       <TriangleAlert aria-hidden />
       <span>{label}</span>
-      {note === undefined ? null : <span className="font-medium text-muted-foreground">{note}</span>}
+      {note === undefined ? null : (
+        <span className="font-medium text-muted-foreground">{note}</span>
+      )}
     </span>
   );
 }

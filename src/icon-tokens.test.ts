@@ -15,7 +15,11 @@ describe("icon-size tokens", () => {
   });
 
   test("declares the tokens once, on :root, not inside a dark-mode block", () => {
-    const rootBlock = theme.slice(theme.indexOf(":root {"), theme.indexOf(":root {") + theme.slice(theme.indexOf(":root {")).indexOf("\n}"));
+    const rootBlock = theme.slice(
+      theme.indexOf(":root {"),
+      theme.indexOf(":root {") +
+        theme.slice(theme.indexOf(":root {")).indexOf("\n}"),
+    );
     expect(rootBlock).toContain("--icon-size-nav");
     expect(rootBlock).toContain("--icon-size-topbar");
     expect(rootBlock).toContain("--icon-size-button");
@@ -26,6 +30,8 @@ describe("icon-size tokens", () => {
     expect(theme).toMatch(/--text-icon-nav:\s*var\(--icon-size-nav\)/);
     expect(theme).toMatch(/--text-icon-topbar:\s*var\(--icon-size-topbar\)/);
     expect(theme).toMatch(/--text-icon-button:\s*var\(--icon-size-button\)/);
-    expect(theme).toMatch(/--text-icon-checkbox:\s*var\(--icon-size-checkbox\)/);
+    expect(theme).toMatch(
+      /--text-icon-checkbox:\s*var\(--icon-size-checkbox\)/,
+    );
   });
 });

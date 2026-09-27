@@ -11,8 +11,10 @@ export const NoPanel = () => (
 );
 
 export const WithDitherCanvasPanel = () => (
-  <AuthLayout brand="Acme" panel={<DitherCanvas className="absolute inset-0" />}>
+  <AuthLayout
+    brand="Acme"
+    panel={<DitherCanvas className="absolute inset-0" />}
+  >
     <LoginForm onSubmit={() => {}} />
   </AuthLayout>
 );
-

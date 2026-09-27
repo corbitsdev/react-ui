@@ -28,17 +28,24 @@ function render(node: React.ReactElement): Mounted {
 
 describe("BlockCard", () => {
   test("renders zero-radius bordered frame with title and body", () => {
-    const mounted = render(<BlockCard title="Cancel order">Body content</BlockCard>);
+    const mounted = render(
+      <BlockCard title="Cancel order">Body content</BlockCard>,
+    );
     const card = mounted.container.querySelector("[data-slot='block-card']");
     expect(card?.getAttribute("class") ?? "").toContain("rounded-none");
-    expect(mounted.container.querySelector("[data-slot='block-card-title']")?.textContent).toBe("Cancel order");
+    expect(
+      mounted.container.querySelector("[data-slot='block-card-title']")
+        ?.textContent,
+    ).toBe("Cancel order");
     expect(mounted.container.textContent).toContain("Body content");
     mounted.unmount();
   });
 
   test("header pulse dot is decorative and not announced twice", () => {
     const mounted = render(<BlockCard title="Cancel order">Body</BlockCard>);
-    const header = mounted.container.querySelector("[data-slot='block-card-header']");
+    const header = mounted.container.querySelector(
+      "[data-slot='block-card-header']",
+    );
     const dot = header?.firstElementChild;
     expect(dot?.getAttribute("aria-hidden")).toBe("true");
     mounted.unmount();
@@ -59,7 +66,9 @@ describe("RiskBadge", () => {
   });
 
   test("renders the label as real text, and an optional note alongside it", () => {
-    const mounted = render(<RiskBadge level="high" label="High risk" note="No undo" />);
+    const mounted = render(
+      <RiskBadge level="high" label="High risk" note="No undo" />,
+    );
     expect(mounted.container.textContent).toContain("High risk");
     expect(mounted.container.textContent).toContain("No undo");
     mounted.unmount();

@@ -13,7 +13,13 @@ import { classifyRunError } from "./workflow-run-error.js";
  * rule encoded here: a step counts as passed once its own phase is completed
  * OR any later step has progressed at all.
  */
-export type StepPhase = "pending" | "in-flight" | "awaiting-signal" | "awaiting-timer" | "completed" | "failed";
+export type StepPhase =
+  | "pending"
+  | "in-flight"
+  | "awaiting-signal"
+  | "awaiting-timer"
+  | "completed"
+  | "failed";
 
 export type RunPhase = "pending" | "in-flight" | "completed" | "failed";
 
@@ -45,7 +51,10 @@ export function workflowStepLabelClass(status: WorkflowStepStatus): string {
 }
 
 /** Mark glyph for a step's status: a checkmark, an exclamation, or its number. */
-export function workflowStepGlyph(status: WorkflowStepStatus, number: number): string {
+export function workflowStepGlyph(
+  status: WorkflowStepStatus,
+  number: number,
+): string {
   if (status === "completed") return "✓";
   if (status === "failed") return "!";
   return String(number);
@@ -68,19 +77,33 @@ export type DisplayStep = {
   readonly activityLabel?: string;
 };
 
-export function getStepPhase(progress: RunProgress | null, stepId: string): StepPhase | undefined {
+export function getStepPhase(
+  progress: RunProgress | null,
+  stepId: string,
+): StepPhase | undefined {
   return progress?.steps.get(stepId)?.phase;
 }
 
 export function isStepRunning(phase: StepPhase | undefined): boolean {
-  return phase === "in-flight" || phase === "awaiting-signal" || phase === "awaiting-timer";
+  return (
+    phase === "in-flight" ||
+    phase === "awaiting-signal" ||
+    phase === "awaiting-timer"
+  );
 }
 
 /** The aggregate phase of a display step from its runtime steps. */
-export function displayStepPhase(progress: RunProgress | null, stepIds: readonly string[]): StepPhase | undefined {
+export function displayStepPhase(
+  progress: RunProgress | null,
+  stepIds: readonly string[],
+): StepPhase | undefined {
   if (stepIds.length === 0) return undefined;
   const terminal = stepIds[stepIds.length - 1];
-  if (terminal !== undefined && getStepPhase(progress, terminal) === "completed") return "completed";
+  if (
+    terminal !== undefined &&
+    getStepPhase(progress, terminal) === "completed"
+  )
+    return "completed";
   for (const id of stepIds) {
     const phase = getStepPhase(progress, id);
     if (isStepRunning(phase)) return phase;
@@ -94,7 +117,10 @@ export function displayStepPhase(progress: RunProgress | null, stepIds: readonly
   return undefined;
 }
 
-function hasAnyProgress(progress: RunProgress | null, step: DisplayStep): boolean {
+function hasAnyProgress(
+  progress: RunProgress | null,
+  step: DisplayStep,
+): boolean {
   return step.stepIds.some((id) => getStepPhase(progress, id) !== undefined);
 }
 
@@ -105,21 +131,29 @@ function hasAnyProgress(progress: RunProgress | null, step: DisplayStep): boolea
  * a later step's progress says nothing about whether this one failed.
  * Returns the last index once every step is complete.
  */
-export function activeDisplayStepIndex(progress: RunProgress | null, steps: readonly DisplayStep[]): number {
+export function activeDisplayStepIndex(
+  progress: RunProgress | null,
+  steps: readonly DisplayStep[],
+): number {
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     if (step === undefined) continue;
     const phase = displayStepPhase(progress, step.stepIds);
     if (phase === "completed") continue;
     if (phase === "failed") return i;
-    const laterProgressed = steps.slice(i + 1).some((later) => hasAnyProgress(progress, later));
+    const laterProgressed = steps
+      .slice(i + 1)
+      .some((later) => hasAnyProgress(progress, later));
     if (laterProgressed) continue;
     return i;
   }
   return Math.max(0, steps.length - 1);
 }
 
-export function buildStepperSteps(progress: RunProgress | null, steps: readonly DisplayStep[]): WorkflowStep[] {
+export function buildStepperSteps(
+  progress: RunProgress | null,
+  steps: readonly DisplayStep[],
+): WorkflowStep[] {
   const activeIdx = activeDisplayStepIndex(progress, steps);
   // A completed run marks every entry done: the final step's output can lag
   // behind the run's own terminal phase, and without this it would linger
@@ -133,14 +167,22 @@ export function buildStepperSteps(progress: RunProgress | null, steps: readonly 
       status = "pending";
     } else {
       const phase = displayStepPhase(progress, step.stepIds);
-      status = phase === "completed" ? "completed" : phase === "failed" ? "failed" : "current";
+      status =
+        phase === "completed"
+          ? "completed"
+          : phase === "failed"
+            ? "failed"
+            : "current";
     }
     return { number: i + 1, label: step.label, status };
   });
 }
 
 /** The active display step, or `null` while the run is terminal. */
-export function activeDisplayStep(progress: RunProgress | null, steps: readonly DisplayStep[]): DisplayStep | null {
+export function activeDisplayStep(
+  progress: RunProgress | null,
+  steps: readonly DisplayStep[],
+): DisplayStep | null {
   if (steps.length === 0) return null;
   return steps[activeDisplayStepIndex(progress, steps)] ?? null;
 }
@@ -153,9 +195,13 @@ export function activeDisplayStep(progress: RunProgress | null, steps: readonly 
  * carries no `activityLabel` at all (a gate or intake step): silence there is
  * correct, never a stepper noun standing in for it.
  */
-export function liveStatusLabel(progress: RunProgress | null, steps: readonly DisplayStep[]): string | null {
+export function liveStatusLabel(
+  progress: RunProgress | null,
+  steps: readonly DisplayStep[],
+): string | null {
   if (progress === null) return null;
-  if (progress.phase === "failed" || progress.phase === "completed") return null;
+  if (progress.phase === "failed" || progress.phase === "completed")
+    return null;
   const idx = activeDisplayStepIndex(progress, steps);
   if (idx === 0) return null;
   const step = steps[idx];
@@ -168,10 +214,14 @@ export function liveStatusLabel(progress: RunProgress | null, steps: readonly Di
 /** Label of the first display step whose aggregate phase is `failed`. Does
  * not require `progress.phase === "failed"` — a caller flagging failure from
  * a single failed step ahead of the run's own phase flip still gets a name. */
-export function failedDisplayStepLabel(progress: RunProgress | null, steps: readonly DisplayStep[]): string | null {
+export function failedDisplayStepLabel(
+  progress: RunProgress | null,
+  steps: readonly DisplayStep[],
+): string | null {
   if (progress === null) return null;
   for (const step of steps) {
-    if (displayStepPhase(progress, step.stepIds) === "failed") return step.label;
+    if (displayStepPhase(progress, step.stepIds) === "failed")
+      return step.label;
   }
   return null;
 }
@@ -180,10 +230,13 @@ export function failedDisplayStepLabel(progress: RunProgress | null, steps: read
  * `null` if the run has not failed or no step carries an error. Uses the
  * first error found in map-iteration order — a run design that attaches an
  * error to more than one step at once is a design this cannot disambiguate. */
-export function failedRunErrorMessage(progress: RunProgress | null): string | null {
+export function failedRunErrorMessage(
+  progress: RunProgress | null,
+): string | null {
   if (progress?.phase !== "failed") return null;
   for (const step of progress.steps.values()) {
-    if (step.lastErrorMessage !== undefined) return classifyRunError(step.lastErrorMessage).userMessage;
+    if (step.lastErrorMessage !== undefined)
+      return classifyRunError(step.lastErrorMessage).userMessage;
   }
   return null;
 }
@@ -196,7 +249,10 @@ export function failedRunErrorMessage(progress: RunProgress | null): string | nu
  * shape regardless of phase — in that case whether it started is unknown, so
  * this returns `false` rather than making a false "never started" claim.
  */
-export function runNeverStarted(progress: RunProgress | null, logRead: boolean): boolean {
+export function runNeverStarted(
+  progress: RunProgress | null,
+  logRead: boolean,
+): boolean {
   return progress !== null && logRead && progress.steps.size === 0;
 }
 
@@ -204,6 +260,7 @@ export function runNeverStarted(progress: RunProgress | null, logRead: boolean):
  * recorded any activity: queued (`pending`, or no progress yet) reads
  * differently from a runtime already booting that first step. */
 export function runStartLabel(progress: RunProgress | null): string {
-  if (progress === null || progress.phase === "pending") return "Starting your workflow…";
+  if (progress === null || progress.phase === "pending")
+    return "Starting your workflow…";
   return "Preparing your workflow…";
 }

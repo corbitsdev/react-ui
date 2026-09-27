@@ -15,13 +15,19 @@ const UNITS: readonly (readonly [Intl.RelativeTimeFormatUnit, number])[] = [
  * is untestable and re-renders to a different string than the server produced.
  * Pass the server's render time when hydrating.
  */
-export function formatRelativeTime(iso: string, now: number = Date.now()): string {
+export function formatRelativeTime(
+  iso: string,
+  now: number = Date.now(),
+): string {
   const then = Date.parse(iso);
   if (Number.isNaN(then)) return "";
 
   const delta = then - now;
   const magnitude = Math.abs(delta);
-  const format = new Intl.RelativeTimeFormat(undefined, { numeric: "auto", style: "narrow" });
+  const format = new Intl.RelativeTimeFormat(undefined, {
+    numeric: "auto",
+    style: "narrow",
+  });
 
   for (const [unit, ms] of UNITS) {
     if (magnitude >= ms) return format.format(Math.round(delta / ms), unit);

@@ -27,7 +27,13 @@ export type MessageBubbleProps = {
  * renderer is the host's decision to make, with the host's sanitiser — pass one
  * as `children`.
  */
-export function MessageBubble({ message, onRetry, now, children, className }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  onRetry,
+  now,
+  children,
+  className,
+}: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
   const failed = message.status === "failed";
@@ -36,7 +42,10 @@ export function MessageBubble({ message, onRetry, now, children, className }: Me
     return (
       <p
         data-slot="message-bubble"
-        className={cn("px-2 py-1 text-center text-xs text-muted-foreground", className)}
+        className={cn(
+          "px-2 py-1 text-center text-xs text-muted-foreground",
+          className,
+        )}
       >
         {children ?? messageText(message)}
       </p>
@@ -46,7 +55,11 @@ export function MessageBubble({ message, onRetry, now, children, className }: Me
   return (
     <div
       data-slot="message-bubble"
-      className={cn("flex flex-col gap-1", isUser ? "items-end" : "items-start", className)}
+      className={cn(
+        "flex flex-col gap-1",
+        isUser ? "items-end" : "items-start",
+        className,
+      )}
     >
       <div
         className={cn(
@@ -59,7 +72,9 @@ export function MessageBubble({ message, onRetry, now, children, className }: Me
       </div>
 
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-        <time dateTime={message.createdAt}>{formatRelativeTime(message.createdAt, now)}</time>
+        <time dateTime={message.createdAt}>
+          {formatRelativeTime(message.createdAt, now)}
+        </time>
         {message.status === "sending" ? <span>Sending…</span> : null}
         {failed ? (
           <>
@@ -69,7 +84,11 @@ export function MessageBubble({ message, onRetry, now, children, className }: Me
               Not sent
             </span>
             {onRetry === undefined ? null : (
-              <button type="button" onClick={onRetry} className="text-primary-emphasis hover:underline">
+              <button
+                type="button"
+                onClick={onRetry}
+                className="text-primary-emphasis hover:underline"
+              >
                 Retry
               </button>
             )}

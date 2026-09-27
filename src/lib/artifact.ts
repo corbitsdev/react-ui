@@ -58,7 +58,10 @@ const FORM_BY_SUFFIX: readonly (readonly [RegExp, ArtifactForm])[] = [
   [/(^|-)csv(-|$)|(^|-)sheet(-|$)|(^|-)table(-|$)/, "table"],
   [/(^|-)comparison(-|$)|(^|-)compare(-|$)|^ab-/, "comparison"],
   [/(^|-)research(-|$)|(^|-)brief(-|$)/, "research"],
-  [/(^|-)deck(-|$)|(^|-)presentation(-|$)|(^|-)slides(-|$)|(^|-)embed(-|$)/, "embed"],
+  [
+    /(^|-)deck(-|$)|(^|-)presentation(-|$)|(^|-)slides(-|$)|(^|-)embed(-|$)/,
+    "embed",
+  ],
   [/(^|-)image(-|$)|(^|-)photo(-|$)|(^|-)screenshot(-|$)/, "image"],
   [/(^|-)file(-|$)|(^|-)upload(-|$)|(^|-)binary(-|$)/, "download"],
 ];

@@ -101,7 +101,9 @@ export function Tabs<Id extends string>({
         }}
         className={cn(
           "flex flex-wrap items-center",
-          variant === "underline" ? "gap-1 border-b border-border" : "gap-1 rounded-md border border-border p-1",
+          variant === "underline"
+            ? "gap-1 border-b border-border"
+            : "gap-1 rounded-md border border-border p-1",
         )}
       >
         {tabs.map((tab) => {
@@ -135,14 +137,21 @@ export function Tabs<Id extends string>({
             >
               {tab.label}
               {tab.count === undefined ? null : (
-                <span className="rounded-sm bg-muted px-1.5 font-mono text-xs text-muted-foreground">{tab.count}</span>
+                <span className="rounded-sm bg-muted px-1.5 font-mono text-xs text-muted-foreground">
+                  {tab.count}
+                </span>
               )}
             </button>
           );
         })}
       </div>
 
-      <div role="tabpanel" id={panelId(active)} aria-labelledby={tabId(active)} tabIndex={0}>
+      <div
+        role="tabpanel"
+        id={panelId(active)}
+        aria-labelledby={tabId(active)}
+        tabIndex={0}
+      >
         {children(active)}
       </div>
     </div>

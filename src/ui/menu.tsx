@@ -38,7 +38,10 @@ export function MenuContent({
   );
 }
 
-export function MenuItem({ className, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Item>) {
+export function MenuItem({
+  className,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Item>) {
   return (
     <DropdownMenuPrimitive.Item
       data-slot="menu-item"
@@ -51,17 +54,26 @@ export function MenuItem({ className, ...props }: React.ComponentProps<typeof Dr
   );
 }
 
-export function MenuLabel({ className, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Label>) {
+export function MenuLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Label>) {
   return (
     <DropdownMenuPrimitive.Label
       data-slot="menu-label"
-      className={cn("px-2.5 py-1.5 text-xs font-semibold text-muted-foreground", className)}
+      className={cn(
+        "px-2.5 py-1.5 text-xs font-semibold text-muted-foreground",
+        className,
+      )}
       {...props}
     />
   );
 }
 
-export function MenuSeparator({ className, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
+export function MenuSeparator({
+  className,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
   return (
     <DropdownMenuPrimitive.Separator
       data-slot="menu-separator"

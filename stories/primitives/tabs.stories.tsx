@@ -15,7 +15,12 @@ type TabId = (typeof tabs)[number]["id"];
 export const Underline = () => {
   const [active, setActive] = useState<TabId>("overview");
   return (
-    <Tabs tabs={tabs} active={active} onChange={setActive} label="Workflow sections">
+    <Tabs
+      tabs={tabs}
+      active={active}
+      onChange={setActive}
+      label="Workflow sections"
+    >
       {(id) => <p className="text-sm text-muted-foreground">Panel: {id}</p>}
     </Tabs>
   );
@@ -24,7 +29,13 @@ export const Underline = () => {
 export const Enclosed = () => {
   const [active, setActive] = useState<TabId>("runs");
   return (
-    <Tabs tabs={tabs} active={active} onChange={setActive} label="Workflow sections" variant="enclosed">
+    <Tabs
+      tabs={tabs}
+      active={active}
+      onChange={setActive}
+      label="Workflow sections"
+      variant="enclosed"
+    >
       {(id) => <p className="text-sm text-muted-foreground">Panel: {id}</p>}
     </Tabs>
   );

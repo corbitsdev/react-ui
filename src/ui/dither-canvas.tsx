@@ -52,7 +52,12 @@ export type DitherCanvasProps = {
  * that the grid is resampled by the compositor on a retina display and the
  * crisp dot pattern — the entire effect — turns to mush.
  */
-export function DitherCanvas({ cell = 4, color, warpRadius = 160, className }: DitherCanvasProps) {
+export function DitherCanvas({
+  cell = 4,
+  color,
+  warpRadius = 160,
+  className,
+}: DitherCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const reduce = usePrefersReducedMotion();
 
@@ -103,7 +108,8 @@ export function DitherCanvas({ cell = 4, color, warpRadius = 160, className }: D
           // Base field: a soft diagonal gradient with a slow sine drift, so the
           // panel is darkest at one corner and the grain has somewhere to go.
           const across = (x / Math.max(width, 1) + y / Math.max(height, 1)) / 2;
-          let intensity = 0.55 - across * 0.5 + Math.sin(across * 6 + drift) * 0.08;
+          let intensity =
+            0.55 - across * 0.5 + Math.sin(across * 6 + drift) * 0.08;
 
           if (warpRadius > 0) {
             const dx = x - pointer.x;
@@ -165,5 +171,11 @@ export function DitherCanvas({ cell = 4, color, warpRadius = 160, className }: D
     };
   }, [cell, color, warpRadius, reduce]);
 
-  return <canvas ref={ref} aria-hidden className={cn("block size-full", className)} />;
+  return (
+    <canvas
+      ref={ref}
+      aria-hidden
+      className={cn("block size-full", className)}
+    />
+  );
 }

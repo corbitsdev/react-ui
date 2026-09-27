@@ -10,7 +10,9 @@ function subscribe(callback: () => void): () => void {
 }
 
 function getSnapshot(): boolean {
-  return typeof window === "undefined" ? false : window.matchMedia(QUERY).matches;
+  return typeof window === "undefined"
+    ? false
+    : window.matchMedia(QUERY).matches;
 }
 
 function getServerSnapshot(): boolean {

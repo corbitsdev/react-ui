@@ -62,10 +62,15 @@ const REQUIRED = [
 /** Hex custom properties declared in the first `selector { ... }` block found. */
 function tokensIn(css, selector) {
   const start = css.indexOf(`${selector} {`);
-  if (start === -1) throw new Error(`contrast-test: no \`${selector}\` block in dist/styles.css`);
+  if (start === -1)
+    throw new Error(
+      `contrast-test: no \`${selector}\` block in dist/styles.css`,
+    );
   const body = css.slice(start, css.indexOf("}", start));
   return Object.fromEntries(
-    [...body.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\b/g)].map(([, name, hex]) => [name, hex]),
+    [...body.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\b/g)].map(
+      ([, name, hex]) => [name, hex],
+    ),
   );
 }
 
@@ -73,7 +78,9 @@ function tokensIn(css, selector) {
 function declaredIn(css, selector) {
   const start = css.indexOf(`${selector} {`);
   const body = css.slice(start, css.indexOf("}", start));
-  return new Set([...body.matchAll(/--([a-z0-9-]+):/g)].map(([, name]) => name));
+  return new Set(
+    [...body.matchAll(/--([a-z0-9-]+):/g)].map(([, name]) => name),
+  );
 }
 
 const AA_TEXT = 4.5; // WCAG 1.4.3, normal-size text
@@ -115,7 +122,9 @@ for (const [mode, declared] of [
 ]) {
   for (const name of REQUIRED) {
     if (declared.has(name)) continue;
-    console.error(`MISSING  ${mode} --${name} is not defined in dist/styles.css`);
+    console.error(
+      `MISSING  ${mode} --${name} is not defined in dist/styles.css`,
+    );
     missingTokens += 1;
   }
 }
@@ -132,7 +141,8 @@ const SURFACES = ["background", "card", "popover", "muted"];
 
 /** Every check, expressed against a mode's token record. */
 function checksFor(tokens) {
-  const has = (name) => typeof tokens[name] === "string" && tokens[name].startsWith("#");
+  const has = (name) =>
+    typeof tokens[name] === "string" && tokens[name].startsWith("#");
   const checks = [];
 
   // 1. Every `X-foreground` must be readable on its own `X`.
@@ -147,7 +157,12 @@ function checksFor(tokens) {
   for (const text of ["foreground", "muted-foreground"]) {
     for (const surface of SURFACES) {
       if (has(text) && has(surface)) {
-        checks.push([`${text} on ${surface}`, tokens[text], tokens[surface], AA_TEXT]);
+        checks.push([
+          `${text} on ${surface}`,
+          tokens[text],
+          tokens[surface],
+          AA_TEXT,
+        ]);
       }
     }
   }
@@ -155,7 +170,12 @@ function checksFor(tokens) {
   // 3. Orange-as-text/border must clear text contrast on the surfaces it sits on.
   for (const surface of ["background", "card"]) {
     if (has("primary-emphasis") && has(surface)) {
-      checks.push([`primary-emphasis on ${surface}`, tokens["primary-emphasis"], tokens[surface], AA_TEXT]);
+      checks.push([
+        `primary-emphasis on ${surface}`,
+        tokens["primary-emphasis"],
+        tokens[surface],
+        AA_TEXT,
+      ]);
     }
   }
 
@@ -163,7 +183,12 @@ function checksFor(tokens) {
   for (const line of ["input", "ring"]) {
     for (const surface of ["background", "card"]) {
       if (has(line) && has(surface)) {
-        checks.push([`${line} against ${surface}`, tokens[line], tokens[surface], AA_UI]);
+        checks.push([
+          `${line} against ${surface}`,
+          tokens[line],
+          tokens[surface],
+          AA_UI,
+        ]);
       }
     }
   }
@@ -173,7 +198,12 @@ function checksFor(tokens) {
   // the 3:1 UI-component threshold (WCAG 1.4.11), not the 4.5:1 text one.
   for (const surface of ["background", "card"]) {
     if (has("destructive") && has(surface)) {
-      checks.push([`destructive border against ${surface}`, tokens["destructive"], tokens[surface], AA_UI]);
+      checks.push([
+        `destructive border against ${surface}`,
+        tokens["destructive"],
+        tokens[surface],
+        AA_UI,
+      ]);
     }
   }
 
@@ -192,7 +222,12 @@ function checksFor(tokens) {
     if (!/^chart-\d+$/.test(name) || !has(name)) continue;
     for (const surface of ["background", "card"]) {
       if (has(surface)) {
-        checks.push([`${name} against ${surface}`, tokens[name], tokens[surface], AA_UI]);
+        checks.push([
+          `${name} against ${surface}`,
+          tokens[name],
+          tokens[surface],
+          AA_UI,
+        ]);
       }
     }
   }

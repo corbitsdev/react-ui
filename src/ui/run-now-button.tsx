@@ -62,7 +62,11 @@ export function RunNowButton({
       }}
     >
       <span aria-live="polite">
-        {state === "pending" ? pendingLabel : state === "done" ? doneLabel : label}
+        {state === "pending"
+          ? pendingLabel
+          : state === "done"
+            ? doneLabel
+            : label}
       </span>
     </Button>
   );

@@ -27,7 +27,13 @@ export type RichEmptyStateProps = {
   readonly className?: string;
 };
 
-function ActionControl({ action, size }: { readonly action: RichEmptyStateAction; readonly size: ButtonProps["size"] }) {
+function ActionControl({
+  action,
+  size,
+}: {
+  readonly action: RichEmptyStateAction;
+  readonly size: ButtonProps["size"];
+}) {
   const variant = action.variant === "primary" ? "primary" : "secondary";
   if (action.href !== undefined) {
     return (
@@ -37,7 +43,12 @@ function ActionControl({ action, size }: { readonly action: RichEmptyStateAction
     );
   }
   return (
-    <Button type="button" variant={variant} size={size} onClick={action.onClick}>
+    <Button
+      type="button"
+      variant={variant}
+      size={size}
+      onClick={action.onClick}
+    >
       {action.label}
     </Button>
   );
@@ -71,16 +82,25 @@ export function RichEmptyState({
       )}
     >
       {icon === undefined ? null : (
-        <div aria-hidden className="mb-4 grid size-12 place-items-center rounded-[12px] bg-muted text-muted-foreground">
+        <div
+          aria-hidden
+          className="mb-4 grid size-12 place-items-center rounded-[12px] bg-muted text-muted-foreground"
+        >
           {icon}
         </div>
       )}
       <h3 className="text-[15px] font-bold tracking-[-0.01em]">{title}</h3>
-      <p className="mt-2 max-w-md text-[13px] leading-relaxed text-muted-foreground">{description}</p>
+      <p className="mt-2 max-w-md text-[13px] leading-relaxed text-muted-foreground">
+        {description}
+      </p>
       {actions !== undefined && actions.length > 0 ? (
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           {actions.map((action) => (
-            <ActionControl key={action.label} action={action} size={actionSize} />
+            <ActionControl
+              key={action.label}
+              action={action}
+              size={actionSize}
+            />
           ))}
         </div>
       ) : null}

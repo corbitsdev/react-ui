@@ -24,9 +24,10 @@ function mount(initialProps: ComponentProps<typeof ReasoningBlock>) {
       });
     },
     // happy-dom delivers `toggle` on a queued task, same as real browsers.
-    flushToggle: () => act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    }),
+    flushToggle: () =>
+      act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }),
     unmount: () => act(() => root.unmount()),
   };
 }
@@ -39,7 +40,9 @@ describe("ReasoningBlock", () => {
   });
 
   test("is collapsed by default and opens by activating the summary", async () => {
-    const { details, summary, body, flushToggle, unmount } = mount({ text: "Weighing two options." });
+    const { details, summary, body, flushToggle, unmount } = mount({
+      text: "Weighing two options.",
+    });
     expect(details()?.hasAttribute("open")).toBe(false);
     expect(body()).toBeTruthy();
 
@@ -53,12 +56,19 @@ describe("ReasoningBlock", () => {
     unmount();
   });
 
-  test("shows the duration label once idle, and \"Thinking…\" while streaming", () => {
-    const idle = mount({ text: "Done thinking.", durationLabel: "Thought for 4s" });
+  test('shows the duration label once idle, and "Thinking…" while streaming', () => {
+    const idle = mount({
+      text: "Done thinking.",
+      durationLabel: "Thought for 4s",
+    });
     expect(idle.summary()?.textContent).toBe("Thought for 4s");
     idle.unmount();
 
-    const streaming = mount({ text: "Still going.", streaming: true, durationLabel: "Thought for 4s" });
+    const streaming = mount({
+      text: "Still going.",
+      streaming: true,
+      durationLabel: "Thought for 4s",
+    });
     expect(streaming.summary()?.textContent).toBe("Thinking…");
     streaming.unmount();
   });
@@ -71,7 +81,11 @@ describe("ReasoningBlock", () => {
   });
 
   test("summary wording is overridable", () => {
-    const streaming = mount({ text: "Going.", streaming: true, streamingLabel: "Working…" });
+    const streaming = mount({
+      text: "Going.",
+      streaming: true,
+      streamingLabel: "Working…",
+    });
     expect(streaming.summary()?.textContent).toBe("Working…");
     streaming.unmount();
 
@@ -85,9 +99,15 @@ describe("ReasoningBlock", () => {
     expect(handle.summary()?.textContent).toBe("Thinking…");
     expect(handle.body()?.getAttribute("aria-busy")).toBe("true");
     // aria-live is unconditional so the streaming-to-idle wording change is announced.
-    expect(handle.summary()?.querySelector("[aria-live]")?.getAttribute("aria-live")).toBe("polite");
+    expect(
+      handle.summary()?.querySelector("[aria-live]")?.getAttribute("aria-live"),
+    ).toBe("polite");
 
-    handle.rerender({ text: "Reasoning.", streaming: false, durationLabel: "Thought for 4s" });
+    handle.rerender({
+      text: "Reasoning.",
+      streaming: false,
+      durationLabel: "Thought for 4s",
+    });
 
     expect(handle.summary()?.textContent).toContain("Thought for 4s");
     expect(handle.body()?.getAttribute("aria-busy")).toBe("false");
@@ -122,7 +142,9 @@ describe("ReasoningBlock", () => {
     expect(handle.details()?.hasAttribute("open")).toBe(false);
 
     act(() => {
-      handle.summary()?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      handle
+        .summary()
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     await handle.flushToggle();
     expect(seen).toEqual([true]);

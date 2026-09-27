@@ -24,12 +24,14 @@ function mountSelection(ids: readonly string[] = IDS) {
 
   return {
     get: () => result,
-    toggle: (id: string, modifiers?: { shiftKey?: boolean }) => act(() => result.toggle(id, modifiers)),
+    toggle: (id: string, modifiers?: { shiftKey?: boolean }) =>
+      act(() => result.toggle(id, modifiers)),
     selectAll: () => act(() => result.selectAll()),
     clear: () => act(() => result.clear()),
     // Re-renders with a fresh `ids` array — exercises reconciliation and the
     // ref-backed callback identity independently of any state change.
-    rerenderWithIds: (nextIds: readonly string[]) => act(() => root.render(createElement(Host, { ids: nextIds }))),
+    rerenderWithIds: (nextIds: readonly string[]) =>
+      act(() => root.render(createElement(Host, { ids: nextIds }))),
     unmount: () => act(() => root.unmount()),
   };
 }

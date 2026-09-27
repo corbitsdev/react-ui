@@ -1,5 +1,10 @@
 import type { BreadcrumbLinkProps } from "../../src/ui/top-bar.js";
-import { TopBar, TopBarActions, TopBarBreadcrumbs, TopBarTitle } from "../../src/ui/top-bar.js";
+import {
+  TopBar,
+  TopBarActions,
+  TopBarBreadcrumbs,
+  TopBarTitle,
+} from "../../src/ui/top-bar.js";
 import { Button } from "../../src/ui/button.js";
 
 export default { title: "Primitives / TopBar" };

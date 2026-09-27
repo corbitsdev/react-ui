@@ -2,7 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { act, createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import { CommandPalette, CommandPaletteInline, type CommandPaletteGroup } from "./command-palette.js";
+import {
+  CommandPalette,
+  CommandPaletteInline,
+  type CommandPaletteGroup,
+} from "./command-palette.js";
 
 const GROUPS: CommandPaletteGroup[] = [
   {
@@ -57,7 +61,9 @@ function mount() {
 
 function press(target: HTMLElement, key: string) {
   act(() => {
-    target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+    target.dispatchEvent(
+      new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }),
+    );
   });
 }
 
@@ -150,7 +156,9 @@ describe("CommandPalette", () => {
         }),
       );
     });
-    const button = document.body.querySelector("[data-slot='command-palette-load-more']") as HTMLButtonElement;
+    const button = document.body.querySelector(
+      "[data-slot='command-palette-load-more']",
+    ) as HTMLButtonElement;
     expect(button).not.toBeNull();
     act(() => {
       button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -172,11 +180,17 @@ describe("CommandPalette", () => {
           onQueryChange: () => {},
           groups: GROUPS,
           onSelect: () => {},
-          inputAccessory: createElement("span", { "data-testid": "scope-chip" }, "This bench"),
+          inputAccessory: createElement(
+            "span",
+            { "data-testid": "scope-chip" },
+            "This bench",
+          ),
         }),
       );
     });
-    const accessory = document.body.querySelector("[data-slot='command-palette-input-accessory']");
+    const accessory = document.body.querySelector(
+      "[data-slot='command-palette-input-accessory']",
+    );
     expect(accessory).not.toBeNull();
     expect(accessory?.textContent).toBe("This bench");
     const input = document.body.querySelector("input");
@@ -203,7 +217,9 @@ describe("CommandPalette", () => {
         }),
       );
     });
-    const footer = document.body.querySelector("[data-slot='command-palette-footer']");
+    const footer = document.body.querySelector(
+      "[data-slot='command-palette-footer']",
+    );
     expect(footer).not.toBeNull();
     expect(footer?.textContent).toBe("↑↓ to navigate");
     root.unmount();
@@ -211,8 +227,14 @@ describe("CommandPalette", () => {
 
   test("omits the accessory and footer slots when not provided", () => {
     const { unmount } = mount();
-    expect(document.body.querySelector("[data-slot='command-palette-input-accessory']")).toBeNull();
-    expect(document.body.querySelector("[data-slot='command-palette-footer']")).toBeNull();
+    expect(
+      document.body.querySelector(
+        "[data-slot='command-palette-input-accessory']",
+      ),
+    ).toBeNull();
+    expect(
+      document.body.querySelector("[data-slot='command-palette-footer']"),
+    ).toBeNull();
     unmount();
   });
 });
@@ -236,7 +258,11 @@ function mountInline(props: { readonly startOpen?: boolean } = {}) {
       onQueryChange: () => {},
       groups: GROUPS,
       onSelect: (id: string) => selected.push(id),
-      leading: createElement("button", { type: "button", "data-testid": "magnifier" }, "Search"),
+      leading: createElement(
+        "button",
+        { type: "button", "data-testid": "magnifier" },
+        "Search",
+      ),
     });
   }
 
@@ -247,9 +273,12 @@ function mountInline(props: { readonly startOpen?: boolean } = {}) {
   return {
     selected,
     openChanges,
-    field: () => container.querySelector("[data-slot='command-palette-inline-field']"),
-    results: () => container.querySelector("[data-slot='command-palette-inline-results']"),
-    magnifier: () => container.querySelector("[data-testid='magnifier']") as HTMLButtonElement,
+    field: () =>
+      container.querySelector("[data-slot='command-palette-inline-field']"),
+    results: () =>
+      container.querySelector("[data-slot='command-palette-inline-results']"),
+    magnifier: () =>
+      container.querySelector("[data-testid='magnifier']") as HTMLButtonElement,
     input: () => container.querySelector("input") as HTMLInputElement | null,
     unmount: () => {
       root.unmount();
@@ -260,7 +289,9 @@ function mountInline(props: { readonly startOpen?: boolean } = {}) {
 
 describe("CommandPaletteInline", () => {
   test("collapsed renders the leading slot alone — no input, no results panel", () => {
-    const { magnifier, input, results, unmount } = mountInline({ startOpen: false });
+    const { magnifier, input, results, unmount } = mountInline({
+      startOpen: false,
+    });
     expect(magnifier()).not.toBeNull();
     expect(input()).toBeNull();
     expect(results()).toBeNull();
@@ -297,11 +328,15 @@ describe("CommandPaletteInline", () => {
   test("a pointer press outside collapses it; one inside does not", () => {
     const { magnifier, openChanges, unmount } = mountInline();
     act(() => {
-      magnifier().dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+      magnifier().dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true }),
+      );
     });
     expect(openChanges).toEqual([]);
     act(() => {
-      document.body.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+      document.body.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true }),
+      );
     });
     expect(openChanges).toEqual([false]);
     unmount();

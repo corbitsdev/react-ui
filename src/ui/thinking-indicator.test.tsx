@@ -11,26 +11,32 @@ describe("ThinkingIndicator", () => {
 
     expect(html).toContain('role="status"');
     expect(html).toContain("Thinking...");
-    expect(html).toContain("aria-hidden=\"true\"");
+    expect(html).toContain('aria-hidden="true"');
     expect(html).toContain("corbits-thinking-silk");
   });
 
   test("renders every motion variant", () => {
     for (const variant of ["silk", "strata", "echo"] as const) {
-      const html = renderToStaticMarkup(createElement(ThinkingMark, { variant }));
+      const html = renderToStaticMarkup(
+        createElement(ThinkingMark, { variant }),
+      );
 
       expect(html).toContain(`corbits-thinking-${variant}`);
     }
   });
 
   test("paused freezes every animated node", () => {
-    const html = renderToStaticMarkup(createElement(ThinkingMark, { paused: true }));
+    const html = renderToStaticMarkup(
+      createElement(ThinkingMark, { paused: true }),
+    );
 
     expect(html).toContain("animation-play-state:paused");
   });
 
   test("echo hides its second wave under reduced motion", () => {
-    const html = renderToStaticMarkup(createElement(ThinkingMark, { variant: "echo" }));
+    const html = renderToStaticMarkup(
+      createElement(ThinkingMark, { variant: "echo" }),
+    );
 
     expect(html).toContain("motion-reduce:hidden");
   });

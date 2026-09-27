@@ -23,7 +23,8 @@ export const Center = () => (
       <DialogHeader>
         <DialogTitle>Archive this run?</DialogTitle>
         <DialogDescription>
-          Archived runs stay searchable. You can restore them later from the archive.
+          Archived runs stay searchable. You can restore them later from the
+          archive.
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
@@ -48,7 +49,8 @@ export const CenterScrollable = () => (
       <DialogHeader>
         <DialogTitle>Review checklist</DialogTitle>
         <DialogDescription>
-          Header and footer stay put. The body scrolls inside the craft max-height.
+          Header and footer stay put. The body scrolls inside the craft
+          max-height.
         </DialogDescription>
       </DialogHeader>
       <DialogBody className="space-y-3 text-sm">
@@ -78,7 +80,9 @@ export const RightSheet = () => (
     <DialogContent side="right">
       <DialogHeader>
         <DialogTitle>Run details</DialogTitle>
-        <DialogDescription>Inspect the latest attempt without leaving the list.</DialogDescription>
+        <DialogDescription>
+          Inspect the latest attempt without leaving the list.
+        </DialogDescription>
       </DialogHeader>
       <DialogBody className="space-y-3 text-sm">
         <p>
@@ -88,7 +92,10 @@ export const RightSheet = () => (
           Duration: <span className="font-medium text-foreground">1m 42s</span>
         </p>
         <p>
-          Trigger: <span className="font-medium text-foreground">schedule / daily-9am</span>
+          Trigger:{" "}
+          <span className="font-medium text-foreground">
+            schedule / daily-9am
+          </span>
         </p>
         {Array.from({ length: 40 }, (_, i) => (
           <p key={i} className="text-muted-foreground">
@@ -113,7 +120,9 @@ export const LeftSheet = () => (
     <DialogContent side="left">
       <DialogHeader>
         <DialogTitle>Filters</DialogTitle>
-        <DialogDescription>Narrow the workflow list. Escape or the X closes this sheet.</DialogDescription>
+        <DialogDescription>
+          Narrow the workflow list. Escape or the X closes this sheet.
+        </DialogDescription>
       </DialogHeader>
       <DialogBody className="space-y-4">
         <label className="grid gap-1.5 text-sm">

@@ -3,7 +3,11 @@ import { Skeleton } from "../../src/ui/skeleton.js";
 export default { title: "Primitives / Skeleton" };
 
 export const Loading = () => (
-  <div role="status" aria-label="Loading workflows" className="flex flex-col gap-2">
+  <div
+    role="status"
+    aria-label="Loading workflows"
+    className="flex flex-col gap-2"
+  >
     <Skeleton className="h-4 w-48" />
     <Skeleton className="h-4 w-64" />
     <Skeleton className="h-4 w-40" />

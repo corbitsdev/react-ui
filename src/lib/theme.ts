@@ -15,7 +15,11 @@ export type ResolvedThemeMode = "light" | "dark";
 export type ThemePreset = "default" | "warm" | "cool";
 
 export const THEME_MODES: readonly ThemeMode[] = ["system", "light", "dark"];
-export const THEME_PRESETS: readonly ThemePreset[] = ["default", "warm", "cool"];
+export const THEME_PRESETS: readonly ThemePreset[] = [
+  "default",
+  "warm",
+  "cool",
+];
 
 export const DEFAULT_THEME_STORAGE_KEY = "corbits-theme";
 
@@ -52,7 +56,9 @@ export function parseThemePreference(
     if (typeof parsed !== "object" || parsed === null) return fallback;
     const record = parsed as Record<string, unknown>;
     const mode = isThemeMode(record.mode) ? record.mode : fallback.mode;
-    const preset = isThemePreset(record.preset) ? record.preset : fallback.preset;
+    const preset = isThemePreset(record.preset)
+      ? record.preset
+      : fallback.preset;
     return { mode, preset };
   } catch {
     // Legacy: a bare mode string from an earlier client.

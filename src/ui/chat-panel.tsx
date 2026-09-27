@@ -12,11 +12,17 @@ import { cn } from "../lib/utils.js";
  * and each wants something different in the header — a thread switcher here, a
  * close button there. Composition is what makes one frame serve three shells.
  */
-export function ChatPanel({ className, ...props }: React.ComponentProps<"div">) {
+export function ChatPanel({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="chat-panel"
-      className={cn("flex min-h-0 flex-1 flex-col bg-background text-foreground", className)}
+      className={cn(
+        "flex min-h-0 flex-1 flex-col bg-background text-foreground",
+        className,
+      )}
       {...props}
     />
   );
@@ -31,7 +37,10 @@ export function ChatPanelHeader({
   return (
     <header
       data-slot="chat-panel-header"
-      className={cn("flex shrink-0 items-center gap-2.5 border-b border-border px-4 py-3", className)}
+      className={cn(
+        "flex shrink-0 items-center gap-2.5 border-b border-border px-4 py-3",
+        className,
+      )}
       {...props}
     >
       <span
@@ -43,7 +52,9 @@ export function ChatPanelHeader({
       <div className="flex min-w-0 flex-col">
         <p className="truncate text-sm font-semibold">{identity.name}</p>
         {identity.tagline === undefined ? null : (
-          <p className="truncate text-xs text-muted-foreground">{identity.tagline}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {identity.tagline}
+          </p>
         )}
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-1">{children}</div>
@@ -52,11 +63,20 @@ export function ChatPanelHeader({
 }
 
 /** The composer area: quick replies, the input, anything else pinned to the bottom. */
-export function ChatPanelFooter({ className, children }: { className?: string; children: ReactNode }) {
+export function ChatPanelFooter({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
   return (
     <div
       data-slot="chat-panel-footer"
-      className={cn("flex shrink-0 flex-col gap-2 border-t border-border p-3", className)}
+      className={cn(
+        "flex shrink-0 flex-col gap-2 border-t border-border p-3",
+        className,
+      )}
     >
       {children}
     </div>

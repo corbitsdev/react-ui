@@ -43,7 +43,10 @@ export function ThinkingLabel({
 
   useEffect(() => {
     if (verbs.length < 2 || reduceMotion) return;
-    const timer = setInterval(() => setAt((current) => (current + 1) % verbs.length), intervalMs);
+    const timer = setInterval(
+      () => setAt((current) => (current + 1) % verbs.length),
+      intervalMs,
+    );
     return () => clearInterval(timer);
   }, [verbs.length, intervalMs, reduceMotion]);
 

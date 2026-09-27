@@ -15,7 +15,13 @@ export type FilterChipProps = {
  * `<button>` with `aria-pressed`, not a styled label, so the selection state
  * is announced and the control is reachable with Space/Enter alone.
  */
-export function FilterChip({ selected = false, onClick, children, count, className }: FilterChipProps) {
+export function FilterChip({
+  selected = false,
+  onClick,
+  children,
+  count,
+  className,
+}: FilterChipProps) {
   return (
     <button
       type="button"
@@ -33,7 +39,12 @@ export function FilterChip({ selected = false, onClick, children, count, classNa
     >
       {children}
       {count === undefined ? null : (
-        <span className={cn("text-[10.5px] font-bold", selected ? "text-primary-emphasis" : "text-muted-foreground")}>
+        <span
+          className={cn(
+            "text-[10.5px] font-bold",
+            selected ? "text-primary-emphasis" : "text-muted-foreground",
+          )}
+        >
           {count}
         </span>
       )}

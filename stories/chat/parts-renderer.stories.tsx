@@ -6,7 +6,11 @@ export default { title: "Chat / Parts renderer" };
 /** A turn that thinks, calls a tool, and answers — rendered in the order it happened. */
 export const FullTurn = () => {
   const parts: Part[] = [
-    { kind: "reasoning", text: "The customer wants last week's shipped orders. I'll query the orders table.", durationMs: 4200 },
+    {
+      kind: "reasoning",
+      text: "The customer wants last week's shipped orders. I'll query the orders table.",
+      durationMs: 4200,
+    },
     {
       kind: "tool-trace",
       toolCallId: "call-1",
@@ -15,7 +19,10 @@ export const FullTurn = () => {
       status: "output-available",
       output: "412 orders",
     },
-    { kind: "text", text: "412 orders shipped this week, up 8% over last week." },
+    {
+      kind: "text",
+      text: "412 orders shipped this week, up 8% over last week.",
+    },
   ];
   return (
     <div className="max-w-lg rounded-lg border border-border bg-card p-4">
@@ -27,7 +34,9 @@ export const FullTurn = () => {
 /** Only a text part — the common case for a plain reply. */
 export const TextOnly = () => (
   <div className="max-w-lg rounded-lg border border-border bg-card p-4">
-    <PartsRenderer parts={[{ kind: "text", text: "Done — the report is attached below." }]} />
+    <PartsRenderer
+      parts={[{ kind: "text", text: "Done — the report is attached below." }]}
+    />
   </div>
 );
 
@@ -35,14 +44,18 @@ export const TextOnly = () => (
 export const Empty = () => (
   <div className="max-w-lg rounded-lg border border-dashed border-border bg-card p-4 text-xs text-muted-foreground">
     <PartsRenderer parts={[]} />
-    (nothing rendered above — this box is only here to show the empty state has no chrome)
+    (nothing rendered above — this box is only here to show the empty state has
+    no chrome)
   </div>
 );
 
 /** A tool call waiting on human approval, shown open by default. */
 export const ToolAwaitingApproval = () => {
   const parts: Part[] = [
-    { kind: "text", text: "This will cancel the customer's order and issue a refund." },
+    {
+      kind: "text",
+      text: "This will cancel the customer's order and issue a refund.",
+    },
     {
       kind: "tool-trace",
       toolCallId: "call-2",
@@ -63,7 +76,12 @@ export const ToolAwaitingApproval = () => {
 export const FileAttachments = () => {
   const parts: Part[] = [
     { kind: "text", text: "Here's the export." },
-    { kind: "file", name: "orders-2026-08.csv", mediaType: "text/csv", url: "https://example.com/f/1" },
+    {
+      kind: "file",
+      name: "orders-2026-08.csv",
+      mediaType: "text/csv",
+      url: "https://example.com/f/1",
+    },
     { kind: "file", name: "processing.csv", mediaType: "text/csv" },
   ];
   return (
@@ -85,7 +103,10 @@ export const UnregisteredBlockFallsBack = () => {
   const parts: Part[] = [
     {
       kind: "block",
-      block: { type: "poll", data: { title: "Ship Friday?", choices: ["Yes", "No"] } },
+      block: {
+        type: "poll",
+        data: { title: "Ship Friday?", choices: ["Yes", "No"] },
+      },
     },
   ];
   return (
@@ -99,7 +120,8 @@ export const UnregisteredBlockFallsBack = () => {
 export const LongContent = () => {
   const longThought = Array.from(
     { length: 12 },
-    (_, i) => `Step ${i + 1}: checked the ${["orders", "returns", "inventory", "shipping"][i % 4]} table.`,
+    (_, i) =>
+      `Step ${i + 1}: checked the ${["orders", "returns", "inventory", "shipping"][i % 4]} table.`,
   ).join(" ");
   const parts: Part[] = [
     { kind: "reasoning", text: longThought, durationMs: 61_500 },

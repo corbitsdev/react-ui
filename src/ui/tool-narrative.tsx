@@ -34,7 +34,12 @@ export type ToolNarrativeProps = {
   readonly className?: string;
 };
 
-export function ToolNarrative({ part, open: openProp, onOpenChange, className }: ToolNarrativeProps) {
+export function ToolNarrative({
+  part,
+  open: openProp,
+  onOpenChange,
+  className,
+}: ToolNarrativeProps) {
   const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: part.state === "error",
@@ -56,11 +61,23 @@ export function ToolNarrative({ part, open: openProp, onOpenChange, className }:
         <StatusDot
           label={STATE_TEXT[part.state]}
           live={part.state === "running"}
-          tone={part.state === "error" ? "danger" : part.state === "running" ? "emphasis" : "neutral"}
+          tone={
+            part.state === "error"
+              ? "danger"
+              : part.state === "running"
+                ? "emphasis"
+                : "neutral"
+          }
         />
         <span className="min-w-0 flex-1 truncate">{label}</span>
         {hasDetail ? (
-          <ChevronRight className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-90")} aria-hidden />
+          <ChevronRight
+            className={cn(
+              "size-3.5 shrink-0 transition-transform",
+              open && "rotate-90",
+            )}
+            aria-hidden
+          />
         ) : null}
       </button>
 
@@ -70,7 +87,9 @@ export function ToolNarrative({ part, open: openProp, onOpenChange, className }:
             <Detail title="Input">{JSON.stringify(part.input, null, 2)}</Detail>
           )}
           {part.output === undefined ? null : (
-            <Detail title={part.state === "error" ? "Error" : "Output"}>{part.output}</Detail>
+            <Detail title={part.state === "error" ? "Error" : "Output"}>
+              {part.output}
+            </Detail>
           )}
         </div>
       ) : null}
@@ -81,7 +100,9 @@ export function ToolNarrative({ part, open: openProp, onOpenChange, className }:
 function Detail({ title, children }: { title: string; children: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <p className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{title}</p>
+      <p className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+        {title}
+      </p>
       {/* Scrolls in its own box: a long tool result must never make the page
           scroll sideways. */}
       <pre className="max-h-48 overflow-auto rounded-md bg-muted p-2 font-mono text-[11px] whitespace-pre-wrap">

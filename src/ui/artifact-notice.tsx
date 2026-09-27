@@ -25,7 +25,13 @@ export function ArtifactNotice({
   readonly message?: string;
 }) {
   if (message !== undefined) {
-    return <EmptyState icon={<FileWarning />} title="Nothing to preview" description={message} />;
+    return (
+      <EmptyState
+        icon={<FileWarning />}
+        title="Nothing to preview"
+        description={message}
+      />
+    );
   }
   if (pending) {
     return (
@@ -36,5 +42,11 @@ export function ArtifactNotice({
       />
     );
   }
-  return <EmptyState icon={<FileWarning />} title="No content" description="This artifact is empty." />;
+  return (
+    <EmptyState
+      icon={<FileWarning />}
+      title="No content"
+      description="This artifact is empty."
+    />
+  );
 }

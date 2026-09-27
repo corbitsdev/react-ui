@@ -53,7 +53,9 @@ export function DialogContent({
   children,
   side = "center",
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & { side?: DialogSide }) {
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  side?: DialogSide;
+}) {
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] data-[state=open]:animate-[corbits-fade-in_150ms_ease-out] data-[state=closed]:animate-[corbits-fade-out_120ms_ease-in]" />
@@ -89,24 +91,40 @@ export function DialogContent({
 }
 
 /** `pr-8` keeps the title clear of the close control in the corner. */
-export function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div data-slot="dialog-header" className={cn("flex shrink-0 flex-col gap-1 pr-8", className)} {...props} />
-  );
-}
-
-/** Scrolls; the header and footer stay put. Needed by tall centre dialogs and side sheets. */
-export function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+export function DialogHeader({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
-      data-slot="dialog-body"
-      className={cn("min-h-0 flex-auto overflow-y-auto overscroll-contain [scrollbar-width:thin]", className)}
+      data-slot="dialog-header"
+      className={cn("flex shrink-0 flex-col gap-1 pr-8", className)}
       {...props}
     />
   );
 }
 
-export function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
+/** Scrolls; the header and footer stay put. Needed by tall centre dialogs and side sheets. */
+export function DialogBody({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-body"
+      className={cn(
+        "min-h-0 flex-auto overflow-y-auto overscroll-contain [scrollbar-width:thin]",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function DialogFooter({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-footer"
@@ -125,26 +143,41 @@ export function DialogFooter({ className, ...props }: React.ComponentProps<"div"
   );
 }
 
-export function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
+export function DialogTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Title>) {
   return (
     <DialogPrimitive.Title
-      className={cn("m-0 text-[0.95rem] font-[650] leading-[1.3] tracking-[-0.01em] text-foreground", className)}
+      className={cn(
+        "m-0 text-[0.95rem] font-[650] leading-[1.3] tracking-[-0.01em] text-foreground",
+        className,
+      )}
       {...props}
     />
   );
 }
 
-export function DialogDescription({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Description>) {
+export function DialogDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Description>) {
   return (
     <DialogPrimitive.Description
-      className={cn("m-0 text-[0.8125rem] leading-[1.4] text-muted-foreground", className)}
+      className={cn(
+        "m-0 text-[0.8125rem] leading-[1.4] text-muted-foreground",
+        className,
+      )}
       {...props}
     />
   );
 }
 
 /** Uppercase field label used inside dialog forms. */
-export function DialogFieldLabel({ className, ...props }: React.ComponentProps<"label">) {
+export function DialogFieldLabel({
+  className,
+  ...props
+}: React.ComponentProps<"label">) {
   return (
     <label
       data-slot="dialog-field-label"

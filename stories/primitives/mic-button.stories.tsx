@@ -4,7 +4,13 @@ import { MicButton, type DictationState } from "../../src/ui/mic-button.js";
 
 export default { title: "Primitives / Mic button" };
 
-const STATES: DictationState[] = ["idle", "starting", "listening", "denied", "unsupported"];
+const STATES: DictationState[] = [
+  "idle",
+  "starting",
+  "listening",
+  "denied",
+  "unsupported",
+];
 
 export const AllStates = () => (
   <div className="flex items-center gap-6 p-4">
@@ -23,7 +29,11 @@ export const Interactive = () => {
     <div className="p-4">
       <MicButton
         state={state}
-        onToggle={() => setState((current) => (current === "listening" ? "idle" : "listening"))}
+        onToggle={() =>
+          setState((current) =>
+            current === "listening" ? "idle" : "listening",
+          )
+        }
       />
     </div>
   );

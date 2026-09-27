@@ -23,13 +23,19 @@ import { dirname, join, relative, resolve } from "node:path";
 
 const ROOT = new URL("../src", import.meta.url).pathname;
 
-const PKG = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+const PKG = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+);
 const OPTIONAL_PEERS = Object.keys(PKG.peerDependenciesMeta).filter(
   (peer) => PKG.peerDependenciesMeta[peer].optional,
 );
 
 const RULES = [
-  { label: "@workbench/*", pattern: /["'](@workbench\/[^"']*)["']/g, allow: () => false },
+  {
+    label: "@workbench/*",
+    pattern: /["'](@workbench\/[^"']*)["']/g,
+    allow: () => false,
+  },
 ];
 
 const walk = (dir) =>
@@ -47,7 +53,9 @@ const id = (path) => relative(ROOT, path);
 const violations = sources.flatMap((path) => {
   const source = read(path);
   return RULES.filter((rule) => !rule.allow(id(path))).flatMap((rule) =>
-    [...source.matchAll(rule.pattern)].map((match) => `${id(path)}: imports ${match[1]}`),
+    [...source.matchAll(rule.pattern)].map(
+      (match) => `${id(path)}: imports ${match[1]}`,
+    ),
   );
 });
 
@@ -75,7 +83,9 @@ function reachableFrom(entry) {
 
 const barrel = join(ROOT, "index.ts");
 if (!sources.includes(barrel)) {
-  console.error("dep-guard: src/index.ts is missing — the root barrel is hand-written");
+  console.error(
+    "dep-guard: src/index.ts is missing — the root barrel is hand-written",
+  );
   process.exit(1);
 }
 
@@ -102,23 +112,30 @@ const CLIENT_ONLY = new RegExp(
   ].join("|"),
 );
 const DIST = new URL("../dist", import.meta.url).pathname;
-const stripComments = (source) => source.replace(/\/\*[\s\S]*?\*\/|(^|[^:])\/\/.*$/gm, "$1");
+const stripComments = (source) =>
+  source.replace(/\/\*[\s\S]*?\*\/|(^|[^:])\/\/.*$/gm, "$1");
 
 for (const path of sources) {
   if (!/^(ui|blocks)\//.test(id(path)) || /\.test\.tsx?$/.test(path)) continue;
   const source = read(path);
   const marked = source.startsWith('"use client";');
   if (CLIENT_ONLY.test(stripComments(source)) !== marked) {
-    violations.push(`${id(path)}: ${marked ? "stateless but marked" : "stateful but missing"} "use client"`);
+    violations.push(
+      `${id(path)}: ${marked ? "stateless but marked" : "stateful but missing"} "use client"`,
+    );
   }
   const built = join(DIST, id(path).replace(/\.tsx?$/, ".js"));
   if (marked && existsSync(built) && !read(built).startsWith('"use client";')) {
-    violations.push(`${id(path)}: the build dropped "use client" from ${relative(DIST, built)}`);
+    violations.push(
+      `${id(path)}: the build dropped "use client" from ${relative(DIST, built)}`,
+    );
   }
 }
 
 if (violations.length > 0) {
-  console.error(`dep-guard: forbidden imports\n${[...new Set(violations)].join("\n")}`);
+  console.error(
+    `dep-guard: forbidden imports\n${[...new Set(violations)].join("\n")}`,
+  );
   process.exit(1);
 }
 console.log(

@@ -1,7 +1,14 @@
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/utils.js";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table.js";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./table.js";
 
 export type ChartLegendEntry = {
   readonly label: string;
@@ -58,7 +65,14 @@ export type ChartFrameProps = {
  * cross-reference. Text never wears the series colour: a mid-lightness hue that
  * is correct for a 24px bar is unreadable at 12px.
  */
-export function ChartFrame({ title, description, legend, table, children, className }: ChartFrameProps) {
+export function ChartFrame({
+  title,
+  description,
+  legend,
+  table,
+  children,
+  className,
+}: ChartFrameProps) {
   const showLegend = legend !== undefined && legend.length > 1;
 
   return (
@@ -73,11 +87,22 @@ export function ChartFrame({ title, description, legend, table, children, classN
       {showLegend ? (
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
           {legend.map((entry) => (
-            <li key={entry.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <li
+              key={entry.label}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+            >
               {entry.dash === undefined ? (
-                <span aria-hidden className="size-2.5 shrink-0 rounded-xs" style={{ backgroundColor: entry.color }} />
+                <span
+                  aria-hidden
+                  className="size-2.5 shrink-0 rounded-xs"
+                  style={{ backgroundColor: entry.color }}
+                />
               ) : (
-                <svg aria-hidden viewBox="0 0 20 4" className="h-1 w-5 shrink-0 overflow-visible">
+                <svg
+                  aria-hidden
+                  viewBox="0 0 20 4"
+                  className="h-1 w-5 shrink-0 overflow-visible"
+                >
                   <line
                     x1={0}
                     y1={2}
@@ -99,13 +124,19 @@ export function ChartFrame({ title, description, legend, table, children, classN
       {children}
 
       <details className="text-xs">
-        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Show the data</summary>
+        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+          Show the data
+        </summary>
         <div className="mt-2">
           <Table aria-label={`${title} — data`}>
             <TableHeader>
               <TableRow>
                 {table.columns.map((column, index) => (
-                  <TableHead key={column} scope="col" className={index === 0 ? undefined : "text-right"}>
+                  <TableHead
+                    key={column}
+                    scope="col"
+                    className={index === 0 ? undefined : "text-right"}
+                  >
                     {column}
                   </TableHead>
                 ))}
@@ -117,7 +148,11 @@ export function ChartFrame({ title, description, legend, table, children, classN
                   {row.map((cell, cellIndex) => (
                     <TableCell
                       key={cellIndex}
-                      className={cellIndex === 0 ? undefined : "text-right font-mono tabular-nums"}
+                      className={
+                        cellIndex === 0
+                          ? undefined
+                          : "text-right font-mono tabular-nums"
+                      }
                     >
                       {cell}
                     </TableCell>

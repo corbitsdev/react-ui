@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 
-import { useDismissablePopover, type UseDismissablePopoverOptions } from "./use-dismissable-popover.js";
+import {
+  useDismissablePopover,
+  type UseDismissablePopoverOptions,
+} from "./use-dismissable-popover.js";
 
 function mount(options: UseDismissablePopoverOptions = {}) {
   const container = document.createElement("div");
@@ -13,7 +16,11 @@ function mount(options: UseDismissablePopoverOptions = {}) {
   container.appendChild(trigger);
   const reactRoot = createRoot(container);
 
-  let result: ReturnType<typeof useDismissablePopover<HTMLDivElement, HTMLButtonElement>> | undefined;
+  let result:
+    | ReturnType<
+        typeof useDismissablePopover<HTMLDivElement, HTMLButtonElement>
+      >
+    | undefined;
 
   function Host(props: UseDismissablePopoverOptions) {
     result = useDismissablePopover<HTMLDivElement, HTMLButtonElement>(props);
@@ -26,11 +33,17 @@ function mount(options: UseDismissablePopoverOptions = {}) {
   // Attach the hook's refs to real, already-mounted nodes since Host renders
   // no DOM of its own — the hook only reads `.current`, it never expects
   // React to have set it via a ref prop.
-  (result as { rootRef: { current: HTMLDivElement | null } }).rootRef.current = root;
-  (result as { triggerRef: { current: HTMLButtonElement | null } }).triggerRef.current = trigger;
+  (result as { rootRef: { current: HTMLDivElement | null } }).rootRef.current =
+    root;
+  (
+    result as { triggerRef: { current: HTMLButtonElement | null } }
+  ).triggerRef.current = trigger;
 
   return {
-    get: () => result as ReturnType<typeof useDismissablePopover<HTMLDivElement, HTMLButtonElement>>,
+    get: () =>
+      result as ReturnType<
+        typeof useDismissablePopover<HTMLDivElement, HTMLButtonElement>
+      >,
     rerender: (props: UseDismissablePopoverOptions) => {
       act(() => {
         reactRoot.render(createElement(Host, props));
@@ -68,7 +81,10 @@ describe("useDismissablePopover", () => {
 
   test("controlled: open tracks the prop, not internal state", () => {
     let changed: boolean | undefined;
-    const handle = mount({ open: false, onOpenChange: (value) => (changed = value) });
+    const handle = mount({
+      open: false,
+      onOpenChange: (value) => (changed = value),
+    });
     act(() => handle.get().setOpen(true));
     expect(changed).toBe(true);
     expect(handle.get().open).toBe(false);
@@ -84,7 +100,9 @@ describe("useDismissablePopover", () => {
       focused = true;
     };
     act(() => {
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+      );
     });
     expect(handle.get().open).toBe(false);
     expect(focused).toBe(true);
@@ -94,7 +112,9 @@ describe("useDismissablePopover", () => {
   test("closeOnEscape: false leaves Escape handling to the caller", () => {
     const handle = mount({ defaultOpen: true, closeOnEscape: false });
     act(() => {
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+      );
     });
     expect(handle.get().open).toBe(true);
     handle.unmount();
@@ -115,7 +135,9 @@ describe("useDismissablePopover", () => {
   test("pointerdown inside the root does not close it", () => {
     const handle = mount({ defaultOpen: true });
     act(() => {
-      handle.root.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+      handle.root.dispatchEvent(
+        new PointerEvent("pointerdown", { bubbles: true }),
+      );
     });
     expect(handle.get().open).toBe(true);
     handle.unmount();

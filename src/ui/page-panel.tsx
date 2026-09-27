@@ -46,14 +46,27 @@ export function PagePanel({
   surface = "background",
   className,
 }: PagePanelProps) {
-  const sizing = fitContent ? "w-full max-h-full self-start" : "flex-1 border border-border";
-  const overflow = scroll ? (fitContent ? "overflow-y-auto" : "min-h-full overflow-y-auto") : "overflow-hidden";
+  const sizing = fitContent
+    ? "w-full max-h-full self-start"
+    : "flex-1 border border-border";
+  const overflow = scroll
+    ? fitContent
+      ? "overflow-y-auto"
+      : "min-h-full overflow-y-auto"
+    : "overflow-hidden";
   const fill = surface === "card" ? "bg-card" : "bg-background";
   return (
     <div className={cn("flex h-full overflow-hidden", fill)}>
       <section
         data-slot="page-panel"
-        className={cn("flex flex-col", fill, sizing, overflow, !flat && "shadow-sm", className)}
+        className={cn(
+          "flex flex-col",
+          fill,
+          sizing,
+          overflow,
+          !flat && "shadow-sm",
+          className,
+        )}
       >
         {children}
       </section>

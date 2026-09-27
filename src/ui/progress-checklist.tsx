@@ -44,16 +44,23 @@ export function ProgressChecklist({
   if (steps.length === 0) return null;
 
   return (
-    <ol aria-label={label} aria-live="polite" className={cn("flex flex-col gap-2.5", className)}>
+    <ol
+      aria-label={label}
+      aria-live="polite"
+      className={cn("flex flex-col gap-2.5", className)}
+    >
       {steps.map((step, index) => (
         <li key={step.id} className="flex items-start gap-3">
           <span
             aria-hidden
             className={cn(
               "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border text-[10px] font-semibold",
-              step.status === "done" && "border-transparent bg-success text-success-foreground",
-              step.status === "failed" && "border-transparent bg-destructive text-destructive-foreground",
-              step.status === "running" && "border-primary-emphasis text-primary-emphasis",
+              step.status === "done" &&
+                "border-transparent bg-success text-success-foreground",
+              step.status === "failed" &&
+                "border-transparent bg-destructive text-destructive-foreground",
+              step.status === "running" &&
+                "border-primary-emphasis text-primary-emphasis",
               step.status === "pending" && "border-input text-muted-foreground",
             )}
           >
@@ -72,14 +79,20 @@ export function ProgressChecklist({
             <p
               className={cn(
                 "text-sm leading-snug",
-                step.status === "pending" ? "text-muted-foreground" : "text-foreground",
+                step.status === "pending"
+                  ? "text-muted-foreground"
+                  : "text-foreground",
               )}
             >
               {step.label}{" "}
-              <span className="text-xs text-muted-foreground">· {STATUS_LABEL[step.status]}</span>
+              <span className="text-xs text-muted-foreground">
+                · {STATUS_LABEL[step.status]}
+              </span>
             </p>
             {step.detail === undefined ? null : (
-              <p className="text-xs leading-relaxed text-muted-foreground">{step.detail}</p>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {step.detail}
+              </p>
             )}
           </div>
         </li>

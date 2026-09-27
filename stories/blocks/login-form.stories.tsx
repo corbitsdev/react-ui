@@ -4,9 +4,18 @@ export default { title: "Blocks / Login Form" };
 
 export const SignIn = () => <LoginForm onSubmit={() => {}} />;
 
-export const SignUp = () => <LoginForm mode="sign-up" heading="Create your account" onSubmit={() => {}} />;
+export const SignUp = () => (
+  <LoginForm mode="sign-up" heading="Create your account" onSubmit={() => {}} />
+);
 
-export const SignUpBusy = () => <LoginForm mode="sign-up" heading="Create your account" onSubmit={() => {}} busy />;
+export const SignUpBusy = () => (
+  <LoginForm
+    mode="sign-up"
+    heading="Create your account"
+    onSubmit={() => {}}
+    busy
+  />
+);
 
 export const WithProviders = () => (
   <LoginForm

@@ -42,7 +42,10 @@ export function NotificationsBell({
   onOpenChange,
   className,
 }: NotificationsBellProps) {
-  const { open, setOpen, rootRef, triggerRef } = useDismissablePopover<HTMLDivElement, HTMLButtonElement>({
+  const { open, setOpen, rootRef, triggerRef } = useDismissablePopover<
+    HTMLDivElement,
+    HTMLButtonElement
+  >({
     open: openProp,
     onOpenChange,
   });
@@ -54,7 +57,8 @@ export function NotificationsBell({
     panelRef.current?.focus();
   }, [open]);
 
-  const label = count === 0 ? "Notifications" : `Notifications, ${count} unread`;
+  const label =
+    count === 0 ? "Notifications" : `Notifications, ${count} unread`;
 
   return (
     <div ref={rootRef} className={cn("relative", className)}>

@@ -1,7 +1,15 @@
 import { BulkActionBar } from "../../src/ui/bulk-action-bar.js";
 import { Button } from "../../src/ui/button.js";
 import { SelectionCheckbox } from "../../src/ui/selection-checkbox.js";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "../../src/ui/table.js";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../src/ui/table.js";
 import { useListSelection } from "../../src/hooks/use-list-selection.js";
 
 export default { title: "Primitives / BulkActionBar" };
@@ -26,7 +34,9 @@ export const WithASelectableList = () => {
   return (
     <div className="pb-20">
       <Table>
-        <TableCaption>Shift-click a second row to select the range between them.</TableCaption>
+        <TableCaption>
+          Shift-click a second row to select the range between them.
+        </TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead className="w-8" />
@@ -39,7 +49,9 @@ export const WithASelectableList = () => {
               <TableCell>
                 <SelectionCheckbox
                   checked={selection.isSelected(row.id)}
-                  onToggle={({ shiftKey }) => selection.toggle(row.id, { shiftKey })}
+                  onToggle={({ shiftKey }) =>
+                    selection.toggle(row.id, { shiftKey })
+                  }
                   rowLabel={row.name}
                 />
               </TableCell>

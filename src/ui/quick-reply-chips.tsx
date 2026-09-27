@@ -23,7 +23,10 @@ export function QuickReplyChips({
   if (replies.length === 0) return null;
 
   return (
-    <ul aria-label="Suggested replies" className={cn("flex flex-wrap gap-2", className)}>
+    <ul
+      aria-label="Suggested replies"
+      className={cn("flex flex-wrap gap-2", className)}
+    >
       {replies.map((reply) => (
         <li key={reply.id}>
           <button

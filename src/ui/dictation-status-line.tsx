@@ -41,14 +41,23 @@ export function DictationStatusLine({
 
   if (state === "starting") {
     return (
-      <p aria-live="polite" className={cn("text-xs text-muted-foreground", className)}>
+      <p
+        aria-live="polite"
+        className={cn("text-xs text-muted-foreground", className)}
+      >
         {startingLabel}
       </p>
     );
   }
 
   return (
-    <p aria-live="polite" className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}>
+    <p
+      aria-live="polite"
+      className={cn(
+        "flex items-center gap-2 text-xs text-muted-foreground",
+        className,
+      )}
+    >
       <span>{listeningLabel}</span>
       <VoiceWaveform levels={levels} className="text-ok" />
     </p>

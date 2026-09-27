@@ -28,12 +28,16 @@ export type DeltaResult = {
  * meaningful baseline to divide by, so callers render the absolute delta rather
  * than a misleading "∞%".
  */
-export function computeDelta(current: number, previous: number | null | undefined): DeltaResult {
+export function computeDelta(
+  current: number,
+  previous: number | null | undefined,
+): DeltaResult {
   if (previous === null || previous === undefined) {
     return { direction: "flat", pct: null, delta: 0, comparable: false };
   }
   const delta = current - previous;
-  const direction: DeltaDirection = delta > 0 ? "up" : delta < 0 ? "down" : "flat";
+  const direction: DeltaDirection =
+    delta > 0 ? "up" : delta < 0 ? "down" : "flat";
   if (previous === 0) {
     return { direction, pct: null, delta, comparable: true };
   }
@@ -53,7 +57,11 @@ export type SparklineGeometry = {
  * a box this small. A flat series renders along the vertical centre and a
  * single point is centred horizontally.
  */
-export function buildSparkline(values: readonly number[], width: number, height: number): SparklineGeometry {
+export function buildSparkline(
+  values: readonly number[],
+  width: number,
+  height: number,
+): SparklineGeometry {
   if (values.length === 0) {
     return { points: "", coords: [] };
   }
@@ -79,7 +87,9 @@ export type MosaicSegment = {
 };
 
 /** Shares of a whole, as percentage widths for a stacked strip. */
-export function buildMosaic(parts: readonly { label: string; value: number }[]): MosaicSegment[] {
+export function buildMosaic(
+  parts: readonly { label: string; value: number }[],
+): MosaicSegment[] {
   const total = parts.reduce((sum, part) => sum + part.value, 0);
   return parts.map((part) => ({
     label: part.label,

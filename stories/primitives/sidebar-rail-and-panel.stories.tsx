@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import { formatRelativeTime } from "../../src/lib/relative-time.js";
 import { Badge } from "../../src/ui/badge.js";
 import { SidebarItemRow } from "../../src/ui/sidebar-item-row.js";
-import { SidebarPanel, SidebarPanelBody, SidebarPanelFooter, SidebarPanelHeader, SidebarPanelPins } from "../../src/ui/sidebar-panel.js";
+import {
+  SidebarPanel,
+  SidebarPanelBody,
+  SidebarPanelFooter,
+  SidebarPanelHeader,
+  SidebarPanelPins,
+} from "../../src/ui/sidebar-panel.js";
 import { StatusDot } from "../../src/ui/status-dot.js";
 
 export default { title: "Primitives / Sidebar panel" };
@@ -15,7 +21,12 @@ export const ChannelsPanel = () => {
   return (
     <div className="flex h-[520px] overflow-hidden rounded-lg border border-border">
       <SidebarPanel>
-        <SidebarPanelHeader title="Channels" action={<Settings className="size-4 text-muted-foreground" aria-hidden />} />
+        <SidebarPanelHeader
+          title="Channels"
+          action={
+            <Settings className="size-4 text-muted-foreground" aria-hidden />
+          }
+        />
         <SidebarPanelPins>
           <SidebarItemRow
             leading={<Pin className="text-muted-foreground" />}
@@ -49,7 +60,10 @@ export const ChannelsPanel = () => {
           />
         </SidebarPanelBody>
         <SidebarPanelFooter>
-          <button type="button" className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted">
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted"
+          >
             <Users className="size-4" aria-hidden />
             Invite people
           </button>
@@ -59,7 +73,12 @@ export const ChannelsPanel = () => {
   );
 };
 
-type RoutineRun = { readonly id: string; readonly name: string; readonly startedAt: string; readonly leaving?: boolean };
+type RoutineRun = {
+  readonly id: string;
+  readonly name: string;
+  readonly startedAt: string;
+  readonly leaving?: boolean;
+};
 
 /**
  * Rows arrive live: a new run is unshifted onto the list every few seconds,
@@ -69,8 +88,16 @@ type RoutineRun = { readonly id: string; readonly name: string; readonly started
 export const LiveRows = () => {
   const [now, setNow] = useState(() => Date.now());
   const [runs, setRuns] = useState<readonly RoutineRun[]>([
-    { id: "r1", name: "Nightly digest", startedAt: new Date(Date.now() - 45_000).toISOString() },
-    { id: "r2", name: "Lead enrichment", startedAt: new Date(Date.now() - 3 * 60_000).toISOString() },
+    {
+      id: "r1",
+      name: "Nightly digest",
+      startedAt: new Date(Date.now() - 45_000).toISOString(),
+    },
+    {
+      id: "r2",
+      name: "Lead enrichment",
+      startedAt: new Date(Date.now() - 3 * 60_000).toISOString(),
+    },
   ]);
 
   useEffect(() => {
@@ -81,7 +108,14 @@ export const LiveRows = () => {
   useEffect(() => {
     let nextId = 3;
     const arrive = setInterval(() => {
-      setRuns((current) => [{ id: `r${nextId++}`, name: "Inbox triage", startedAt: new Date().toISOString() }, ...current]);
+      setRuns((current) => [
+        {
+          id: `r${nextId++}`,
+          name: "Inbox triage",
+          startedAt: new Date().toISOString(),
+        },
+        ...current,
+      ]);
     }, 4000);
     return () => clearInterval(arrive);
   }, []);
@@ -96,7 +130,14 @@ export const LiveRows = () => {
               key={run.id}
               leading={<StatusDot label="Running" tone="emphasis" live />}
               name={run.name}
-              meta={<time dateTime={run.startedAt} className="font-mono text-xs text-muted-foreground tabular-nums">{formatRelativeTime(run.startedAt, now)}</time>}
+              meta={
+                <time
+                  dateTime={run.startedAt}
+                  className="font-mono text-xs text-muted-foreground tabular-nums"
+                >
+                  {formatRelativeTime(run.startedAt, now)}
+                </time>
+              }
               leaving={run.leaving}
             />
           ))}

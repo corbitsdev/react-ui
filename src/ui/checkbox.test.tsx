@@ -22,7 +22,11 @@ function mount(props: ComponentProps<typeof Checkbox>) {
 
 describe("Checkbox", () => {
   test("renders a native checkbox labelled by its own label text", () => {
-    const { input, label, unmount } = mount({ label: "Auto-approve", checked: false, onCheckedChange: () => {} });
+    const { input, label, unmount } = mount({
+      label: "Auto-approve",
+      checked: false,
+      onCheckedChange: () => {},
+    });
     expect(input().type).toBe("checkbox");
     expect(label().textContent).toBe("Auto-approve");
     expect(label().getAttribute("for")).toBe(input().id);
@@ -60,7 +64,11 @@ describe("Checkbox", () => {
   });
 
   test("omits aria-describedby when there is no description", () => {
-    const { input, unmount } = mount({ label: "Auto-approve", checked: false, onCheckedChange: () => {} });
+    const { input, unmount } = mount({
+      label: "Auto-approve",
+      checked: false,
+      onCheckedChange: () => {},
+    });
     expect(input().getAttribute("aria-describedby")).toBeNull();
     unmount();
   });
@@ -78,13 +86,23 @@ describe("Checkbox", () => {
   });
 
   test("disabled disables the control", () => {
-    const { input, unmount } = mount({ label: "Auto-approve", checked: false, onCheckedChange: () => {}, disabled: true });
+    const { input, unmount } = mount({
+      label: "Auto-approve",
+      checked: false,
+      onCheckedChange: () => {},
+      disabled: true,
+    });
     expect(input().disabled).toBe(true);
     unmount();
   });
 
   test("invalid marks the control as aria-invalid", () => {
-    const { input, unmount } = mount({ label: "Agree", checked: false, onCheckedChange: () => {}, invalid: true });
+    const { input, unmount } = mount({
+      label: "Agree",
+      checked: false,
+      onCheckedChange: () => {},
+      invalid: true,
+    });
     expect(input().getAttribute("aria-invalid")).toBe("true");
     unmount();
   });
@@ -100,7 +118,9 @@ describe("Checkbox", () => {
       },
     });
     const describedBy = input().getAttribute("aria-describedby");
-    const description = container.querySelector(`#${describedBy}`) as HTMLElement;
+    const description = container.querySelector(
+      `#${describedBy}`,
+    ) as HTMLElement;
     act(() => {
       description.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
@@ -109,7 +129,11 @@ describe("Checkbox", () => {
   });
 
   test("without a label, renders just the bare control", () => {
-    const { container, input, unmount } = mount({ checked: false, onCheckedChange: () => {}, id: "bare-checkbox" });
+    const { container, input, unmount } = mount({
+      checked: false,
+      onCheckedChange: () => {},
+      id: "bare-checkbox",
+    });
     expect(container.querySelector("label")).toBeNull();
     expect(input().id).toBe("bare-checkbox");
     unmount();
@@ -122,7 +146,9 @@ describe("Checkbox", () => {
       id: "bare-checkbox",
       describedBy: "external-description",
     });
-    expect(input().getAttribute("aria-describedby")).toBe("external-description");
+    expect(input().getAttribute("aria-describedby")).toBe(
+      "external-description",
+    );
     unmount();
   });
 });

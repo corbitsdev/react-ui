@@ -89,7 +89,9 @@ const ATTENTION_RANK: Record<RunStatus, number> = {
 };
 
 /** Attention order, newest first within a band. Sorts a copy. */
-export function sortRunsByAttention(runs: readonly WorkflowRunSummary[]): readonly WorkflowRunSummary[] {
+export function sortRunsByAttention(
+  runs: readonly WorkflowRunSummary[],
+): readonly WorkflowRunSummary[] {
   return [...runs].sort((a, b) => {
     const byAttention = ATTENTION_RANK[a.status] - ATTENTION_RANK[b.status];
     if (byAttention !== 0) return byAttention;

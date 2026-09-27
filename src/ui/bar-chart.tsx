@@ -1,4 +1,8 @@
-import { formatCompact, niceTicks, scaleLinear } from "../lib/chart-geometry.js";
+import {
+  formatCompact,
+  niceTicks,
+  scaleLinear,
+} from "../lib/chart-geometry.js";
 import { seriesColor } from "../lib/chart-palette.js";
 import { cn } from "../lib/utils.js";
 import { ChartFrame } from "./chart-frame.js";
@@ -48,7 +52,14 @@ const RADIUS = 4;
  * the exact values — which is what anyone reading non-visually wants — are in
  * the table, in order, with headers.
  */
-export function BarChart({ title, description, data, valueLabel = "Value", format = formatCompact, className }: BarChartProps) {
+export function BarChart({
+  title,
+  description,
+  data,
+  valueLabel = "Value",
+  format = formatCompact,
+  className,
+}: BarChartProps) {
   const max = Math.max(0, ...data.map((datum) => datum.value));
   const ticks = niceTicks(max);
   const axisMax = ticks[ticks.length - 1] ?? 1;
@@ -79,7 +90,15 @@ export function BarChart({ title, description, data, valueLabel = "Value", forma
           return (
             // Hairline, solid, one step off the surface: present enough to
             // measure against, quiet enough that the bars stay the loud thing.
-            <line key={tick} x1={x} y1={0} x2={x} y2={height} stroke="var(--border)" strokeWidth={1} />
+            <line
+              key={tick}
+              x1={x}
+              y1={0}
+              x2={x}
+              y2={height}
+              stroke="var(--border)"
+              strokeWidth={1}
+            />
           );
         })}
 
