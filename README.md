@@ -21,7 +21,7 @@ Optional peers, needed only by the subpaths that import them. These modules are 
 bun add @corbits/react-ui
 ```
 
-Import the stylesheet once at the app root, before your own CSS (no Tailwind build required). Mount `ThemeProvider` near the root so dark mode persists per user, and `Toaster` once alongside it so any component can call `toast()`:
+Import the stylesheet once at the app root, before your own CSS (no Tailwind build required). Mount `ThemeProvider` near the root (see [Theming](#theming)) and `Toaster` once alongside it so any component can call `toast()`:
 
 ```tsx
 import "@corbits/react-ui/styles.css";
@@ -43,11 +43,7 @@ function App() {
 }
 ```
 
-That sheet includes Tailwind preflight and a base layer — it restyles the page, and neither import is safe to skip: without one of them the components render unstyled markup, not a fallback look. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities; don't import both.
-
-Dark mode is a `dark` class on an ancestor; the stylesheet reads it and does not manage it. With neither `.dark` nor `.light` set, the theme follows the OS — a `@media (prefers-color-scheme: dark)` block applies the dark tokens to `:root` and sets `color-scheme: dark` so native controls follow, so a zero-JS install already renders dark on a dark-OS host. That media-query path is tokens only — `dark:` utilities still need a `.dark` ancestor.
-
-Removing `.dark` is not light: hosts that toggle by adding and removing `.dark` must now add `.light` for an explicit light choice (or mount `ThemeProvider`, which toggles both), or a dark-OS user falls back to OS dark. An explicit-light choice on a dark OS first-paints dark then swaps when JS adds `.light`; to block the flash, apply it before first paint *only when the stored choice is light* — `<script>if (localStorage.getItem("corbits-theme")?.includes('"light"')) document.documentElement.classList.add("light")</script>` — adding it unconditionally pins light for dark-OS users too. `ThemeProvider` still wins once it mounts — mount it only if you want the library to persist the choice and apply named presets.
+That sheet includes Tailwind preflight and a base layer — it restyles the page, and neither import is safe to skip: without one of them the components render unstyled markup, not a fallback look. If you already use Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your own build generate utilities; don't import both. Dark mode and fonts are under [Theming](#theming).
 
 A page body typically pairs `PageShell` (margins and scroll ownership) with `EmptyState` (title, description, an optional icon, and an action):
 
@@ -112,9 +108,15 @@ export function Conversation() {
 
 Every component is importable by subpath (`@corbits/react-ui/ui/button`); all but the optional-peer modules above are also exported from the root (`@corbits/react-ui`).
 
-The brand faces (Red Hat Display, Space Mono) are named by the theme but not bundled. Load them yourself, or the stack falls through to system fonts; to use a face loaded under a generated name, override `--font-sans` / `--font-mono`.
-
 This package ships no `"use client"` directives. In a React Server Components app, re-export stateful components from a file you mark yourself, using subpaths rather than the root barrel.
+
+## Theming
+
+Dark mode is a `dark` class on an ancestor; the stylesheet reads it and does not manage it. With neither `.dark` nor `.light` set, the theme follows the OS — a `@media (prefers-color-scheme: dark)` block applies the dark tokens to `:root` and sets `color-scheme: dark` so native controls follow, so a zero-JS install already renders dark on a dark-OS host. That media-query path is tokens only — `dark:` utilities still need a `.dark` ancestor.
+
+Removing `.dark` is not light: hosts that toggle by adding and removing `.dark` must now add `.light` for an explicit light choice (or mount `ThemeProvider`, which toggles both), or a dark-OS user falls back to OS dark. An explicit-light choice on a dark OS first-paints dark then swaps when JS adds `.light`; to block the flash, apply it before first paint *only when the stored choice is light* — `<script>if (localStorage.getItem("corbits-theme")?.includes('"light"')) document.documentElement.classList.add("light")</script>` — adding it unconditionally pins light for dark-OS users too. `ThemeProvider` still wins once it mounts — mount it only if you want the library to persist the choice and apply named presets.
+
+The brand faces (Red Hat Display, Space Mono) are named by the theme but not bundled. Load them yourself, or the stack falls through to system fonts; to use a face loaded under a generated name, override `--font-sans` / `--font-mono`.
 
 ## Components
 
