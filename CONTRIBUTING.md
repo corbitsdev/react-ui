@@ -12,8 +12,10 @@ bun run check
 Contributors sign the [CLA](CLA.md) on their first PR; the CLA bot explains how.
 
 `bun run test:e2e` checks the built package: every `exports` target exists and the
-root entry loads under Node with every optional peer blocked. Run `bun run build`
-first. CI also runs `bun run contrast-test` (theme contrast floors, reads
+root entry loads under Node with every optional peer blocked, then packs the
+package into a Vite host and runs the Playwright specs in `e2e/` against it. Each
+scenario is a route in `e2e/fixtures.tsx`. Run `bun run build` first, and
+`bunx playwright install chromium` once. CI also runs `bun run contrast-test` (theme contrast floors, reads
 `dist/styles.css`) and `bun run dep-guard` (forbidden imports, see `AGENTS.md`)
 after the build.
 

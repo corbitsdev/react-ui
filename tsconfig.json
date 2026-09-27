@@ -18,5 +18,14 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": ["bun"]
   },
-  "include": ["src", "e2e", "stories", ".ladle", "vite.ladle.config.mjs"]
+  "include": [
+    "src",
+    "e2e",
+    "stories",
+    "playwright.config.ts",
+    ".ladle",
+    "vite.ladle.config.mjs"
+  ],
+  // Typechecked by the e2e host against the packed package.
+  "exclude": ["e2e/fixtures.tsx"]
 }
