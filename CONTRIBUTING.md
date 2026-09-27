@@ -7,7 +7,7 @@ once that is clear.
 
 ## How it works
 
-Components never fetch; data arrives as props. The root entry is generated re-exports
+Components never fetch; data arrives as props. The root entry is hand-written re-exports
 only, and the package is side-effect free apart from its CSS, so either import style
 tree-shakes. Tokens and keyframes live in `theme.css`; `styles.css` is the prebuilt sheet
 for hosts that do not run Tailwind. [PRODUCT.md](./PRODUCT.md) covers why the library
@@ -26,7 +26,7 @@ consumer's data layer, not in a component — data arrives as props.
 ## Gates
 
 ```sh
-bun run build          # generate → SWC → tsc → Tailwind → the contrast gate
+bun run build          # SWC → tsc → Tailwind → the contrast gate
 bun run typecheck      # tsc --noEmit
 bun run lint           # eslint .
 bun run dep-guard      # forbidden-import checks over src/
@@ -65,7 +65,7 @@ secret is a guard nobody can comply with.
    in the *consumer's* install, where they cannot fix it.
 2. **Nothing reachable from the root barrel imports an optional peer.** Re-exporting a
    module that statically imports an optional peer makes that peer mandatory for every
-   root import, so such a module must be kept out of the barrel (`BARREL_EXCLUDED`).
+   root import, so such a module must be kept out of the barrel and given its own `exports` entry.
 
 The same rule, not machine-checked, applies to server-side packages: a component must
 never import one. They carry database drivers, and pulling one into a browser bundle is a
@@ -78,13 +78,12 @@ around it.
 
 1. Write the file under `src/{ui,lib,hooks,blocks}/`. Imports of sibling modules are
    **relative and carry a `.js` extension** (`../lib/utils.js`) — there is no path alias.
-2. Do not edit `src/index.ts` or the `exports` map in `package.json`. Both are generated;
-   `bun run build` picks the new file up.
-3. If the module is machinery rather than public API, add it to `INTERNAL` in
-   `scripts/generate-exports.mjs`. Keeping something internal is cheap; taking a subpath
-   back after it ships is not. If it is public but statically imports an *optional* peer,
-   add it to `BARREL_EXCLUDED` in the same file instead — it keeps its subpath but must
-   stay out of the root barrel. `dep-guard` fails if you forget.
+2. If it is public API, add `export * from "./<dir>/<name>.js";` to `src/index.ts`.
+   Machinery stays unlisted: keeping something internal is cheap; taking an export back
+   after it ships is not.
+3. If it is public but statically imports an *optional* peer, leave it out of
+   `src/index.ts` and add a `./<dir>/<name>` entry to `exports` in `package.json` instead.
+   `dep-guard` fails if it reaches the barrel.
 4. If a `ui/` or `blocks/` module calls a hook, creates a context, defines an inline
    event handler, or imports an optional peer, start it with `"use client"`;
    `@radix-ui/react-slot` alone does not count. Leave stateless components and
@@ -133,11 +132,9 @@ every published component, running against `src/theme.css` so what you see is wh
 consumer gets. `bun run stories:build` produces a static build of the same canvas for
 anyone who wants to check it without running the dev server.
 
-Stories live under `stories/`, not next to their component in `src/`. `src/` is walked to
-generate the `exports` map (see [ARCHITECTURE.md](./ARCHITECTURE.md)); a colocated
-`*.stories.tsx` would either leak into that map or need its own entry in `INTERNAL` for
-every single story file. Keeping them in a separate top-level directory keeps the public
-surface exactly the set of files that ship, with nothing to remember to exclude.
+Stories live under `stories/`, not next to their component in `src/`. SWC and `tsc`
+compile all of `src/`, so a colocated `*.stories.tsx` would ship in `dist/`. Keeping them
+in a separate top-level directory keeps `dist/` exactly the set of files that matter.
 
 The theme toggle in Ladle's own top bar switches the real `.dark` class from
 `src/theme.css` — not a canvas-only colour swap — so a component's dark-mode tokens,

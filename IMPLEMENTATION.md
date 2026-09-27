@@ -12,7 +12,7 @@ Why the library exists lives in [PRODUCT.md](./PRODUCT.md).
 - Required peers: `react` and `react-dom` (`^18.2.0 || ^19.0.0`),
   `lucide-react` (`^0.545.0 || ^1.0.0`), `@radix-ui/react-slot` (`^1.2.3`).
 - Optional peers (`peerDependenciesMeta`), each imported only by subpath-only
-  modules kept out of the root barrel (`BARREL_EXCLUDED`):
+  modules kept out of the root barrel, each with its own `exports` entry:
   `@radix-ui/react-dialog` (`^1.1.15`; `ui/dialog`, `ui/command-palette`,
   `ui/mic-permission-dialog`), `@radix-ui/react-dropdown-menu` (`^2.1.16`;
   `ui/menu`), `@radix-ui/react-tooltip` (`^1.2.8`; `ui/tooltip`), `sonner`
@@ -27,7 +27,6 @@ by `&&`:
 
 | Step | Tool | Output |
 | --- | --- | --- |
-| `generate` | `scripts/generate-exports.mjs` | `src/index.ts` and the `exports` map in `package.json` |
 | `build:js` | SWC (`@swc/cli`, `@swc/core`) | `dist/**/*.js`, one per source file |
 | `build:types` | `tsc -p tsconfig.build.json` | `dist/**/*.d.ts` |
 | `build:css` | Tailwind v4 CLI | `dist/styles.css`, plus `dist/theme.css` copied from source |

@@ -5,8 +5,8 @@ All notable changes to `@corbits/react-ui` are documented here. The format follo
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Until 1.0, a minor bump may contain a breaking change; breaking changes are always called
-out under their own heading. Every subpath in the package's `exports` map is part of that
-contract — modules that are not exported are internal and may change in any release.
+out under their own heading. Every entry in the package's `exports` map is part of that
+contract, and so is everything the root re-exports — modules that are not exported are internal and may change in any release.
 
 ## [Unreleased]
 
@@ -73,6 +73,11 @@ contract — modules that are not exported are internal and may change in any re
   `StepListItem` and `StepDisplayStatus` stay public from `ui/step-list`;
   `GateShellModel` and `GateKind` from `ui/gate-block`. For `cn`, compose `clsx` and
   `tailwind-merge` directly: `twMerge(clsx(...inputs))`.
+- **Per-module subpaths are removed; import from the root.** The `exports` map is now
+  `.`, the six optional-peer modules below, `styles.css`, `theme.css` and
+  `package.json`. `@corbits/react-ui/ui/button` and every other per-module subpath no
+  longer resolve: `import { Button } from "@corbits/react-ui"`. The root barrel is
+  hand-written and `scripts/generate-exports.mjs` is gone.
 - **Four peers are optional and their modules are subpath-only.** `@radix-ui/react-dialog`,
   `@radix-ui/react-dropdown-menu`, `@radix-ui/react-tooltip` and `sonner` move to
   `peerDependenciesMeta`. `ui/dialog`, `ui/command-palette`, `ui/mic-permission-dialog`,
