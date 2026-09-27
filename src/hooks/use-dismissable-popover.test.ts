@@ -73,6 +73,16 @@ describe("useDismissablePopover", () => {
     handle.unmount();
   });
 
+  test("uncontrolled: two batched toggles return to closed", () => {
+    const handle = mount();
+    act(() => {
+      handle.get().setOpen((previous) => !previous);
+      handle.get().setOpen((previous) => !previous);
+    });
+    expect(handle.get().open).toBe(false);
+    handle.unmount();
+  });
+
   test("uncontrolled: honors defaultOpen", () => {
     const handle = mount({ defaultOpen: true });
     expect(handle.get().open).toBe(true);
