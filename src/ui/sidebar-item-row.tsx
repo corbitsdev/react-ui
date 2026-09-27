@@ -20,7 +20,7 @@ export type SidebarItemRowProps = {
    * one more frame (~150ms) so the leave transition gets to play. List
    * membership is the consumer's data — nothing here manages it for you.
    */
-  readonly leaving?: boolean;
+  readonly leaving?: boolean | undefined;
   readonly onSelect?: () => void;
   readonly className?: string;
 };

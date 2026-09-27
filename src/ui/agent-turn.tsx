@@ -19,7 +19,7 @@ export type AgentTurnProps = {
   readonly identity: AgentIdentity;
   /** Rich body for the answer — a markdown renderer. */
   readonly children?: ReactNode;
-  readonly now?: number;
+  readonly now?: number | undefined;
   /** e.g. "Thought for 4s". Shown on the reasoning block once it stops streaming. */
   readonly reasoningDurationLabel?: string;
   readonly className?: string;

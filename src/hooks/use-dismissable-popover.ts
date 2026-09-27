@@ -7,8 +7,8 @@ import {
 
 export type UseDismissablePopoverOptions = {
   /** Controlled open flag. Supply this with `onOpenChange` to lift state to a parent. */
-  readonly open?: boolean;
-  readonly onOpenChange?: (open: boolean) => void;
+  readonly open?: boolean | undefined;
+  readonly onOpenChange?: ((open: boolean) => void) | undefined;
   /** Seeds the hook's own state when `open` is not supplied. */
   readonly defaultOpen?: boolean;
   /** Escape closes the popover and returns focus to the trigger. Default `true`. */

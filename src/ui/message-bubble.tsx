@@ -8,8 +8,8 @@ import { cn } from "../lib/utils.js";
 export type MessageBubbleProps = {
   readonly message: ChatMessage;
   /** Retry affordance for a failed send. Omit and a failure is only reported. */
-  readonly onRetry?: () => void;
-  readonly now?: number;
+  readonly onRetry?: (() => void) | undefined;
+  readonly now?: number | undefined;
   /** Rich body — a markdown renderer. Defaults to the message's plain text. */
   readonly children?: ReactNode;
   readonly className?: string;

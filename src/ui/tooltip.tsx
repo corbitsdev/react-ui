@@ -34,7 +34,7 @@ export function InfoTooltip({
 }: InfoTooltipProps) {
   return (
     <TooltipPrimitive.Provider delayDuration={200}>
-      <TooltipPrimitive.Root defaultOpen={defaultOpen}>
+      <TooltipPrimitive.Root defaultOpen={defaultOpen ?? false}>
         <TooltipPrimitive.Trigger asChild>
           <button
             type="button"

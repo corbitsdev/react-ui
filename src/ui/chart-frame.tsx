@@ -42,7 +42,7 @@ export type ChartFrameProps = {
   readonly table: ChartTable;
   /** The plot itself — an `<svg>`. */
   readonly children: ReactNode;
-  readonly className?: string;
+  readonly className?: string | undefined;
 };
 
 /**

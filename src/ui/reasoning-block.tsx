@@ -15,7 +15,7 @@ export type ReasoningBlockProps = {
   /** Summary once idle when no `durationLabel` is supplied. Defaults to "Thinking". */
   readonly idleLabel?: string;
   /** e.g. "Thought for 4s". Becomes the summary once reasoning has stopped streaming. */
-  readonly durationLabel?: string;
+  readonly durationLabel?: string | undefined;
   readonly defaultOpen?: boolean;
   /**
    * Controlled open state. Pair with `onOpenChange` to lift it to a parent —

@@ -1,30 +1,31 @@
-name: CI
+name: ci
 
 on:
-  push:
-    branches: [main]
   pull_request:
+  push:
     branches: [main]
 
 jobs:
-  verify:
+  check:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [24]
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 24
       - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.0
       - run: bun install --frozen-lockfile
-      - run: bun run typecheck
-      - run: bun run lint
-      - run: bun run format:check
-      - run: bun test
+      - run: bun run check
       - run: bun run build
       - run: bun run contrast-test
       - run: bun run dep-guard
+      - run: bun run test:e2e
+      - name: node consumer smoke
+        run: |
+          set -euo pipefail
+          TARBALL="$PWD/$(npm pack --silent)"
+          mkdir -p "$RUNNER_TEMP/c" && cd "$RUNNER_TEMP/c"
+          npm init -y >/dev/null && npm pkg set type=module >/dev/null
+          npm install "$TARBALL"
+          node -e 'import("@corbits/react-ui").then((m) => { for (const n of ["Button", "ChatThread", "Badge"]) if (typeof m[n] !== "function") throw new Error("missing export: " + n); })'

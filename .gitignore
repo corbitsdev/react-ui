@@ -1,11 +1,9 @@
 node_modules/
 dist/
-*.tgz
-.env
-.env.local
 *.tsbuildinfo
+*.tgz
+coverage/
+.env
+.env.*
 .DS_Store
-scratch/
 build/
-.worktrees/
-.agent-state/
