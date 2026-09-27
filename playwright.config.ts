@@ -6,6 +6,8 @@ export default defineConfig({
   testMatch: "*.spec.ts",
   reporter: "list",
   globalTeardown: "./e2e/teardown.ts",
+  // Screenshots are text-free token swatches, so one baseline serves every OS.
+  snapshotPathTemplate: "{testDir}/__screenshots__/{arg}{ext}",
   use: { baseURL: "http://localhost:4173" },
   projects: [{ name: "chromium", use: devices["Desktop Chrome"] }],
   webServer: {
