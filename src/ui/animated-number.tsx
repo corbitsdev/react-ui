@@ -55,12 +55,12 @@ export function AnimatedNumber({
     const start = performance.now();
     const step = (now: number) => {
       const t = Math.min((now - start) / durationMs, 1);
-      setDisplay(from + (value - from) * easeOut(t));
-      if (t < 1) {
-        frameRef.current = requestAnimationFrame(step);
-      } else {
-        fromRef.current = value;
-      }
+      const current = from + (value - from) * easeOut(t);
+      // A value change mid-count continues from what is on screen, not from
+      // the previous target.
+      fromRef.current = current;
+      setDisplay(current);
+      if (t < 1) frameRef.current = requestAnimationFrame(step);
     };
     frameRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frameRef.current);
