@@ -34,16 +34,6 @@ export type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function readSystemPrefersDark(): boolean {
-  if (
-    typeof window === "undefined" ||
-    typeof window.matchMedia !== "function"
-  ) {
-    return false;
-  }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
-
 function readStoredPreference(
   storageKey: string,
   fallback: ThemePreference,
@@ -111,14 +101,12 @@ export function ThemeProvider({
     [defaultMode, defaultPreset],
   );
 
-  const [preference, setPreference] = useState<ThemePreference>(() =>
-    readStoredPreference(storageKey, fallback),
-  );
-  const [systemPrefersDark, setSystemPrefersDark] = useState(
-    readSystemPrefersDark,
-  );
+  // Both start from what the server renders; the effects below read
+  // localStorage and matchMedia after mount so hydration never mismatches.
+  const [preference, setPreference] = useState<ThemePreference>(fallback);
+  const [systemPrefersDark, setSystemPrefersDark] = useState(false);
 
-  // Re-read when the host changes the storage key (e.g. user signs in).
+  // Re-read on mount and when the host changes the storage key (e.g. user signs in).
   useEffect(() => {
     setPreference(readStoredPreference(storageKey, fallback));
   }, [storageKey, fallback]);
