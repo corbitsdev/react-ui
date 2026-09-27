@@ -84,6 +84,11 @@ contract, and so is everything the root re-exports — modules that are not expo
   `ui/menu`, `ui/tooltip` and `ui/toast` leave the root barrel; import them by subpath
   (`import { Toaster, toast } from "@corbits/react-ui/ui/toast"`).
 
+### Changed
+
+- **Build emits JavaScript with `tsc`.** SWC is gone; one `tsc` pass writes `dist/**/*.js`
+  and `.d.ts`. `contrast-test` and `dep-guard` run in CI instead of inside `build`.
+
 ### Added
 
 - **`"use client"` on stateful components.** The 45 `ui/` and `blocks/` modules that call
