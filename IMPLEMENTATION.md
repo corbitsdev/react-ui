@@ -35,8 +35,6 @@ by `&&`:
 
 Source imports are relative and carry `.js` extensions. There is no path
 alias. `prepack` runs the whole build so a failing gate cannot be packed.
-`prepare` (`scripts/prepare.mjs`) builds `dist/` on a git install; it is a
-no-op when `dist/` is already present.
 
 Other scripts: `bun run typecheck`, `bun run lint` (eslint),
 `bun run dep-guard` (`scripts/dep-guard.mjs` — fails if any file imports
@@ -73,6 +71,4 @@ the rest of the library does not.
 ## Publish
 
 Registry install is the documented path (`npm` / `pnpm` / `yarn` /
-`bun add @corbits/react-ui`). `publishConfig.access` is `public`. A git
-install still works via `prepare`, and under bun that requires
-`trustedDependencies: ["@corbits/react-ui"]`.
+`bun add @corbits/react-ui`). `publishConfig.access` is `public`.
