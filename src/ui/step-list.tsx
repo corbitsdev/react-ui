@@ -4,6 +4,8 @@ import type { StepDisplayStatus, StepListItem } from "../lib/workflow-registry.j
 import { cn } from "../lib/utils.js";
 import { StatusDot } from "./status-dot.js";
 
+export type { StepDisplayStatus, StepListItem } from "../lib/workflow-registry.js";
+
 const STATE_LABEL: Record<StepDisplayStatus, string> = {
   pending: "Pending",
   active: "Now",

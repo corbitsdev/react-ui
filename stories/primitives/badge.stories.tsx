@@ -26,8 +26,8 @@ export const Tones = () => (
 const STATUS_TONES: readonly WorkflowStatusTone[] = ["running", "awaiting", "done", "paused", "fail"];
 
 /** A workflow status chip is `Badge` plus a leading `StatusDot` — the tone
- * and pulsing rule come from `lib/workflow-registry`'s mapping tables, not
- * from a dedicated component. */
+ * and pulsing rule come from the internal `lib/workflow-registry` mapping
+ * tables, not from a dedicated component. */
 export const WorkflowStatus = () => (
   <div className="flex flex-wrap items-center gap-2">
     {STATUS_TONES.map((tone) => (
@@ -42,7 +42,7 @@ export const WorkflowStatus = () => (
 const SCOPES: readonly WorkflowScopeValue[] = ["personal", "tenant"];
 
 /** A workflow scope pill is a plain tone lookup on `Badge` — see
- * `WORKFLOW_SCOPE_BADGE_TONE` in `lib/workflow-registry`. */
+ * `WORKFLOW_SCOPE_BADGE_TONE` in the internal `lib/workflow-registry`. */
 export const WorkflowScope = () => (
   <div className="flex flex-wrap items-center gap-2">
     {SCOPES.map((scope) => (

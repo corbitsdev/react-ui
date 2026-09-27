@@ -64,50 +64,6 @@ export const WORKFLOW_SCOPE_BADGE_TONE: Record<WorkflowScope, BadgeTone> = {
   personal: "accent",
 };
 
-/** A live run's phase as an inspector or list row reports it — a coarser
- * vocabulary than `RunStatus` in `workflow-run.ts` (no `provisioning`), for
- * surfaces that only distinguish what a reader can act on. */
-export type LiveRunPhase = "running" | "awaiting" | "completed" | "failed" | "cancelled";
-
-export const LIVE_RUN_PHASE_TONE: Record<LiveRunPhase, WorkflowStatusTone> = {
-  running: "running",
-  awaiting: "awaiting",
-  completed: "done",
-  failed: "fail",
-  cancelled: "fail",
-};
-
-export const LIVE_RUN_PHASE_LABEL: Record<LiveRunPhase, string> = {
-  running: "Running",
-  awaiting: "Needs you",
-  completed: "Done",
-  failed: "Failed",
-  cancelled: "Cancelled",
-};
-
-export type WorkflowListItemKind = "run" | "schedule";
-
-/** One dense row in the combined live-runs-and-schedules list. */
-export type WorkflowListItem = {
-  readonly id: string;
-  readonly itemKind: WorkflowListItemKind;
-  /** Primary label — the workflow's kind, already humanised. */
-  readonly title: string;
-  /** Secondary line under the title: an alias, an origin tag. */
-  readonly subtitle?: string;
-  /** The "when" column: origin phrase for a run, cadence for a schedule. */
-  readonly when: string;
-  readonly scope: WorkflowScope;
-  readonly statusTone: WorkflowStatusTone;
-  readonly statusLabel: string;
-  /** Next-fire or elapsed text, already formatted by the caller. */
-  readonly nextOrElapsed: string;
-  /** Highlights `nextOrElapsed` — the next fire is close, or the run is fresh. */
-  readonly nextSoon?: boolean;
-  /** A live run parked on a human decision gets a subtle accent stripe. */
-  readonly needsYou?: boolean;
-};
-
 export type GateKind = "reviewList" | "choice" | "form" | "multiSelect";
 
 export const GATE_KIND_LABEL: Record<GateKind, string> = {
@@ -122,21 +78,6 @@ export type GateShellModel = {
   readonly kind: GateKind;
   readonly title: string;
   readonly prompt?: string;
-};
-
-/** One offering in a workflow-kind picker (distinct from `WorkflowOffering` in
- * `workflow-catalog.tsx`, which drives the run-once grid): this shape adds
- * category grouping and an "already on" badge for a picker that lists kinds
- * to attach to a schedule or an automation rather than to run once. */
-export type KindPickerItem = {
-  readonly id: string;
-  readonly label: string;
-  readonly description: string;
-  /** Grouping key. Omit when every item shares one category. */
-  readonly category?: string;
-  readonly categoryLabel?: string;
-  readonly alreadyOn?: boolean;
-  readonly alreadyOnLabel?: string;
 };
 
 export type StepDisplayStatus = "pending" | "active" | "done" | "failed";

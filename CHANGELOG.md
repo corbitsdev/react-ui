@@ -59,6 +59,16 @@ contract — modules that are not exported are internal and may change in any re
   `ThemeProvider` writes `.light` for resolved-light mode, so hosts on the provider need
   no change.
 
+- **Five helper modules are internal.** `lib/csv`, `lib/url`, `lib/utils` (`cn`),
+  `lib/workflow-registry` and `ui/chat-dock-timing` leave the root barrel and the
+  `exports` map, taking with them `cn`, `parseCsv` and the CSV caps, `isSafeUrl` /
+  `toSafeHref`, the `CHAT_DOCK_*` timings, and the workflow status and scope tables
+  (`WORKFLOW_STATUS_*`, `WORKFLOW_SCOPE_BADGE_TONE`, `LIVE_RUN_PHASE_*`,
+  `GATE_KIND_LABEL`, `workflowStatusLive`, `workflowScopeLabel`) with their types.
+  `StepListItem` and `StepDisplayStatus` stay public from `ui/step-list`;
+  `GateShellModel` and `GateKind` from `ui/gate-block`. For `cn`, compose `clsx` and
+  `tailwind-merge` directly: `twMerge(clsx(...inputs))`.
+
 ### Added
 
 - **`ui/shimmer-text` and `ui/thinking-label`** — a token-pure shimmer sweep

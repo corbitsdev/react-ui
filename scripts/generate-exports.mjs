@@ -22,7 +22,14 @@ import { join, relative } from "node:path";
 const ROOT = new URL("..", import.meta.url).pathname;
 const SRC = join(ROOT, "src");
 
-const INTERNAL = new Set(["lib/chart-geometry"]);
+const INTERNAL = new Set([
+  "lib/chart-geometry",
+  "lib/csv",
+  "lib/url",
+  "lib/utils",
+  "lib/workflow-registry",
+  "ui/chat-dock-timing",
+]);
 const BARREL_EXCLUDED = new Set();
 
 const walk = (dir) =>

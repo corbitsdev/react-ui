@@ -143,10 +143,6 @@
       "types": "./dist/lib/chat-parts.d.ts",
       "default": "./dist/lib/chat-parts.js"
     },
-    "./lib/csv": {
-      "types": "./dist/lib/csv.d.ts",
-      "default": "./dist/lib/csv.js"
-    },
     "./lib/metrics": {
       "types": "./dist/lib/metrics.d.ts",
       "default": "./dist/lib/metrics.js"
@@ -163,21 +159,9 @@
       "types": "./dist/lib/theme.d.ts",
       "default": "./dist/lib/theme.js"
     },
-    "./lib/url": {
-      "types": "./dist/lib/url.d.ts",
-      "default": "./dist/lib/url.js"
-    },
-    "./lib/utils": {
-      "types": "./dist/lib/utils.d.ts",
-      "default": "./dist/lib/utils.js"
-    },
     "./lib/workflow-display-flow": {
       "types": "./dist/lib/workflow-display-flow.d.ts",
       "default": "./dist/lib/workflow-display-flow.js"
-    },
-    "./lib/workflow-registry": {
-      "types": "./dist/lib/workflow-registry.d.ts",
-      "default": "./dist/lib/workflow-registry.js"
     },
     "./lib/workflow-run": {
       "types": "./dist/lib/workflow-run.d.ts",
@@ -254,10 +238,6 @@
     "./ui/chat-composer": {
       "types": "./dist/ui/chat-composer.d.ts",
       "default": "./dist/ui/chat-composer.js"
-    },
-    "./ui/chat-dock-timing": {
-      "types": "./dist/ui/chat-dock-timing.d.ts",
-      "default": "./dist/ui/chat-dock-timing.js"
     },
     "./ui/chat-input": {
       "types": "./dist/ui/chat-input.d.ts",
