@@ -10,10 +10,13 @@ Why the library exists lives in [PRODUCT.md](./PRODUCT.md).
 - Package name `@corbits/react-ui`, ESM (`"type": "module"`), license
   `LGPL-2.1-only`.
 - Required peers: `react` and `react-dom` (`^18.2.0 || ^19.0.0`),
-  `lucide-react` (`^0.545.0 || ^1.0.0`), `sonner` (`^2.0.7`),
-  `@radix-ui/react-dialog` (`^1.1.15`), `@radix-ui/react-dropdown-menu`
-  (`^2.1.16`), `@radix-ui/react-slot` (`^1.2.3`),
-  `@radix-ui/react-tooltip` (`^1.2.8`).
+  `lucide-react` (`^0.545.0 || ^1.0.0`), `@radix-ui/react-slot` (`^1.2.3`).
+- Optional peers (`peerDependenciesMeta`), each imported only by subpath-only
+  modules kept out of the root barrel (`BARREL_EXCLUDED`):
+  `@radix-ui/react-dialog` (`^1.1.15`; `ui/dialog`, `ui/command-palette`,
+  `ui/mic-permission-dialog`), `@radix-ui/react-dropdown-menu` (`^2.1.16`;
+  `ui/menu`), `@radix-ui/react-tooltip` (`^1.2.8`; `ui/tooltip`), `sonner`
+  (`^2.0.7`; `ui/toast`).
 - Direct dependencies: `class-variance-authority`, `clsx`, `tailwind-merge`.
 - `sideEffects` is CSS-only (`**/*.css`). `files` publishes `dist/` only.
 

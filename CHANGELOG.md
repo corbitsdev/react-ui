@@ -68,6 +68,11 @@ contract — modules that are not exported are internal and may change in any re
   `StepListItem` and `StepDisplayStatus` stay public from `ui/step-list`;
   `GateShellModel` and `GateKind` from `ui/gate-block`. For `cn`, compose `clsx` and
   `tailwind-merge` directly: `twMerge(clsx(...inputs))`.
+- **Four peers are optional and their modules are subpath-only.** `@radix-ui/react-dialog`,
+  `@radix-ui/react-dropdown-menu`, `@radix-ui/react-tooltip` and `sonner` move to
+  `peerDependenciesMeta`. `ui/dialog`, `ui/command-palette`, `ui/mic-permission-dialog`,
+  `ui/menu`, `ui/tooltip` and `ui/toast` leave the root barrel; import them by subpath
+  (`import { Toaster, toast } from "@corbits/react-ui/ui/toast"`).
 
 ### Added
 

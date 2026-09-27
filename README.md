@@ -4,7 +4,16 @@ React components for agent and workflow surfaces — chat, runs, artifacts, anal
 
 ## Runtime support
 
-Node >= 24 consumes built `dist/`. Peers: `react` and `react-dom` (18 or 19), `lucide-react`, `sonner`, `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-slot`, `@radix-ui/react-tooltip`.
+Node >= 24 consumes built `dist/`. Required peers: `react` and `react-dom` (18 or 19), `lucide-react`, `@radix-ui/react-slot`.
+
+Optional peers, needed only by the subpaths that import them. These modules are not in the root barrel; import them by subpath:
+
+| Peer | Subpaths |
+| --- | --- |
+| `@radix-ui/react-dialog` | `ui/dialog`, `ui/command-palette`, `ui/mic-permission-dialog` |
+| `@radix-ui/react-dropdown-menu` | `ui/menu` |
+| `@radix-ui/react-tooltip` | `ui/tooltip` |
+| `sonner` | `ui/toast` |
 
 ## Quickstart
 
@@ -26,7 +35,8 @@ Import the stylesheet once at the app root, before your own CSS (no Tailwind bui
 ```tsx
 import "@corbits/react-ui/styles.css";
 
-import { ThemeProvider, Toaster, toast } from "@corbits/react-ui";
+import { ThemeProvider } from "@corbits/react-ui";
+import { Toaster, toast } from "@corbits/react-ui/ui/toast";
 
 export function Root() {
   return (
@@ -70,7 +80,7 @@ export function NotFoundPage() {
 }
 ```
 
-Every component is importable by subpath (`@corbits/react-ui/ui/button`) or from the root (`@corbits/react-ui`).
+Every component is importable by subpath (`@corbits/react-ui/ui/button`); all but the optional-peer modules above are also exported from the root (`@corbits/react-ui`).
 
 The brand faces (Red Hat Display, Space Mono) are named by the theme but not bundled. Load them yourself, or the stack falls through to system fonts; to use a face loaded under a generated name, override `--font-sans` / `--font-mono`.
 
