@@ -10,7 +10,9 @@ contract — modules that are not exported are internal and may change in any re
 
 ## [Unreleased]
 
-### Breaking changes since 0.1.0
+## [0.2.0] - 2026-09-25
+
+### Breaking changes
 
 - **Git installs are no longer supported.** The `prepare` hook that built `dist/` on a
   `github:corbitsdev/react-ui#<sha>` install is gone, so such an install ships no build
@@ -143,5 +145,6 @@ rather than what changed.
   marks its own client boundary; see the README.
 - `lib/chart-geometry` and `lib/chart-palette` are internal and deliberately not exported.
 
-[Unreleased]: https://github.com/corbitsdev/react-ui/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/corbitsdev/react-ui/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/corbitsdev/react-ui/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/corbitsdev/react-ui/releases/tag/v0.1.0
