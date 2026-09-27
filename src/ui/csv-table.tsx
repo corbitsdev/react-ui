@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo } from "react";
 
 import { capCsv, isTabular, parseCsv } from "../lib/csv.js";

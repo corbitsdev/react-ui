@@ -1,3 +1,5 @@
+"use client";
+
 import { ChevronRight } from "lucide-react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";

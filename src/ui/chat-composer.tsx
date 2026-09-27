@@ -1,3 +1,5 @@
+"use client";
+
 import { useRef } from "react";
 
 import { useDelayedAutofocus } from "../hooks/use-delayed-autofocus.js";

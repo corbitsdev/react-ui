@@ -1,3 +1,5 @@
+"use client";
+
 import { ArrowUp, Paperclip, Square, X } from "lucide-react";
 import { useEffect, useRef, type RefObject } from "react";
 

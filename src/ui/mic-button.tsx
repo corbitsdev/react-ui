@@ -1,3 +1,5 @@
+"use client";
+
 import { Mic, MicOff, Square } from "lucide-react";
 
 import { cn } from "../lib/utils.js";

@@ -42,10 +42,11 @@ published.
 Source imports are relative and carry `.js` extensions. There is no path alias, so the
 emitted files are valid ESM for Node as well as for every bundler.
 
-The package ships no `"use client"` directives; a React Server Components consumer marks
-its own boundary (see README). Baking one framework's convention into a hundred
-published files would make correctness depend on a build step no plain-React consumer
-runs, and hide the boundary where the consumer cannot see it.
+Every component module that calls a hook, creates a context, defines an inline event
+handler, or imports an optional peer (Radix dialog, dropdown-menu or tooltip, or
+`sonner`) starts with `"use client"`, and SWC carries the directive into `dist/`. A React Server Components consumer renders any
+component directly; stateless components stay server-renderable. Plain-React bundlers
+ignore the directive. `dep-guard` enforces the rule, and checks `dist/` after a build.
 
 ## No fetch, ever
 

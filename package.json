@@ -27,7 +27,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "bun run clean && bun run generate && bun run build:js && bun run build:types && bun run build:css && bun run contrast-test",
+    "build": "bun run clean && bun run generate && bun run build:js && bun run build:types && bun run build:css && bun run contrast-test && bun run dep-guard",
     "clean": "rm -rf dist",
     "generate": "node scripts/generate-exports.mjs",
     "build:js": "swc src -d dist --strip-leading-paths --extensions .ts,.tsx --ignore \"**/*.test.ts\" --ignore \"**/*.test.tsx\"",

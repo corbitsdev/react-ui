@@ -76,6 +76,11 @@ contract — modules that are not exported are internal and may change in any re
 
 ### Added
 
+- **`"use client"` on stateful components.** The 45 `ui/` and `blocks/` modules that call
+  a hook, create a context, define an inline event handler, or import a Radix dialog,
+  dropdown-menu or tooltip, or `sonner`, ship the directive, so a React Server Components app renders them without
+  its own client wrapper.
+
 - **`ui/shimmer-text` and `ui/thinking-label`** — a token-pure shimmer sweep
   over text, and a rotating-verb status label built on it. Verb rotation is
   width-stable (stacked grid, crossfade) and stops under reduced motion via

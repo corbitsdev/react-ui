@@ -1,3 +1,5 @@
+"use client";
+
 import { useId, type CSSProperties } from "react";
 import { cn } from "../lib/utils.js";
 import { CORBITS_MARK_PATH } from "./corbits-mark.js";

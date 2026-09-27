@@ -77,7 +77,10 @@ around it.
    back after it ships is not. If it is public but statically imports an *optional* peer,
    add it to `BARREL_EXCLUDED` in the same file instead — it keeps its subpath but must
    stay out of the root barrel. `dep-guard` fails if you forget.
-4. Do not add `"use client"`. The package ships no client-boundary directives.
+4. If a `ui/` or `blocks/` module calls a hook, creates a context, defines an inline
+   event handler, or imports an optional peer, start it with `"use client"`;
+   `@radix-ui/react-slot` alone does not count. Leave stateless components and
+   `hooks/` / `lib/` modules unmarked. `dep-guard` fails either way you get it wrong.
 5. If it needs a new package, decide deliberately: a framework-level library the consumer
    already has is a **peer** dependency, a small implementation detail is a real
    dependency. Adding a peer is a breaking change for existing consumers.

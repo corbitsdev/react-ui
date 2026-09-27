@@ -108,7 +108,7 @@ export function Conversation() {
 
 Every component is importable by subpath (`@corbits/react-ui/ui/button`); all but the optional-peer modules above are also exported from the root (`@corbits/react-ui`).
 
-This package ships no `"use client"` directives. In a React Server Components app, re-export stateful components from a file you mark yourself, using subpaths rather than the root barrel.
+Stateful components ship `"use client"`, so a React Server Components app imports them directly, from the root or a subpath. Other bundlers ignore the directive.
 
 ## Theming
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import type * as React from "react";
