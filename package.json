@@ -75,7 +75,7 @@
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "test": "bun test src --pass-with-no-tests",
-    "test:e2e": "bun test e2e",
+    "test:e2e": "bun test ./e2e/exports.test.ts && playwright test",
     "check": "bun run typecheck && bun run lint && bun run format:check && bun run test",
     "build:css": "tailwindcss -i src/styles.css -o dist/styles.css && cp src/theme.css dist/theme.css",
     "dep-guard": "node scripts/dep-guard.mjs",
@@ -91,6 +91,7 @@
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.11.2",
     "@ladle/react": "^5.1.1",
+    "@playwright/test": "^1.63.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-slot": "^1.2.3",
