@@ -9,8 +9,10 @@ import {
   DictationStatusLine,
   FilterChip,
   Select,
+  ShimmerText,
   ThemeProvider,
   ThemeToggle,
+  ThinkingMark,
   type ApprovalRequest,
   type ChatMessage,
 } from "@corbits/react-ui";
@@ -189,6 +191,9 @@ export const scenarios: Record<string, () => ReactNode> = {
       Form
     </AuthLayout>
   ),
+  shimmer: () => <ShimmerText>Thinking</ShimmerText>,
+  "thinking-mark": () => <ThinkingMark variant="echo" />,
+  "thinking-mark-paused": () => <ThinkingMark variant="echo" paused />,
   theme: () => <Swatches />,
   "theme-toggle": () => (
     <ThemeProvider storageKey="e2e-theme" defaultMode="light">
