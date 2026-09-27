@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
-import { act, createElement } from "react";
+import { StrictMode, act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 
 import {
   useControllableState,
   type UseControllableStateOptions,
 } from "./use-controllable-state.js";
+import { renderHook } from "../test/render-hook.js";
 
 function mount<T>(options: UseControllableStateOptions<T>) {
   const container = document.createElement("div");
@@ -50,6 +51,45 @@ describe("useControllableState", () => {
     act(() => handle.get()[1]((previous) => previous + 1));
     expect(handle.get()[0]).toBe(2);
     handle.unmount();
+  });
+
+  test("uncontrolled: batched functional updates each see the previous result", () => {
+    const changes: number[] = [];
+    const { result, unmount } = renderHook(() =>
+      useControllableState({
+        defaultValue: 0,
+        name: "test",
+        onChange: (v) => changes.push(v),
+      }),
+    );
+    act(() => {
+      result.current[1]((previous) => previous + 1);
+      result.current[1]((previous) => previous + 1);
+    });
+    expect(result.current[0]).toBe(2);
+    expect(changes).toEqual([1, 2]);
+    unmount();
+  });
+
+  test("uncontrolled: onChange fires once per update under StrictMode", () => {
+    const changes: number[] = [];
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    let set: ((action: (previous: number) => number) => void) | undefined;
+    function Host() {
+      set = useControllableState({
+        defaultValue: 0,
+        name: "test",
+        onChange: (v) => changes.push(v),
+      })[1];
+      return null;
+    }
+    act(() =>
+      root.render(createElement(StrictMode, null, createElement(Host))),
+    );
+    act(() => set?.((previous) => previous + 1));
+    expect(changes).toEqual([1]);
+    act(() => root.unmount());
   });
 
   test("controlled: the value tracks the prop, not internal state", () => {

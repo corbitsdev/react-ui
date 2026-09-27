@@ -52,16 +52,27 @@ export function useControllableState<T>(
   }
   wasControlledRef.current = isControlled;
 
+  // Mirrors the uncontrolled state synchronously so batched functional updates
+  // chain off each other. Resolving inside a React updater instead would call
+  // `onChange` from that updater, which StrictMode invokes twice.
+  const latestUncontrolledRef = useRef(uncontrolledValue);
+
   const setValue = useCallback(
     (action: ControllableStateAction<T>) => {
-      const resolved =
+      const previous = isControlled
+        ? controlledValue
+        : latestUncontrolledRef.current;
+      const next =
         typeof action === "function"
-          ? (action as (previous: T) => T)(value)
+          ? (action as (previous: T) => T)(previous)
           : action;
-      if (!isControlled) setUncontrolledValue(resolved);
-      onChange?.(resolved);
+      if (!isControlled) {
+        latestUncontrolledRef.current = next;
+        setUncontrolledValue(next);
+      }
+      onChange?.(next);
     },
-    [isControlled, value, onChange],
+    [isControlled, controlledValue, onChange],
   );
 
   return [value, setValue] as const;
