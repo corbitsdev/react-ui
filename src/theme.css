@@ -620,14 +620,15 @@
 }
 .corbits-avatar-orbit {
   position: absolute;
-  inset: -3px;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: conic-gradient(
-    from var(--corbits-avatar-angle),
-    transparent 0 35%,
-    var(--primary-emphasis) 100%
-  );
+  inset: -4px;
+  padding: 2px;
+  background:
+    conic-gradient(
+      from var(--corbits-avatar-angle),
+      var(--primary-emphasis) 0deg 90deg,
+      transparent 90deg 360deg
+    ),
+    color-mix(in srgb, var(--foreground) 12%, transparent);
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);

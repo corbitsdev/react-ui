@@ -56,7 +56,8 @@ const DOT_SIZE: Record<AvatarSize, string> = {
 };
 
 const TONE_CLASS: Record<AvatarTone, string> = {
-  neutral: "bg-muted text-muted-foreground",
+  neutral:
+    "bg-muted text-muted-foreground dark:bg-[color-mix(in_srgb,var(--foreground)_14%,var(--muted))]",
   agent: "bg-primary text-primary-foreground",
   agent2: "bg-accent text-accent-foreground",
   agent3: "bg-success text-success-foreground",
@@ -94,11 +95,25 @@ export function Avatar({
         "relative inline-flex shrink-0 items-center justify-center font-bold uppercase",
         SIZE_CLASS[size],
         TONE_CLASS[tone],
+        "dark:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--foreground)_14%,transparent)]",
         shape !== undefined && SHAPE_CLASS[shape],
         className,
       )}
     >
-      {orbit ? <span aria-hidden className="corbits-avatar-orbit" /> : null}
+      {orbit ? (
+        <span
+          aria-hidden
+          className="corbits-avatar-orbit"
+          style={{
+            borderRadius:
+              shape === "circle"
+                ? "9999px"
+                : shape === "square"
+                  ? "calc(var(--avatar-radius, var(--radius)) + 4px)"
+                  : "0",
+          }}
+        />
+      ) : null}
       <span aria-hidden>{initials.slice(0, 2)}</span>
       {tenantMonogram === undefined ? null : (
         <span
