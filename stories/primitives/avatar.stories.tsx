@@ -13,9 +13,76 @@ export const Tones = () => (
 
 export const Sizes = () => (
   <div className="flex items-center gap-3">
+    <Avatar initials="XS" label="Extra small" size="xs" />
     <Avatar initials="SM" label="Small" size="sm" />
     <Avatar initials="MD" label="Medium" size="md" />
     <Avatar initials="LG" label="Large" size="lg" />
+    <Avatar initials="XL" label="Extra large" size="xl" />
+  </div>
+);
+
+export const Shapes = () => (
+  <div className="flex items-center gap-3">
+    <Avatar initials="NP" label="Noor Patel" shape="circle" tone="agent" />
+    <Avatar initials="AI" label="Agent" shape="square" tone="agent" />
+  </div>
+);
+
+export const Statuses = () => (
+  <div className="flex items-center gap-4">
+    <Avatar
+      initials="AI"
+      label="Agent"
+      shape="square"
+      status="working"
+      size="lg"
+    />
+    <Avatar
+      initials="AI"
+      label="Agent"
+      shape="square"
+      status="ready"
+      size="lg"
+    />
+    <Avatar
+      initials="AI"
+      label="Agent"
+      shape="square"
+      status="idle"
+      size="lg"
+    />
+    <Avatar
+      initials="NP"
+      label="Noor Patel"
+      shape="circle"
+      status="ready"
+      size="lg"
+    />
+  </div>
+);
+
+export const Orbit = () => (
+  <div className="flex items-center gap-4 p-2">
+    {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
+      <Avatar
+        key={size}
+        initials="AI"
+        label="Agent"
+        tone="agent"
+        shape="square"
+        status="working"
+        orbit
+        size={size}
+      />
+    ))}
+    <Avatar
+      initials="NP"
+      label="Noor Patel"
+      shape="circle"
+      status="working"
+      orbit
+      size="lg"
+    />
   </div>
 );
 
@@ -33,5 +100,23 @@ export const Stack = () => (
       { id: "5", initials: "TL", label: "Tara Lin" },
     ]}
     max={4}
+  />
+);
+
+export const StackWithStatus = () => (
+  <AvatarStack
+    shape="circle"
+    items={[
+      { id: "1", initials: "NP", label: "Noor Patel" },
+      {
+        id: "2",
+        initials: "AI",
+        label: "Agent",
+        tone: "agent",
+        shape: "square",
+        status: "working",
+        orbit: true,
+      },
+    ]}
   />
 );

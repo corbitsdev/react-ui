@@ -605,6 +605,46 @@
   }
 }
 
+/* Avatar working orbit. The conic angle is a registered property so the arc
+   sweeps while the masked ring (and the avatar it encircles) never rotates.
+   Used by ui/avatar. */
+@property --corbits-avatar-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes corbits-avatar-orbit {
+  to {
+    --corbits-avatar-angle: 360deg;
+  }
+}
+.corbits-avatar-orbit {
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--corbits-avatar-angle),
+    transparent 0 35%,
+    var(--primary-emphasis) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  animation: corbits-avatar-orbit 1.4s linear infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .corbits-avatar-orbit {
+    animation: none;
+    --corbits-avatar-angle: 120deg;
+  }
+}
+
 /* Ridge-study motion: keep geometry and timing in the original 100 x 70 space. */
 @keyframes corbits-thinking-sweep {
   0% {
