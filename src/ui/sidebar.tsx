@@ -1,5 +1,6 @@
 import { Slot } from "@radix-ui/react-slot";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { cloneElement, isValidElement } from "react";
 import type * as React from "react";
 
 import { cn } from "../lib/utils.js";
@@ -114,6 +115,33 @@ export type SidebarItemProps = React.ComponentProps<"a"> & {
   asChild?: boolean;
 };
 
+function sidebarItemParts(
+  icon: React.ReactNode,
+  label: React.ReactNode,
+  count: number | undefined,
+) {
+  return (
+    <>
+      {icon === undefined ? null : (
+        <span
+          className="grid size-4 shrink-0 place-items-center [&_svg]:size-4"
+          aria-hidden
+        >
+          {icon}
+        </span>
+      )}
+      <span className="min-w-0 flex-1 truncate group-data-[collapsed=true]/sidebar:sr-only">
+        {label}
+      </span>
+      {count === undefined ? null : (
+        <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground group-data-[collapsed=true]/sidebar:sr-only">
+          {count}
+        </span>
+      )}
+    </>
+  );
+}
+
 export function SidebarItem({
   active = false,
   icon,
@@ -124,6 +152,16 @@ export function SidebarItem({
   ...props
 }: SidebarItemProps) {
   const Comp = asChild ? Slot : "a";
+  // Slot accepts one child, so with `asChild` the icon, label and count go
+  // inside the consumer's element (a router link) rather than beside it.
+  const content =
+    asChild && isValidElement<{ children?: React.ReactNode }>(children)
+      ? cloneElement(
+          children,
+          undefined,
+          sidebarItemParts(icon, children.props.children, count),
+        )
+      : sidebarItemParts(icon, children, count);
   return (
     <li>
       <Comp
@@ -139,22 +177,7 @@ export function SidebarItem({
         )}
         {...props}
       >
-        {icon === undefined ? null : (
-          <span
-            className="grid size-4 shrink-0 place-items-center [&_svg]:size-4"
-            aria-hidden
-          >
-            {icon}
-          </span>
-        )}
-        <span className="min-w-0 flex-1 truncate group-data-[collapsed=true]/sidebar:sr-only">
-          {children}
-        </span>
-        {count === undefined ? null : (
-          <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground group-data-[collapsed=true]/sidebar:sr-only">
-            {count}
-          </span>
-        )}
+        {content}
       </Comp>
     </li>
   );
