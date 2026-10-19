@@ -179,6 +179,21 @@ function checksFor(tokens) {
     }
   }
 
+  // 3b. The status-text tokens are text by contract (a medium/high RiskBadge
+  //     label is `warn`), so they clear text contrast on the same surfaces.
+  for (const text of ["ok", "warn"]) {
+    for (const surface of ["background", "card"]) {
+      if (has(text) && has(surface)) {
+        checks.push([
+          `${text} on ${surface}`,
+          tokens[text],
+          tokens[surface],
+          AA_TEXT,
+        ]);
+      }
+    }
+  }
+
   // 4. Control boundaries and the focus ring must clear the UI-component threshold.
   for (const line of ["input", "ring"]) {
     for (const surface of ["background", "card"]) {
