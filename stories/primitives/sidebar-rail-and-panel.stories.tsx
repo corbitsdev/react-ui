@@ -10,6 +10,7 @@ import {
   SidebarPanelFooter,
   SidebarPanelHeader,
   SidebarPanelPins,
+  SidebarPanelSection,
 } from "../../src/ui/sidebar-panel.js";
 import { StatusDot } from "../../src/ui/status-dot.js";
 
@@ -28,36 +29,42 @@ export const ChannelsPanel = () => {
           }
         />
         <SidebarPanelPins>
-          <SidebarItemRow
-            leading={<Pin className="text-muted-foreground" />}
-            name="#launch-week"
-            selected={selectedId === "launch-week"}
-            onSelect={() => setSelectedId("launch-week")}
-          />
+          <SidebarPanelSection aria-label="Pinned">
+            <SidebarItemRow
+              leading={<Pin className="text-muted-foreground" />}
+              name="#launch-week"
+              selected={selectedId === "launch-week"}
+              onSelect={() => setSelectedId("launch-week")}
+            />
+          </SidebarPanelSection>
         </SidebarPanelPins>
         <SidebarPanelBody>
-          {[
-            { id: "general", name: "general", unread: true },
-            { id: "eng", name: "eng", unread: false },
-            { id: "design", name: "design", unread: false },
-          ].map((channel) => (
+          <SidebarPanelSection aria-label="Channels">
+            {[
+              { id: "general", name: "general", unread: true },
+              { id: "eng", name: "eng", unread: false },
+              { id: "design", name: "design", unread: false },
+            ].map((channel) => (
+              <SidebarItemRow
+                key={channel.id}
+                leading={<Hash className="text-muted-foreground" />}
+                name={channel.name}
+                unread={channel.unread}
+                meta={
+                  channel.unread ? <Badge tone="accent">3</Badge> : undefined
+                }
+                selected={selectedId === channel.id}
+                onSelect={() => setSelectedId(channel.id)}
+              />
+            ))}
             <SidebarItemRow
-              key={channel.id}
-              leading={<Hash className="text-muted-foreground" />}
-              name={channel.name}
-              unread={channel.unread}
-              meta={channel.unread ? <Badge tone="accent">3</Badge> : undefined}
-              selected={selectedId === channel.id}
-              onSelect={() => setSelectedId(channel.id)}
+              leading={<MessagesSquare className="text-muted-foreground" />}
+              name="Priya Shah"
+              meta={<StatusDot label="Online" tone="emphasis" size="xs" />}
+              selected={selectedId === "priya"}
+              onSelect={() => setSelectedId("priya")}
             />
-          ))}
-          <SidebarItemRow
-            leading={<MessagesSquare className="text-muted-foreground" />}
-            name="Priya Shah"
-            meta={<StatusDot label="Online" tone="emphasis" size="xs" />}
-            selected={selectedId === "priya"}
-            onSelect={() => setSelectedId("priya")}
-          />
+          </SidebarPanelSection>
         </SidebarPanelBody>
         <SidebarPanelFooter>
           <button
@@ -125,22 +132,24 @@ export const LiveRows = () => {
       <SidebarPanel>
         <SidebarPanelHeader title="Routines activity" />
         <SidebarPanelBody>
-          {runs.map((run) => (
-            <SidebarItemRow
-              key={run.id}
-              leading={<StatusDot label="Running" tone="emphasis" live />}
-              name={run.name}
-              meta={
-                <time
-                  dateTime={run.startedAt}
-                  className="font-mono text-xs text-muted-foreground tabular-nums"
-                >
-                  {formatRelativeTime(run.startedAt, now)}
-                </time>
-              }
-              leaving={run.leaving}
-            />
-          ))}
+          <SidebarPanelSection aria-label="Running routines">
+            {runs.map((run) => (
+              <SidebarItemRow
+                key={run.id}
+                leading={<StatusDot label="Running" tone="emphasis" live />}
+                name={run.name}
+                meta={
+                  <time
+                    dateTime={run.startedAt}
+                    className="font-mono text-xs text-muted-foreground tabular-nums"
+                  >
+                    {formatRelativeTime(run.startedAt, now)}
+                  </time>
+                }
+                leaving={run.leaving}
+              />
+            ))}
+          </SidebarPanelSection>
         </SidebarPanelBody>
       </SidebarPanel>
     </div>
