@@ -157,6 +157,7 @@ export function ToolPicker({
 
   const emptyCatalog = items.length === 0;
   const noMatches = !emptyCatalog && filtered.length === 0;
+  const hasOptions = !loading && filtered.length > 0;
 
   return (
     <div
@@ -170,7 +171,7 @@ export function ToolPicker({
         placeholder={searchPlaceholder}
         aria-label={searchLabel}
         role="combobox"
-        aria-expanded
+        aria-expanded={hasOptions}
         aria-autocomplete="list"
         aria-controls={`${baseId}-list`}
         aria-activedescendant={
@@ -183,63 +184,71 @@ export function ToolPicker({
         spellCheck={false}
       />
 
+      {/* Status copy sits beside the listbox, not in it: a listbox may only own
+          options and groups, so it is hidden while it has none. */}
+      {loading ? (
+        <p
+          role="status"
+          className="px-2 py-8 text-center text-sm text-muted-foreground"
+        >
+          Loading…
+        </p>
+      ) : emptyCatalog ? (
+        <div role="status">
+          {empty ?? (
+            <EmptyState
+              title="No tools"
+              description="Nothing in the catalog yet."
+            />
+          )}
+        </div>
+      ) : noMatches ? (
+        <p
+          role="status"
+          className="px-2 py-8 text-center text-sm text-muted-foreground"
+        >
+          No tools match — try a different search.
+        </p>
+      ) : null}
+
       <div
         ref={listRef}
         id={`${baseId}-list`}
         role="listbox"
         aria-label="Tools"
         aria-multiselectable={multiple}
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto"
-      >
-        {loading ? (
-          <p
-            role="presentation"
-            className="px-2 py-8 text-center text-sm text-muted-foreground"
-          >
-            Loading…
-          </p>
-        ) : emptyCatalog ? (
-          <div role="presentation">
-            {empty ?? (
-              <EmptyState
-                title="No tools"
-                description="Nothing in the catalog yet."
-              />
-            )}
-          </div>
-        ) : noMatches ? (
-          <p
-            role="presentation"
-            className="px-2 py-8 text-center text-sm text-muted-foreground"
-          >
-            No tools match — try a different search.
-          </p>
-        ) : (
-          groups.map((group) => (
-            <div
-              key={group.id}
-              role="presentation"
-              className="flex flex-col gap-1"
-            >
-              <p className="px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                {groupHeading(group.id)}
-              </p>
-              <div className="flex flex-col gap-1">
-                {group.items.map((item) => (
-                  <ToolPickerOption
-                    key={item.id}
-                    id={optionId(item.id)}
-                    item={item}
-                    selected={selectedIds.has(item.id)}
-                    active={navigation.activeId === item.id}
-                    onSelect={() => toggle(item)}
-                    onPointerMove={() => navigation.setActiveId(item.id)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))
+        hidden={!hasOptions}
+        className={cn(
+          "flex min-h-0 flex-1 flex-col gap-3 overflow-auto",
+          !hasOptions && "hidden",
         )}
+      >
+        {hasOptions
+          ? groups.map((group) => (
+              <div
+                key={group.id}
+                role="presentation"
+                className="flex flex-col gap-1"
+              >
+                <p className="px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  {groupHeading(group.id)}
+                </p>
+                <div className="flex flex-col gap-1">
+                  {group.items.map((item) => (
+                    <ToolPickerOption
+                      key={item.id}
+                      id={optionId(item.id)}
+                      item={item}
+                      selected={selectedIds.has(item.id)}
+                      active={navigation.activeId === item.id}
+                      onSelect={() => toggle(item)}
+                      onPointerMove={() => navigation.setActiveId(item.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))
+          : null}
       </div>
     </div>
   );
