@@ -223,8 +223,11 @@ function Detail({ title, children }: { title: string; children: string }) {
         {title}
       </p>
       {/* Scrolls in its own box: a long tool result must never make the page
-          scroll sideways. */}
-      <pre className="max-h-48 overflow-auto rounded-md bg-muted p-2 font-mono text-[11px] whitespace-pre-wrap">
+          scroll sideways. Focusable so the keyboard can scroll it too. */}
+      <pre
+        tabIndex={0}
+        className="max-h-48 overflow-auto rounded-md bg-muted p-2 font-mono text-[11px] whitespace-pre-wrap"
+      >
         {children}
       </pre>
     </div>

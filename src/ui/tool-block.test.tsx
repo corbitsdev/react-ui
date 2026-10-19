@@ -115,6 +115,21 @@ describe("ToolBlock", () => {
     mounted.unmount();
   });
 
+  test("detail boxes take focus so the keyboard can scroll long output", () => {
+    const mounted = render(
+      <ToolBlock
+        name="search"
+        input={{ query: "invoices" }}
+        state={{ status: "output-available", output: "3 results" }}
+        defaultOpen
+      />,
+    );
+    const boxes = [...mounted.container.querySelectorAll("pre")];
+    expect(boxes.length).toBe(2);
+    for (const box of boxes) expect(box.tabIndex).toBe(0);
+    mounted.unmount();
+  });
+
   test("carries its status as a data attribute for state-based styling", () => {
     const mounted = render(
       <ToolBlock name="search" state={{ status: "running" }} />,
