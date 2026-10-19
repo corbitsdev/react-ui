@@ -23,8 +23,8 @@
     "e2e",
     "stories",
     "playwright.config.ts",
-    ".ladle",
-    "vite.ladle.config.mjs"
+    ".storybook",
+    "vite.stories.config.mjs"
   ],
   // Typechecked by the e2e host against the packed package.
   "exclude": ["e2e/fixtures.tsx"]
