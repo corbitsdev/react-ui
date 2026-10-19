@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 // Serves the Vite host e2e/helpers.ts bootstraps from the packed tarball, and
-// the Ladle stories build for the accessibility sweep.
+// the static Storybook build for the accessibility sweep.
 export default defineConfig({
   testDir: "e2e",
   testMatch: "*.spec.ts",
@@ -19,8 +19,9 @@ export default defineConfig({
       timeout: 180_000,
     },
     {
-      command: "bun run stories:build && bunx ladle preview --port 61000",
-      url: "http://localhost:61000/meta.json",
+      command:
+        "bun run stories:build && bunx vite preview --outDir build --port 61000 --strictPort",
+      url: "http://localhost:61000/index.json",
       reuseExistingServer: false,
       timeout: 180_000,
     },

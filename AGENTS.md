@@ -19,7 +19,7 @@ arrives as props.
 - `src/index.ts`: the hand-written root barrel.
 - `src/theme.css`, `src/styles.css`: tokens and keyframes; the prebuilt sheet
   entry.
-- `stories/`: Ladle stories, kept out of `src/` so they never ship in `dist/`.
+- `stories/`: Storybook stories, kept out of `src/` so they never ship in `dist/`.
 - `scripts/dep-guard.mjs`, `scripts/contrast-test.mjs`: the CI gates.
 - `scripts/test-dom-setup.ts`: happy-dom preload for unit tests (`bunfig.toml`).
 - `e2e/`: checks against the built package.
