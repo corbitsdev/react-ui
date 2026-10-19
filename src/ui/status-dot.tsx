@@ -8,7 +8,11 @@ export type StatusDotTone =
   | "danger";
 
 export type StatusDotProps = {
-  /** Names the state for assistive tech. Required — a bare colour says nothing. */
+  /**
+   * Names the state for assistive tech. Required — a bare colour says nothing.
+   * Pass `""` when adjacent text already names the state (a status `Badge`, a
+   * step title): the dot is then decorative and hidden, as `<img alt="">` is.
+   */
   readonly label: string;
   /** Adds a ring that pulses outward: this state is live and still changing. */
   readonly live?: boolean;
@@ -45,7 +49,8 @@ const TONE_CLASS: Record<StatusDotTone, string> = {
 /**
  * A state marker carrying its own accessible name — a coloured dot with no
  * label is invisible to a screen reader, so the label is required rather than
- * optional.
+ * optional. An empty label opts out explicitly: the dot leaves the
+ * accessibility tree instead of announcing an unnamed image.
  *
  * The `live` ring is a separate `aria-hidden` element: motion says "still
  * changing" to people who can see it, and the label already says so to those
@@ -65,8 +70,9 @@ export function StatusDot({
 }: StatusDotProps) {
   return (
     <span
-      role="img"
-      aria-label={label}
+      {...(label
+        ? { role: "img", "aria-label": label }
+        : { "aria-hidden": true })}
       className={cn(
         "relative inline-flex shrink-0",
         SIZE_CLASS[size],
