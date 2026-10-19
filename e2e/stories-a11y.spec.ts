@@ -34,6 +34,31 @@ test("every story is free of serious and critical axe violations", async ({
         failures.push(`${story} (${theme}): render error`);
         continue;
       }
+      // Rows mount a frame late and fade in, so wait for the theme class, two
+      // frames and any finite transition before scanning; otherwise contrast
+      // is measured mid-fade and depends on runner speed.
+      await page
+        .locator("html.light, html.dark")
+        .waitFor({ state: "attached" });
+      await page.evaluate(async () => {
+        const frame = () =>
+          new Promise((resolve) => requestAnimationFrame(resolve));
+        await frame();
+        await frame();
+        const finite = document
+          .getAnimations()
+          .filter(
+            (animation) =>
+              animation.playState === "running" &&
+              animation.effect?.getTiming().iterations !== Infinity,
+          );
+        await Promise.race([
+          Promise.all(
+            finite.map((animation) => animation.finished.catch(() => {})),
+          ),
+          new Promise((resolve) => setTimeout(resolve, 2_000)),
+        ]);
+      });
       const { violations } = await new AxeBuilder({ page }).analyze();
       for (const violation of violations) {
         if (violation.impact === "serious" || violation.impact === "critical") {
