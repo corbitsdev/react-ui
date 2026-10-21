@@ -132,3 +132,4 @@ export * from "./ui/conversation.js";
 export * from "./ui/conversation-divider.js";
 export * from "./ui/prompt-input.js";
 export * from "./ui/panel.js";
+export * from "./ui/prompt-input-toolbar.js";
