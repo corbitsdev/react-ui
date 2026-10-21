@@ -35,6 +35,14 @@ import {
   PanelHandle,
   PanelHeader,
   PanelPane,
+  PromptInputToolbar,
+  PromptInputAddMenu,
+  PromptInputButton,
+  PromptInputModelSelect,
+  PromptInputModeSelect,
+  PromptInputFloat,
+  PromptInputContext,
+  PromptInputNote,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
@@ -683,6 +691,109 @@ function PanelScenario() {
   );
 }
 
+/** Every toolbar part, with each choice and action recorded. "Toggle
+ * toolbar" takes the toolbar out, to compare layouts; clearing the reply
+ * chip removes it and "Reply to Ada" brings it back. */
+function PromptToolbarScenario() {
+  const [value, setValue] = useState("");
+  const [model, setModel] = useState("deep");
+  const [mode, setMode] = useState("ask");
+  const [toolbar, setToolbar] = useState(true);
+  const [replying, setReplying] = useState(true);
+  const { log, record } = useEventLog();
+  return (
+    <div style={{ width: 520, paddingTop: 280 }}>
+      <PromptInput
+        value={value}
+        onValueChange={setValue}
+        onSubmit={() => record(`submit:${value}`)}
+        tokens={PROMPT_TOKENS}
+      >
+        {replying ? (
+          <PromptInputFloat>
+            <PromptInputContext
+              label="Replying to"
+              detail="Ada"
+              onClear={() => setReplying(false)}
+            />
+          </PromptInputFloat>
+        ) : null}
+        <PromptInputSuggestions />
+        <PromptInputTextarea />
+        {toolbar ? (
+          <PromptInputToolbar>
+            <PromptInputAddMenu
+              items={[
+                {
+                  id: "files",
+                  label: "Add files",
+                  onSelect: () => record("add:files"),
+                },
+                {
+                  id: "link",
+                  label: "Add a link",
+                  disabled: true,
+                  onSelect: () => record("add:link"),
+                },
+                {
+                  id: "mention",
+                  label: "Mention an agent",
+                  onSelect: () => record("add:mention"),
+                },
+              ]}
+            />
+            <PromptInputModeSelect
+              modes={[
+                { id: "ask", label: "Ask", detail: "Answers only" },
+                { id: "plan", label: "Plan", detail: "Drafts steps" },
+                { id: "agent", label: "Agent", detail: "Takes action" },
+              ]}
+              value={mode}
+              onValueChange={(id) => {
+                record(`mode:${id}`);
+                setMode(id);
+              }}
+            />
+            <PromptInputModelSelect
+              className="ms-auto"
+              models={[
+                { id: "swift", name: "Swift 2", short: "Swift", group: "Fast" },
+                { id: "lite", name: "Lite 1", short: "Lite", group: "Fast" },
+                {
+                  id: "deep",
+                  name: "Deep 4",
+                  short: "Deep",
+                  group: "Thorough",
+                },
+              ]}
+              value={model}
+              onValueChange={(id) => {
+                record(`model:${id}`);
+                setModel(id);
+              }}
+            />
+            <PromptInputButton
+              aria-label="Voice"
+              onClick={() => record("voice")}
+            >
+              V
+            </PromptInputButton>
+            <PromptInputSubmit />
+          </PromptInputToolbar>
+        ) : (
+          <PromptInputSubmit />
+        )}
+      </PromptInput>
+      <PromptInputNote>Agents can make mistakes.</PromptInputNote>
+      <Button onClick={() => setToolbar((shown) => !shown)}>
+        Toggle toolbar
+      </Button>
+      <Button onClick={() => setReplying(true)}>Reply to Ada</Button>
+      {log}
+    </div>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -722,4 +833,5 @@ export const scenarios: Record<string, () => ReactNode> = {
   "prompt-input-chat": () => <PromptChat stoppable />,
   "prompt-input-chat-no-stop": () => <PromptChat stoppable={false} />,
   panel: () => <PanelScenario />,
+  "prompt-input-toolbar": () => <PromptToolbarScenario />,
 };
