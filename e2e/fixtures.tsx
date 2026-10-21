@@ -22,6 +22,12 @@ import {
   type ChatMessage,
   type ConversationScrollPolicy,
   useConversation,
+  PromptInput,
+  PromptInputSubmit,
+  PromptInputSuggestions,
+  PromptInputTextarea,
+  type PromptInputStatus,
+  type PromptToken,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
@@ -459,6 +465,69 @@ function ConversationEmptyScenario() {
   );
 }
 
+const PROMPT_TOKENS: PromptToken[] = [
+  { id: "ada", kind: "mention", token: "@Ada", detail: "Research agent" },
+  { id: "adam", kind: "mention", token: "@Adam", detail: "Review agent" },
+  { id: "brief", kind: "command", token: "/brief", detail: "Summarize" },
+];
+
+/** Records every submit with its text, and every stop. "Reply" puts the
+ * prompt into the streaming state a host is in while an agent answers. */
+function Prompt() {
+  const [value, setValue] = useState("");
+  const [status, setStatus] = useState<PromptInputStatus>("ready");
+  const { log, record } = useEventLog();
+  return (
+    <div style={{ width: 480, paddingTop: 160 }}>
+      <PromptInput
+        value={value}
+        onValueChange={setValue}
+        onSubmit={() => record(`submit:${value}`)}
+        tokens={PROMPT_TOKENS}
+        status={status}
+      >
+        <PromptInputSuggestions />
+        <PromptInputTextarea />
+        <PromptInputSubmit
+          onStop={() => {
+            record("stop");
+            setStatus("ready");
+          }}
+        />
+      </PromptInput>
+      <Button onClick={() => setStatus("streaming")}>Reply</Button>
+      {log}
+    </div>
+  );
+}
+
+/** A host that sends attachments with the text: "Attach file" toggles one,
+ * and with it attached there is something to send even with no text. */
+function PromptWithAttachment() {
+  const [value, setValue] = useState("");
+  const [attached, setAttached] = useState(false);
+  const { log, record } = useEventLog();
+  return (
+    <div style={{ width: 480 }}>
+      <PromptInput
+        value={value}
+        onValueChange={setValue}
+        onSubmit={() =>
+          record(`submit:${value}${attached ? "+attachment" : ""}`)
+        }
+        canSubmit={value.trim() !== "" || attached}
+      >
+        <PromptInputTextarea />
+        <PromptInputSubmit />
+      </PromptInput>
+      <Button aria-pressed={attached} onClick={() => setAttached(!attached)}>
+        Attach file
+      </Button>
+      {log}
+    </div>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -492,4 +561,6 @@ export const scenarios: Record<string, () => ReactNode> = {
   "conversation-stick": () => <ConversationScenario policy="stick" />,
   "conversation-glide": () => <ConversationGlideScenario />,
   "conversation-empty": () => <ConversationEmptyScenario />,
+  "prompt-input": () => <Prompt />,
+  "prompt-input-attachment": () => <PromptWithAttachment />,
 };
