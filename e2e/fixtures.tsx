@@ -62,6 +62,8 @@ import {
   MessageContent,
   MessageFold,
   MessageFooter,
+  ConversationEarlier,
+  useHistoryWindow,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
@@ -1193,6 +1195,116 @@ function MessageActionsScenario() {
   );
 }
 
+type HistoryRow = { readonly id: string; readonly lines: number };
+
+/** Rows of fractional heights, so rounding shows up in the positions. */
+function historyWindowRows(from: number, to: number): HistoryRow[] {
+  return Array.from({ length: to - from }, (_, index) => ({
+    id: `r${from + index}`,
+    lines: 1 + ((from + index) % 3),
+  }));
+}
+
+const HISTORY_PAGE = 10;
+
+/** Renders the window; must sit inside the Conversation it follows. */
+function HistoryRows({
+  rows,
+  hasEarlier,
+  onLoadEarlier,
+  distance,
+}: {
+  rows: readonly HistoryRow[];
+  hasEarlier: boolean;
+  onLoadEarlier: () => Promise<void>;
+  distance: number | undefined;
+}) {
+  const history = useHistoryWindow({
+    items: rows,
+    windowSize: 30,
+    step: HISTORY_PAGE,
+    hasEarlier,
+    onLoadEarlier,
+  });
+  return (
+    <>
+      <ConversationContent>
+        <ConversationEarlier
+          hasEarlier={history.hasEarlier}
+          loading={history.loading}
+          stalled={history.stalled}
+          onReachStart={history.reachStart}
+          distance={distance}
+        />
+        {history.items.map((row) => (
+          <ConversationItem key={row.id} itemId={row.id} data-testid={row.id}>
+            <p style={{ height: row.lines * 23.5, margin: 0 }}>Row {row.id}</p>
+          </ConversationItem>
+        ))}
+      </ConversationContent>
+      <ConversationScrollButton />
+      <div style={{ display: "flex", gap: 8 }}>
+        <Button onClick={history.reachStart}>Load earlier</Button>
+        <output aria-label="Shown">{history.items.length}</output>
+      </div>
+    </>
+  );
+}
+
+/**
+ * `local` rows are loaded; `remote` older ones come from a pretend server a
+ * page at a time, when "Deliver" is pressed. "Deliver nothing" ends a load
+ * with no rows.
+ */
+function HistoryWindowScenario({
+  local,
+  remote,
+  distance,
+}: {
+  local: number;
+  remote: number;
+  distance?: number;
+}) {
+  const [from, setFrom] = useState(remote);
+  const [to, setTo] = useState(remote + local);
+  const [requests, setRequests] = useState(0);
+  const [pending, setPending] = useState<(() => void) | null>(null);
+  const settle = (rows: number) => {
+    if (pending === null) return;
+    setFrom((current) => Math.max(0, current - rows));
+    setPending(null);
+    pending();
+  };
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: 400,
+        width: 600,
+      }}
+    >
+      <Conversation>
+        <HistoryRows
+          rows={historyWindowRows(from, to)}
+          hasEarlier={from > 0}
+          onLoadEarlier={() => {
+            setRequests((count) => count + 1);
+            return new Promise((resolve) => setPending(() => resolve));
+          }}
+          distance={distance}
+        />
+      </Conversation>
+      <div style={{ display: "flex", gap: 8 }}>
+        <Button onClick={() => setTo((current) => current + 1)}>Append</Button>
+        <Button onClick={() => settle(HISTORY_PAGE)}>Deliver</Button>
+        <Button onClick={() => settle(0)}>Deliver nothing</Button>
+        <output aria-label="Requests">{requests}</output>
+      </div>
+    </div>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -1245,4 +1357,13 @@ export const scenarios: Record<string, () => ReactNode> = {
     <MessageFoldConversationScenario policy="stick" />
   ),
   "message-actions": () => <MessageActionsScenario />,
+  "history-window": () => (
+    <HistoryWindowScenario local={100} remote={0} distance={0} />
+  ),
+  "history-window-paged": () => (
+    <HistoryWindowScenario local={20} remote={30} distance={0} />
+  ),
+  "history-window-reach": () => (
+    <HistoryWindowScenario local={200} remote={0} />
+  ),
 };
