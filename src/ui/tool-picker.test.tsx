@@ -171,6 +171,26 @@ describe("ToolPicker", () => {
     unmount();
   });
 
+  test("status copy sits outside the listbox, which hides while it has no options", () => {
+    for (const props of [{ loading: true }, { items: [] }]) {
+      const { container, unmount } = mount(props);
+      const listbox = container.querySelector(
+        '[role="listbox"]',
+      ) as HTMLElement;
+      const status = container.querySelector('[role="status"]');
+      expect(listbox.hidden).toBe(true);
+      expect(listbox.childElementCount).toBe(0);
+      expect(status).not.toBeNull();
+      expect(listbox.contains(status)).toBe(false);
+      expect(
+        container
+          .querySelector('[role="combobox"]')
+          ?.getAttribute("aria-expanded"),
+      ).toBe("false");
+      unmount();
+    }
+  });
+
   test("a search with no hits shows no-matches copy", () => {
     const { container, unmount } = mount();
     const input = container.querySelector("input") as HTMLInputElement;

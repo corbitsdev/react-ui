@@ -85,10 +85,10 @@
      state needs to read as "good"/"caution" beyond what --success/--destructive
      already carry (those are fills). --warn also colours a medium/high
      RiskBadge; low risk stays --muted-foreground so only the levels worth
-     flagging draw the eye. Matches Workbench's app.css exactly, so a block
-     lifted from a consumer app keeps its colours. */
-  --ok: #37904a;
-  --warn: #b7791f;
+     flagging draw the eye. Both clear 4.5:1 on the page and the card (the
+     contrast gate checks them as text). */
+  --ok: #2f7c40;
+  --warn: #966319;
 
   /* The chrome's elevation. The design is flat — floating chrome separates
      itself with --border-strong, not depth — so the token ships as `none`

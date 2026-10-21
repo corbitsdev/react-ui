@@ -4,8 +4,8 @@ import { cn } from "../lib/utils.js";
 
 /**
  * The second column's shell. Composable parts, like `ui/sidebar` — a consumer
- * assembles `SidebarPanelHeader`, `SidebarPanelPins`, `SidebarPanelBody` and
- * `SidebarPanelFooter` in whatever combination the active page calls for, and
+ * assembles `SidebarPanelHeader`, `SidebarPanelPins`, `SidebarPanelBody`,
+ * `SidebarPanelSection` and `SidebarPanelFooter` in whatever combination the active page calls for, and
  * the root only supplies the width, the border and the flex column.
  */
 export function SidebarPanel({
@@ -81,6 +81,39 @@ export function SidebarPanelBody({
       className={cn("min-h-0 flex-1 overflow-y-auto py-1", className)}
       {...props}
     />
+  );
+}
+
+export type SidebarPanelSectionProps = React.ComponentProps<"ul"> & {
+  /** A visible heading that also names the list for assistive tech. */
+  readonly label?: string;
+};
+
+/**
+ * The list that holds `SidebarItemRow`s, in `SidebarPanelPins` or
+ * `SidebarPanelBody`. Each row is an `<li>`, so it needs this `<ul>` around it
+ * for a screen reader to announce the list and its length.
+ */
+export function SidebarPanelSection({
+  label,
+  className,
+  children,
+  ...props
+}: SidebarPanelSectionProps) {
+  return (
+    <div data-slot="sidebar-panel-section" className={className}>
+      {label === undefined ? null : (
+        <p
+          aria-hidden
+          className="px-2 py-1 text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase"
+        >
+          {label}
+        </p>
+      )}
+      <ul aria-label={label} className="flex flex-col" {...props}>
+        {children}
+      </ul>
+    </div>
   );
 }
 

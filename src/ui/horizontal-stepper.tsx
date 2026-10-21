@@ -48,9 +48,12 @@ export function HorizontalStepper({
 
   return (
     <div className={cn("border-b border-border bg-card px-6 py-5", className)}>
+      {/* Focusable so a rail too long for the screen scrolls by keyboard; the
+          ring is inset because the edge mask hides anything drawn outside. */}
       <ol
         aria-label="Workflow progress"
-        className="flex items-center gap-2 overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)] md:gap-3"
+        tabIndex={0}
+        className="flex items-center gap-2 overflow-x-auto focus-visible:-outline-offset-2 [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)] md:gap-3"
       >
         {steps.map((step, index) => (
           <li

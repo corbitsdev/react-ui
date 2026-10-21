@@ -57,10 +57,14 @@ export function PagePanel({
   const fill = surface === "card" ? "bg-card" : "bg-background";
   return (
     <div className={cn("flex h-full overflow-hidden", fill)}>
+      {/* A scrolling panel takes focus so the keyboard can scroll it even when
+          it holds no focusable content; the ring is inset because the outer
+          fill clips anything drawn outside the panel. */}
       <section
         data-slot="page-panel"
+        tabIndex={scroll ? 0 : undefined}
         className={cn(
-          "flex flex-col",
+          "flex flex-col focus-visible:-outline-offset-2",
           fill,
           sizing,
           overflow,

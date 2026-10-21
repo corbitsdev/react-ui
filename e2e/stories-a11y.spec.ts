@@ -7,7 +7,7 @@ const STORIES = "http://localhost:61000";
 
 // Existing violations recorded as a baseline to fix later; only a violation
 // not listed here fails.
-const KNOWN = new Set(known);
+const KNOWN = new Set<string>(known);
 
 test("every story is free of serious and critical axe violations", async ({
   page,

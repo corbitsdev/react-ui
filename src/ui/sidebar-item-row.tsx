@@ -42,6 +42,9 @@ export type SidebarItemRowProps = {
  * that is not colour-only (a `StatusDot`, a count), not rely on this
  * component to supply one.
  *
+ * The row is an `<li>`: render it inside a `SidebarPanelSection` or another
+ * `<ul>`.
+ *
  * Not `ui/sidebar`'s `SidebarItem` — that's the single-column family's row.
  */
 export function SidebarItemRow({
