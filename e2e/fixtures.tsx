@@ -51,6 +51,13 @@ import {
   groupActivity,
   type PartTool,
   type ToolApprovalRecord,
+  Message,
+  MessageAction,
+  MessageActionMenu,
+  MessageActions,
+  MessageContent,
+  MessageFold,
+  MessageFooter,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
@@ -817,6 +824,121 @@ function ToolApprovalScenario() {
   );
 }
 
+/** A long answer: 40 paragraphs of fixed-height lines, past the fold. */
+const FOLD_PARAGRAPHS = Array.from(
+  { length: 40 },
+  (_, index) => `Paragraph ${index + 1} of a long answer.`,
+);
+const FOLD_LENGTH = 10_000;
+
+function FoldedAnswer() {
+  return (
+    <Message from="agent" data-testid="long-answer">
+      <MessageFold length={FOLD_LENGTH}>
+        <MessageContent>
+          {FOLD_PARAGRAPHS.map((text) => (
+            <p key={text} style={{ height: 48, margin: 0 }}>
+              {text}
+            </p>
+          ))}
+        </MessageContent>
+      </MessageFold>
+    </Message>
+  );
+}
+
+/** A long answer between other rows, in a plain scroll container. */
+function MessageFoldScenario() {
+  return (
+    <div
+      data-testid="scroller"
+      style={{ height: 400, width: 600, overflowY: "auto" }}
+    >
+      <p style={{ height: 600, margin: 0 }}>Before</p>
+      <FoldedAnswer />
+      <p style={{ height: 600, margin: 0 }}>After</p>
+    </div>
+  );
+}
+
+/** The same answer inside a conversation, which anchors its own scrolling. */
+function MessageFoldConversationScenario({
+  policy,
+}: {
+  policy: ConversationScrollPolicy;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: 400,
+        width: 600,
+      }}
+    >
+      <Conversation scrollPolicy={policy}>
+        <ConversationContent data-testid="scroller">
+          {historyRows("h", 10).map((row) => (
+            <ConversationItem key={row.id} itemId={row.id}>
+              <p style={{ height: row.lines * 24, margin: 0 }}>Row {row.id}</p>
+            </ConversationItem>
+          ))}
+          <ConversationItem itemId="long">
+            <FoldedAnswer />
+          </ConversationItem>
+          {historyRows("t", 10).map((row) => (
+            <ConversationItem key={row.id} itemId={row.id}>
+              <p style={{ height: row.lines * 24, margin: 0 }}>Row {row.id}</p>
+            </ConversationItem>
+          ))}
+        </ConversationContent>
+      </Conversation>
+    </div>
+  );
+}
+
+function ActionRow({ record }: { record: (event: string) => void }) {
+  return (
+    <MessageActions>
+      <MessageAction label="Copy" onClick={() => record("copy")} />
+      <MessageActionMenu>
+        <MessageAction label="Pin" onClick={() => record("pin")} />
+        <MessageAction label="Copy link" onClick={() => record("link")} />
+        <MessageAction label="Report" onClick={() => record("report")} />
+      </MessageActionMenu>
+    </MessageActions>
+  );
+}
+
+/** An action row at the top of the page, and one at the foot of a short
+ * scroll container where a menu opening downwards would be clipped. */
+function MessageActionsScenario() {
+  const { log, record } = useEventLog();
+  return (
+    <div style={{ width: 480 }}>
+      <Message from="agent" data-testid="top">
+        <MessageContent text="An answer with actions." />
+        <MessageFooter>
+          <ActionRow record={record} />
+        </MessageFooter>
+      </Message>
+      <button type="button">After</button>
+      <div
+        data-testid="clipped"
+        style={{ height: 240, overflowY: "auto", marginTop: 24 }}
+      >
+        <div style={{ height: 200 }} />
+        <Message from="agent" data-testid="bottom">
+          <MessageFooter>
+            <ActionRow record={record} />
+          </MessageFooter>
+        </Message>
+      </div>
+      {log}
+    </div>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -855,4 +977,12 @@ export const scenarios: Record<string, () => ReactNode> = {
   "prompt-input-toolbar": () => <PromptToolbarScenario />,
   "panel-tabs": () => <PanelTabsScenario />,
   "tool-approval": () => <ToolApprovalScenario />,
+  "message-fold": () => <MessageFoldScenario />,
+  "message-fold-settle": () => (
+    <MessageFoldConversationScenario policy="settle" />
+  ),
+  "message-fold-stick": () => (
+    <MessageFoldConversationScenario policy="stick" />
+  ),
+  "message-actions": () => <MessageActionsScenario />,
 };
