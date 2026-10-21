@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+import { contrastSamples } from "./contrast-dom.js";
+import { judgeContrast } from "./contrast.js";
 import known from "./stories-a11y.known.json" with { type: "json" };
 
 const STORIES = "http://localhost:61000";
@@ -59,7 +61,9 @@ test("every story is free of serious and critical axe violations", async ({
           new Promise((resolve) => setTimeout(resolve, 2_000)),
         ]);
       });
-      const { violations } = await new AxeBuilder({ page }).analyze();
+      const { passes, violations, incomplete } = await new AxeBuilder({
+        page,
+      }).analyze();
       for (const violation of violations) {
         if (violation.impact === "serious" || violation.impact === "critical") {
           const key = `${story} (${theme}): ${violation.id}`;
@@ -67,6 +71,43 @@ test("every story is free of serious and critical axe violations", async ({
             failures.push(`${key} (${violation.nodes.length})`);
           }
         }
+      }
+      // Axe leaves contrast "incomplete" when it cannot settle the colours,
+      // e.g. text on a translucent wash. Measure those here, so every such
+      // node gets a verdict: measured below its floor is a failure, and a
+      // node nothing can measure is reported until it is listed in KNOWN.
+      const unsettled = incomplete
+        .filter((result) => result.id === "color-contrast")
+        .flatMap((result) => result.nodes);
+      const judged = [...passes, ...violations, ...incomplete]
+        .filter((result) => result.id === "color-contrast")
+        .flatMap((result) => result.nodes)
+        .flatMap(({ target: [selector, ...rest] }) =>
+          typeof selector === "string" && rest.length === 0 ? [selector] : [],
+        );
+      // Nodes inside a frame or shadow root have no single selector.
+      const measurable = unsettled.flatMap((node) => {
+        const [selector] = node.target;
+        return typeof selector === "string" && node.target.length === 1
+          ? [selector]
+          : [];
+      });
+      const verdicts = (await contrastSamples(page, measurable, judged)).map(
+        judgeContrast,
+      );
+      const failing = verdicts.filter(
+        (verdict) => verdict.kind === "measured" && !verdict.pass,
+      ).length;
+      const unmeasured =
+        unsettled.length -
+        measurable.length +
+        verdicts.filter((verdict) => verdict.kind === "unmeasured").length;
+      for (const [id, count] of [
+        ["color-contrast-measured", failing],
+        ["color-contrast-unmeasured", unmeasured],
+      ] as const) {
+        const key = `${story} (${theme}): ${id}`;
+        if (count > 0 && !KNOWN.has(key)) failures.push(`${key} (${count})`);
       }
     }
   }
