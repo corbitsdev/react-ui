@@ -64,6 +64,8 @@ import {
   MessageFooter,
   ConversationEarlier,
   useHistoryWindow,
+  ConversationMap,
+  type ConversationMapTurn,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
@@ -1305,6 +1307,57 @@ function HistoryWindowScenario({
   );
 }
 
+const mapTurns = (length: number): ConversationMapTurn[] =>
+  Array.from({ length }, (_, index) => ({
+    id: `t${index}`,
+    label: `Question ${index}`,
+    preview: `Answer ${index}`,
+  }));
+
+const MAP_TURNS = mapTurns(20);
+
+/** Turns of fixed height: a 24px question, then a 72px answer. Twenty by
+ * default. */
+function ConversationMapScenario({
+  turns = MAP_TURNS,
+}: {
+  turns?: ConversationMapTurn[];
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: 400,
+        width: 600,
+      }}
+    >
+      <Conversation>
+        <ConversationMap turns={turns} />
+        <ConversationContent>
+          {turns.flatMap((turn) => [
+            <ConversationItem
+              key={turn.id}
+              itemId={turn.id}
+              data-testid={turn.id}
+            >
+              <p style={{ height: 24, margin: "0 0 0 48px" }}>{turn.label}</p>
+            </ConversationItem>,
+            <ConversationItem
+              key={`${turn.id}a`}
+              itemId={`${turn.id}a`}
+              data-testid={`${turn.id}a`}
+            >
+              <p style={{ height: 72, margin: "0 0 0 48px" }}>{turn.preview}</p>
+            </ConversationItem>,
+          ])}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
+    </div>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -1365,5 +1418,13 @@ export const scenarios: Record<string, () => ReactNode> = {
   ),
   "history-window-reach": () => (
     <HistoryWindowScenario local={200} remote={0} />
+  ),
+  "conversation-map": () => <ConversationMapScenario />,
+  // Below the fold of a tall page, with more turns than the rail can fit.
+  "conversation-map-tall-page": () => (
+    <>
+      <div style={{ height: 1600 }} />
+      <ConversationMapScenario turns={mapTurns(80)} />
+    </>
   ),
 };
