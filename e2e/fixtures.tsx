@@ -42,6 +42,10 @@ import {
   PromptInputFloat,
   PromptInputContext,
   PromptInputNote,
+  PanelTab,
+  PanelTabAdd,
+  PanelTabs,
+  useTabs,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
@@ -681,6 +685,75 @@ function PromptToolbarScenario() {
   );
 }
 
+type TabScenarioItem = { readonly value: string; readonly title: string };
+
+const TAB_ITEMS: readonly TabScenarioItem[] = [
+  { value: "alpha", title: "Alpha" },
+  { value: "beta", title: "Beta" },
+  { value: "gamma", title: "Gamma" },
+  { value: "delta", title: "Delta" },
+];
+
+function PanelTabsScenario() {
+  const { tabs, value, open, tabsProps, paneProps } = useTabs<TabScenarioItem>({
+    defaultTabs: TAB_ITEMS,
+  });
+  const [added, setAdded] = useState(0);
+  const openMore = (count: number) => {
+    for (let index = 1; index <= count; index += 1) {
+      open({
+        value: `extra-${added + index}`,
+        title: `Extra ${added + index}`,
+      });
+    }
+    setAdded(added + count);
+  };
+  return (
+    <div
+      data-testid="row"
+      style={{
+        position: "relative",
+        display: "flex",
+        height: 600,
+        containerType: "inline-size",
+      }}
+    >
+      <main data-testid="main" style={{ flex: 1, minWidth: 0 }}>
+        <Button onClick={() => openMore(12)}>Open twelve more</Button>
+        <output aria-label="Order">
+          {tabs.map((tab) => tab.value).join(",")}
+        </output>
+        <output aria-label="Selected">{value ?? "none"}</output>
+      </main>
+      {value === null ? null : (
+        <Panel aria-label="Side panel">
+          <PanelHeader className="items-end bg-muted pt-1.5 pb-0">
+            <PanelTabs label="Open items" {...tabsProps}>
+              {tabs.map((tab) => (
+                <PanelTab key={tab.value} value={tab.value}>
+                  {tab.title}
+                </PanelTab>
+              ))}
+            </PanelTabs>
+            <PanelTabAdd onClick={() => openMore(1)} />
+          </PanelHeader>
+          <PanelContent value={value} keepMounted>
+            {tabs.map((tab) => (
+              <PanelPane
+                key={tab.value}
+                value={tab.value}
+                {...paneProps(tab.value)}
+              >
+                {tab.title} pane
+              </PanelPane>
+            ))}
+          </PanelContent>
+        </Panel>
+      )}
+    </div>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -717,4 +790,5 @@ export const scenarios: Record<string, () => ReactNode> = {
   "prompt-input-attachment": () => <PromptWithAttachment />,
   panel: () => <PanelScenario />,
   "prompt-input-toolbar": () => <PromptToolbarScenario />,
+  "panel-tabs": () => <PanelTabsScenario />,
 };
