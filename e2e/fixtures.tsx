@@ -72,6 +72,12 @@ import {
   type AttachmentItem,
   type AttachmentRejection,
   useAttachments,
+  GeneratedImages,
+  generatedImageViewerItems,
+  MediaViewer,
+  useMediaViewer,
+  type ConversationImage,
+  type PartImage,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
@@ -1198,6 +1204,79 @@ function AttachmentsScenario() {
   );
 }
 
+/** A flat swatch as an inline SVG, so nothing is fetched. */
+function swatch(index: number): ConversationImage {
+  const shade = 40 + index * 20;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect width="300" height="200" fill="hsl(${shade} 70% 60%)"/></svg>`;
+  return {
+    id: `swatch-${index}`,
+    mediaType: "image/svg+xml",
+    width: 300,
+    height: 200,
+    alt: `Swatch ${index}`,
+    url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
+  };
+}
+
+const SWATCHES: PartImage = {
+  kind: "image",
+  id: "swatches",
+  prompt: "Three swatches",
+  state: "done",
+  images: [swatch(1), swatch(2), swatch(3)],
+};
+
+/** Starts generating, so landing the images is watched and reveals them. */
+function MediaViewerScenario() {
+  const [landed, setLanded] = useState(false);
+  const part: PartImage = landed
+    ? SWATCHES
+    : {
+        ...SWATCHES,
+        state: "generating",
+        images: [],
+        expected: { count: 3, width: 300, height: 200 },
+      };
+  const viewer = useMediaViewer({ items: generatedImageViewerItems(part) });
+  return (
+    <div style={{ width: 600 }}>
+      <Button onClick={() => setLanded(true)}>Land images</Button>
+      <GeneratedImages part={part} onOpen={viewer.open} />
+      <MediaViewer viewer={viewer} />
+    </div>
+  );
+}
+
+const REMOTE: PartImage = {
+  kind: "image",
+  id: "remote",
+  prompt: "Remote swatches",
+  state: "done",
+  images: [1, 2].map((index) => ({
+    id: `remote-${index}`,
+    mediaType: "image/svg+xml",
+    width: 300,
+    height: 200,
+    alt: `Remote ${index}`,
+    url: `https://images.example.test/remote-${index}.svg`,
+  })),
+};
+
+/** Images from another origin inside a scrolling log, on a page that scrolls. */
+function MediaViewerChatScenario() {
+  const viewer = useMediaViewer({ items: generatedImageViewerItems(REMOTE) });
+  return (
+    <div style={{ width: 600, paddingBottom: 3000 }}>
+      <div data-testid="log" style={{ height: 320, overflow: "auto" }}>
+        <div style={{ height: 600 }} />
+        <GeneratedImages part={REMOTE} onOpen={viewer.open} />
+        <div style={{ height: 600 }} />
+      </div>
+      <MediaViewer viewer={viewer} />
+    </div>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -1262,4 +1341,6 @@ export const scenarios: Record<string, () => ReactNode> = {
     </>
   ),
   attachments: () => <AttachmentsScenario />,
+  "media-viewer": () => <MediaViewerScenario />,
+  "media-viewer-chat": () => <MediaViewerChatScenario />,
 };
