@@ -6,7 +6,7 @@ import {
   type AttachmentItem,
 } from "../../src/hooks/use-attachments.js";
 import type { AttachmentRejection } from "../../src/lib/attachment-limits.js";
-import type { PartFile } from "../../src/lib/chat-parts.js";
+import type { PartFile } from "../../src/lib/conversation.js";
 import { AttachmentDropZone } from "../../src/ui/attachment-drop-zone.js";
 import {
   Attachment,

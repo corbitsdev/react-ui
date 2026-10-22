@@ -2,9 +2,8 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import type { PartReasoning } from "../lib/chat-parts.js";
 import type { ActivityStep } from "../lib/conversation-activity.js";
-import type { PartTool } from "../lib/conversation.js";
+import type { PartReasoning, PartTool } from "../lib/conversation.js";
 import { Activity, ActivityContent, ActivityTrigger } from "./activity.js";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "./reasoning.js";
 

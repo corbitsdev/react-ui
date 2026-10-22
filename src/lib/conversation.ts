@@ -3,24 +3,83 @@
  * message holds, and how a tool call that waited on a person records that
  * wait.
  *
- * A message is an ordered list of parts. The text, reasoning, block, file and
- * event members are the ones `lib/chat-parts.ts` already defines; this module
- * adds what a conversation needs beyond them: a tool call carrying its
- * approval record, a batch of calls that ran at the same time, generated
- * images and sources.
+ * A message is an ordered list of parts rather than a string, because a
+ * single turn genuinely interleaves kinds: think, call a tool, emit a
+ * generative block, answer. Beyond text, reasoning, tool calls, blocks, files
+ * and events, a conversation part can be a tool call carrying its approval
+ * record, a batch of calls that ran at the same time, generated images or
+ * sources.
  *
  * Types only. Parsing untrusted data into this shape is the host's job, at its
- * own trust boundary.
+ * own trust boundary, with whatever schema library it already uses.
  */
 
-import type {
-  PartBlock,
-  PartEvent,
-  PartFile,
-  PartReasoning,
-  PartText,
-  PartToolTrace,
-} from "./chat-parts.js";
+export type PartText = {
+  readonly kind: "text";
+  readonly text: string;
+};
+
+/** Thinking text, plus how long the agent spent producing it. */
+export type PartReasoning = {
+  readonly kind: "reasoning";
+  readonly text: string;
+  /** Wall-clock milliseconds spent on this reasoning segment, once known. */
+  readonly durationMs?: number;
+};
+
+/**
+ * A tool call's lifecycle. Six states, not three: a tool call is not only
+ * running-or-finished, it can wait on human approval and that approval can be
+ * refused — a state distinct from an execution error.
+ */
+export type ToolTraceStatus =
+  | "pending"
+  | "running"
+  | "output-available"
+  | "error"
+  | "approval-requested"
+  | "output-denied";
+
+export type PartToolTrace = {
+  readonly kind: "tool-trace";
+  readonly toolCallId: string;
+  readonly name: string;
+  readonly status: ToolTraceStatus;
+  readonly input?: unknown;
+  readonly output?: unknown;
+};
+
+/** A generative-UI block. `data` is opaque here — a host-specific registry parses it. */
+export type PartBlock = {
+  readonly kind: "block";
+  readonly block: {
+    readonly type: string;
+    readonly data: unknown;
+  };
+};
+
+export type PartFile = {
+  readonly kind: "file";
+  readonly name: string;
+  readonly mediaType: string;
+  /** Resolved by the host — this model never fetches bytes. */
+  readonly url?: string;
+};
+
+/** A system/lifecycle line, e.g. "agent joined". `data` carries whatever the event needs. */
+export type PartEvent = {
+  readonly kind: "event";
+  readonly event: string;
+  readonly data?: unknown;
+};
+
+export type Part =
+  | PartText
+  | PartReasoning
+  | PartToolTrace
+  | PartBlock
+  | PartFile
+  | PartEvent;
 
 /** A person or an agent taking part in a conversation. */
 export type ConversationParticipant = {

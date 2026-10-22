@@ -5,7 +5,7 @@ import { createContext, useContext, useId } from "react";
 import type { ComponentProps, ReactNode } from "react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";
-import type { PartReasoning } from "../lib/chat-parts.js";
+import type { PartReasoning } from "../lib/conversation.js";
 import { summarizeActivity } from "../lib/conversation-activity.js";
 import { cn } from "../lib/utils.js";
 

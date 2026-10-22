@@ -29,4 +29,4 @@ jobs:
           mkdir -p "$RUNNER_TEMP/c" && cd "$RUNNER_TEMP/c"
           npm init -y >/dev/null && npm pkg set type=module >/dev/null
           npm install "$TARBALL"
-          node -e 'import("@corbits/react-ui").then((m) => { for (const n of ["Button", "ChatThread", "Badge"]) if (typeof m[n] !== "function") throw new Error("missing export: " + n); })'
+          node -e 'import("@corbits/react-ui").then((m) => { for (const n of ["Button", "Conversation", "Badge"]) if (typeof m[n] !== "function") throw new Error("missing export: " + n); })'
