@@ -125,3 +125,5 @@ export * from "./ui/trace-waterfall.js";
 export * from "./ui/typing-indicator.js";
 export * from "./ui/view-toggle.js";
 export * from "./ui/voice-waveform.js";
+export * from "./ui/conversation.js";
+export * from "./ui/conversation-divider.js";
