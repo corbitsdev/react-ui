@@ -1,6 +1,6 @@
-import type { PartReasoning } from "./chat-parts.js";
 import type {
   ConversationPart,
+  PartReasoning,
   PartTool,
   PartToolBatch,
 } from "./conversation.js";

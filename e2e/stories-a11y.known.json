@@ -12,8 +12,6 @@
   "chat-prompt-input--suggestions-open (light): color-contrast-unmeasured",
   "chat-prompt-input--with-tokens (dark): color-contrast-unmeasured",
   "chat-prompt-input--with-tokens (light): color-contrast-unmeasured",
-  "chat-tool-block--long-output-scrolls-in-place (dark): scrollable-region-focusable",
-  "chat-tool-block--long-output-scrolls-in-place (light): scrollable-region-focusable",
   "primitives-avatar--orbit (dark): color-contrast-unmeasured",
   "primitives-avatar--orbit (light): color-contrast-unmeasured",
   "primitives-avatar--stack-with-status (dark): color-contrast-unmeasured",

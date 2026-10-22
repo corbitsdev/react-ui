@@ -1,9 +1,8 @@
-import type { ToolTraceStatus } from "./chat-parts.js";
 import {
   isAwaitingApproval,
   type ActivityStep,
 } from "./conversation-activity.js";
-import type { PartTool } from "./conversation.js";
+import type { PartTool, ToolTraceStatus } from "./conversation.js";
 
 /**
  * The execution status a tool call shows, with its approval record taken

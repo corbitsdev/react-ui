@@ -1,11 +1,11 @@
 # @corbits/react-ui
 
-React components for agent products: chat transcripts with reasoning and tool calls, approval cards, run status, artifacts and charts, styled by one Tailwind v4 token theme. The UI package of Corbits: it renders data a host web app loads from Interchange, and works in any React 18 or 19 app without Interchange.
+React components for agent products: conversations with reasoning, tool calls and approvals, run status, artifacts and charts, styled by one Tailwind v4 token theme. The UI package of Corbits: it renders data a host web app loads from Interchange, and works in any React 18 or 19 app without Interchange.
 
 ## Why @corbits/react-ui?
 
 1. **Props in, markup out.** No component fetches, subscribes or holds a client. Your data layer stays yours, and every component renders the same in stories, tests and production.
-2. **Agent-shaped building blocks.** `ChatThread` renders a message as ordered parts (text, reasoning, tool calls), and `ApprovalCard`, `GateBlock` and `StepList` cover a run that waits on a person.
+2. **Agent-shaped building blocks.** `Message` holds a turn while `Tool`, `Reasoning` and `Activity` render its parts (text, reasoning, tool calls), `ToolApproval` asks a person before a call runs, and `GateBlock` and `StepList` cover a run that waits on a person.
 3. **Pay for what you import.** One root entry, the package is side-effect free apart from its CSS, and heavy peers (Radix dialog, dropdown-menu, tooltip, `sonner`) are optional.
 4. **Server Components ready.** Stateful modules ship `"use client"`, so a React Server Components app imports them directly. Outside RSC the directive is a no-op.
 
@@ -33,44 +33,102 @@ Import the stylesheet once at the app root, before your own CSS, and mount `Them
 ```tsx
 import "@corbits/react-ui/styles.css";
 
-import { ChatThread, ThemeProvider, type ChatMessage } from "@corbits/react-ui";
+import {
+  Activity,
+  Conversation,
+  ConversationContent,
+  ConversationItem,
+  ConversationScrollButton,
+  Message,
+  MessageContent,
+  MessageHeader,
+  ThemeProvider,
+  groupActivity,
+  type ConversationMessage,
+  type ConversationParticipant,
+} from "@corbits/react-ui";
 
-const messages: ChatMessage[] = [
+const you: ConversationParticipant = { id: "u1", kind: "person", name: "You" };
+const scout: ConversationParticipant = {
+  id: "a1",
+  kind: "agent",
+  name: "Scout",
+};
+
+const messages: ConversationMessage[] = [
   {
     id: "m1",
-    role: "user",
-    createdAt: "2026-01-01T09:00:00Z",
-    parts: [{ type: "text", text: "What changed in the repo today?" }],
+    author: you,
+    at: "2026-01-01T09:00:00Z",
+    status: "sent",
+    parts: [{ kind: "text", text: "What changed in the repo today?" }],
   },
   {
     id: "m2",
-    role: "agent",
-    createdAt: "2026-01-01T09:00:04Z",
+    author: scout,
+    at: "2026-01-01T09:00:04Z",
+    status: "sent",
     parts: [
-      { type: "reasoning", text: "Check the commit log first." },
       {
-        type: "tool",
+        kind: "reasoning",
+        text: "Check the commit log first.",
+        durationMs: 1200,
+      },
+      {
+        kind: "tool-trace",
         toolCallId: "t1",
-        toolName: "git__log",
-        label: "Read today's commits",
-        state: "done",
+        name: "git__log",
+        status: "output-available",
         output: "3 commits",
       },
-      { type: "text", text: "Three commits landed today, all in the docs." },
+      { kind: "text", text: "Three commits landed today, all in the docs." },
     ],
   },
 ];
 
+function Turn({ message }: { message: ConversationMessage }) {
+  const own = message.author.id === you.id;
+  return (
+    <Message
+      from={own ? "own" : message.author.kind}
+      status={message.status}
+      aria-label={own ? "You" : undefined}
+    >
+      {own ? null : (
+        <MessageHeader name={message.author.name} at={message.at} />
+      )}
+      {groupActivity(message.parts).map((group) => {
+        if (group.kind === "activity")
+          return <Activity key={group.key} steps={group.steps} />;
+        if (group.part.kind === "text")
+          return <MessageContent key={group.key} text={group.part.text} />;
+        return null;
+      })}
+    </Message>
+  );
+}
+
 export function App() {
   return (
     <ThemeProvider>
-      <ChatThread messages={messages} identity={{ name: "Scout" }} />
+      <div style={{ display: "flex", flexDirection: "column", height: 480 }}>
+        <Conversation>
+          <ConversationContent>
+            {messages.map((message) => (
+              <ConversationItem key={message.id} itemId={message.id}>
+                <Turn message={message} />
+              </ConversationItem>
+            ))}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
+      </div>
     </ThemeProvider>
   );
 }
 ```
 
-This renders the user message, a collapsed reasoning block, a finished tool call and the agent's reply.
+This renders the user message in a bubble, the agent's thinking and tool call folded into one activity line that opens onto both, and the agent's reply. Every other part kind (tool calls waiting on a person, images, sources, files) has its own component; see [Chat](#chat).
 
 `styles.css` includes Tailwind preflight and a base layer, so it restyles the page. If you already run Tailwind v4, import `@corbits/react-ui/theme.css` instead and let your build generate the utilities. Import one of the two, never both; without either, components render unstyled.
 
@@ -119,31 +177,45 @@ Everything imports from `@corbits/react-ui`, except rows marked "optional peer",
 
 #### Chat
 
-| Component             | What it is                                                               |
-| --------------------- | ------------------------------------------------------------------------ |
-| `ChatThread`          | Scrolling transcript of user and agent messages                          |
-| `AgentTurn`           | One agent reply: reasoning, tool calls, answer, in order                 |
-| `MessageBubble`       | One user or system message                                               |
-| `ChatInput`           | Auto-growing message input with a send/stop button                       |
-| `ChatComposer`        | `ChatInput` with suggestion chips for an empty conversation              |
-| `ChatPanel`           | Docked chat frame with header and footer                                 |
-| `PartsRenderer`       | Renders a list of message parts                                          |
-| `ReasoningBlock`      | Collapsible thinking text                                                |
-| `ToolBlock`           | A tool call's lifecycle: running, done, failed                           |
-| `ToolNarrative`       | What the agent did, as one expandable line                               |
-| `ToolPicker`          | Browse, search and select tools                                          |
-| `QuickReplyChips`     | Tappable suggested replies                                               |
-| `TypingIndicator`     | Agent-is-typing dots                                                     |
-| `ThinkingIndicator`   | Animated Corbits mark with a status label                                |
-| `ThinkingMark`        | Decorative animated Corbits mark                                         |
-| `ThinkingLabel`       | Rotating-verb status label                                               |
-| `ShimmerText`         | Shimmer sweep over text                                                  |
-| `MicButton`           | Permission-aware microphone toggle                                       |
-| `VoiceWaveform`       | Live audio level bars                                                    |
-| `DictationStatusLine` | Composer dictation status row                                            |
-| `MicPermissionDialog` | Microphone permission prompt (optional peer, `ui/mic-permission-dialog`) |
-| `Panel`               | Side panel resized from its edge; hidden panes keep their state          |
-| `PanelTabs`           | A panel's tab row: select, close, drag or keyboard to reorder; `useTabs` |
+| Component                  | What it is                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `Conversation`             | Scrolling conversation that settles or follows new messages; `useConversation`                                      |
+| `ConversationContent`      | The scrolling log; a `ConversationItem` wraps each entry                                                            |
+| `ConversationScrollButton` | Jump back to the latest message                                                                                     |
+| `ConversationEmptyState`   | No messages yet                                                                                                     |
+| `ConversationDivider`      | A rule with an optional label, such as a day; `ConversationNotice` for a system line                                |
+| `ConversationEarlier`      | Loads older messages as the reader scrolls up; `useHistoryWindow`                                                   |
+| `ConversationMap`          | Rail of ticks, one per turn, to find your way around; `useReadingPosition`                                          |
+| `ConversationThread`       | A reply thread headed by its parent message                                                                         |
+| `Message`                  | One message, built from `MessageAvatar`, `MessageHeader`, `MessageContent`, `MessageSendStatus` and `MessageFooter` |
+| `MessageFold`              | Folds a very long answer to its opening                                                                             |
+| `MessageActions`           | Row of actions under a message: `MessageAction`, `MessageActionMenu`                                                |
+| `MessageReactions`         | Emoji reactions with counts                                                                                         |
+| `MessageReplies`           | Reply count and time that opens the thread                                                                          |
+| `Activity`                 | A run of thinking and tool calls folded to one line; `groupActivity`                                                |
+| `Reasoning`                | An agent's thinking, folded                                                                                         |
+| `Tool`                     | One tool call that opens onto its input and output                                                                  |
+| `ToolGroup`                | Tool calls that ran at the same time                                                                                |
+| `ToolApproval`             | Approve, approve always or deny a tool call waiting on a person                                                     |
+| `GeneratedImages`          | Images an agent made, with placeholders while generating                                                            |
+| `Sources`                  | Numbered citations for an answer                                                                                    |
+| `MediaViewer`              | Pictures, video, audio, PDFs and text full size; `useMediaViewer`                                                   |
+| `Attachments`              | Files as a stack, tiles or a list; `useAttachments`                                                                 |
+| `AttachmentDropZone`       | Area that takes dropped files and folders; `useFileDrop`                                                            |
+| `PromptInput`              | The message box: `PromptInputTextarea`, `PromptInputSubmit`, `PromptInputSuggestions`; `usePromptInput`             |
+| `PromptInputToolbar`       | Controls under the text: add menu, model and mode selects, notes                                                    |
+| `ToolPicker`               | Browse, search and select tools                                                                                     |
+| `TypingIndicator`          | Agent-is-typing dots                                                                                                |
+| `ThinkingIndicator`        | Animated Corbits mark with a status label                                                                           |
+| `ThinkingMark`             | Decorative animated Corbits mark                                                                                    |
+| `ThinkingLabel`            | Rotating-verb status label                                                                                          |
+| `ShimmerText`              | Shimmer sweep over text                                                                                             |
+| `MicButton`                | Permission-aware microphone toggle                                                                                  |
+| `VoiceWaveform`            | Live audio level bars                                                                                               |
+| `DictationStatusLine`      | Composer dictation status row                                                                                       |
+| `MicPermissionDialog`      | Microphone permission prompt (optional peer, `ui/mic-permission-dialog`)                                            |
+| `Panel`                    | Side panel resized from its edge; hidden panes keep their state                                                     |
+| `PanelTabs`                | A panel's tab row: select, close, drag or keyboard to reorder; `useTabs`                                            |
 
 #### Runs
 
@@ -151,7 +223,6 @@ Everything imports from `@corbits/react-ui`, except rows marked "optional peer",
 | ------------------- | ------------------------------------------------- |
 | `LiveRunBanner`     | Status of a run in progress                       |
 | `LiveStatusLine`    | The single "what's happening now" line            |
-| `ApprovalCard`      | Approve or reject a pending action                |
 | `GateBlock`         | Chrome for a run parked on a human decision       |
 | `StepList`          | Vertical list of run steps and their status       |
 | `HorizontalStepper` | Horizontal step progress                          |
@@ -252,8 +323,51 @@ Everything imports from `@corbits/react-ui`, except rows marked "optional peer",
 The host app owns the connection to the hub; components only take props.
 
 1. Load run state with [`@intx/hub-client`](https://github.com/faremeter/interchange/tree/main/packages/hub-client): `createRunSession` polls a workflow run's event log and exposes a seq-ordered `WorkflowRunEvent` timeline.
-2. Map that timeline to props: agent output to `ChatMessage` parts for `ChatThread`, step events to `StepList` items, and a run parked on a person to `GateBlock` or `ApprovalCard`.
-3. Wire callbacks back to the hub. `ApprovalCard`'s `onApprove` and `onReject` call your hub route that resolves the awaited signal; the hub checks the caller's grant, not the component.
+2. Map that timeline to props: agent output to `ConversationMessage` parts rendered by `Message` inside a `Conversation`, a tool call waiting on a person to a `PartTool` carrying its `ToolApprovalRecord` for `ToolApproval`, step events to `StepList` items, and a run parked on a person to `GateBlock`.
+3. Wire callbacks back to the hub. `ToolApproval`'s `onDecide` calls your hub route that resolves the awaited approval with the decision's outcome and scope; the hub checks the caller's grant, not the component. The settled record comes back on the part, and `ToolApproval` shows what was decided.
+
+## Upgrading from 0.3
+
+The old chat family is removed. The conversation family replaces it: a message is a `ConversationMessage` whose `parts` are a `ConversationPart[]` (discriminated by `kind`), and the components are built from parts you compose rather than one component per screen.
+
+- `Part`, `PartText`, `PartReasoning`, `PartToolTrace`, `PartBlock`, `PartFile`, `PartEvent` and `ToolTraceStatus` are unchanged and still import from the root.
+- `ToolProviderMark` takes the raw tool id as `toolName` instead of a `part` (`<ToolProviderMark toolName={part.name} />`); its props are `ToolProviderMarkProps`.
+- `useDelayedAutofocus` is unchanged.
+
+Removed exports and what replaces them:
+
+| Removed                                           | Use instead                                                                                                                                                                             |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ChatThread`, `ChatThreadProps`                   | `Conversation` with `ConversationContent`, a `ConversationItem` per message and `ConversationScrollButton`                                                                              |
+| `AgentTurn`, `AgentTurnProps`                     | `Message` with `from="agent"`, `MessageAvatar`, `MessageHeader` and `MessageContent`; thinking and tool calls through `groupActivity` and `Activity`                                    |
+| `MessageBubble`, `MessageBubbleProps`             | `Message` with `MessageContent`; `from="own"` draws the bubble                                                                                                                          |
+| `PartsRenderer`, `PartsRendererProps`             | Map `groupActivity(message.parts)` to `Activity`, `MessageContent`, `ToolApproval`, `ToolGroup`, `GeneratedImages`, `Sources` and `Attachments`; `block` parts are the host's to render |
+| `toolTraceToBlockState`                           | No replacement: `Tool` reads `ToolTraceStatus` and the approval record directly                                                                                                         |
+| `ReasoningBlock`, `ReasoningBlockProps`           | `Reasoning` (`ReasoningTrigger`, `ReasoningContent`) on a `PartReasoning`                                                                                                               |
+| `ToolBlock`, `ToolBlockProps`, `ToolBlockState`   | `Tool` (`ToolHeader`, `ToolInput`, `ToolOutput`) on a `PartTool`; the state is its `ToolTraceStatus`                                                                                    |
+| `ToolNarrative`, `ToolNarrativeProps`             | `Tool`, or `ToolGroup` for calls that ran together                                                                                                                                      |
+| `ApprovalCard`, `ApprovalCardProps`               | `ToolApproval` on a `PartTool` with a `ToolApprovalRecord`; `onApprove`, `onReject` and `onAllowAlways` become `onDecide(ToolApprovalDecision)`, and a busy `state` becomes `disabled`  |
+| `ApprovalRequest`, `ApprovalDetail`               | The `PartTool` itself: `name` and `input`, with the host's own account of the action as `ToolApproval`'s children                                                                       |
+| `ApprovalState`                                   | `ToolApprovalRecord`'s `status` for the outcome, `ToolApproval`'s `disabled` while a decision is recorded                                                                               |
+| `ChatInput`, `ChatInputProps`                     | `PromptInput` with `PromptInputTextarea` and `PromptInputSubmit`; `PromptInputToolbar` for controls under the text                                                                      |
+| `ChatAttachment`                                  | `AttachmentData` for `Attachments`, `AttachmentItem` from `useAttachments`                                                                                                              |
+| `ChatComposer`, `ChatComposerProps`               | `PromptInput`, with `ConversationEmptyState` for an empty conversation                                                                                                                  |
+| `QuickReplyChips`, `QuickReply`                   | No replacement: suggested replies are the host's own buttons, for example inside `ConversationEmptyState`                                                                               |
+| `ChatPanel`, `ChatPanelHeader`, `ChatPanelFooter` | `Panel`, `PanelHeader` and `PanelContent` for a side panel; put `Conversation` and `PromptInput` in your own frame                                                                      |
+| `ChatMessage`                                     | `ConversationMessage`: `role` becomes `author` (`ConversationParticipant`), `createdAt` becomes `at`, `status` is required                                                              |
+| `ChatRole`                                        | `ConversationParticipant`'s `kind` (`person` or `agent`); a system line is a `PartEvent`, shown with `ConversationNotice`                                                               |
+| `MessageStatus`                                   | `ConversationMessageStatus`, which adds `streaming`                                                                                                                                     |
+| `MessagePart`                                     | `ConversationPart`, discriminated by `kind` instead of `type`                                                                                                                           |
+| `TextPart`, `ReasoningPart`, `FilePart`           | `PartText`, `PartReasoning`, `PartFile`                                                                                                                                                 |
+| `ToolPart`                                        | `PartTool`: `toolName` becomes `name`, `state` becomes `status`, and `label` moves to `ToolHeader`'s `label`                                                                            |
+| `ToolPartState`                                   | `ToolTraceStatus`: `done` becomes `output-available`                                                                                                                                    |
+| `AgentIdentity`                                   | `ConversationParticipant` with `kind: "agent"`; `tagline` becomes `role`, and `MessageAvatar` takes `initials`                                                                          |
+| `agentInitials`                                   | `MessageAvatar`, which derives initials from `name`                                                                                                                                     |
+| `SubagentRun`, `SubagentState`                    | No replacement: the conversation model has no subagent type; show a helper's calls as `PartTool`s or a `PartToolBatch`                                                                  |
+| `ChatThreadSummary`                               | No replacement: a list of conversations is the host's own data                                                                                                                          |
+| `messageText`, `reasoningText`, `toolParts`       | No replacement: filter `message.parts` by `kind`                                                                                                                                        |
+| `isTurnWorking`                                   | `parts.some((p) => p.kind === "tool-trace" && p.status === "running")` (any tool still running; `message.status === "streaming"` is the whole message)                                  |
+| `toolLabel`                                       | No replacement: `ToolHeader` shows the raw tool name, after the `label` you pass                                                                                                        |
 
 ## Upgrading from 0.1
 

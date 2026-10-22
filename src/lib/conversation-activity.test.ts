@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import type { PartReasoning, PartText } from "./chat-parts.js";
 import type {
   ConversationPart,
+  PartReasoning,
+  PartText,
   PartTool,
   PartToolBatch,
   ToolApprovalRecord,

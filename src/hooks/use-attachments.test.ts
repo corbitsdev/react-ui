@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { Activity, StrictMode, act, createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import type { PartFile } from "../lib/chat-parts.js";
+import type { PartFile } from "../lib/conversation.js";
 import type { AttachmentData } from "../ui/attachments.js";
 import {
   useAttachments,
