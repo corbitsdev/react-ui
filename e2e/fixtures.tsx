@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, Profiler } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, Profiler } from "react";
 import type { ReactNode } from "react";
 
 import {
@@ -62,6 +62,16 @@ import {
   useHistoryWindow,
   ConversationMap,
   type ConversationMapTurn,
+  Attachment,
+  AttachmentDropZone,
+  AttachmentInfo,
+  AttachmentMore,
+  AttachmentPreview,
+  AttachmentRemove,
+  Attachments,
+  type AttachmentItem,
+  type AttachmentRejection,
+  useAttachments,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
@@ -1104,6 +1114,90 @@ function ConversationMapScenario({
   );
 }
 
+/** How many of each reason, e.g. "too-many 20". */
+function refusals(rejected: readonly AttachmentRejection<File>[]): string {
+  const counts = new Map<string, number>();
+  for (const { reason } of rejected) {
+    counts.set(reason, (counts.get(reason) ?? 0) + 1);
+  }
+  return [...counts].map(([reason, count]) => `${reason} ${count}`).join(", ");
+}
+
+/** A message box taking dropped files into a folded stack, as a chat would. */
+function AttachmentsScenario() {
+  const [attachments, setAttachments] = useState<readonly AttachmentItem[]>([]);
+  const [expanded, setExpanded] = useState(false);
+  const [refused, setRefused] = useState("");
+  const [folders, setFolders] = useState("");
+  const message = useRef<HTMLTextAreaElement>(null);
+  const { add } = useAttachments({
+    attachments,
+    maxFiles: 100,
+    maxFileBytes: 1024 * 1024,
+  });
+  const folded = !expanded && attachments.length > 5;
+  const shown = folded ? attachments.slice(0, 4) : attachments;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <div data-testid="outside" style={{ height: 80 }}>
+        Outside the drop zone
+      </div>
+      <AttachmentDropZone
+        data-testid="zone"
+        onFiles={(files, details) => {
+          const { accepted, rejected } = add(files);
+          setAttachments((previous) => [...previous, ...accepted]);
+          setRefused(refusals(rejected));
+          setFolders(details.folders.join(","));
+        }}
+        style={{ padding: "96px 16px 16px", width: 640 }}
+      >
+        {attachments.length === 0 ? null : (
+          <Attachments
+            variant="stack"
+            total={attachments.length}
+            expanded={expanded}
+            onExpandedChange={setExpanded}
+            returnFocusTo={message}
+          >
+            {shown.map((item) => (
+              <Attachment key={item.id} data={item}>
+                <AttachmentPreview />
+                <AttachmentInfo />
+                <AttachmentRemove
+                  onClick={() =>
+                    setAttachments((previous) =>
+                      previous.filter((held) => held.id !== item.id),
+                    )
+                  }
+                />
+              </Attachment>
+            ))}
+            {folded ? (
+              <AttachmentMore count={attachments.length - shown.length} />
+            ) : null}
+          </Attachments>
+        )}
+        {expanded ? (
+          <Button
+            onClick={() => {
+              message.current?.focus();
+              setExpanded(false);
+              setAttachments([]);
+            }}
+          >
+            Remove all
+          </Button>
+        ) : null}
+        <textarea ref={message} aria-label="Message" />
+      </AttachmentDropZone>
+      <output aria-label="Count">{attachments.length}</output>
+      <output aria-label="Refused">{refused}</output>
+      <output aria-label="Folders">{folders}</output>
+    </div>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -1167,4 +1261,5 @@ export const scenarios: Record<string, () => ReactNode> = {
       <ConversationMapScenario turns={mapTurns(80)} />
     </>
   ),
+  attachments: () => <AttachmentsScenario />,
 };
