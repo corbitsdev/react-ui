@@ -183,6 +183,46 @@ describe("ConversationItem registry", () => {
     unsubscribe();
     mounted.unmount();
   });
+
+  test("a null ref drops the item, which is how React 18 detaches", async () => {
+    let api: ConversationContextValue | null = null;
+    function Probe() {
+      api = useConversation();
+      return null;
+    }
+    const mounted = render(
+      <Conversation>
+        <ConversationContent>
+          <ConversationItem itemId="a">a</ConversationItem>
+        </ConversationContent>
+        <Probe />
+      </Conversation>,
+    );
+    const element = mounted.container.querySelector<HTMLElement>(
+      "[data-item-id='a']",
+    );
+    const fiberKey = Object.keys(element ?? {}).find((key) =>
+      key.startsWith("__reactFiber$"),
+    );
+    const fiber =
+      element === null || fiberKey === undefined
+        ? undefined
+        : (element as HTMLElement & Record<string, { ref?: unknown }>)[fiberKey];
+    const ref = fiber?.ref;
+    if (typeof ref !== "function") throw new Error("expected the item ref");
+    const items = () => {
+      if (api === null) throw new Error("expected the conversation API");
+      return api.items;
+    };
+
+    act(() => {
+      ref(null);
+    });
+    await act(() => Promise.resolve());
+    expect(items().get("a")).toBeUndefined();
+    expect(items().ids()).toEqual([]);
+    mounted.unmount();
+  });
 });
 
 describe("ConversationScrollButton", () => {
