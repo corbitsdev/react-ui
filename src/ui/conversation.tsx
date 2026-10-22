@@ -862,9 +862,18 @@ export function ConversationItem({
   ...props
 }: ConversationItemProps) {
   const engine = useEngine("ConversationItem");
+  // React 19 runs the cleanup `register` returns. React 18 ignores that
+  // return and detaches by calling the ref with null, so release there too.
+  const release = useRef<(() => void) | null>(null);
   const register = useCallback(
-    (element: HTMLDivElement | null) =>
-      element === null ? undefined : engine.registry.register(itemId, element),
+    (element: HTMLDivElement | null) => {
+      release.current?.();
+      release.current = null;
+      if (element === null) return;
+      const cleanup = engine.registry.register(itemId, element);
+      release.current = cleanup;
+      return cleanup;
+    },
     [engine, itemId],
   );
   const mergedRef = useMergedRef(register, ref);
