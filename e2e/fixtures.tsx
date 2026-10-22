@@ -44,9 +44,8 @@ import {
   PanelTabs,
   panelTabsHeaderClassName,
   useTabs,
-  Activity,
-  ToolApproval,
-  groupActivity,
+  MessageParts,
+  type ConversationPart,
   type PartTool,
   type ToolApprovalRecord,
   ToolGroup,
@@ -927,17 +926,22 @@ function PanelTabsScenario() {
   );
 }
 
+/** A call's execution status once a decision is recorded on it. */
+function decidedStatus(approval: ToolApprovalRecord): PartTool["status"] {
+  if (approval.status === "pending") return "approval-requested";
+  return approval.status === "approved" ? "output-available" : "output-denied";
+}
+
+function pendingApproval(id: string): ToolApprovalRecord {
+  return { id, status: "pending", scope: null, timeoutAt: null };
+}
+
 // A host's view of one agent turn: a finished draft, then a send waiting on a
-// person. Deciding records the outcome on the call, which then folds into the
-// run before it, the way a message renders `groupActivity`.
+// person. Deciding records the outcome on the call, which `MessageParts` then
+// folds into the run before it.
 function ToolApprovalScenario() {
   const { log, record } = useEventLog();
-  const [approval, setApproval] = useState<ToolApprovalRecord>({
-    id: "approval-1",
-    status: "pending",
-    scope: null,
-    timeoutAt: null,
-  });
+  const [approval, setApproval] = useState(pendingApproval("approval-1"));
   const parts: PartTool[] = [
     {
       kind: "tool-trace",
@@ -950,36 +954,26 @@ function ToolApprovalScenario() {
       kind: "tool-trace",
       toolCallId: "send",
       name: "mail__send",
-      status:
-        approval.status === "pending"
-          ? "approval-requested"
-          : approval.status === "approved"
-            ? "output-available"
-            : "output-denied",
+      status: decidedStatus(approval),
       input: { to: "team" },
       approval,
     },
   ];
   return (
     <>
-      {groupActivity(parts).map((group) =>
-        group.kind === "activity" ? (
-          <Activity key={group.key} steps={group.steps} />
-        ) : group.part.kind === "tool-trace" ? (
-          <ToolApproval
-            key={group.key}
-            part={group.part}
-            onDecide={(decision) => {
-              record(`${decision.outcome}:${decision.scope}`);
-              setApproval((current) => ({
-                ...current,
-                status: decision.outcome,
-                scope: decision.scope,
-              }));
-            }}
-          />
-        ) : null,
-      )}
+      <Message from="agent" aria-label="Agent">
+        <MessageParts
+          parts={parts}
+          onDecide={(_, decision) => {
+            record(`${decision.outcome}:${decision.scope}`);
+            setApproval((current) => ({
+              ...current,
+              status: decision.outcome,
+              scope: decision.scope,
+            }));
+          }}
+        />
+      </Message>
       {log}
     </>
   );
@@ -1046,6 +1040,73 @@ function ToolGroupApprovalScenario() {
       />
       {log}
     </>
+  );
+}
+
+const BATCH_CALLS = ["notice", "totals", "calendar"] as const;
+
+// Three calls that ran at once after a finished read, two of them waiting on
+// a person. Each decision is recorded on its call; the batch folds into the
+// run once none is left waiting.
+function ToolBatchApprovalScenario() {
+  const [approvals, setApprovals] = useState<
+    Record<string, ToolApprovalRecord>
+  >({
+    notice: pendingApproval("approval-notice"),
+    calendar: pendingApproval("approval-calendar"),
+  });
+  const parts: ConversationPart[] = [
+    {
+      kind: "tool-trace",
+      toolCallId: "read",
+      name: "files__read",
+      status: "output-available",
+      output: "Read 3 files",
+    },
+    {
+      kind: "tool-batch",
+      id: "batch",
+      tools: BATCH_CALLS.map((name): PartTool => {
+        const approval = approvals[name];
+        return approval === undefined
+          ? {
+              kind: "tool-trace",
+              toolCallId: name,
+              name: `send__${name}`,
+              status: "output-available",
+              output: "Sent",
+            }
+          : {
+              kind: "tool-trace",
+              toolCallId: name,
+              name: `send__${name}`,
+              status: decidedStatus(approval),
+              input: { to: "team" },
+              approval,
+            };
+      }),
+    },
+  ];
+  return (
+    <Message from="agent" aria-label="Agent">
+      <MessageParts
+        parts={parts}
+        onDecide={(tool, decision) =>
+          setApprovals((current) => {
+            const approval = current[tool.toolCallId];
+            if (approval === undefined) return current;
+            return {
+              ...current,
+              [tool.toolCallId]: {
+                ...approval,
+                status: decision.outcome,
+                scope: decision.scope,
+              },
+            };
+          })
+        }
+      />
+    </Message>
   );
 }
 
@@ -1534,11 +1595,7 @@ function ThreadMessage({ message }: { message: ConversationMessage }) {
       from={own ? "own" : "agent"}
       aria-label={`${message.author.name} ${message.id}`}
     >
-      <MessageContent
-        text={message.parts
-          .map((part) => (part.kind === "text" ? part.text : ""))
-          .join("")}
-      />
+      <MessageParts parts={message.parts} />
     </Message>
   );
 }
@@ -1675,6 +1732,7 @@ export const scenarios: Record<string, () => ReactNode> = {
   "panel-tabs": () => <PanelTabsScenario />,
   "tool-approval": () => <ToolApprovalScenario />,
   "tool-group-approval": () => <ToolGroupApprovalScenario />,
+  "tool-batch-approval": () => <ToolBatchApprovalScenario />,
   "message-fold": () => <MessageFoldScenario />,
   "message-fold-settle": () => (
     <MessageFoldConversationScenario policy="settle" />

@@ -12,7 +12,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -29,11 +28,6 @@ import { useMediaViewer } from "../../src/hooks/use-media-viewer.js";
 import { panelTabIds, useTabs } from "../../src/hooks/use-tabs.js";
 import type { AttachmentRejection } from "../../src/lib/attachment-limits.js";
 import type { PartBlock, PartFile } from "../../src/lib/conversation.js";
-import {
-  groupActivity,
-  type ActivityStep,
-  type ConversationPartGroup,
-} from "../../src/lib/conversation-activity.js";
 import type {
   ConversationMessage,
   ConversationPart,
@@ -42,7 +36,6 @@ import type {
   PartTool,
 } from "../../src/lib/conversation.js";
 import type { PromptToken } from "../../src/lib/prompt-tokens.js";
-import { Activity } from "../../src/ui/activity.js";
 import { AttachmentDropZone } from "../../src/ui/attachment-drop-zone.js";
 import {
   Attachment,
@@ -64,21 +57,18 @@ import {
   type ConversationMapTurn,
 } from "../../src/ui/conversation-map.js";
 import { ConversationThread } from "../../src/ui/conversation-thread.js";
-import {
-  GeneratedImages,
-  generatedImageViewerItems,
-} from "../../src/ui/generated-images.js";
+import { generatedImageViewerItems } from "../../src/ui/generated-images.js";
 import { MediaViewer } from "../../src/ui/media-viewer.js";
 import {
   Message,
   MessageAvatar,
-  MessageContent,
   MessageFooter,
   MessageHeader,
   type MessageFrom,
 } from "../../src/ui/message.js";
 import { MessageAction, MessageActions } from "../../src/ui/message-actions.js";
 import { MessageFold } from "../../src/ui/message-fold.js";
+import { MessageParts } from "../../src/ui/message-parts.js";
 import { MessageReactions } from "../../src/ui/message-reactions.js";
 import { MessageReplies } from "../../src/ui/message-replies.js";
 import {
@@ -107,10 +97,7 @@ import {
   type PromptInputModelOption,
   type PromptInputModeOption,
 } from "../../src/ui/prompt-input-toolbar.js";
-import { Source, Sources } from "../../src/ui/sources.js";
 import type { ToolApprovalDecision } from "../../src/ui/tool-approval.js";
-import { ToolApproval } from "../../src/ui/tool-approval.js";
-import { ToolGroup } from "../../src/ui/tool-group.js";
 import {
   SAMPLE_NOW,
   assistant,
@@ -277,33 +264,6 @@ function turnsOf(
   return turns;
 }
 
-/** The ids of the tool calls a step or part carries. */
-function toolCallIds(part: ConversationPart): readonly string[] {
-  if (part.kind === "tool-trace") return [part.toolCallId];
-  if (part.kind === "tool-batch")
-    return part.tools.map((tool) => tool.toolCallId);
-  return [];
-}
-
-function holdsCall(group: ConversationPartGroup, toolCallId: string): boolean {
-  const parts: readonly (ConversationPart | ActivityStep)[] =
-    group.kind === "activity" ? group.steps : [group.part];
-  return parts.some((part) => toolCallIds(part).includes(toolCallId));
-}
-
-/**
- * Where focus goes once a decided call has moved: the first call still
- * waiting in the same batch, else the run's trigger or the batch's header.
- */
-function nearestControl(group: Element): HTMLElement | null {
-  return (
-    group.querySelector<HTMLElement>("[data-slot='tool-approval'] button") ??
-    group.querySelector<HTMLElement>(
-      "[data-slot='activity-trigger'], [data-slot='tool-group-header']",
-    )
-  );
-}
-
 /** The person's answer recorded on the call; an approved call has then run. */
 function settle(tool: PartTool, decision: ToolApprovalDecision): PartTool {
   const approval = {
@@ -389,133 +349,27 @@ function useChatActions(): ChatActions {
 }
 
 /**
- * A message's parts as they render: runs of thinking and tool work fold,
- * calls waiting on a person stand out with their buttons, and the rest
- * shows as itself.
- *
- * Deciding a call folds it into the run before it, so its buttons unmount.
- * Focus would fall to the page; it goes to the run's trigger instead.
+ * A message's parts as they render. Blocks are the host's to draw; this one
+ * shows each as a small card with its title.
  */
-function MessageParts({ message }: { readonly message: ConversationMessage }) {
+function ChatParts({ message }: { readonly message: ConversationMessage }) {
   const { decide, openImage } = useChatActions();
   const own = message.author.id === you.id;
-  const streaming = message.status === "streaming";
-  const groups = groupActivity(message.parts);
-  const root = useRef<HTMLDivElement>(null);
-  const decided = useRef<string | null>(null);
-
-  useLayoutEffect(() => {
-    const toolCallId = decided.current;
-    if (toolCallId === null) return;
-    decided.current = null;
-    const active = document.activeElement;
-    if (active !== null && active !== document.body) return;
-    const group = groups.find((candidate) => holdsCall(candidate, toolCallId));
-    const element =
-      group === undefined
-        ? null
-        : root.current?.querySelector(`[data-group-key='${group.key}']`);
-    if (element !== null && element !== undefined)
-      nearestControl(element)?.focus();
-  });
-
-  const onDecide = (toolCallId: string, decision: ToolApprovalDecision) => {
-    decided.current = toolCallId;
-    decide(message.id, toolCallId, decision);
-  };
-  const files = message.parts.filter(
-    (part): part is PartFile => part.kind === "file",
-  );
-
   return (
-    <div ref={root} className="flex min-w-0 flex-col gap-3">
-      {groups.map((group, index) => {
-        if (group.kind === "activity")
-          return (
-            <Activity
-              key={group.key}
-              data-group-key={group.key}
-              steps={group.steps}
-              streaming={streaming && index === groups.length - 1}
-            />
-          );
-        const { part } = group;
-        switch (part.kind) {
-          case "text":
-            return (
-              <MessageContent
-                key={group.key}
-                text={part.text}
-                render={own ? undefined : markdown}
-              />
-            );
-          case "tool-trace":
-            return (
-              <ToolApproval
-                key={group.key}
-                data-group-key={group.key}
-                part={part}
-                onDecide={(decision) => onDecide(part.toolCallId, decision)}
-              />
-            );
-          case "tool-batch":
-            return (
-              <ToolGroup
-                key={group.key}
-                data-group-key={group.key}
-                part={part}
-                onDecide={(tool, decision) =>
-                  onDecide(tool.toolCallId, decision)
-                }
-              />
-            );
-          case "image":
-            return (
-              <GeneratedImages
-                key={group.key}
-                part={part}
-                onOpen={(index, opener) => openImage(part.id, index, opener)}
-              />
-            );
-          case "sources":
-            return (
-              <Sources key={group.key}>
-                {part.sources.map((source, position) => (
-                  <Source
-                    key={source.url}
-                    href={source.url}
-                    index={position + 1}
-                  >
-                    {source.title}
-                  </Source>
-                ))}
-              </Sources>
-            );
-          case "block":
-            return (
-              <div
-                key={group.key}
-                className="flex flex-col gap-0.5 rounded-lg border border-border bg-card p-3 text-sm text-card-foreground"
-              >
-                <p className="font-medium">{blockTitle(part.block)}</p>
-                <p className="text-muted-foreground">{part.block.type}</p>
-              </div>
-            );
-          default:
-            return null;
-        }
-      })}
-      {files.length === 0 ? null : (
-        <Attachments variant="tiles" total={files.length}>
-          {files.map((file, position) => (
-            <Attachment key={`${position}-${file.name}`} data={file}>
-              <AttachmentPreview />
-              <AttachmentInfo />
-            </Attachment>
-          ))}
-        </Attachments>
+    <MessageParts
+      parts={message.parts}
+      renderMarkdown={own ? undefined : markdown}
+      onDecide={(tool, decision) =>
+        decide(message.id, tool.toolCallId, decision)
+      }
+      onOpenImage={(part, index, opener) => openImage(part.id, index, opener)}
+      renderBlock={(part) => (
+        <div className="flex flex-col gap-0.5 rounded-lg border border-border bg-card p-3 text-sm text-card-foreground">
+          <p className="font-medium">{blockTitle(part.block)}</p>
+          <p className="text-muted-foreground">{part.block.type}</p>
+        </div>
       )}
-    </div>
+    />
   );
 }
 
@@ -589,10 +443,10 @@ function ChatEntry({
         />
       )}
       {own ? (
-        <MessageParts message={message} />
+        <ChatParts message={message} />
       ) : (
         <MessageFold length={text.length} defaultOpen={newest}>
-          <MessageParts message={message} />
+          <ChatParts message={message} />
         </MessageFold>
       )}
       {footer === null ? null : <MessageFooter>{footer}</MessageFooter>}

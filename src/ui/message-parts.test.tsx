@@ -1,0 +1,442 @@
+import { act, useState } from "react";
+import type { ReactElement } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, describe, expect, test } from "bun:test";
+
+import type {
+  ConversationMessageStatus,
+  ConversationPart,
+  PartImage,
+  PartTool,
+  PartToolBatch,
+} from "../lib/conversation.js";
+import { Message } from "./message.js";
+import { MessageParts, type MessagePartsProps } from "./message-parts.js";
+import { ToolApproval, type ToolApprovalDecision } from "./tool-approval.js";
+
+type Mounted = {
+  container: HTMLElement;
+  render: (node: ReactElement) => void;
+  unmount: () => void;
+};
+
+const mounted: Mounted[] = [];
+
+function mount(node: ReactElement): Mounted {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  let root!: Root;
+  act(() => {
+    root = createRoot(container);
+    root.render(node);
+  });
+  const handle = {
+    container,
+    render: (next: ReactElement) => act(() => root.render(next)),
+    unmount: () => {
+      act(() => root.unmount());
+      container.remove();
+    },
+  };
+  mounted.push(handle);
+  return handle;
+}
+
+afterEach(() => {
+  for (const handle of mounted.splice(0)) handle.unmount();
+});
+
+function inMessage(
+  props: MessagePartsProps,
+  status: ConversationMessageStatus = "sent",
+): ReactElement {
+  return (
+    <Message from="agent" status={status} aria-label="Agent">
+      <MessageParts {...props} />
+    </Message>
+  );
+}
+
+function call(id: string, overrides: Partial<PartTool> = {}): PartTool {
+  return {
+    kind: "tool-trace",
+    toolCallId: id,
+    name: `tool__${id}`,
+    status: "output-available",
+    output: "ok",
+    ...overrides,
+  };
+}
+
+function waiting(id: string): PartTool {
+  return call(id, {
+    status: "approval-requested",
+    output: undefined,
+    input: { to: "team" },
+    approval: {
+      id: `approval-${id}`,
+      status: "pending",
+      scope: null,
+      timeoutAt: null,
+    },
+  });
+}
+
+/** The person's answer recorded on the call, as a host would. */
+function settle(tool: PartTool, decision: ToolApprovalDecision): PartTool {
+  if (tool.approval === undefined) throw new Error("no approval record");
+  return {
+    ...tool,
+    status:
+      decision.outcome === "approved" ? "output-available" : "output-denied",
+    approval: {
+      ...tool.approval,
+      status: decision.outcome,
+      scope: decision.scope,
+    },
+  };
+}
+
+function decideIn(
+  parts: readonly ConversationPart[],
+  toolCallId: string,
+  decision: ToolApprovalDecision,
+): readonly ConversationPart[] {
+  return parts.map((part) => {
+    if (part.kind === "tool-trace" && part.toolCallId === toolCallId)
+      return settle(part, decision);
+    if (part.kind === "tool-batch")
+      return {
+        ...part,
+        tools: part.tools.map((tool) =>
+          tool.toolCallId === toolCallId ? settle(tool, decision) : tool,
+        ),
+      };
+    return part;
+  });
+}
+
+/** A host that records each decision as soon as it is made. */
+function Host({
+  initial,
+  ...props
+}: Omit<MessagePartsProps, "parts" | "onDecide"> & {
+  readonly initial: readonly ConversationPart[];
+}) {
+  const [parts, setParts] = useState(initial);
+  return inMessage({
+    ...props,
+    parts,
+    onDecide: (tool, decision) =>
+      setParts((current) => decideIn(current, tool.toolCallId, decision)),
+  });
+}
+
+function slots(container: HTMLElement): readonly string[] {
+  return [...container.querySelectorAll("[data-part-key] > [data-slot]")].map(
+    (element) => element.getAttribute("data-slot") ?? "",
+  );
+}
+
+function button(container: ParentNode, name: string): HTMLButtonElement {
+  const found = [...container.querySelectorAll("button")].find(
+    (element) => element.textContent === name,
+  );
+  if (found === undefined) throw new Error(`expected a ${name} button`);
+  return found;
+}
+
+function press(element: HTMLElement) {
+  act(() => element.focus());
+  act(() => element.click());
+}
+
+const IMAGES: PartImage = {
+  kind: "image",
+  id: "images-1",
+  prompt: "A cover",
+  state: "done",
+  images: [
+    {
+      id: "image-1",
+      mediaType: "image/svg+xml",
+      width: 100,
+      height: 100,
+      alt: "Cover",
+      base64: "PHN2Zy8+",
+    },
+  ],
+};
+
+const EVERY_KIND: readonly ConversationPart[] = [
+  { kind: "event", event: "Agent joined" },
+  { kind: "reasoning", text: "Plan the work.", durationMs: 2_000 },
+  call("read"),
+  { kind: "text", text: "Here is what I found." },
+  { kind: "file", name: "a.csv", mediaType: "text/csv" },
+  { kind: "file", name: "b.csv", mediaType: "text/csv" },
+  IMAGES,
+  { kind: "sources", sources: [{ title: "Docs", url: "https://example.com" }] },
+  { kind: "block", block: { type: "chart", data: { title: "Runs" } } },
+  waiting("send"),
+];
+
+describe("MessageParts", () => {
+  test("maps each kind of part to its component, in order", () => {
+    const { container } = mount(inMessage({ parts: EVERY_KIND }));
+    expect(slots(container)).toEqual([
+      "conversation-notice",
+      "activity",
+      "message-content",
+      "attachments",
+      "generated-images",
+      "sources",
+      "tool-approval",
+    ]);
+    expect(container.textContent).toContain("Thought for 2s · 1 step");
+    // Consecutive files share one row of tiles.
+    expect(
+      container.querySelectorAll("[data-slot='attachments']"),
+    ).toHaveLength(1);
+    expect(
+      container.querySelector("[data-slot='attachments']")?.textContent,
+    ).toContain("b.csv");
+    expect(
+      container
+        .querySelector("[data-slot='source-link']")
+        ?.getAttribute("href"),
+    ).toBe("https://example.com");
+  });
+
+  test("a block shows nothing until the host renders it", () => {
+    const block = EVERY_KIND.filter((part) => part.kind === "block");
+    const { container, render } = mount(inMessage({ parts: block }));
+    expect(container.querySelector("[data-part-key]")?.textContent).toBe("");
+    render(
+      inMessage({
+        parts: block,
+        renderBlock: (part) => <p data-slot="host-block">{part.block.type}</p>,
+      }),
+    );
+    expect(slots(container)).toEqual(["host-block"]);
+  });
+
+  test("text goes through renderMarkdown", () => {
+    const { container } = mount(
+      inMessage({
+        parts: [{ kind: "text", text: "**bold**" }],
+        renderMarkdown: (text) => <strong>{text.slice(2, -2)}</strong>,
+      }),
+    );
+    expect(
+      container.querySelector("[data-slot='message-content'] strong")
+        ?.textContent,
+    ).toBe("bold");
+  });
+
+  test("an override replaces its kind; undefined keeps the default, null drops it", () => {
+    const { container } = mount(
+      inMessage({
+        parts: EVERY_KIND,
+        renderText: (part) => <p data-slot="host-text">{part.text}</p>,
+        renderEvent: () => undefined,
+        renderSources: () => null,
+        renderFiles: (files) => <p data-slot="host-files">{files.length}</p>,
+      }),
+    );
+    expect(slots(container)).toEqual([
+      "conversation-notice",
+      "activity",
+      "host-text",
+      "host-files",
+      "generated-images",
+      "tool-approval",
+    ]);
+    expect(
+      container.querySelector("[data-slot='host-files']")?.textContent,
+    ).toBe("2");
+  });
+
+  test("renderStep draws the steps of an opened run", () => {
+    const { container } = mount(
+      inMessage({
+        parts: [call("read")],
+        renderStep: (step) => <span data-slot="host-step">{step.kind}</span>,
+      }),
+    );
+    const trigger = container.querySelector<HTMLElement>(
+      "[data-slot='activity-trigger']",
+    );
+    if (trigger === null) throw new Error("expected a trigger");
+    act(() => trigger.click());
+    expect(
+      container.querySelector("[data-slot='host-step']")?.textContent,
+    ).toBe("tool-trace");
+  });
+
+  test("the last run is live while the message streams", () => {
+    const parts: readonly ConversationPart[] = [
+      call("read"),
+      { kind: "text", text: "So far" },
+      call("fetch", { status: "running", output: undefined }),
+    ];
+    const { container, render } = mount(inMessage({ parts }, "streaming"));
+    const triggers = () =>
+      [...container.querySelectorAll("[data-slot='activity-trigger']")].map(
+        (element) => element.textContent,
+      );
+    expect(triggers()).toEqual(["Worked through 1 step", "tool__fetch…"]);
+    render(inMessage({ parts, streaming: false }, "streaming"));
+    expect(triggers()).toEqual([
+      "Worked through 1 step",
+      "Worked through 1 step",
+    ]);
+  });
+
+  test("choosing an image reports its part and index", () => {
+    const opened: [string, number][] = [];
+    const { container } = mount(
+      inMessage({
+        parts: [IMAGES],
+        onOpenImage: (part, index) => opened.push([part.id, index]),
+      }),
+    );
+    const open = container.querySelector<HTMLElement>(
+      "[data-slot='generated-image-open']",
+    );
+    if (open === null) throw new Error("expected an open control");
+    act(() => open.click());
+    expect(opened).toEqual([["images-1", 0]]);
+  });
+});
+
+describe("MessageParts focus after a decision", () => {
+  const RUN_THEN_WAIT: readonly ConversationPart[] = [
+    call("draft"),
+    waiting("send"),
+  ];
+
+  for (const name of ["Approve", "Approve always", "Deny"]) {
+    test(`${name} folds the call and focus lands on the run's trigger`, () => {
+      const { container } = mount(<Host initial={RUN_THEN_WAIT} />);
+      press(button(container, name));
+      expect(container.querySelector("[data-slot='tool-approval']")).toBeNull();
+      const active = document.activeElement as HTMLElement | null;
+      expect(active?.dataset["slot"]).toBe("activity-trigger");
+      expect(active?.textContent).toContain("Worked through 2 steps");
+    });
+  }
+
+  test("a call with no run before it lands on the run it starts", () => {
+    const { container } = mount(
+      <Host
+        initial={[{ kind: "text", text: "Sending now." }, waiting("send")]}
+      />,
+    );
+    press(button(container, "Approve"));
+    const active = document.activeElement as HTMLElement | null;
+    expect(active?.dataset["slot"]).toBe("activity-trigger");
+    expect(active?.textContent).toContain("Worked through 1 step");
+  });
+
+  test("in a batch, focus moves to the next call still waiting, then to the run", () => {
+    const batch: PartToolBatch = {
+      kind: "tool-batch",
+      id: "batch-1",
+      tools: [waiting("one"), call("two"), waiting("three")],
+    };
+    const { container } = mount(<Host initial={[call("draft"), batch]} />);
+    const cards = () => [
+      ...container.querySelectorAll(
+        "[data-slot='tool-approval'][data-status='pending']",
+      ),
+    ];
+    expect(cards()).toHaveLength(2);
+
+    press(button(container, "Deny"));
+    expect(cards()).toHaveLength(1);
+    const next = document.activeElement as HTMLElement | null;
+    expect(next?.textContent).toBe("Approve");
+    expect(cards()[0]?.contains(next)).toBe(true);
+
+    press(button(container, "Approve"));
+    const active = document.activeElement as HTMLElement | null;
+    expect(active?.dataset["slot"]).toBe("activity-trigger");
+    expect(active?.textContent).toContain("Worked through 4 steps");
+  });
+
+  test("the next waiting call wraps to the first when the decided one was last", () => {
+    const batch: PartToolBatch = {
+      kind: "tool-batch",
+      id: "batch-1",
+      tools: [waiting("one"), waiting("two")],
+    };
+    const { container } = mount(<Host initial={[batch]} />);
+    const last = [
+      ...container.querySelectorAll("[data-slot='tool-approval']"),
+    ].at(-1);
+    if (last === undefined) throw new Error("expected two cards");
+    press(button(last, "Approve"));
+    const active = document.activeElement as HTMLElement | null;
+    expect(active?.textContent).toBe("Approve");
+    expect(
+      container
+        .querySelector("[data-slot='tool-approval'][data-status='pending']")
+        ?.contains(active),
+    ).toBe(true);
+  });
+
+  test("a decision the host records later moves focus once it shows", () => {
+    const decisions: ToolApprovalDecision[] = [];
+    const props = (parts: readonly ConversationPart[]) =>
+      inMessage({ parts, onDecide: (_, decision) => decisions.push(decision) });
+    const { container, render } = mount(props(RUN_THEN_WAIT));
+    const approve = button(container, "Approve");
+    press(approve);
+    // Not recorded yet: the buttons stay and keep focus.
+    render(props(RUN_THEN_WAIT));
+    expect(document.activeElement).toBe(approve);
+
+    const [decision] = decisions;
+    if (decision === undefined) throw new Error("expected a decision");
+    render(props(decideIn(RUN_THEN_WAIT, "send", decision)));
+    expect(
+      (document.activeElement as HTMLElement | null)?.dataset["slot"],
+    ).toBe("activity-trigger");
+  });
+
+  test("focus that went somewhere else stays there", () => {
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    const decisions: ToolApprovalDecision[] = [];
+    const props = (parts: readonly ConversationPart[]) =>
+      inMessage({ parts, onDecide: (_, decision) => decisions.push(decision) });
+    const { container, render } = mount(props(RUN_THEN_WAIT));
+    press(button(container, "Approve"));
+    act(() => outside.focus());
+    const [decision] = decisions;
+    if (decision === undefined) throw new Error("expected a decision");
+    render(props(decideIn(RUN_THEN_WAIT, "send", decision)));
+    expect(document.activeElement).toBe(outside);
+    outside.remove();
+  });
+
+  test("a host's renderApproval gets the handoff through decide", () => {
+    const { container } = mount(
+      <Host
+        initial={RUN_THEN_WAIT}
+        renderApproval={(part, decide) => (
+          <ToolApproval
+            part={part}
+            onDecide={decide}
+            labels={{ approve: "Go" }}
+          />
+        )}
+      />,
+    );
+    press(button(container, "Go"));
+    expect(
+      (document.activeElement as HTMLElement | null)?.dataset["slot"],
+    ).toBe("activity-trigger");
+  });
+});
