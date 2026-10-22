@@ -142,6 +142,7 @@ Everything imports from `@corbits/react-ui`, except rows marked "optional peer",
 | `VoiceWaveform`       | Live audio level bars                                                    |
 | `DictationStatusLine` | Composer dictation status row                                            |
 | `MicPermissionDialog` | Microphone permission prompt (optional peer, `ui/mic-permission-dialog`) |
+| `Panel`               | Side panel resized from its edge; hidden panes keep their state          |
 
 #### Runs
 
