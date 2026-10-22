@@ -12,8 +12,9 @@ import type {
 } from "../../src/lib/conversation.js";
 import { Activity } from "../../src/ui/activity.js";
 import { Button } from "../../src/ui/button.js";
+import { Message } from "../../src/ui/message.js";
+import { MessageParts } from "../../src/ui/message-parts.js";
 import { Reasoning } from "../../src/ui/reasoning.js";
-import { ToolApproval } from "../../src/ui/tool-approval.js";
 import { toolStorm } from "./samples/conversations.js";
 
 export default { title: "Chat / Activity" };
@@ -31,23 +32,14 @@ function firstRun(parts: readonly ConversationPart[]): readonly ActivityStep[] {
   return [];
 }
 
-/** A message's parts as they render: runs fold, text stays. */
-function Parts({ parts }: { readonly parts: readonly ConversationPart[] }) {
-  return (
-    <div className="flex max-w-2xl flex-col gap-3 p-4 text-sm">
-      {groupActivity(parts).map((group) =>
-        group.kind === "activity" ? (
-          <Activity key={group.key} steps={group.steps} />
-        ) : group.part.kind === "text" ? (
-          <p key={group.key}>{group.part.text}</p>
-        ) : null,
-      )}
-    </div>
-  );
-}
-
 /** The tool storm turn: each run folded to its summary between the text. */
-export const ToolStorm = () => <Parts parts={partsOf("storm-2")} />;
+export const ToolStorm = () => (
+  <div className="max-w-2xl p-4">
+    <Message from="agent" aria-label="Agent">
+      <MessageParts parts={partsOf("storm-2")} />
+    </Message>
+  </div>
+);
 
 /** A 41-step run opened: the latest ten, with a control for the rest. */
 export const Opened = () => (
@@ -141,7 +133,8 @@ export const ReasoningStates = () => (
 
 /**
  * A call waiting on a person stands outside the fold. Once decided, it
- * joins the run before it, and the run's steps show the outcome.
+ * joins the run before it, the run's steps show the outcome, and focus
+ * moves to the run's trigger.
  */
 export const ApprovalFolds = () => {
   const [approval, setApproval] = useState<ToolApprovalRecord>({
@@ -174,24 +167,19 @@ export const ApprovalFolds = () => {
     },
   ];
   return (
-    <div className="flex max-w-2xl flex-col gap-3 p-4">
-      {groupActivity(parts).map((group) =>
-        group.kind === "activity" ? (
-          <Activity key={group.key} steps={group.steps} />
-        ) : group.part.kind === "tool-trace" ? (
-          <ToolApproval
-            key={group.key}
-            part={group.part}
-            onDecide={(decision) =>
-              setApproval({
-                ...approval,
-                status: decision.outcome,
-                scope: decision.scope,
-              })
-            }
-          />
-        ) : null,
-      )}
+    <div className="max-w-2xl p-4">
+      <Message from="agent" aria-label="Agent">
+        <MessageParts
+          parts={parts}
+          onDecide={(_, decision) =>
+            setApproval({
+              ...approval,
+              status: decision.outcome,
+              scope: decision.scope,
+            })
+          }
+        />
+      </Message>
     </div>
   );
 };

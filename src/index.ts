@@ -138,6 +138,7 @@ export * from "./ui/message-fold.js";
 export * from "./ui/message-actions.js";
 export * from "./ui/message-reactions.js";
 export * from "./ui/message-replies.js";
+export * from "./ui/message-parts.js";
 export * from "./ui/conversation-earlier.js";
 export * from "./ui/conversation-map.js";
 export * from "./ui/attachments.js";
