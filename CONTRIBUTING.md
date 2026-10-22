@@ -12,7 +12,8 @@ bun run check
 Contributors sign the [CLA](CLA.md) on their first PR; the CLA bot explains how.
 
 `bun run test:e2e` checks the built package: every `exports` target exists and the
-root entry loads under Node with every optional peer blocked, then packs the
+root entry loads under Node with every optional peer blocked, and unit-tests the
+contrast maths the stories sweep uses (`e2e/contrast.ts`), then packs the
 package into a Vite host and runs the Playwright specs in `e2e/` against it. Each
 scenario is a route in `e2e/fixtures.tsx`. The same run builds the Storybook stories
 and fails on any serious or critical axe violation in any story. Run `bun run build` first, and
