@@ -159,3 +159,4 @@ export * from "./ui/attachment-drop-zone.js";
 export * from "./ui/generated-images.js";
 export * from "./ui/sources.js";
 export * from "./ui/media-viewer.js";
+export * from "./ui/conversation-thread.js";
