@@ -28,7 +28,7 @@ import { useHistoryWindow } from "../../src/hooks/use-history-window.js";
 import { useMediaViewer } from "../../src/hooks/use-media-viewer.js";
 import { panelTabIds, useTabs } from "../../src/hooks/use-tabs.js";
 import type { AttachmentRejection } from "../../src/lib/attachment-limits.js";
-import type { PartBlock, PartFile } from "../../src/lib/chat-parts.js";
+import type { PartBlock, PartFile } from "../../src/lib/conversation.js";
 import {
   groupActivity,
   type ActivityStep,

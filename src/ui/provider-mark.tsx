@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import type { ToolPart } from "../lib/chat-message.js";
 import { cn } from "../lib/utils.js";
 
 export type ProviderMarkProps = {
@@ -50,23 +49,25 @@ export function ProviderMark({
   );
 }
 
+export type ToolProviderMarkProps = {
+  /** Raw tool id, e.g. `slack__post_message`. */
+  readonly toolName: string;
+  readonly logo?: ReactNode;
+  readonly className?: string | undefined;
+};
+
 /**
  * The provider marker for a tool call in a transcript.
  *
- * The provider is read off the tool id's `provider__operation` prefix — the
- * same convention `toolLabel` uses — so a tool with no prefix is local and gets
- * no marker rather than a guessed one.
+ * The provider is read off the tool id's `provider__operation` prefix, so a
+ * tool with no prefix is local and gets no marker rather than a guessed one.
  */
 export function ToolProviderMark({
-  part,
+  toolName,
   logo,
   className,
-}: {
-  part: ToolPart;
-  logo?: ReactNode;
-  className?: string;
-}) {
-  const [provider, ...rest] = part.toolName.split("__");
+}: ToolProviderMarkProps) {
+  const [provider, ...rest] = toolName.split("__");
   if (rest.length === 0 || provider === undefined || provider === "")
     return null;
   return <ProviderMark provider={provider} logo={logo} className={className} />;

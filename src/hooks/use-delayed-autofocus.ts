@@ -1,18 +1,21 @@
 import { useEffect, type RefObject } from "react";
 
-import { CHAT_DOCK_AUTOFOCUS_DELAY_MS } from "../ui/chat-dock-timing.js";
+/**
+ * Roughly a typical panel entrance (a few hundred milliseconds), so focus
+ * never lands on an element that is still moving.
+ */
+const DEFAULT_DELAY_MS = 280;
 
 /**
- * Focuses the given element shortly after `active` turns true — the composer
- * wants to autofocus once the dock has finished popping open, not while it is
- * still mid-animation, so the delay is deliberate rather than a magic number.
- * `delayMs` defaults to `CHAT_DOCK_AUTOFOCUS_DELAY_MS`, which is pinned `>=`
- * the dock's own entrance duration so focus never lands mid-animation.
+ * Focuses the given element shortly after `active` turns true: an element
+ * that animates in takes focus once it has settled, not while it is still
+ * mid-animation. Pass a `delayMs` at least as long as the entrance it waits
+ * for.
  */
 export function useDelayedAutofocus<T extends HTMLElement>(
   ref: RefObject<T | null>,
   active: boolean,
-  delayMs = CHAT_DOCK_AUTOFOCUS_DELAY_MS,
+  delayMs = DEFAULT_DELAY_MS,
 ): void {
   useEffect(() => {
     if (!active) return;

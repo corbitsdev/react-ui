@@ -11,7 +11,7 @@ import {
 } from "react";
 import { createRoot } from "react-dom/client";
 
-import type { PartFile } from "../lib/chat-parts.js";
+import type { PartFile } from "../lib/conversation.js";
 import type { AttachmentData } from "../ui/attachments.js";
 import {
   useAttachments,

@@ -5,8 +5,8 @@ import { useEffect, useRef } from "react";
 
 import { cn } from "../lib/utils.js";
 
-// Matches ChatInput's MAX_ROWS_PX — the same cap, so a textarea grown by
-// autoResize behaves identically wherever it's used.
+// The cap autoResize grows to when no `maxHeight` is given, so a textarea
+// grown by autoResize behaves identically wherever it's used.
 const DEFAULT_MAX_HEIGHT_PX = 200;
 
 export type TextareaProps = React.ComponentProps<"textarea"> & {

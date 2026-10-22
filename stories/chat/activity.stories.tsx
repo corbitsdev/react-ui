@@ -1,12 +1,12 @@
 import { useState } from "react";
 
-import type { PartReasoning } from "../../src/lib/chat-parts.js";
 import {
   groupActivity,
   type ActivityStep,
 } from "../../src/lib/conversation-activity.js";
 import type {
   ConversationPart,
+  PartReasoning,
   PartTool,
   ToolApprovalRecord,
 } from "../../src/lib/conversation.js";
