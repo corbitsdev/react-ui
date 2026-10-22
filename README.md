@@ -189,6 +189,7 @@ Everything imports from `@corbits/react-ui`, except rows marked "optional peer",
 | `ConversationThread`       | A reply thread headed by its parent message                                                                         |
 | `Message`                  | One message, built from `MessageAvatar`, `MessageHeader`, `MessageContent`, `MessageSendStatus` and `MessageFooter` |
 | `MessageFold`              | Folds a very long answer to its opening                                                                             |
+| `MessageParts`             | A message's parts as their components, any kind replaceable; keeps focus when a decided call folds                  |
 | `MessageActions`           | Row of actions under a message: `MessageAction`, `MessageActionMenu`                                                |
 | `MessageReactions`         | Emoji reactions with counts                                                                                         |
 | `MessageReplies`           | Reply count and time that opens the thread                                                                          |
