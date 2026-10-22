@@ -139,6 +139,8 @@ export function PromptInput({
         data-disabled={disabled ? "" : undefined}
         className={cn(
           "relative flex items-end gap-2 rounded-lg border border-input bg-background p-1.5",
+          // A `PromptInputToolbar` placed last takes a row of its own.
+          "has-[>[data-slot=prompt-input-toolbar]]:flex-wrap",
           // The textarea gives up its own outline for one round the box.
           "has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-2 has-[textarea:focus-visible]:outline-ring",
           className,
