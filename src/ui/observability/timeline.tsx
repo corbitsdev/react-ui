@@ -33,7 +33,7 @@ const KIND_MARK: Record<SpanKind, string> = {
   error: "bg-destructive",
   event: "bg-foreground/40",
   step: "bg-foreground/50",
-  gate: "bg-primary",
+  gate: "bg-foreground",
   mail: "bg-chart-2",
   provision: "bg-chart-4",
   fork: "bg-chart-1",

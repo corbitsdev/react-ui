@@ -279,7 +279,7 @@ export function TraceView({
       </header>
       {trace.brief === undefined ? null : <AgentBriefPanel brief={trace.brief} wording={wording} />}
 
-      <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-4 py-2">
         <ChipRow
           label="Audience"
           value={audience}
@@ -325,10 +325,8 @@ export function TraceView({
               aria-pressed={on}
               onClick={() => setFocus({ ...focus, [key]: !on })}
               className={cn(
-                "rounded-md border px-2 py-1 text-xs",
-                on
-                  ? "border-border bg-muted font-medium text-foreground"
-                  : "border-transparent text-muted-foreground hover:bg-muted/70",
+                "rounded-full px-2 py-1 text-xs",
+                on ? "font-medium text-foreground" : "text-muted-foreground line-through decoration-border hover:text-foreground hover:no-underline",
               )}
             >
               {FOCUS_LABEL[wording][key]}
@@ -365,10 +363,8 @@ export function TraceView({
                 aria-pressed={on}
                 onClick={() => setLayers({ ...layers, [key]: !on })}
                 className={cn(
-                  "rounded-md border px-2 py-1 text-xs",
-                  on
-                    ? "border-border bg-muted font-medium text-foreground"
-                    : "border-transparent text-muted-foreground hover:bg-muted/70",
+                  "rounded-full px-2 py-1 text-xs",
+                  on ? "font-medium text-foreground" : "text-muted-foreground line-through decoration-border hover:text-foreground hover:no-underline",
                 )}
               >
                 {layerLabel(key, wording)}
@@ -562,24 +558,29 @@ function ChipRow<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-1" role="group" aria-label={label}>
+    <div
+      className="flex flex-wrap items-center gap-1 border-l border-border pl-3 first:border-l-0 first:pl-0"
+      role="group"
+      aria-label={label}
+    >
       <span className="mr-1 text-xs text-muted-foreground">{label}</span>
-      {options.map(([id, text]) => (
-        <button
-          key={id}
-          type="button"
-          aria-pressed={value === id}
-          onClick={() => onChange(id)}
-          className={cn(
-            "rounded-md border px-2 py-1 text-xs",
-            value === id
-              ? "border-border bg-muted font-medium text-foreground"
-              : "border-transparent text-muted-foreground hover:bg-muted/70",
-          )}
-        >
-          {text}
-        </button>
-      ))}
+      {options.map(([id, text]) => {
+        const on = value === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onChange(id)}
+            className={cn(
+              "rounded-full px-2.5 py-1 text-xs",
+              on ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {text}
+          </button>
+        );
+      })}
     </div>
   );
 }

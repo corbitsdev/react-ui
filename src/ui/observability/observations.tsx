@@ -63,10 +63,10 @@ export function Observations({ traces, onOpen, wording = "plain" }: Observations
                 aria-pressed={on}
                 onClick={() => setFocus({ ...focus, [key]: !on })}
                 className={cn(
-                  "rounded-md border px-2 py-1 text-xs",
+                  "rounded-full px-2 py-1 text-xs",
                   on
-                    ? "border-border bg-muted font-medium text-foreground"
-                    : "border-transparent text-muted-foreground hover:bg-muted/70",
+                    ? "font-medium text-foreground"
+                    : "text-muted-foreground line-through decoration-border hover:text-foreground hover:no-underline",
                 )}
               >
                 {FOCUS_LABEL[wording][key]}
