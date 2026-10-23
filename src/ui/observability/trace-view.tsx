@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { useControllableState } from "../../hooks/use-controllable-state.js";
+import { seriesColor } from "../../lib/chart-palette.js";
 import { cn } from "../../lib/utils.js";
 import { Badge } from "../badge.js";
 import { InspectorHeader, InspectorKv, InspectorShell } from "../inspector-shell.js";
@@ -435,12 +436,16 @@ export function TraceView({
                 </button>
                 <div className="relative" title={formatDuration(span.durationMs)} aria-hidden="true">
                   <div
-                    className="absolute inset-y-2 overflow-hidden rounded-sm bg-foreground/25"
+                    className="absolute inset-y-2 overflow-hidden rounded-sm"
                     style={barBox(span, end)}
                   >
                     <div
-                      className={cn("h-full", barClass(span))}
-                      style={{ width: `${played * 100}%` }}
+                      className="absolute inset-0 opacity-30"
+                      style={{ backgroundColor: barColor(span) }}
+                    />
+                    <div
+                      className="absolute inset-y-0 left-0"
+                      style={{ width: `${played * 100}%`, backgroundColor: barColor(span) }}
                     />
                   </div>
                   <span
@@ -520,17 +525,21 @@ function barBox(span: Span, end: number): { left: string; width: string } {
   };
 }
 
-function barClass(span: Span): string {
-  if (span.status === "error" || span.status === "denied") return "bg-destructive";
-  if (span.status === "waiting" || span.status === "running") return "bg-primary";
-  if (span.kind === "network") return "bg-chart-1";
-  if (span.kind === "mail" || span.kind === "attachment") return "bg-chart-2";
-  if (span.kind === "provision" || span.kind === "reactor") return "bg-chart-4";
-  if (span.kind === "reasoning") return "bg-foreground/40";
-  if (span.kind === "compact") return "bg-chart-3";
-  if (span.kind === "transform") return "bg-chart-4";
-  if (span.kind === "nudge") return "bg-foreground/60";
-  return "bg-foreground/75";
+function ink(amount: number): string {
+  return `color-mix(in oklab, var(--foreground) ${amount}%, transparent)`;
+}
+
+function barColor(span: Span): string {
+  if (span.status === "error" || span.status === "denied") return "var(--destructive)";
+  if (span.status === "waiting" || span.status === "running") return "var(--primary)";
+  if (span.kind === "network") return seriesColor(0);
+  if (span.kind === "mail" || span.kind === "attachment") return seriesColor(1);
+  if (span.kind === "provision" || span.kind === "reactor") return seriesColor(3);
+  if (span.kind === "reasoning") return ink(40);
+  if (span.kind === "compact") return seriesColor(2);
+  if (span.kind === "transform") return seriesColor(3);
+  if (span.kind === "nudge") return ink(60);
+  return ink(75);
 }
 
 function usageTotal(usage: UsageBreakdown): number {

@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "../../lib/utils.js";
+import { seriesColor } from "../../lib/chart-palette.js";
 import { StatGrid, StatGridItem } from "../stat-grid.js";
 import {
   Table,
@@ -394,11 +394,11 @@ const USAGE_PARTS = [
 ] as const;
 
 const USAGE_BAR = {
-  input: "bg-chart-1",
-  output: "bg-chart-2",
-  cacheRead: "bg-chart-4",
-  cacheWrite: "bg-chart-3",
-  thinking: "bg-foreground/55",
+  input: seriesColor(0),
+  output: seriesColor(1),
+  cacheRead: seriesColor(3),
+  cacheWrite: seriesColor(2),
+  thinking: "color-mix(in oklab, var(--foreground) 55%, transparent)",
 } as const;
 
 export function UsageMix({ usage }: { readonly usage: UsageBreakdown }) {
@@ -424,8 +424,8 @@ export function UsageMix({ usage }: { readonly usage: UsageBreakdown }) {
               <span className="text-xs">{label}</span>
               <span className="h-2.5 rounded-sm bg-muted">
                 <span
-                  className={cn("block h-full rounded-sm", USAGE_BAR[key])}
-                  style={{ width: `${(value / max) * 100}%` }}
+                  className="block h-full rounded-sm"
+                  style={{ width: `${(value / max) * 100}%`, backgroundColor: USAGE_BAR[key] }}
                 />
               </span>
               <span className="text-right font-mono text-xs">{value === 0 ? "—" : formatTokens(value)}</span>

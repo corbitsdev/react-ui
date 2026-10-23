@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { usePrefersReducedMotion } from "../../hooks/use-prefers-reduced-motion.js";
+import { seriesColor } from "../../lib/chart-palette.js";
 import { cn } from "../../lib/utils.js";
 import { Button } from "../button.js";
 import { formatClock } from "./format.js";
@@ -21,26 +22,44 @@ export type TraceTimelineProps = {
   readonly className?: string;
 };
 
+function ink(amount: number): string {
+  return `color-mix(in oklab, var(--foreground) ${amount}%, transparent)`;
+}
+
+function seekAt(
+  node: HTMLDivElement,
+  clientX: number,
+  end: number,
+  onTimeChange: (timeMs: number) => void,
+  onPlayingChange: (playing: boolean) => void,
+): void {
+  const rect = node.getBoundingClientRect();
+  if (rect.width <= 0) return;
+  const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+  onPlayingChange(false);
+  onTimeChange(Math.round(ratio * end));
+}
+
 const KIND_MARK: Record<SpanKind, string> = {
-  turn: "bg-foreground/70",
-  reasoning: "bg-foreground/40",
-  tool: "bg-foreground/80",
-  permission: "bg-destructive",
-  subagent: "bg-foreground/70",
-  compact: "bg-chart-3",
-  transform: "bg-chart-4",
-  nudge: "bg-foreground/60",
-  error: "bg-destructive",
-  event: "bg-foreground/40",
-  step: "bg-foreground/50",
-  gate: "bg-foreground",
-  mail: "bg-chart-2",
-  provision: "bg-chart-4",
-  fork: "bg-chart-1",
-  reactor: "bg-chart-3",
-  network: "bg-chart-1",
-  attachment: "bg-chart-2",
-  citation: "bg-foreground/40",
+  turn: ink(70),
+  reasoning: ink(40),
+  tool: ink(80),
+  permission: "var(--destructive)",
+  subagent: ink(70),
+  compact: seriesColor(2),
+  transform: seriesColor(3),
+  nudge: ink(60),
+  error: "var(--destructive)",
+  event: ink(40),
+  step: ink(50),
+  gate: "var(--foreground)",
+  mail: seriesColor(1),
+  provision: seriesColor(3),
+  fork: seriesColor(0),
+  reactor: seriesColor(2),
+  network: seriesColor(0),
+  attachment: seriesColor(1),
+  citation: ink(40),
 };
 
 export function TraceTimeline({
@@ -127,45 +146,53 @@ export function TraceTimeline({
           <span className="text-foreground/40"> / {formatClock(end)}</span>
         </span>
       </div>
-      <label className="flex flex-col gap-1">
-        <span className="sr-only">Trace time</span>
-        <input
-          type="range"
-          min={0}
-          max={end}
-          step={1}
-          value={Math.min(timeMs, end)}
-          aria-valuetext={formatClock(timeMs)}
-          onChange={(event) => {
-            const next = Number(event.target.value);
-            if (!Number.isFinite(next)) return;
-            onPlayingChange(false);
-            onTimeChange(next);
+      <div className="rounded-sm focus-within:ring-2 focus-within:ring-ring">
+        <div
+          className="relative h-6 cursor-pointer rounded-sm bg-muted"
+          aria-hidden="true"
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            seekAt(event.currentTarget, event.clientX, end, onTimeChange, onPlayingChange);
           }}
-          className="h-2 w-full cursor-pointer"
-          style={{ accentColor: "var(--foreground)" }}
-        />
-      </label>
-      <div className="relative h-6 rounded-sm bg-muted" aria-hidden="true">
-        {spans.map((span) => (
+          onPointerMove={(event) => {
+            if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+            seekAt(event.currentTarget, event.clientX, end, onTimeChange, onPlayingChange);
+          }}
+        >
+          {spans.map((span) => (
+            <span
+              key={span.id}
+              title={stepTitle(span, wording)}
+              className={cn("absolute top-1.5 h-3 rounded-full", span.startMs > timeMs && "opacity-35")}
+              style={{
+                left: `${(span.startMs / end) * 100}%`,
+                width: `max(4px, ${(Math.max(span.durationMs, 1) / end) * 100}%)`,
+                backgroundColor: KIND_MARK[span.kind],
+              }}
+            />
+          ))}
           <span
-            key={span.id}
-            title={stepTitle(span, wording)}
-            className={cn(
-              "absolute top-1.5 h-3 rounded-full",
-              KIND_MARK[span.kind],
-              span.startMs > timeMs && "opacity-35",
-            )}
-            style={{
-              left: `${(span.startMs / end) * 100}%`,
-              width: `max(3px, ${(Math.max(span.durationMs, 1) / end) * 100}%)`,
+            className="absolute top-0 h-full w-0.5 bg-foreground"
+            style={{ left: `${(Math.min(timeMs, end) / end) * 100}%` }}
+          />
+        </div>
+        <label className="sr-only">
+          Trace time
+          <input
+            type="range"
+            min={0}
+            max={end}
+            step={1}
+            value={Math.min(timeMs, end)}
+            aria-valuetext={formatClock(timeMs)}
+            onChange={(event) => {
+              const next = Number(event.target.value);
+              if (!Number.isFinite(next)) return;
+              onPlayingChange(false);
+              onTimeChange(next);
             }}
           />
-        ))}
-        <span
-          className="absolute top-0 h-full w-0.5 bg-foreground"
-          style={{ left: `${(Math.min(timeMs, end) / end) * 100}%` }}
-        />
+        </label>
       </div>
     </div>
   );
