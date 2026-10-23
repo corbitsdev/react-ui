@@ -56,23 +56,6 @@ export function TraceHeader({ trace }: { readonly trace: Trace }) {
           <Metric label="Steps" value={String(trace.spans.length)} />
         </dl>
       </div>
-      {trace.placement === undefined ? null : (
-        <dl className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-muted-foreground">
-          <PlacementItem label="Sidecar" value={trace.placement.sidecarId} />
-          <PlacementItem label="Host" value={trace.placement.host} />
-          <PlacementItem label="Region" value={trace.placement.region} />
-          <PlacementItem label="Size" value={trace.placement.size} />
-          <PlacementItem
-            label="Package"
-            value={`${trace.placement.packageName}@${trace.placement.packageVersion}`}
-          />
-          <PlacementItem
-            label="Generation"
-            value={String(trace.placement.generation)}
-          />
-          <PlacementItem label="Status" value={trace.placement.status} />
-        </dl>
-      )}
     </header>
   );
 }
@@ -104,15 +87,6 @@ function Metric({ label, value }: { label: string; value: string }) {
     <div>
       <dt className="text-[10px] text-muted-foreground">{label}</dt>
       <dd className="font-mono text-sm font-medium">{value}</dd>
-    </div>
-  );
-}
-
-function PlacementItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex gap-1 after:mx-1 after:text-muted-foreground after:content-['·'] last:after:content-none">
-      <dt>{label}</dt>
-      <dd className="text-foreground">{value}</dd>
     </div>
   );
 }

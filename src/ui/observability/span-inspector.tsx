@@ -203,7 +203,7 @@ function NudgeBlock({ nudge }: { nudge: DirectorNudge }) {
   );
 }
 
-function CompactionBlock({ compaction }: { compaction: Compaction }) {
+export function CompactionBlock({ compaction }: { compaction: Compaction }) {
   return (
     <section className="flex flex-col gap-2">
       <div>
@@ -253,7 +253,7 @@ function CompactionBlock({ compaction }: { compaction: Compaction }) {
   );
 }
 
-function ContextBlock({ change }: { change: ContextChange }) {
+export function ContextBlock({ change }: { change: ContextChange }) {
   return (
     <section className="flex flex-col gap-1">
       <h3 className="text-xs font-medium">Context transform</h3>
@@ -265,7 +265,7 @@ function ContextBlock({ change }: { change: ContextChange }) {
   );
 }
 
-function ThoughtBlock({
+export function ThoughtBlock({
   span,
   timeMs,
   playing,
@@ -300,7 +300,7 @@ function ThoughtBlock({
   );
 }
 
-function GrantBlock({ grant }: { grant: GrantUse }) {
+export function GrantBlock({ grant }: { grant: GrantUse }) {
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
@@ -375,7 +375,7 @@ function SignatureBadge({ status }: { status: SignatureStatus }) {
   return <Badge tone={tone}>{status}</Badge>;
 }
 
-function TextBlock({ label, text }: { label: string; text: string }) {
+export function TextBlock({ label, text }: { label: string; text: string }) {
   return (
     <section className="flex flex-col gap-1">
       <h3 className="text-xs font-medium">{label}</h3>
@@ -412,7 +412,7 @@ function MediaBlock({ items }: { items: readonly MediaItem[] }) {
   );
 }
 
-function NetworkBlock({ hops }: { hops: readonly NetworkHop[] }) {
+export function NetworkBlock({ hops }: { hops: readonly NetworkHop[] }) {
   return (
     <section className="flex flex-col gap-2">
       <h3 className="text-xs font-medium">Network</h3>

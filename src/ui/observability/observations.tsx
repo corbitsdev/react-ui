@@ -30,7 +30,7 @@ export function Observations({ traces, onOpen }: ObservationsProps) {
     <section className="flex flex-col gap-3 p-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">Observations</h1>
+          <h1 className="text-xl font-semibold">Steps</h1>
           <p className="text-sm text-muted-foreground">
             Every step, across runs.
           </p>
@@ -55,7 +55,7 @@ export function Observations({ traces, onOpen }: ObservationsProps) {
         <table className="w-full border-collapse text-left text-sm">
           <thead className="text-xs text-muted-foreground">
             <tr className="border-b border-border">
-              <th className="px-2 py-2 font-medium">Trace</th>
+              <th className="px-2 py-2 font-medium">Run</th>
               <th className="px-2 py-2 font-medium">Type</th>
               <th className="px-2 py-2 font-medium">Name</th>
               <th className="px-2 py-2 font-medium">Model</th>

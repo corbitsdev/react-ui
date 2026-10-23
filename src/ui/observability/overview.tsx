@@ -46,7 +46,7 @@ export function WeekOverview({
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">This week</h1>
         <Button variant="outline" onClick={() => onOpen()}>
-          Open sessions
+          Open runs
         </Button>
       </div>
       <StatGrid>

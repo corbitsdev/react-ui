@@ -13,20 +13,16 @@ import {
   DialogTitle,
 } from "../../ui/dialog.js";
 import { EmptyState } from "../../ui/empty-state.js";
-import { FilterBar } from "../../ui/filter-bar.js";
 import { Input } from "../../ui/input.js";
 import type {
   SeriesPoint,
   SessionSummary,
   Trace,
 } from "../../ui/observability/model.js";
+import { RunList } from "../../ui/observability/elements.js";
 import { Observations } from "../../ui/observability/observations.js";
 import { WeekOverview } from "../../ui/observability/overview.js";
-import { SessionTable } from "../../ui/observability/session-table.js";
-import {
-  AgentTrace,
-  WorkflowTrace,
-} from "../../ui/observability/trace-view.js";
+import { AuditRun } from "./audit-run.js";
 
 export type ObservabilityAppProps = {
   readonly sessions: readonly SessionSummary[];
@@ -35,7 +31,7 @@ export type ObservabilityAppProps = {
   readonly failures?: readonly SeriesPoint[];
 };
 
-type Screen = "overview" | "sessions" | "observations" | "trace";
+type Screen = "week" | "runs" | "steps" | "run";
 
 export function ObservabilityApp({
   sessions,
@@ -43,8 +39,7 @@ export function ObservabilityApp({
   series,
   failures,
 }: ObservabilityAppProps) {
-  const [screen, setScreen] = useState<Screen>("overview");
-  const [kind, setKind] = useState<string | null>(null);
+  const [screen, setScreen] = useState<Screen>("week");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [focusSpan, setFocusSpan] = useState<string | undefined>(undefined);
@@ -54,13 +49,12 @@ export function ObservabilityApp({
   const visible = useMemo(
     () =>
       sessions.filter((session) => {
-        if (kind !== null && session.kind !== kind) return false;
         if (query.length === 0) return true;
         const haystack =
           `${session.name} ${session.actor} ${session.model}`.toLowerCase();
         return haystack.includes(query.toLowerCase());
       }),
-    [sessions, kind, query],
+    [sessions, query],
   );
 
   const trace = openId === null ? undefined : traces[openId];
@@ -68,7 +62,7 @@ export function ObservabilityApp({
   function openTrace(id: string, spanId?: string) {
     setOpenId(id);
     setFocusSpan(spanId);
-    setScreen("trace");
+    setScreen("run");
   }
 
   return (
@@ -76,22 +70,22 @@ export function ObservabilityApp({
       <nav className="flex w-52 shrink-0 flex-col gap-1 border-r border-border bg-card p-3">
         <p className="px-2 pb-2 text-sm font-semibold">Observe</p>
         <NavButton
-          current={screen === "overview"}
-          onClick={() => setScreen("overview")}
+          current={screen === "week"}
+          onClick={() => setScreen("week")}
         >
-          Overview
+          Week
         </NavButton>
         <NavButton
-          current={screen === "sessions"}
-          onClick={() => setScreen("sessions")}
+          current={screen === "runs"}
+          onClick={() => setScreen("runs")}
         >
-          Sessions
+          Runs
         </NavButton>
         <NavButton
-          current={screen === "observations"}
-          onClick={() => setScreen("observations")}
+          current={screen === "steps"}
+          onClick={() => setScreen("steps")}
         >
-          Observations
+          Steps
         </NavButton>
         <div className="mt-auto border-t border-border pt-3">
           <Button className="w-full" onClick={() => setAdding(true)}>
@@ -100,67 +94,54 @@ export function ObservabilityApp({
         </div>
       </nav>
       <main className="min-w-0 flex-1 overflow-auto">
-        {screen === "overview" ? (
+        {screen === "week" ? (
           <WeekOverview
             series={series}
             {...(failures === undefined ? {} : { failures })}
             sessions={sessions}
             traces={Object.values(traces)}
-            onOpen={() => setScreen("sessions")}
+            onOpen={() => setScreen("runs")}
           />
         ) : null}
-        {screen === "sessions" ? (
+        {screen === "runs" ? (
           <section className="flex flex-col gap-3 p-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
-              <h1 className="text-xl font-semibold">Sessions</h1>
+              <h1 className="text-xl font-semibold">Runs</h1>
               <Input
-                aria-label="Search sessions"
+                aria-label="Search runs"
                 placeholder="Search name, actor, or model"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 className="max-w-xs"
               />
             </div>
-            <FilterBar
-              filters={[
-                {
-                  id: "kind",
-                  label: "Kind",
-                  anyLabel: "All kinds",
-                  value: kind,
-                  options: [
-                    { value: "agent", label: "Agent" },
-                    { value: "workflow", label: "Workflow" },
-                  ],
-                },
-              ]}
-              onChange={(_id, value) => setKind(value)}
-            />
             {visible.length === 0 ? (
               <EmptyState
-                title="No sessions match"
-                description="Clear the filter or the search."
+                title="No runs match"
+                description="Clear the search."
               />
             ) : (
-              <SessionTable
-                sessions={visible}
-                {...(openId === null ? {} : { selectedId: openId })}
-                onSelect={(id) => openTrace(id)}
+              <RunList
+                traces={visible.flatMap((session) => {
+                  const run = traces[session.id];
+                  return run === undefined ? [] : [run];
+                })}
+                onOpen={(id) => openTrace(id)}
               />
             )}
           </section>
         ) : null}
-        {screen === "observations" ? (
+        {screen === "steps" ? (
           <Observations
             traces={Object.values(traces)}
             onOpen={(traceId, spanId) => openTrace(traceId, spanId)}
           />
         ) : null}
-        {screen === "trace" ? (
+        {screen === "run" ? (
           trace === undefined ? (
             <EmptyState
-              title="No session open"
-              description="Choose one from Sessions."
+              title="No run open"
+              description="Choose one from Runs."
             />
           ) : (
             <div className="flex h-full min-h-0 flex-col">
@@ -168,30 +149,16 @@ export function ObservabilityApp({
                 <button
                   type="button"
                   className="text-xs text-muted-foreground"
-                  onClick={() => setScreen("sessions")}
+                  onClick={() => setScreen("runs")}
                 >
-                  Sessions
+                  Runs
                 </button>
               </div>
-              {trace.kind === "workflow" ? (
-                <WorkflowTrace
-                  key={`${trace.id}:${focusSpan ?? ""}`}
-                  trace={trace}
-                  {...(focusSpan === undefined
-                    ? {}
-                    : { defaultSelectedId: focusSpan })}
-                  className="min-h-0 flex-1"
-                />
-              ) : (
-                <AgentTrace
-                  key={`${trace.id}:${focusSpan ?? ""}`}
-                  trace={trace}
-                  {...(focusSpan === undefined
-                    ? {}
-                    : { defaultSelectedId: focusSpan })}
-                  className="min-h-0 flex-1"
-                />
-              )}
+              <AuditRun
+                key={`${trace.id}:${focusSpan ?? ""}`}
+                trace={trace}
+                {...(focusSpan === undefined ? {} : { focusSpan })}
+              />
             </div>
           )
         ) : null}

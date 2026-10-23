@@ -1,5 +1,7 @@
 "use client";
 
+import { type ReactNode } from "react";
+
 import { seriesColor } from "../../lib/chart-palette.js";
 import { cn } from "../../lib/utils.js";
 import { formatDuration } from "./format.js";
@@ -11,17 +13,17 @@ import { rowMarker, stepTitle } from "./wording.js";
 export function TraceSteps({
   placed,
   end,
-  timeMs,
   selectedId,
   onSeek,
   rowRef,
+  renderTrailing,
 }: {
   readonly placed: readonly PlacedSpan[];
   readonly end: number;
-  readonly timeMs: number;
   readonly selectedId: string;
   readonly onSeek: (id: string, startMs: number) => void;
   readonly rowRef?: (id: string, node: HTMLButtonElement | null) => void;
+  readonly renderTrailing?: (span: Span) => ReactNode;
 }) {
   const index = placed.findIndex((row) => row.span.id === selectedId);
   function move(delta: number) {
@@ -46,24 +48,43 @@ export function TraceSteps({
         }
       }}
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_16rem] border-b border-border px-2 py-1 font-mono text-[11px] text-muted-foreground">
+      <div
+        className={cn(
+          "grid border-b border-border px-2 py-1 font-mono text-[11px] text-muted-foreground",
+          renderTrailing === undefined
+            ? "grid-cols-1"
+            : "grid-cols-[minmax(0,1fr)_16rem]",
+        )}
+      >
         <span>Step</span>
-        <span className="flex justify-between">
-          <span>0</span>
-          <span>{formatDuration(end)}</span>
-        </span>
+        {renderTrailing === undefined ? null : (
+          <span className="flex justify-between">
+            <span>0</span>
+            <span>{formatDuration(end)}</span>
+          </span>
+        )}
       </div>
       {placed.map(({ span, depth }) => (
-        <Step
+        <div
           key={span.id}
-          span={span}
-          depth={depth}
-          end={end}
-          timeMs={timeMs}
-          selected={span.id === selectedId}
-          onSelect={() => onSeek(span.id, span.startMs)}
-          buttonRef={(node) => rowRef?.(span.id, node)}
-        />
+          className={cn(
+            "grid border-b border-border",
+            renderTrailing === undefined
+              ? "grid-cols-1"
+              : "grid-cols-[minmax(0,1fr)_16rem]",
+            span.id === selectedId &&
+              "bg-muted/70 shadow-[inset_2px_0_0_var(--foreground)]",
+          )}
+        >
+          <Step
+            span={span}
+            depth={depth}
+            selected={span.id === selectedId}
+            onSelect={() => onSeek(span.id, span.startMs)}
+            buttonRef={(node) => rowRef?.(span.id, node)}
+          />
+          {renderTrailing === undefined ? null : renderTrailing(span)}
+        </div>
       ))}
     </div>
   );
@@ -71,70 +92,72 @@ export function TraceSteps({
 
 export function Step({
   span,
-  depth,
-  end,
-  timeMs,
-  selected,
+  depth = 0,
+  selected = false,
   onSelect,
   buttonRef,
 }: {
   readonly span: Span;
-  readonly depth: number;
+  readonly depth?: number;
+  readonly selected?: boolean;
+  readonly onSelect?: () => void;
+  readonly buttonRef?: (node: HTMLButtonElement | null) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="option"
+      id={span.id}
+      aria-selected={selected}
+      ref={buttonRef}
+      className="flex min-w-0 items-center gap-2 py-1.5 text-left"
+      style={{ paddingLeft: 8 + depth * 14 }}
+      {...(onSelect === undefined ? {} : { onClick: onSelect })}
+    >
+      <span className="w-28 shrink-0 truncate text-xs text-muted-foreground">
+        {rowMarker(span)}
+      </span>
+      <span className="truncate text-sm">{stepTitle(span)}</span>
+    </button>
+  );
+}
+
+export function Timing({
+  span,
+  end,
+  timeMs,
+}: {
+  readonly span: Span;
   readonly end: number;
   readonly timeMs: number;
-  readonly selected: boolean;
-  readonly onSelect: () => void;
-  readonly buttonRef?: (node: HTMLButtonElement | null) => void;
 }) {
   const played = playedRatio(span, timeMs);
   return (
     <div
-      className={cn(
-        "grid grid-cols-[minmax(0,1fr)_16rem] border-b border-border",
-        selected && "bg-muted/70 shadow-[inset_2px_0_0_var(--foreground)]",
-      )}
+      className="relative"
+      title={formatDuration(span.durationMs)}
+      aria-hidden="true"
     >
-      <button
-        type="button"
-        role="option"
-        id={span.id}
-        aria-selected={selected}
-        ref={buttonRef}
-        className="flex min-w-0 items-center gap-2 py-1.5 text-left"
-        style={{ paddingLeft: 8 + depth * 14 }}
-        onClick={onSelect}
-      >
-        <span className="w-28 shrink-0 truncate text-xs text-muted-foreground">
-          {rowMarker(span)}
-        </span>
-        <span className="truncate text-sm">{stepTitle(span)}</span>
-      </button>
       <div
-        className="relative"
-        title={formatDuration(span.durationMs)}
-        aria-hidden="true"
+        className="absolute inset-y-2 overflow-hidden rounded-sm"
+        style={barBox(span, end)}
       >
         <div
-          className="absolute inset-y-2 overflow-hidden rounded-sm"
-          style={barBox(span, end)}
-        >
-          <div
-            className="absolute inset-0 opacity-30"
-            style={{ backgroundColor: barColor(span) }}
-          />
-          <div
-            className="absolute inset-y-0 left-0"
-            style={{
-              width: `${played * 100}%`,
-              backgroundColor: barColor(span),
-            }}
-          />
-        </div>
-        <span
-          className="absolute inset-y-0 w-px bg-foreground"
-          style={{ left: `${(Math.min(timeMs, end) / end) * 100}%` }}
+          className="absolute inset-0 opacity-30"
+          style={{ backgroundColor: barColor(span) }}
+        />
+        <div
+          className="absolute inset-y-0 left-0"
+          style={{
+            width: `${played * 100}%`,
+            backgroundColor: barColor(span),
+          }}
         />
       </div>
+      <span
+        className="absolute inset-y-0 w-px bg-foreground"
+        style={{ left: `${(Math.min(timeMs, end) / end) * 100}%` }}
+      />
     </div>
   );
 }
