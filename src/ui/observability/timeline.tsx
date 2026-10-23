@@ -9,14 +9,13 @@ import { Button } from "../button.js";
 import { formatClock } from "./format.js";
 import type { Span, SpanKind } from "./model.js";
 import { nextBoundary, previousBoundary, SCAN_MS } from "./playback.js";
-import { stepTitle, type Wording } from "./wording.js";
+import { stepTitle } from "./wording.js";
 
 export type TraceTimelineProps = {
   readonly spans: readonly Span[];
   readonly endMs: number;
   readonly timeMs: number;
   readonly playing: boolean;
-  readonly wording: Wording;
   readonly onTimeChange: (timeMs: number) => void;
   readonly onPlayingChange: (playing: boolean) => void;
   readonly className?: string;
@@ -67,7 +66,6 @@ export function TraceTimeline({
   endMs,
   timeMs,
   playing,
-  wording,
   onTimeChange,
   onPlayingChange,
   className,
@@ -162,7 +160,7 @@ export function TraceTimeline({
           {spans.map((span) => (
             <span
               key={span.id}
-              title={stepTitle(span, wording)}
+              title={stepTitle(span)}
               className={cn("absolute top-1.5 h-3 rounded-full", span.startMs > timeMs && "opacity-35")}
               style={{
                 left: `${(span.startMs / end) * 100}%`,

@@ -69,7 +69,7 @@ export type ObservationRow = {
   readonly traceId: string;
   readonly traceName: string;
   readonly spanId: string;
-  readonly type: Span["kind"];
+  readonly type: string;
   readonly name: string;
   readonly model: string;
   readonly level: "Default" | "Warning" | "Error" | "Debug";
@@ -263,7 +263,7 @@ export function observationRows(traces: readonly Trace[]): readonly ObservationR
         traceId: trace.id,
         traceName: trace.name,
         spanId: span.id,
-        type: span.kind,
+        type: span.type ?? span.kind,
         name: span.name,
         model: span.usage?.model ?? "—",
         level: levelOf(span.status),

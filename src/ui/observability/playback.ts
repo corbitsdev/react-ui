@@ -1,6 +1,5 @@
 import type { Span, TraceLayers } from "./model.js";
 import { placeSpans } from "./tree.js";
-import { focusKeeps, type TraceFocus } from "./wording.js";
 
 /** How long a full play-through takes on screen, whatever the trace length. */
 export const SCAN_MS = 16_000;
@@ -16,10 +15,8 @@ export function contains(span: Span, timeMs: number): boolean {
 export function visibleSpans(
   spans: readonly Span[],
   layers: TraceLayers,
-  focus?: TraceFocus,
 ): readonly Span[] {
   return spans.filter((span) => {
-    if (focus !== undefined && !focusKeeps(span, focus)) return false;
     if (span.kind === "reasoning" && !layers.reasoning) return false;
     if (span.kind === "network" && !layers.network) return false;
     if (span.kind === "attachment" && !layers.media) return false;

@@ -27,9 +27,7 @@ import { Observations } from "../../ui/observability/observations.js";
 import { UsageMix } from "../../ui/observability/slots.js";
 import { SessionTable } from "../../ui/observability/session-table.js";
 import { AgentTrace, WorkflowTrace } from "../../ui/observability/trace-view.js";
-import type { Wording } from "../../ui/observability/wording.js";
 import { StatGrid, StatGridItem } from "../../ui/stat-grid.js";
-import { cn } from "../../lib/utils.js";
 
 export type ObservabilityAppProps = {
   readonly sessions: readonly SessionSummary[];
@@ -53,7 +51,6 @@ export function ObservabilityApp({
   const [focusSpan, setFocusSpan] = useState<string | undefined>(undefined);
   const [adding, setAdding] = useState(false);
   const [token, setToken] = useState<string | null>(null);
-  const [wording, setWording] = useState<Wording>("plain");
 
   const visible = useMemo(
     () =>
@@ -87,33 +84,7 @@ export function ObservabilityApp({
         <NavButton current={screen === "observations"} onClick={() => setScreen("observations")}>
           Observations
         </NavButton>
-        <div className="mt-auto flex flex-col gap-3 border-t border-border pt-3">
-          <div className="flex flex-col gap-1" role="group" aria-label="Words">
-            <span className="px-2 text-xs text-muted-foreground">Words</span>
-            <div className="flex gap-1 px-1">
-              {(
-                [
-                  ["plain", "Plain"],
-                  ["precise", "Precise"],
-                ] as const
-              ).map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={wording === id}
-                  onClick={() => setWording(id)}
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-xs",
-                    wording === id
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="mt-auto border-t border-border pt-3">
           <Button className="w-full" onClick={() => setAdding(true)}>
             Add agent
           </Button>
@@ -170,7 +141,6 @@ export function ObservabilityApp({
         {screen === "observations" ? (
           <Observations
             traces={Object.values(traces)}
-            wording={wording}
             onOpen={(traceId, spanId) => openTrace(traceId, spanId)}
           />
         ) : null}
@@ -192,10 +162,6 @@ export function ObservabilityApp({
                 <WorkflowTrace
                   key={`${trace.id}:${focusSpan ?? ""}`}
                   trace={trace}
-                  peers={Object.values(traces)}
-                  onOpen={openTrace}
-                  wording={wording}
-                  onWordingChange={setWording}
                   {...(focusSpan === undefined ? {} : { defaultSelectedId: focusSpan })}
                   className="min-h-0 flex-1"
                 />
@@ -203,10 +169,6 @@ export function ObservabilityApp({
                 <AgentTrace
                   key={`${trace.id}:${focusSpan ?? ""}`}
                   trace={trace}
-                  peers={Object.values(traces)}
-                  onOpen={openTrace}
-                  wording={wording}
-                  onWordingChange={setWording}
                   {...(focusSpan === undefined ? {} : { defaultSelectedId: focusSpan })}
                   className="min-h-0 flex-1"
                 />

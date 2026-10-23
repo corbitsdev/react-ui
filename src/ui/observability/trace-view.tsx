@@ -17,10 +17,8 @@ import {
   spanTokens,
 } from "./format.js";
 import {
-  AUDIENCE_REPRESENTATION,
   DEFAULT_LAYERS,
   type AgentBrief,
-  type Audience,
   type Compaction,
   type ContextChange,
   type DirectorNudge,
@@ -32,10 +30,9 @@ import {
   type SpanStatus,
   type Trace,
   type TraceLayers,
-  type TraceRepresentation,
 } from "./model.js";
 import { usageOfSpan, type UsageBreakdown } from "./metrics.js";
-import { AudienceBand, CostPicture, Ledger, Shape, UsageMix } from "./slots.js";
+import { UsageMix } from "./slots.js";
 import {
   deepestAt,
   grantAt,
@@ -45,21 +42,7 @@ import {
 } from "./playback.js";
 import { TraceTimeline } from "./timeline.js";
 import { placeSpans, traceEnd } from "./tree.js";
-import {
-  DEFAULT_FOCUS,
-  effectLabel,
-  FOCUS_KEYS,
-  FOCUS_LABEL,
-  compactionLine,
-  kindLabel,
-  originLabel,
-  phrase,
-  placementStatus,
-  rowMarker,
-  stepTitle,
-  type TraceFocus,
-  type Wording,
-} from "./wording.js";
+import { compactionLine, rowMarker, stepTitle } from "./wording.js";
 
 export type TraceViewProps = {
   readonly trace: Trace;
@@ -73,16 +56,6 @@ export type TraceViewProps = {
   readonly defaultPlaying?: boolean;
   readonly onPlayingChange?: (playing: boolean) => void;
   readonly layers?: TraceLayers;
-  readonly onLayersChange?: (layers: TraceLayers) => void;
-  readonly audience?: Audience;
-  readonly defaultAudience?: Audience;
-  readonly onAudienceChange?: (audience: Audience) => void;
-  readonly representation?: TraceRepresentation;
-  readonly onRepresentationChange?: (representation: TraceRepresentation) => void;
-  readonly peers?: readonly Trace[];
-  readonly onOpen?: (id: string) => void;
-  readonly wording?: Wording;
-  readonly onWordingChange?: (wording: Wording) => void;
   readonly className?: string;
 };
 
@@ -101,25 +74,6 @@ const STATUS_TONE = {
   waiting: "warning",
   denied: "danger",
 } as const;
-
-const LAYERS = ["reasoning", "grants", "io", "media", "network", "raw"] as const;
-
-function layerLabel(key: (typeof LAYERS)[number], wording: Wording): string {
-  if (wording === "precise") {
-    if (key === "reasoning") return "Thought";
-    if (key === "grants") return "Grants";
-    if (key === "io") return "Input / output";
-    if (key === "media") return "Media";
-    if (key === "network") return "Network";
-    return "Raw";
-  }
-  if (key === "reasoning") return "Thinking";
-  if (key === "grants") return "Rules";
-  if (key === "io") return "In and out";
-  if (key === "media") return "Files";
-  if (key === "network") return "Internet";
-  return "Raw record";
-}
 
 export function AgentTrace(props: TraceViewProps) {
   return <TraceView {...props} />;
@@ -141,16 +95,6 @@ export function TraceView({
   defaultPlaying = false,
   onPlayingChange,
   layers: layersProp,
-  onLayersChange,
-  audience: audienceProp,
-  defaultAudience = "operator",
-  onAudienceChange,
-  representation: representationProp,
-  onRepresentationChange,
-  peers,
-  onOpen,
-  wording: wordingProp,
-  onWordingChange,
   className,
 }: TraceViewProps) {
   const placedAll = placeSpans(trace.spans);
@@ -172,37 +116,8 @@ export function TraceView({
     onChange: onPlayingChange,
     name: "playing",
   });
-  const [layers, setLayers] = useControllableState({
-    value: layersProp,
-    defaultValue: DEFAULT_LAYERS,
-    onChange: onLayersChange,
-    name: "layers",
-  });
-  const [audience, setAudience] = useControllableState({
-    value: audienceProp,
-    defaultValue: defaultAudience,
-    onChange: onAudienceChange,
-    name: "audience",
-  });
-  const [wording, setWording] = useControllableState({
-    value: wordingProp,
-    defaultValue: "plain" as Wording,
-    onChange: onWordingChange,
-    name: "wording",
-  });
-  const [focus, setFocus] = useControllableState<TraceFocus>({
-    value: undefined,
-    defaultValue: DEFAULT_FOCUS,
-    name: "focus",
-  });
-  const [representation, setRepresentation] = useControllableState({
-    value: representationProp,
-    defaultValue: AUDIENCE_REPRESENTATION[audienceProp ?? defaultAudience],
-    onChange: onRepresentationChange,
-    name: "representation",
-  });
-
-  const shown = visibleSpans(trace.spans, layers, focus);
+  const layers = layersProp ?? DEFAULT_LAYERS;
+  const shown = visibleSpans(trace.spans, layers);
   const placed = placeSpans(shown);
   const selected = trace.spans.find((span) => span.id === selectedId);
   const end = Math.max(trace.durationMs, traceEnd(trace.spans), 1);
@@ -212,9 +127,9 @@ export function TraceView({
 
   useEffect(() => {
     if (!playing) return;
-    const active = deepestAt(visibleSpans(trace.spans, layers, focus), timeMs);
+    const active = deepestAt(visibleSpans(trace.spans, layers), timeMs);
     if (active !== undefined && active.id !== selectedId) setSelectedId(active.id);
-  }, [playing, trace.spans, layers, focus, timeMs, selectedId, setSelectedId]);
+  }, [playing, trace.spans, layers, timeMs, selectedId, setSelectedId]);
 
   useEffect(() => {
     rowRefs.current.get(selectedId)?.scrollIntoView({ block: "nearest" });
@@ -251,134 +166,43 @@ export function TraceView({
               {trace.actor} · {trace.startedAt}
             </p>
           </div>
-          {audience === "operator" ? (
-            <dl className="flex gap-6 text-right">
-              <Metric label="Duration" value={formatDuration(trace.durationMs)} />
-              <Metric label="Tokens" value={formatTokens(tokens)} />
-              <Metric label="Cost" value={formatCost(cost)} />
-              <Metric label="Steps" value={String(trace.spans.length)} />
-            </dl>
-          ) : null}
+          <dl className="flex gap-6 text-right">
+            <Metric label="Duration" value={formatDuration(trace.durationMs)} />
+            <Metric label="Tokens" value={formatTokens(tokens)} />
+            <Metric label="Cost" value={formatCost(cost)} />
+            <Metric label="Steps" value={String(trace.spans.length)} />
+          </dl>
         </div>
         {trace.placement === undefined ? null : (
           <dl className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-muted-foreground">
-            <PlacementItem label={phrase(wording, "Sidecar", "Machine")} value={trace.placement.sidecarId} />
-            <PlacementItem label={phrase(wording, "Host", "Computer")} value={trace.placement.host} />
+            <PlacementItem label="Sidecar" value={trace.placement.sidecarId} />
+            <PlacementItem label="Host" value={trace.placement.host} />
             <PlacementItem label="Region" value={trace.placement.region} />
             <PlacementItem label="Size" value={trace.placement.size} />
             <PlacementItem
-              label={phrase(wording, "Package", "Software")}
+              label="Package"
               value={`${trace.placement.packageName}@${trace.placement.packageVersion}`}
             />
-            <PlacementItem label={phrase(wording, "Generation", "Run")} value={String(trace.placement.generation)} />
-            <PlacementItem
-              label={phrase(wording, "Allocation", "Status")}
-              value={placementStatus(trace.placement.status, wording)}
-            />
+            <PlacementItem label="Generation" value={String(trace.placement.generation)} />
+            <PlacementItem label="Status" value={trace.placement.status} />
           </dl>
         )}
       </header>
-      {trace.brief === undefined ? null : <AgentBriefPanel brief={trace.brief} wording={wording} />}
+      {trace.brief === undefined ? null : <AgentBriefPanel brief={trace.brief} />}
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-4 py-2">
-        <ChipRow
-          label="Audience"
-          value={audience}
-          options={[
-            ["operator", "Operator"],
-            ["cfo", "CFO"],
-            ["coo", "COO"],
-            ["ciso", "CISO"],
-          ] as const}
-          onChange={(next) => {
-            setAudience(next);
-            if (representationProp === undefined) setRepresentation(AUDIENCE_REPRESENTATION[next]);
-          }}
-        />
-        <ChipRow
-          label="View"
-          value={representation}
-          options={[
-            ["timeline", "Timeline"],
-            ["ledger", "Ledger"],
-            ["cost", "Cost"],
-            ["shape", "Shape"],
-          ] as const}
-          onChange={setRepresentation}
-        />
-        <ChipRow
-          label="Words"
-          value={wording}
-          options={[
-            ["plain", "Plain"],
-            ["precise", "Precise"],
-          ] as const}
-          onChange={setWording}
-        />
-      </div>
-      <div className="flex flex-wrap gap-1 border-b border-border px-4 py-2" role="group" aria-label="Show">
-        {FOCUS_KEYS.map((key) => {
-          const on = focus[key];
-          return (
-            <button
-              key={key}
-              type="button"
-              aria-pressed={on}
-              onClick={() => setFocus({ ...focus, [key]: !on })}
-              className={cn(
-                "rounded-full px-2 py-1 text-xs",
-                on ? "font-medium text-foreground" : "text-muted-foreground line-through decoration-border hover:text-foreground hover:no-underline",
-              )}
-            >
-              {FOCUS_LABEL[wording][key]}
-            </button>
-          );
-        })}
-      </div>
-      <AudienceBand
-        audience={audience}
-        trace={trace}
-        peers={peers ?? []}
-        wording={wording}
-        {...(onOpen === undefined ? {} : { onOpen })}
-      />
-
-      {representation === "timeline" ? (
       <div className="flex flex-col gap-2 border-b border-border px-4 py-3">
         <TraceTimeline
           spans={shown}
           endMs={end}
           timeMs={timeMs}
           playing={playing}
-          wording={wording}
           onTimeChange={setTimeMs}
           onPlayingChange={setPlaying}
         />
-        <div className="flex flex-wrap gap-1" role="group" aria-label="Layers">
-          {LAYERS.map((key) => {
-            const on = layers[key];
-            return (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={on}
-                onClick={() => setLayers({ ...layers, [key]: !on })}
-                className={cn(
-                  "rounded-full px-2 py-1 text-xs",
-                  on ? "font-medium text-foreground" : "text-muted-foreground line-through decoration-border hover:text-foreground hover:no-underline",
-                )}
-              >
-                {layerLabel(key, wording)}
-              </button>
-            );
-          })}
-        </div>
-        <LiveGrant span={liveGrant} wording={wording} />
+        <LiveGrant span={liveGrant} />
       </div>
-      ) : null}
 
       <div className="flex min-h-0 flex-1">
-        {representation === "timeline" ? (
         <div
           className="min-w-0 flex-1 overflow-auto outline-none"
           role="listbox"
@@ -429,10 +253,10 @@ export function TraceView({
                   style={{ paddingLeft: 8 + depth * 14 }}
                   onClick={() => seek(span.id, span.startMs)}
                 >
-                  <span className="w-24 shrink-0 text-xs text-muted-foreground">
-                    {rowMarker(span, wording)}
+                  <span className="w-28 shrink-0 truncate text-xs text-muted-foreground">
+                    {rowMarker(span)}
                   </span>
-                  <span className="truncate text-sm">{stepTitle(span, wording)}</span>
+                  <span className="truncate text-sm">{stepTitle(span)}</span>
                 </button>
                 <div className="relative" title={formatDuration(span.durationMs)} aria-hidden="true">
                   <div
@@ -457,24 +281,6 @@ export function TraceView({
             );
           })}
         </div>
-        ) : (
-          <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-auto p-4">
-            {representation === "cost" ? <CostPicture trace={trace} wording={wording} /> : null}
-            {representation === "shape" ? <Shape trace={trace} wording={wording} /> : null}
-            {representation === "shape" ? null : (
-            <Ledger
-              trace={trace}
-              wording={wording}
-              sort={ledgerSort(audience, representation)}
-              selectedId={selectedId}
-              onSelect={(id) => {
-                const span = trace.spans.find((item) => item.id === id);
-                if (span !== undefined) seek(span.id, span.startMs);
-              }}
-            />
-            )}
-          </div>
-        )}
         <InspectorShell
           className="w-80 shrink-0"
           header={
@@ -482,13 +288,13 @@ export function TraceView({
               <InspectorHeader
                 eyebrow={
                   <>
-                    <Badge tone="neutral">{kindLabel(selected.kind, wording)}</Badge>
+                    <Badge tone="neutral">{rowMarker(selected)}</Badge>
                     <Badge tone={STATUS_TONE[selected.status]}>
                       {STATUS_LABEL[selected.status]}
                     </Badge>
                   </>
                 }
-                title={stepTitle(selected, wording)}
+                title={stepTitle(selected)}
                 description={`${formatClock(selected.startMs)} · ${formatDuration(selected.durationMs)}`}
               />
             )
@@ -502,7 +308,6 @@ export function TraceView({
               timeMs={timeMs}
               layers={layers}
               playing={playing}
-              wording={wording}
             />
           )}
         </InspectorShell>
@@ -547,54 +352,6 @@ function usageTotal(usage: UsageBreakdown): number {
   return usage.input + usage.output + usage.cacheRead + usage.cacheWrite + usage.thinking;
 }
 
-function ledgerSort(
-  audience: Audience,
-  representation: TraceRepresentation,
-): "time" | "cost" | "duration" {
-  if (audience === "cfo" || representation === "cost") return "cost";
-  if (audience === "coo") return "duration";
-  return "time";
-}
-
-function ChipRow<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: T;
-  options: readonly (readonly [T, string])[];
-  onChange: (value: T) => void;
-}) {
-  return (
-    <div
-      className="flex flex-wrap items-center gap-1 border-l border-border pl-3 first:border-l-0 first:pl-0"
-      role="group"
-      aria-label={label}
-    >
-      <span className="mr-1 text-xs text-muted-foreground">{label}</span>
-      {options.map(([id, text]) => {
-        const on = value === id;
-        return (
-          <button
-            key={id}
-            type="button"
-            aria-pressed={on}
-            onClick={() => onChange(id)}
-            className={cn(
-              "rounded-full px-2.5 py-1 text-xs",
-              on ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {text}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -613,27 +370,20 @@ function PlacementItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LiveGrant({ span, wording }: { span: Span | undefined; wording: Wording }) {
+function LiveGrant({ span }: { span: Span | undefined }) {
   if (span?.grant === undefined) {
     return (
-      <p className="font-mono text-[11px] text-muted-foreground">
-        {phrase(wording, "No grant is resolved at the playhead.", "Nothing is asking for permission here.")}
-      </p>
+      <p className="font-mono text-[11px] text-muted-foreground">No grant at the playhead.</p>
     );
   }
   const grant = span.grant;
   const winner = grant.resolvedBy;
-  const stopped = grant.blocked ? phrase(wording, " · blocked", ", stopped") : "";
-  const by =
-    winner === null
-      ? ""
-      : wording === "plain"
-        ? ` by ${originLabel(winner.origin, wording)}`
-        : ` · ${winner.origin} ${winner.resource} ${winner.action} · ${winner.id}`;
+  const stopped = grant.blocked ? " · blocked" : "";
+  const by = winner === null ? "" : ` · ${winner.id}`;
   return (
     <p className="font-mono text-[11px] text-foreground">
-      <span className="text-muted-foreground">{phrase(wording, "Grant now", "Permission now")} · </span>
-      {stepTitle(span, wording)} · {effectLabel(grant.effect, wording)}
+      <span className="text-muted-foreground">Grant · </span>
+      {stepTitle(span)} · {grant.effect}
       {stopped}
       {by}
     </p>
@@ -646,14 +396,12 @@ function SpanDetail({
   timeMs,
   layers,
   playing,
-  wording,
 }: {
   traceSpans: readonly Span[];
   span: Span;
   timeMs: number;
   layers: TraceLayers;
   playing: boolean;
-  wording: Wording;
 }) {
   const thoughts = thoughtSpans(traceSpans, span);
   return (
@@ -697,7 +445,7 @@ function SpanDetail({
             : [
                 {
                   label: "Signature",
-                  value: <SignatureBadge status={span.signature} wording={wording} />,
+                  value: <SignatureBadge status={span.signature} />,
                 },
               ]),
           ...(span.attributes ?? []).map((attribute) => ({
@@ -707,16 +455,10 @@ function SpanDetail({
           })),
         ]}
       />
-      {span.nudge === undefined ? null : <NudgeBlock nudge={span.nudge} wording={wording} />}
-      {span.compaction === undefined ? null : (
-        <CompactionBlock compaction={span.compaction} wording={wording} />
-      )}
-      {span.contextChange === undefined ? null : (
-        <ContextBlock change={span.contextChange} wording={wording} />
-      )}
-      {layers.grants && span.grant !== undefined ? (
-        <GrantBlock grant={span.grant} wording={wording} />
-      ) : null}
+      {span.nudge === undefined ? null : <NudgeBlock nudge={span.nudge} />}
+      {span.compaction === undefined ? null : <CompactionBlock compaction={span.compaction} />}
+      {span.contextChange === undefined ? null : <ContextBlock change={span.contextChange} />}
+      {layers.grants && span.grant !== undefined ? <GrantBlock grant={span.grant} /> : null}
       {layers.reasoning
         ? thoughts.map((thought) => (
             <ThoughtBlock
@@ -724,7 +466,6 @@ function SpanDetail({
               span={thought}
               timeMs={timeMs}
               playing={playing}
-              wording={wording}
             />
           ))
         : null}
@@ -755,15 +496,15 @@ function thoughtSpans(spans: readonly Span[], span: Span): readonly Span[] {
   );
 }
 
-function AgentBriefPanel({ brief, wording }: { brief: AgentBrief; wording: Wording }) {
+function AgentBriefPanel({ brief }: { brief: AgentBrief }) {
   return (
     <div className="grid gap-6 border-b border-border bg-card px-4 py-4 lg:grid-cols-2">
       <section className="flex min-w-0 flex-col gap-2">
-        <h3 className="text-sm font-semibold">{phrase(wording, "System prompt", "Instructions")}</h3>
+        <h3 className="text-sm font-semibold">System prompt</h3>
         <p className="max-h-28 overflow-auto whitespace-pre-wrap text-sm leading-6">{brief.systemPrompt}</p>
       </section>
       <section className="flex min-w-0 flex-col gap-2">
-        <h3 className="text-sm font-semibold">{phrase(wording, "Tools", "What it can use")}</h3>
+        <h3 className="text-sm font-semibold">Tools</h3>
         <ul className="flex flex-col gap-2">
           {brief.tools.map((tool) => (
             <li key={tool.name} className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3 text-sm">
@@ -777,46 +518,35 @@ function AgentBriefPanel({ brief, wording }: { brief: AgentBrief; wording: Wordi
   );
 }
 
-function NudgeBlock({ nudge, wording }: { nudge: DirectorNudge; wording: Wording }) {
+function NudgeBlock({ nudge }: { nudge: DirectorNudge }) {
   return (
     <section className="flex flex-col gap-1">
-      <h3 className="text-xs font-medium">{phrase(wording, "Director action", "Nudge")}</h3>
+      <h3 className="text-xs font-medium">{nudge.action}</h3>
       <p className="text-sm">{nudge.because}</p>
-      {wording === "precise" ? (
-        <p className="font-mono text-[11px] text-muted-foreground">{nudge.action}</p>
-      ) : null}
     </section>
   );
 }
 
-function CompactionBlock({
-  compaction,
-  wording,
-}: {
-  compaction: Compaction;
-  wording: Wording;
-}) {
+function CompactionBlock({ compaction }: { compaction: Compaction }) {
   return (
     <section className="flex flex-col gap-2">
       <div>
-        <h3 className="text-xs font-medium">{phrase(wording, "Compaction", "What was shortened")}</h3>
+        <h3 className="text-xs font-medium">Compaction</h3>
         <p className="text-sm">
           {compaction.turnsBefore} turns down to {compaction.turnsAfter}
           {` · ${compactionLine(compaction)}`}
         </p>
         <p className="text-sm text-muted-foreground">{compaction.detail}</p>
-        {wording === "precise" ? (
-          <p className="font-mono text-[11px] text-muted-foreground">
-            {compaction.compactor} v{compaction.version} · {compaction.reason}
-          </p>
-        ) : null}
+        <p className="font-mono text-[11px] text-muted-foreground">
+          {compaction.compactor} v{compaction.version} · {compaction.reason}
+        </p>
       </div>
       <table className="w-full border-collapse text-left text-xs">
         <thead className="text-muted-foreground">
           <tr>
-            <th className="py-1 font-medium">{phrase(wording, "Turn", "Piece")}</th>
+            <th className="py-1 font-medium">Turn</th>
             <th className="py-1 text-right font-medium">Tokens</th>
-            <th className="py-1 font-medium">{phrase(wording, "Kept", "Stayed")}</th>
+            <th className="py-1 font-medium">Kept</th>
           </tr>
         </thead>
         <tbody>
@@ -829,7 +559,7 @@ function CompactionBlock({
                 )}
               </td>
               <td className="py-1 text-right font-mono">{formatTokens(turn.tokens)}</td>
-              <td className="py-1">{turn.kept ? phrase(wording, "Kept", "Stayed") : phrase(wording, "Dropped", "Cut")}</td>
+              <td className="py-1">{turn.kept ? "Kept" : "Dropped"}</td>
             </tr>
           ))}
         </tbody>
@@ -838,16 +568,14 @@ function CompactionBlock({
   );
 }
 
-function ContextBlock({ change, wording }: { change: ContextChange; wording: Wording }) {
+function ContextBlock({ change }: { change: ContextChange }) {
   return (
     <section className="flex flex-col gap-1">
-      <h3 className="text-xs font-medium">{phrase(wording, "Context transform", "Prompt change")}</h3>
+      <h3 className="text-xs font-medium">Context transform</h3>
       <p className="text-sm">{change.summary}</p>
-      {wording === "precise" ? (
-        <p className="font-mono text-[11px] text-muted-foreground">
-          {change.strategy} v{change.version} · {change.trigger} · {change.reason}
-        </p>
-      ) : null}
+      <p className="font-mono text-[11px] text-muted-foreground">
+        {change.strategy} v{change.version} · {change.trigger} · {change.reason}
+      </p>
     </section>
   );
 }
@@ -856,19 +584,17 @@ function ThoughtBlock({
   span,
   timeMs,
   playing,
-  wording,
 }: {
   span: Span;
   timeMs: number;
   playing: boolean;
-  wording: Wording;
 }) {
   const started = timeMs > span.startMs;
   const done = timeMs >= spanEnd(span);
   const streaming = playing && started && !done;
   return (
     <section className="flex flex-col gap-1">
-      <h3 className="text-xs font-medium">{phrase(wording, "Chain of thought", "Thinking")}</h3>
+      <h3 className="text-xs font-medium">Thinking</h3>
       {span.redacted === true || span.thinking === undefined ? (
         <p className="text-sm text-muted-foreground">Redacted by the model.</p>
       ) : playing && !started ? (
@@ -887,39 +613,25 @@ function ThoughtBlock({
   );
 }
 
-function GrantBlock({ grant, wording }: { grant: GrantUse; wording: Wording }) {
+function GrantBlock({ grant }: { grant: GrantUse }) {
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <h3 className="text-xs font-medium">
-          {phrase(wording, "Grant at this step", "Permission at this step")}
-        </h3>
-        <EffectBadge effect={grant.effect} wording={wording} />
-        {grant.blocked ? <Badge tone="danger">{phrase(wording, "Blocked", "Stopped")}</Badge> : null}
+        <h3 className="text-xs font-medium">Grant</h3>
+        <EffectBadge effect={grant.effect} />
+        {grant.blocked ? <Badge tone="danger">Blocked</Badge> : null}
       </div>
-      {grant.blockReason === undefined ? null : (
-        <p className="text-sm">{grant.blockReason}</p>
-      )}
+      {grant.blockReason === undefined ? null : <p className="text-sm">{grant.blockReason}</p>}
       {grant.resolvedBy === null ? (
-        <p className="text-xs text-muted-foreground">
-          {phrase(wording, "Nothing matched. Failed closed.", "No rule matched, so this was refused.")}
-        </p>
+        <p className="text-xs text-muted-foreground">Nothing matched. Failed closed.</p>
       ) : (
-        <GrantLine
-          label={phrase(wording, "Resolved by", "Chosen rule")}
-          grant={grant.resolvedBy}
-          wording={wording}
-        />
+        <GrantLine label="Resolved by" grant={grant.resolvedBy} />
       )}
       {grant.matching.length === 0 ? null : (
         <ul className="flex flex-col gap-1">
           {grant.matching.map((item) => (
             <li key={item.id}>
-              <GrantLine
-                label={phrase(wording, "Matched", "Also considered")}
-                grant={item}
-                wording={wording}
-              />
+              <GrantLine label="Matched" grant={item} />
             </li>
           ))}
         </ul>
@@ -931,53 +643,31 @@ function GrantBlock({ grant, wording }: { grant: GrantUse; wording: Wording }) {
 function GrantLine({
   label,
   grant,
-  wording,
 }: {
   label: string;
   grant: NonNullable<GrantUse["resolvedBy"]>;
-  wording: Wording;
 }) {
-  const exact =
-    grant.specificity === undefined || wording === "plain" ? "" : ` · specificity ${grant.specificity}`;
+  const exact = grant.specificity === undefined ? "" : ` · specificity ${grant.specificity}`;
   return (
     <p className="font-mono text-[11px] leading-relaxed">
       <span className="text-muted-foreground">{label} </span>
-      {wording === "plain" ? (
-        <>
-          {effectLabel(grant.effect, wording)} by {originLabel(grant.origin, wording)}
-        </>
-      ) : (
-        <>
-          {grant.id} · {grant.effect} · {grant.origin}
-          <br />
-          {grant.resource} {grant.action}
-          {exact}
-        </>
-      )}
+      {grant.id} · {grant.effect} · {grant.origin}
+      <br />
+      {grant.resource} {grant.action}
+      {exact}
     </p>
   );
 }
 
-function EffectBadge({ effect, wording }: { effect: GrantUse["effect"]; wording: Wording }) {
+function EffectBadge({ effect }: { effect: GrantUse["effect"] }) {
   const tone =
     effect === "allow" ? "success" : effect === "ask" ? "warning" : effect === "none" ? "neutral" : "danger";
-  return <Badge tone={tone}>{effectLabel(effect, wording)}</Badge>;
+  return <Badge tone={tone}>{effect}</Badge>;
 }
 
-function SignatureBadge({ status, wording }: { status: SignatureStatus; wording: Wording }) {
-  const tone =
-    status === "valid" ? "success" : status === "invalid" ? "danger" : "warning";
-  const label =
-    wording === "precise"
-      ? status
-      : status === "valid"
-        ? "Checked"
-        : status === "invalid"
-          ? "Bad"
-          : status === "missing"
-            ? "Missing"
-            : "Unknown";
-  return <Badge tone={tone}>{label}</Badge>;
+function SignatureBadge({ status }: { status: SignatureStatus }) {
+  const tone = status === "valid" ? "success" : status === "invalid" ? "danger" : "warning";
+  return <Badge tone={tone}>{status}</Badge>;
 }
 
 function TextBlock({ label, text }: { label: string; text: string }) {

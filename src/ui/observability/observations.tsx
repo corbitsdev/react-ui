@@ -7,21 +7,11 @@ import { Badge } from "../badge.js";
 import { formatCost, formatDuration, formatTokens } from "./format.js";
 import { observationRows, type ObservationRow } from "./metrics.js";
 import type { Trace } from "./model.js";
-import {
-  DEFAULT_FOCUS,
-  FOCUS_KEYS,
-  FOCUS_LABEL,
-  focusKeepsKind,
-  kindLabel,
-  stepTitle,
-  type TraceFocus,
-  type Wording,
-} from "./wording.js";
+import { stepTitle } from "./wording.js";
 
 export type ObservationsProps = {
   readonly traces: readonly Trace[];
   readonly onOpen: (traceId: string, spanId: string) => void;
-  readonly wording?: Wording;
 };
 
 const LEVEL_TONE = {
@@ -31,49 +21,21 @@ const LEVEL_TONE = {
   Debug: "info",
 } as const;
 
-export function Observations({ traces, onOpen, wording = "plain" }: ObservationsProps) {
+export function Observations({ traces, onOpen }: ObservationsProps) {
   const rows = useMemo(() => observationRows(traces), [traces]);
-  const [focus, setFocus] = useState<TraceFocus>(DEFAULT_FOCUS);
   const [level, setLevel] = useState<"all" | "Error" | "Warning">("all");
-  const shown = rows.filter((row) => {
-    if (!focusKeepsKind(row.type, focus)) return false;
-    if (level !== "all" && row.level !== level) return false;
-    return true;
-  });
+  const shown = rows.filter((row) => level === "all" || row.level === level);
 
   return (
     <section className="flex flex-col gap-3 p-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Observations</h1>
-          <p className="text-sm text-muted-foreground">
-            Every step, across runs. Turn off the groups you do not need, then open the trace.
-          </p>
+          <p className="text-sm text-muted-foreground">Every step, across runs.</p>
         </div>
         <p className="font-mono text-xs text-muted-foreground">{shown.length} shown</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap gap-1" role="group" aria-label="Show">
-          {FOCUS_KEYS.map((key) => {
-            const on = focus[key];
-            return (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={on}
-                onClick={() => setFocus({ ...focus, [key]: !on })}
-                className={cn(
-                  "rounded-full px-2 py-1 text-xs",
-                  on
-                    ? "font-medium text-foreground"
-                    : "text-muted-foreground line-through decoration-border hover:text-foreground hover:no-underline",
-                )}
-              >
-                {FOCUS_LABEL[wording][key]}
-              </button>
-            );
-          })}
-        </div>
         <Filter
           label="Level"
           value={level}
@@ -111,8 +73,8 @@ export function Observations({ traces, onOpen, wording = "plain" }: Observations
                     {row.traceName}
                   </button>
                 </td>
-                <td className="px-2 py-2 text-xs text-muted-foreground">{kindLabel(row.type, wording)}</td>
-                <td className="px-2 py-2">{rowTitle(traces, row, wording)}</td>
+                <td className="px-2 py-2 text-xs text-muted-foreground">{row.type}</td>
+                <td className="px-2 py-2">{rowTitle(traces, row)}</td>
                 <td className="px-2 py-2 font-mono text-xs">{row.model}</td>
                 <td className="px-2 py-2">
                   <Badge tone={LEVEL_TONE[row.level]}>{row.level}</Badge>
@@ -133,10 +95,10 @@ export function Observations({ traces, onOpen, wording = "plain" }: Observations
   );
 }
 
-function rowTitle(traces: readonly Trace[], row: ObservationRow, wording: Wording): string {
+function rowTitle(traces: readonly Trace[], row: ObservationRow): string {
   const trace = traces.find((item) => item.id === row.traceId);
   const span = trace?.spans.find((item) => item.id === row.spanId);
-  return span === undefined ? row.name : stepTitle(span, wording);
+  return span === undefined ? row.name : stepTitle(span);
 }
 
 function Filter<T extends string>({

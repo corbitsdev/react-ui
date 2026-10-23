@@ -169,11 +169,22 @@ export type Placement = {
   readonly status: string;
 };
 
-/** One timed step inside a trace. `startMs` is relative to the trace start. */
+/**
+ * One timed step. `startMs` is relative to the trace start.
+ *
+ * `kind` is the role this viewer knows how to draw. A caller maps interchange,
+ * a local session (`~/.corbits/code`, `~/.claude/projects`, `~/.codex`), or an
+ * SDK trace (Vercel AI SDK, Mastra) onto that role. `type` is the source's own
+ * step type and `label` is optional display copy. Both are shown as passed.
+ */
 export type Span = {
   readonly id: string;
   readonly parentId: string | null;
   readonly kind: SpanKind;
+  /** Source step type, shown beside the row. Omit to show `kind`. */
+  readonly type?: string;
+  /** Row title. Omit to show what the step did, then `name`. */
+  readonly label?: string;
   readonly name: string;
   readonly status: SpanStatus;
   readonly startMs: number;
@@ -224,18 +235,6 @@ export type Trace = {
   readonly tenant?: TenantRef;
   readonly providers?: readonly ProviderInfo[];
   readonly brief?: AgentBrief;
-};
-
-export type Audience = "operator" | "cfo" | "coo" | "ciso";
-
-/** How the steps are drawn. The audience picks a default. The caller can override it. */
-export type TraceRepresentation = "timeline" | "ledger" | "cost" | "shape";
-
-export const AUDIENCE_REPRESENTATION: Record<Audience, TraceRepresentation> = {
-  operator: "timeline",
-  cfo: "ledger",
-  coo: "ledger",
-  ciso: "timeline",
 };
 
 export type SeriesPoint = {

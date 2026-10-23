@@ -1,6 +1,7 @@
 import { ObservabilityApp } from "../../src/blocks/observability/app.js";
 import { AreaChart } from "../../src/ui/observability/area-chart.js";
 import { SessionTable } from "../../src/ui/observability/session-table.js";
+import { WorkflowFinOps, WorkflowsFinOps } from "../../src/ui/observability/slots.js";
 import { AgentTrace, WorkflowTrace } from "../../src/ui/observability/trace-view.js";
 import { FAILURES, SERIES, SESSIONS, TRACES } from "./fixtures.js";
 
@@ -41,38 +42,23 @@ export const Agent = () => (
   </div>
 );
 
+export const WorkflowsFinOpsOverview = () => (
+  <div className="border border-border">
+    <WorkflowsFinOps traces={Object.values(TRACES)} />
+  </div>
+);
+WorkflowsFinOpsOverview.storyName = "Workflows FinOps Overview";
+
+export const WorkflowFinOpsOverview = () => (
+  <div className="border border-border">
+    <WorkflowFinOps trace={trace("wf-review")} />
+  </div>
+);
+WorkflowFinOpsOverview.storyName = "Workflow FinOps Overview";
+
 export const Workflow = () => (
   <div className="h-[820px] border border-border">
-    <WorkflowTrace trace={trace("wf-review")} peers={Object.values(TRACES)} />
+    <WorkflowTrace trace={trace("wf-review")} />
   </div>
 );
-
-export const Finance = () => (
-  <div className="h-[820px] border border-border">
-    <WorkflowTrace
-      trace={trace("wf-review")}
-      peers={Object.values(TRACES)}
-      defaultAudience="cfo"
-    />
-  </div>
-);
-
-export const Operations = () => (
-  <div className="h-[820px] border border-border">
-    <WorkflowTrace
-      trace={trace("wf-review")}
-      peers={Object.values(TRACES)}
-      defaultAudience="coo"
-    />
-  </div>
-);
-
-export const Security = () => (
-  <div className="h-[820px] border border-border">
-    <WorkflowTrace
-      trace={trace("wf-review")}
-      peers={Object.values(TRACES)}
-      defaultAudience="ciso"
-    />
-  </div>
-);
+Workflow.storyName = "Workflow";
