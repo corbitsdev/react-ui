@@ -141,7 +141,7 @@ export function TraceTimeline({
         </Button>
         <span className="font-mono text-xs text-muted-foreground">
           {formatClock(timeMs)}
-          <span className="text-foreground/40"> / {formatClock(end)}</span>
+          <span> / {formatClock(end)}</span>
         </span>
       </div>
       <div className="rounded-sm focus-within:ring-2 focus-within:ring-ring">

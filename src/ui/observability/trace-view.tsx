@@ -245,7 +245,6 @@ export function TraceView({
           </div>
           {placed.map(({ span, depth }) => {
             const selectedRow = span.id === selectedId;
-            const future = span.startMs > timeMs;
             const played = playedRatio(span, timeMs);
             return (
               <div
@@ -254,7 +253,6 @@ export function TraceView({
                   "grid grid-cols-[minmax(0,1fr)_16rem] border-b border-border",
                   selectedRow &&
                     "bg-muted/70 shadow-[inset_2px_0_0_var(--foreground)]",
-                  future && "opacity-40",
                 )}
               >
                 <button
