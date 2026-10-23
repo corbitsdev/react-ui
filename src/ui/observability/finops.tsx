@@ -16,18 +16,14 @@ import {
 } from "./format.js";
 import { Ledger } from "./ledger.js";
 import {
-  measures,
   modelShares,
   portfolio,
   rollup,
-  shapeOf,
-  stepKeys,
   usageOf,
   type UsageBreakdown,
 } from "./metrics.js";
 import type { Trace } from "./model.js";
 import { UsageMix } from "./usage-mix.js";
-import { stepTitle } from "./wording.js";
 
 export function WorkflowsFinOps({
   traces,
@@ -199,86 +195,4 @@ function ProviderNotes({ shares }: { shares: ReturnType<typeof modelShares> }) {
       </ul>
     </section>
   );
-}
-
-export function StepCosts({ trace }: { readonly trace: Trace }) {
-  const priced = measures(trace, "cost").filter((row) => row.costUsd > 0);
-  return (
-    <CostBars
-      title="Cost by step"
-      description="Each priced step, largest first."
-      rows={priced.map((row) => {
-        const span = trace.spans.find((item) => item.id === row.id);
-        return {
-          key: row.id,
-          label: span === undefined ? row.name : stepTitle(span),
-          value: row.costUsd,
-          detail: formatTokens(row.tokens),
-        };
-      })}
-    />
-  );
-}
-
-export function Shape({ trace }: { readonly trace: Trace }) {
-  const nodes = shapeOf(trace);
-  const keys = stepKeys(trace.spans);
-  return (
-    <section className="flex flex-col gap-2">
-      <div>
-        <h3 className="text-sm font-semibold">Shape</h3>
-        <p className="text-xs text-muted-foreground">
-          Steps that share a name collapse into one node. The count is how many
-          times it ran.
-        </p>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Node</TableHead>
-            <TableHead>Count</TableHead>
-            <TableHead>Time</TableHead>
-            <TableHead>Tokens</TableHead>
-            <TableHead>Cost</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {nodes.map((node) => (
-            <TableRow key={node.key}>
-              <TableCell>
-                <span className="block truncate">
-                  {titlesFor(trace, keys, node.key)}
-                </span>
-              </TableCell>
-              <TableCell className="font-mono">{node.count}</TableCell>
-              <TableCell className="font-mono">
-                {formatDuration(node.durationMs)}
-              </TableCell>
-              <TableCell className="font-mono">
-                {node.tokens === 0 ? "—" : formatTokens(node.tokens)}
-              </TableCell>
-              <TableCell className="font-mono">
-                {node.costUsd === 0 ? "—" : formatCost(node.costUsd)}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </section>
-  );
-}
-
-function titlesFor(
-  trace: Trace,
-  keys: ReadonlyMap<string, string>,
-  nodeKey: string,
-): string {
-  const titles: string[] = [];
-  for (const span of trace.spans) {
-    const full = keys.get(span.id) ?? span.id;
-    if (full.replace(/\.\d+$/, "") !== nodeKey) continue;
-    const title = stepTitle(span);
-    if (!titles.includes(title)) titles.push(title);
-  }
-  return titles.join(" · ");
 }

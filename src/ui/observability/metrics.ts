@@ -56,15 +56,6 @@ export type UsageBreakdown = {
   readonly thinking: number;
 };
 
-export type ShapeNode = {
-  readonly key: string;
-  readonly name: string;
-  readonly count: number;
-  readonly durationMs: number;
-  readonly tokens: number;
-  readonly costUsd: number;
-};
-
 export type ObservationRow = {
   readonly traceId: string;
   readonly traceName: string;
@@ -244,30 +235,6 @@ export function usageOfSpan(span: Span): UsageBreakdown {
     cacheWrite: span.usage?.cacheWriteTokens ?? 0,
     thinking: span.usage?.thinkingTokens ?? 0,
   };
-}
-
-/** Same step name collapsed, with a count. Loops show up as one node. */
-export function shapeOf(trace: Trace): readonly ShapeNode[] {
-  const grouped = new Map<string, ShapeNode>();
-  for (const span of trace.spans) {
-    const key = `${span.kind}:${span.name}`;
-    const current = grouped.get(key) ?? {
-      key,
-      name: span.name,
-      count: 0,
-      durationMs: 0,
-      tokens: 0,
-      costUsd: 0,
-    };
-    grouped.set(key, {
-      ...current,
-      count: current.count + 1,
-      durationMs: current.durationMs + span.durationMs,
-      tokens: current.tokens + spanTokens(span),
-      costUsd: current.costUsd + (span.usage?.costUsd ?? 0),
-    });
-  }
-  return [...grouped.values()].sort((a, b) => b.durationMs - a.durationMs);
 }
 
 export function observationRows(

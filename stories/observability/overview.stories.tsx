@@ -1,4 +1,3 @@
-import { AreaChart } from "../../src/ui/observability/area-chart.js";
 import { Observations } from "../../src/ui/observability/observations.js";
 import { WeekOverview } from "../../src/ui/observability/overview.js";
 import { SessionTable } from "../../src/ui/observability/session-table.js";
@@ -17,20 +16,6 @@ export const Week = () => (
     />
   </div>
 );
-
-export const SessionsChart = () => (
-  <div className="max-w-3xl p-6">
-    <AreaChart
-      title="Sessions"
-      description="Completed runs, and the runs that failed, by day."
-      data={SERIES}
-      compare={FAILURES}
-      valueLabel="Sessions"
-      compareLabel="Failed"
-    />
-  </div>
-);
-SessionsChart.storyName = "Sessions chart";
 
 export const Sessions = () => (
   <div className="p-6">
