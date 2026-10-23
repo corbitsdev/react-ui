@@ -146,13 +146,13 @@ export function TraceTimeline({
           style={{ accentColor: "var(--foreground)" }}
         />
       </label>
-      <div className="relative h-4 rounded-sm bg-muted" aria-hidden="true">
+      <div className="relative h-6 rounded-sm bg-muted" aria-hidden="true">
         {spans.map((span) => (
           <span
             key={span.id}
             title={stepTitle(span, wording)}
             className={cn(
-              "absolute top-1 h-2 rounded-full",
+              "absolute top-1.5 h-3 rounded-full",
               KIND_MARK[span.kind],
               span.startMs > timeMs && "opacity-35",
             )}
@@ -163,7 +163,7 @@ export function TraceTimeline({
           />
         ))}
         <span
-          className="absolute top-0 h-3 w-px bg-foreground"
+          className="absolute top-0 h-full w-0.5 bg-foreground"
           style={{ left: `${(Math.min(timeMs, end) / end) * 100}%` }}
         />
       </div>

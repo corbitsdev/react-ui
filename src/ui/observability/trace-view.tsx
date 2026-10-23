@@ -260,7 +260,7 @@ export function TraceView({
           ) : null}
         </div>
         {trace.placement === undefined ? null : (
-          <dl className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] text-muted-foreground">
+          <dl className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-muted-foreground">
             <PlacementItem label={phrase(wording, "Sidecar", "Machine")} value={trace.placement.sidecarId} />
             <PlacementItem label={phrase(wording, "Host", "Computer")} value={trace.placement.host} />
             <PlacementItem label="Region" value={trace.placement.region} />
@@ -395,7 +395,7 @@ export function TraceView({
             }
           }}
         >
-          <div className="grid grid-cols-[minmax(0,1fr)_9.5rem] border-b border-border px-2 py-1 font-mono text-[10px] text-muted-foreground">
+          <div className="grid grid-cols-[minmax(0,1fr)_16rem] border-b border-border px-2 py-1 font-mono text-[11px] text-muted-foreground">
             <span>Step</span>
             <span className="flex justify-between">
               <span>0</span>
@@ -410,8 +410,8 @@ export function TraceView({
               <div
                 key={span.id}
                 className={cn(
-                  "grid grid-cols-[minmax(0,1fr)_9.5rem] border-b border-border",
-                  selectedRow && "bg-muted/70",
+                  "grid grid-cols-[minmax(0,1fr)_16rem] border-b border-border",
+                  selectedRow && "bg-muted/70 shadow-[inset_2px_0_0_var(--foreground)]",
                   future && "opacity-40",
                 )}
               >
@@ -428,7 +428,7 @@ export function TraceView({
                   style={{ paddingLeft: 8 + depth * 14 }}
                   onClick={() => seek(span.id, span.startMs)}
                 >
-                  <span className="w-20 shrink-0 font-mono text-[10px] text-muted-foreground">
+                  <span className="w-24 shrink-0 text-xs text-muted-foreground">
                     {rowMarker(span, wording)}
                   </span>
                   <span className="truncate text-sm">{stepTitle(span, wording)}</span>
@@ -596,7 +596,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function PlacementItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1 after:mx-1 after:text-muted-foreground after:content-['·'] last:after:content-none">
       <dt>{label}</dt>
       <dd className="text-foreground">{value}</dd>
     </div>
@@ -747,20 +747,18 @@ function thoughtSpans(spans: readonly Span[], span: Span): readonly Span[] {
 
 function AgentBriefPanel({ brief, wording }: { brief: AgentBrief; wording: Wording }) {
   return (
-    <div className="grid gap-4 border-b border-border px-4 py-3 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-      <section className="flex min-w-0 flex-col gap-1">
+    <div className="grid gap-6 border-b border-border bg-card px-4 py-4 lg:grid-cols-2">
+      <section className="flex min-w-0 flex-col gap-2">
         <h3 className="text-sm font-semibold">{phrase(wording, "System prompt", "Instructions")}</h3>
-        <pre className="max-h-28 overflow-auto whitespace-pre-wrap text-sm leading-relaxed">
-          {brief.systemPrompt}
-        </pre>
+        <p className="max-h-28 overflow-auto whitespace-pre-wrap text-sm leading-6">{brief.systemPrompt}</p>
       </section>
-      <section className="flex min-w-0 flex-col gap-1">
+      <section className="flex min-w-0 flex-col gap-2">
         <h3 className="text-sm font-semibold">{phrase(wording, "Tools", "What it can use")}</h3>
-        <ul className="flex flex-col gap-1">
+        <ul className="flex flex-col gap-2">
           {brief.tools.map((tool) => (
-            <li key={tool.name} className="min-w-0 text-sm">
-              <span className="font-mono text-xs">{tool.name}</span>
-              <span className="text-muted-foreground"> {tool.description}</span>
+            <li key={tool.name} className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3 text-sm">
+              <span className="truncate font-mono text-xs leading-6">{tool.name}</span>
+              <span className="text-muted-foreground">{tool.description}</span>
             </li>
           ))}
         </ul>
