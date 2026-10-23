@@ -15,18 +15,30 @@ import {
 import { EmptyState } from "../../ui/empty-state.js";
 import { FilterBar } from "../../ui/filter-bar.js";
 import { Input } from "../../ui/input.js";
-import { formatCost, formatDuration, formatTokens } from "../../ui/observability/format.js";
+import {
+  formatCost,
+  formatDuration,
+  formatTokens,
+} from "../../ui/observability/format.js";
 import { AreaChart } from "../../ui/observability/area-chart.js";
 import type {
   SeriesPoint,
   SessionSummary,
   Trace,
 } from "../../ui/observability/model.js";
-import { observationRows, portfolio, rollup, usageOf } from "../../ui/observability/metrics.js";
+import {
+  observationRows,
+  portfolio,
+  rollup,
+  usageOf,
+} from "../../ui/observability/metrics.js";
 import { Observations } from "../../ui/observability/observations.js";
 import { UsageMix } from "../../ui/observability/slots.js";
 import { SessionTable } from "../../ui/observability/session-table.js";
-import { AgentTrace, WorkflowTrace } from "../../ui/observability/trace-view.js";
+import {
+  AgentTrace,
+  WorkflowTrace,
+} from "../../ui/observability/trace-view.js";
 import { StatGrid, StatGridItem } from "../../ui/stat-grid.js";
 
 export type ObservabilityAppProps = {
@@ -57,7 +69,8 @@ export function ObservabilityApp({
       sessions.filter((session) => {
         if (kind !== null && session.kind !== kind) return false;
         if (query.length === 0) return true;
-        const haystack = `${session.name} ${session.actor} ${session.model}`.toLowerCase();
+        const haystack =
+          `${session.name} ${session.actor} ${session.model}`.toLowerCase();
         return haystack.includes(query.toLowerCase());
       }),
     [sessions, kind, query],
@@ -75,13 +88,22 @@ export function ObservabilityApp({
     <div className="flex h-[900px] overflow-hidden rounded-lg border border-border bg-background text-foreground">
       <nav className="flex w-52 shrink-0 flex-col gap-1 border-r border-border bg-card p-3">
         <p className="px-2 pb-2 text-sm font-semibold">Observe</p>
-        <NavButton current={screen === "overview"} onClick={() => setScreen("overview")}>
+        <NavButton
+          current={screen === "overview"}
+          onClick={() => setScreen("overview")}
+        >
           Overview
         </NavButton>
-        <NavButton current={screen === "sessions"} onClick={() => setScreen("sessions")}>
+        <NavButton
+          current={screen === "sessions"}
+          onClick={() => setScreen("sessions")}
+        >
           Sessions
         </NavButton>
-        <NavButton current={screen === "observations"} onClick={() => setScreen("observations")}>
+        <NavButton
+          current={screen === "observations"}
+          onClick={() => setScreen("observations")}
+        >
           Observations
         </NavButton>
         <div className="mt-auto border-t border-border pt-3">
@@ -128,7 +150,10 @@ export function ObservabilityApp({
               onChange={(_id, value) => setKind(value)}
             />
             {visible.length === 0 ? (
-              <EmptyState title="No sessions match" description="Clear the filter or the search." />
+              <EmptyState
+                title="No sessions match"
+                description="Clear the filter or the search."
+              />
             ) : (
               <SessionTable
                 sessions={visible}
@@ -146,7 +171,10 @@ export function ObservabilityApp({
         ) : null}
         {screen === "trace" ? (
           trace === undefined ? (
-            <EmptyState title="No session open" description="Choose one from Sessions." />
+            <EmptyState
+              title="No session open"
+              description="Choose one from Sessions."
+            />
           ) : (
             <div className="flex h-full min-h-0 flex-col">
               <div className="border-b border-border px-3 py-2">
@@ -162,14 +190,18 @@ export function ObservabilityApp({
                 <WorkflowTrace
                   key={`${trace.id}:${focusSpan ?? ""}`}
                   trace={trace}
-                  {...(focusSpan === undefined ? {} : { defaultSelectedId: focusSpan })}
+                  {...(focusSpan === undefined
+                    ? {}
+                    : { defaultSelectedId: focusSpan })}
                   className="min-h-0 flex-1"
                 />
               ) : (
                 <AgentTrace
                   key={`${trace.id}:${focusSpan ?? ""}`}
                   trace={trace}
-                  {...(focusSpan === undefined ? {} : { defaultSelectedId: focusSpan })}
+                  {...(focusSpan === undefined
+                    ? {}
+                    : { defaultSelectedId: focusSpan })}
                   className="min-h-0 flex-1"
                 />
               )}
@@ -208,7 +240,9 @@ function Overview({
   traces: readonly Trace[];
   onOpen: () => void;
 }) {
-  const failed = sessions.filter((session) => session.status === "error").length;
+  const failed = sessions.filter(
+    (session) => session.status === "error",
+  ).length;
   const tokens = sessions.reduce((sum, session) => sum + session.tokens, 0);
   const cost = traces.reduce((sum, trace) => sum + rollup(trace).costUsd, 0);
   const usage = traces.reduce(
@@ -235,10 +269,19 @@ function Overview({
         </Button>
       </div>
       <StatGrid>
-        <StatGridItem label="Sessions" value={String(sessions.length)} sparklineValues={series.map((point) => point.value)} sparklineLabel="Sessions across the week" />
+        <StatGridItem
+          label="Sessions"
+          value={String(sessions.length)}
+          sparklineValues={series.map((point) => point.value)}
+          sparklineLabel="Sessions across the week"
+        />
         <StatGridItem label="Observations" value={String(steps)} />
         <StatGridItem label="Cost" value={formatCost(cost)} />
-        <StatGridItem label="Tokens" value={formatTokens(tokens)} sub={`${failed} failed`} />
+        <StatGridItem
+          label="Tokens"
+          value={formatTokens(tokens)}
+          sub={`${failed} failed`}
+        />
       </StatGrid>
       <div className="grid gap-4 lg:grid-cols-2">
         <AreaChart
@@ -256,9 +299,16 @@ function Overview({
           <h2 className="text-sm font-semibold">Cost by model</h2>
           <ul className="flex flex-col text-sm">
             {shares.map((share) => (
-              <li key={`${share.provider}/${share.model}`} className="flex justify-between gap-3 border-b border-border py-1.5 font-mono text-xs">
-                <span>{share.provider} / {share.model}</span>
-                <span>{formatCost(share.costUsd)} · {formatTokens(share.tokens)}</span>
+              <li
+                key={`${share.provider}/${share.model}`}
+                className="flex justify-between gap-3 border-b border-border py-1.5 font-mono text-xs"
+              >
+                <span>
+                  {share.provider} / {share.model}
+                </span>
+                <span>
+                  {formatCost(share.costUsd)} · {formatTokens(share.tokens)}
+                </span>
               </li>
             ))}
           </ul>
@@ -267,9 +317,15 @@ function Overview({
           <h2 className="text-sm font-semibold">Latency by run</h2>
           <ul className="flex flex-col text-sm">
             {sessions.map((session) => (
-              <li key={session.id} className="flex justify-between gap-3 border-b border-border py-1.5 font-mono text-xs">
+              <li
+                key={session.id}
+                className="flex justify-between gap-3 border-b border-border py-1.5 font-mono text-xs"
+              >
                 <span className="truncate">{session.name}</span>
-                <span className="shrink-0">{formatDuration(session.durationMs)} · {formatCost(session.costUsd)}</span>
+                <span className="shrink-0">
+                  {formatDuration(session.durationMs)} ·{" "}
+                  {formatCost(session.costUsd)}
+                </span>
               </li>
             ))}
           </ul>
@@ -332,17 +388,25 @@ function AddAgent({
         <DialogBody>
           <label className="flex flex-col gap-1 text-sm">
             Name
-            <Input value={name} onChange={(event) => setName(event.target.value)} />
+            <Input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
           </label>
           {token === null ? null : (
-            <p className="mt-3 rounded-md bg-muted p-2 font-mono text-xs">{token}</p>
+            <p className="mt-3 rounded-md bg-muted p-2 font-mono text-xs">
+              {token}
+            </p>
           )}
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button disabled={label.length === 0 || token !== null} onClick={() => onMint(label)}>
+          <Button
+            disabled={label.length === 0 || token !== null}
+            onClick={() => onMint(label)}
+          >
             Mint token
           </Button>
         </DialogFooter>

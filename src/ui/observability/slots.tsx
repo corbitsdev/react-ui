@@ -30,11 +30,17 @@ import {
 import type { Trace } from "./model.js";
 import { stepTitle } from "./wording.js";
 
-export function WorkflowsFinOps({ traces }: { readonly traces: readonly Trace[] }) {
+export function WorkflowsFinOps({
+  traces,
+}: {
+  readonly traces: readonly Trace[];
+}) {
   const totals = traces.map((trace) => rollup(trace));
   const cost = totals.reduce((sum, row) => sum + row.costUsd, 0);
   const tokens = totals.reduce((sum, row) => sum + row.tokens, 0);
-  const failed = traces.filter((trace) => trace.status === "error" || trace.status === "denied").length;
+  const failed = traces.filter(
+    (trace) => trace.status === "error" || trace.status === "denied",
+  ).length;
   const usage = traces.reduce<UsageBreakdown>(
     (sum, trace) => {
       const part = usageOf(trace);
@@ -59,7 +65,11 @@ export function WorkflowsFinOps({ traces }: { readonly traces: readonly Trace[] 
         <StatGridItem label="Runs" value={String(traces.length)} />
         <StatGridItem label="Cost" value={formatCost(cost)} emphasis />
         <StatGridItem label="Tokens" value={formatTokens(tokens)} />
-        <StatGridItem label="Failed" value={String(failed)} danger={failed > 0} />
+        <StatGridItem
+          label="Failed"
+          value={String(failed)}
+          danger={failed > 0}
+        />
       </StatGrid>
       <div className="grid gap-4 lg:grid-cols-2">
         <CostBars
@@ -90,10 +100,18 @@ export function WorkflowsFinOps({ traces }: { readonly traces: readonly Trace[] 
             return (
               <TableRow key={trace.id}>
                 <TableCell>{trace.name}</TableCell>
-                <TableCell className="font-mono">{formatCost(row.costUsd)}</TableCell>
-                <TableCell className="font-mono">{formatTokens(row.tokens)}</TableCell>
-                <TableCell className="font-mono">{formatDuration(row.durationMs)}</TableCell>
-                <TableCell className="font-mono text-xs">{trace.status}</TableCell>
+                <TableCell className="font-mono">
+                  {formatCost(row.costUsd)}
+                </TableCell>
+                <TableCell className="font-mono">
+                  {formatTokens(row.tokens)}
+                </TableCell>
+                <TableCell className="font-mono">
+                  {formatDuration(row.durationMs)}
+                </TableCell>
+                <TableCell className="font-mono text-xs">
+                  {trace.status}
+                </TableCell>
               </TableRow>
             );
           })}
@@ -105,7 +123,8 @@ export function WorkflowsFinOps({ traces }: { readonly traces: readonly Trace[] 
 
 export function WorkflowFinOps({ trace }: { readonly trace: Trace }) {
   const totals = rollup(trace);
-  const perThousand = totals.tokens === 0 ? 0 : totals.costUsd / (totals.tokens / 1000);
+  const perThousand =
+    totals.tokens === 0 ? 0 : totals.costUsd / (totals.tokens / 1000);
   const shares = modelShares(trace);
   return (
     <section className="flex flex-col gap-4 p-4">
@@ -116,14 +135,26 @@ export function WorkflowFinOps({ trace }: { readonly trace: Trace }) {
         </p>
       </div>
       <StatGrid columns={4}>
-        <StatGridItem label="Cost" value={formatCost(totals.costUsd)} emphasis />
+        <StatGridItem
+          label="Cost"
+          value={formatCost(totals.costUsd)}
+          emphasis
+        />
         <StatGridItem
           label="Tokens"
           value={formatTokens(totals.tokens)}
-          sub={totals.cachedTokens === 0 ? "No cached input" : `${formatTokens(totals.cachedTokens)} cached`}
+          sub={
+            totals.cachedTokens === 0
+              ? "No cached input"
+              : `${formatTokens(totals.cachedTokens)} cached`
+          }
         />
         <StatGridItem label="Per 1k tokens" value={formatCost(perThousand)} />
-        <StatGridItem label="Speed" value={formatSpeed(totals.tokensPerSecond)} sub={formatDuration(totals.durationMs)} />
+        <StatGridItem
+          label="Speed"
+          value={formatSpeed(totals.tokensPerSecond)}
+          sub={formatDuration(totals.durationMs)}
+        />
       </StatGrid>
       <div className="grid gap-4 lg:grid-cols-2">
         <CostBars
@@ -160,7 +191,9 @@ function ProviderNotes({ shares }: { shares: ReturnType<typeof modelShares> }) {
             {share.quirks.length === 0 ? (
               <p className="text-muted-foreground">No recorded quirks.</p>
             ) : (
-              <p className="text-muted-foreground">{share.quirks.join(" · ")}</p>
+              <p className="text-muted-foreground">
+                {share.quirks.join(" · ")}
+              </p>
             )}
           </li>
         ))}
@@ -198,26 +231,39 @@ export function Ledger({
           const span = trace.spans.find((item) => item.id === row.id);
           const title = span === undefined ? row.name : stepTitle(span);
           return (
-          <TableRow key={row.id} className={row.id === selectedId ? "bg-muted/70" : undefined}>
-            <TableCell>
-              {onSelect === undefined ? (
-                title
-              ) : (
-                <button type="button" className="text-left" onClick={() => onSelect(row.id)}>
-                  {title}
-                </button>
-              )}
-            </TableCell>
-            <TableCell className="font-mono text-xs">
-              {row.provider === "—" ? "—" : `${row.provider}/${row.model}`}
-            </TableCell>
-            <TableCell className="font-mono">
-              {row.tokens === 0 ? "—" : formatTokens(row.tokens)}
-            </TableCell>
-            <TableCell className="font-mono">{row.costUsd === 0 ? "—" : formatCost(row.costUsd)}</TableCell>
-            <TableCell className="font-mono">{formatDuration(row.durationMs)}</TableCell>
-            <TableCell className="font-mono">{formatSpeed(row.tokensPerSecond)}</TableCell>
-          </TableRow>
+            <TableRow
+              key={row.id}
+              className={row.id === selectedId ? "bg-muted/70" : undefined}
+            >
+              <TableCell>
+                {onSelect === undefined ? (
+                  title
+                ) : (
+                  <button
+                    type="button"
+                    className="text-left"
+                    onClick={() => onSelect(row.id)}
+                  >
+                    {title}
+                  </button>
+                )}
+              </TableCell>
+              <TableCell className="font-mono text-xs">
+                {row.provider === "—" ? "—" : `${row.provider}/${row.model}`}
+              </TableCell>
+              <TableCell className="font-mono">
+                {row.tokens === 0 ? "—" : formatTokens(row.tokens)}
+              </TableCell>
+              <TableCell className="font-mono">
+                {row.costUsd === 0 ? "—" : formatCost(row.costUsd)}
+              </TableCell>
+              <TableCell className="font-mono">
+                {formatDuration(row.durationMs)}
+              </TableCell>
+              <TableCell className="font-mono">
+                {formatSpeed(row.tokensPerSecond)}
+              </TableCell>
+            </TableRow>
           );
         })}
       </TableBody>
@@ -279,15 +325,23 @@ export function UsageMix({ usage }: { readonly usage: UsageBreakdown }) {
         {USAGE_PARTS.map(([key, label]) => {
           const value = usage[key];
           return (
-            <li key={key} className="grid grid-cols-[6.5rem_1fr_3.5rem] items-center gap-2">
+            <li
+              key={key}
+              className="grid grid-cols-[6.5rem_1fr_3.5rem] items-center gap-2"
+            >
               <span className="text-xs">{label}</span>
               <span className="h-2.5 rounded-sm bg-muted">
                 <span
                   className="block h-full rounded-sm"
-                  style={{ width: `${(value / max) * 100}%`, backgroundColor: USAGE_BAR[key] }}
+                  style={{
+                    width: `${(value / max) * 100}%`,
+                    backgroundColor: USAGE_BAR[key],
+                  }}
                 />
               </span>
-              <span className="text-right font-mono text-xs">{value === 0 ? "—" : formatTokens(value)}</span>
+              <span className="text-right font-mono text-xs">
+                {value === 0 ? "—" : formatTokens(value)}
+              </span>
             </li>
           );
         })}
@@ -304,7 +358,8 @@ export function Shape({ trace }: { readonly trace: Trace }) {
       <div>
         <h3 className="text-sm font-semibold">Shape</h3>
         <p className="text-xs text-muted-foreground">
-          Steps that share a name collapse into one node. The count is how many times it ran.
+          Steps that share a name collapse into one node. The count is how many
+          times it ran.
         </p>
       </div>
       <Table>
@@ -321,12 +376,20 @@ export function Shape({ trace }: { readonly trace: Trace }) {
           {nodes.map((node) => (
             <TableRow key={node.key}>
               <TableCell>
-                <span className="block truncate">{titlesFor(trace, keys, node.key)}</span>
+                <span className="block truncate">
+                  {titlesFor(trace, keys, node.key)}
+                </span>
               </TableCell>
               <TableCell className="font-mono">{node.count}</TableCell>
-              <TableCell className="font-mono">{formatDuration(node.durationMs)}</TableCell>
-              <TableCell className="font-mono">{node.tokens === 0 ? "—" : formatTokens(node.tokens)}</TableCell>
-              <TableCell className="font-mono">{node.costUsd === 0 ? "—" : formatCost(node.costUsd)}</TableCell>
+              <TableCell className="font-mono">
+                {formatDuration(node.durationMs)}
+              </TableCell>
+              <TableCell className="font-mono">
+                {node.tokens === 0 ? "—" : formatTokens(node.tokens)}
+              </TableCell>
+              <TableCell className="font-mono">
+                {node.costUsd === 0 ? "—" : formatCost(node.costUsd)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -357,7 +420,12 @@ function CostBars({
 }: {
   title: string;
   description: string;
-  rows: readonly { key: string; label: string; value: number; detail: string }[];
+  rows: readonly {
+    key: string;
+    label: string;
+    value: number;
+    detail: string;
+  }[];
 }) {
   const max = Math.max(0.0001, ...rows.map((row) => row.value));
   return (
@@ -368,7 +436,10 @@ function CostBars({
       </div>
       <ul className="flex flex-col gap-2">
         {rows.map((row) => (
-          <li key={row.key} className="grid grid-cols-[minmax(0,1fr)_5rem] items-center gap-3">
+          <li
+            key={row.key}
+            className="grid grid-cols-[minmax(0,1fr)_5rem] items-center gap-3"
+          >
             <div className="min-w-0">
               <p className="truncate font-mono text-xs">{row.label}</p>
               <div className="mt-1 h-2 rounded-sm bg-muted">

@@ -6,7 +6,11 @@ import { useControllableState } from "../../hooks/use-controllable-state.js";
 import { seriesColor } from "../../lib/chart-palette.js";
 import { cn } from "../../lib/utils.js";
 import { Badge } from "../badge.js";
-import { InspectorHeader, InspectorKv, InspectorShell } from "../inspector-shell.js";
+import {
+  InspectorHeader,
+  InspectorKv,
+  InspectorShell,
+} from "../inspector-shell.js";
 import {
   formatBytes,
   formatClock,
@@ -128,7 +132,8 @@ export function TraceView({
   useEffect(() => {
     if (!playing) return;
     const active = deepestAt(visibleSpans(trace.spans, layers), timeMs);
-    if (active !== undefined && active.id !== selectedId) setSelectedId(active.id);
+    if (active !== undefined && active.id !== selectedId)
+      setSelectedId(active.id);
   }, [playing, trace.spans, layers, timeMs, selectedId, setSelectedId]);
 
   useEffect(() => {
@@ -158,9 +163,15 @@ export function TraceView({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-semibold text-foreground">{trace.name}</h2>
-              <Badge tone="neutral">{trace.kind === "agent" ? "Agent" : "Workflow"}</Badge>
-              <Badge tone={STATUS_TONE[trace.status]}>{STATUS_LABEL[trace.status]}</Badge>
+              <h2 className="text-lg font-semibold text-foreground">
+                {trace.name}
+              </h2>
+              <Badge tone="neutral">
+                {trace.kind === "agent" ? "Agent" : "Workflow"}
+              </Badge>
+              <Badge tone={STATUS_TONE[trace.status]}>
+                {STATUS_LABEL[trace.status]}
+              </Badge>
             </div>
             <p className="font-mono text-xs text-muted-foreground">
               {trace.actor} · {trace.startedAt}
@@ -183,12 +194,17 @@ export function TraceView({
               label="Package"
               value={`${trace.placement.packageName}@${trace.placement.packageVersion}`}
             />
-            <PlacementItem label="Generation" value={String(trace.placement.generation)} />
+            <PlacementItem
+              label="Generation"
+              value={String(trace.placement.generation)}
+            />
             <PlacementItem label="Status" value={trace.placement.status} />
           </dl>
         )}
       </header>
-      {trace.brief === undefined ? null : <AgentBriefPanel brief={trace.brief} />}
+      {trace.brief === undefined ? null : (
+        <AgentBriefPanel brief={trace.brief} />
+      )}
 
       <div className="flex flex-col gap-2 border-b border-border px-4 py-3">
         <TraceTimeline
@@ -236,7 +252,8 @@ export function TraceView({
                 key={span.id}
                 className={cn(
                   "grid grid-cols-[minmax(0,1fr)_16rem] border-b border-border",
-                  selectedRow && "bg-muted/70 shadow-[inset_2px_0_0_var(--foreground)]",
+                  selectedRow &&
+                    "bg-muted/70 shadow-[inset_2px_0_0_var(--foreground)]",
                   future && "opacity-40",
                 )}
               >
@@ -258,7 +275,11 @@ export function TraceView({
                   </span>
                   <span className="truncate text-sm">{stepTitle(span)}</span>
                 </button>
-                <div className="relative" title={formatDuration(span.durationMs)} aria-hidden="true">
+                <div
+                  className="relative"
+                  title={formatDuration(span.durationMs)}
+                  aria-hidden="true"
+                >
                   <div
                     className="absolute inset-y-2 overflow-hidden rounded-sm"
                     style={barBox(span, end)}
@@ -269,7 +290,10 @@ export function TraceView({
                     />
                     <div
                       className="absolute inset-y-0 left-0"
-                      style={{ width: `${played * 100}%`, backgroundColor: barColor(span) }}
+                      style={{
+                        width: `${played * 100}%`,
+                        backgroundColor: barColor(span),
+                      }}
                     />
                   </div>
                   <span
@@ -299,7 +323,15 @@ export function TraceView({
               />
             )
           }
-          {...(selected === undefined ? { empty: <p className="p-4 text-sm text-muted-foreground">Select a step.</p> } : {})}
+          {...(selected === undefined
+            ? {
+                empty: (
+                  <p className="p-4 text-sm text-muted-foreground">
+                    Select a step.
+                  </p>
+                ),
+              }
+            : {})}
         >
           {selected === undefined ? null : (
             <SpanDetail
@@ -335,12 +367,14 @@ function ink(amount: number): string {
 }
 
 function barColor(span: Span): string {
-  if (span.status === "error" || span.status === "denied") return "var(--destructive)";
+  if (span.status === "error" || span.status === "denied")
+    return "var(--destructive)";
   if (span.status === "waiting") return "var(--warn)";
   if (span.status === "running") return "var(--foreground)";
   if (span.kind === "network") return seriesColor(0);
   if (span.kind === "mail" || span.kind === "attachment") return seriesColor(1);
-  if (span.kind === "provision" || span.kind === "reactor") return seriesColor(3);
+  if (span.kind === "provision" || span.kind === "reactor")
+    return seriesColor(3);
   if (span.kind === "reasoning") return ink(40);
   if (span.kind === "compact") return seriesColor(2);
   if (span.kind === "transform") return seriesColor(3);
@@ -349,7 +383,13 @@ function barColor(span: Span): string {
 }
 
 function usageTotal(usage: UsageBreakdown): number {
-  return usage.input + usage.output + usage.cacheRead + usage.cacheWrite + usage.thinking;
+  return (
+    usage.input +
+    usage.output +
+    usage.cacheRead +
+    usage.cacheWrite +
+    usage.thinking
+  );
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -373,7 +413,9 @@ function PlacementItem({ label, value }: { label: string; value: string }) {
 function LiveGrant({ span }: { span: Span | undefined }) {
   if (span?.grant === undefined) {
     return (
-      <p className="font-mono text-[11px] text-muted-foreground">No grant at the playhead.</p>
+      <p className="font-mono text-[11px] text-muted-foreground">
+        No grant at the playhead.
+      </p>
     );
   }
   const grant = span.grant;
@@ -406,11 +448,17 @@ function SpanDetail({
   const thoughts = thoughtSpans(traceSpans, span);
   return (
     <div className="flex flex-col gap-4">
-      {usageTotal(usageOfSpan(span)) > 0 ? <UsageMix usage={usageOfSpan(span)} /> : null}
+      {usageTotal(usageOfSpan(span)) > 0 ? (
+        <UsageMix usage={usageOfSpan(span)} />
+      ) : null}
       <InspectorKv
         rows={[
           { label: "Starts", value: formatClock(span.startMs), mono: true },
-          { label: "Duration", value: formatDuration(span.durationMs), mono: true },
+          {
+            label: "Duration",
+            value: formatDuration(span.durationMs),
+            mono: true,
+          },
           ...(span.usage?.provider === undefined
             ? []
             : [{ label: "Provider", value: span.usage.provider, mono: true }]),
@@ -419,14 +467,22 @@ function SpanDetail({
             : [{ label: "Model", value: span.usage.model, mono: true }]),
           ...(span.usage?.cachedTokens === undefined
             ? []
-            : [{ label: "Cached", value: formatTokens(span.usage.cachedTokens), mono: true }]),
+            : [
+                {
+                  label: "Cached",
+                  value: formatTokens(span.usage.cachedTokens),
+                  mono: true,
+                },
+              ]),
           ...(spanTokens(span) === 0
             ? []
             : [
                 {
                   label: "Speed",
                   value: formatSpeed(
-                    span.durationMs > 0 ? spanTokens(span) / (span.durationMs / 1000) : null,
+                    span.durationMs > 0
+                      ? spanTokens(span) / (span.durationMs / 1000)
+                      : null,
                   ),
                   mono: true,
                 },
@@ -456,9 +512,15 @@ function SpanDetail({
         ]}
       />
       {span.nudge === undefined ? null : <NudgeBlock nudge={span.nudge} />}
-      {span.compaction === undefined ? null : <CompactionBlock compaction={span.compaction} />}
-      {span.contextChange === undefined ? null : <ContextBlock change={span.contextChange} />}
-      {layers.grants && span.grant !== undefined ? <GrantBlock grant={span.grant} /> : null}
+      {span.compaction === undefined ? null : (
+        <CompactionBlock compaction={span.compaction} />
+      )}
+      {span.contextChange === undefined ? null : (
+        <ContextBlock change={span.contextChange} />
+      )}
+      {layers.grants && span.grant !== undefined ? (
+        <GrantBlock grant={span.grant} />
+      ) : null}
       {layers.reasoning
         ? thoughts.map((thought) => (
             <ThoughtBlock
@@ -478,10 +540,14 @@ function SpanDetail({
       {layers.media && span.media !== undefined && span.media.length > 0 ? (
         <MediaBlock items={span.media} />
       ) : null}
-      {layers.network && span.network !== undefined && span.network.length > 0 ? (
+      {layers.network &&
+      span.network !== undefined &&
+      span.network.length > 0 ? (
         <NetworkBlock hops={span.network} />
       ) : null}
-      {layers.raw ? <TextBlock label="Raw" text={span.payload ?? rawSpan(span)} /> : null}
+      {layers.raw ? (
+        <TextBlock label="Raw" text={span.payload ?? rawSpan(span)} />
+      ) : null}
     </div>
   );
 }
@@ -501,14 +567,21 @@ function AgentBriefPanel({ brief }: { brief: AgentBrief }) {
     <div className="grid gap-6 border-b border-border bg-card px-4 py-4 lg:grid-cols-2">
       <section className="flex min-w-0 flex-col gap-2">
         <h3 className="text-sm font-semibold">System prompt</h3>
-        <p className="max-h-28 overflow-auto whitespace-pre-wrap text-sm leading-6">{brief.systemPrompt}</p>
+        <p className="max-h-28 overflow-auto whitespace-pre-wrap text-sm leading-6">
+          {brief.systemPrompt}
+        </p>
       </section>
       <section className="flex min-w-0 flex-col gap-2">
         <h3 className="text-sm font-semibold">Tools</h3>
         <ul className="flex flex-col gap-2">
           {brief.tools.map((tool) => (
-            <li key={tool.name} className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3 text-sm">
-              <span className="truncate font-mono text-xs leading-6">{tool.name}</span>
+            <li
+              key={tool.name}
+              className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3 text-sm"
+            >
+              <span className="truncate font-mono text-xs leading-6">
+                {tool.name}
+              </span>
               <span className="text-muted-foreground">{tool.description}</span>
             </li>
           ))}
@@ -551,14 +624,23 @@ function CompactionBlock({ compaction }: { compaction: Compaction }) {
         </thead>
         <tbody>
           {compaction.turns.map((turn) => (
-            <tr key={`${turn.role}:${turn.title}`} className="border-t border-border">
+            <tr
+              key={`${turn.role}:${turn.title}`}
+              className="border-t border-border"
+            >
               <td className="py-1 pr-2">
-                <span className={turn.kept ? "" : "text-muted-foreground"}>{turn.title}</span>
+                <span className={turn.kept ? "" : "text-muted-foreground"}>
+                  {turn.title}
+                </span>
                 {turn.note === undefined ? null : (
-                  <span className="block text-muted-foreground">{turn.note}</span>
+                  <span className="block text-muted-foreground">
+                    {turn.note}
+                  </span>
                 )}
               </td>
-              <td className="py-1 text-right font-mono">{formatTokens(turn.tokens)}</td>
+              <td className="py-1 text-right font-mono">
+                {formatTokens(turn.tokens)}
+              </td>
               <td className="py-1">{turn.kept ? "Kept" : "Dropped"}</td>
             </tr>
           ))}
@@ -603,7 +685,9 @@ function ThoughtBlock({
         </p>
       ) : (
         <p className="whitespace-pre-wrap text-sm leading-relaxed">
-          {streaming ? revealedText(span.thinking, span, timeMs) : span.thinking}
+          {streaming
+            ? revealedText(span.thinking, span, timeMs)
+            : span.thinking}
           {streaming ? (
             <span className="ml-0.5 inline-block h-4 w-px align-text-bottom bg-foreground" />
           ) : null}
@@ -621,9 +705,13 @@ function GrantBlock({ grant }: { grant: GrantUse }) {
         <EffectBadge effect={grant.effect} />
         {grant.blocked ? <Badge tone="danger">Blocked</Badge> : null}
       </div>
-      {grant.blockReason === undefined ? null : <p className="text-sm">{grant.blockReason}</p>}
+      {grant.blockReason === undefined ? null : (
+        <p className="text-sm">{grant.blockReason}</p>
+      )}
       {grant.resolvedBy === null ? (
-        <p className="text-xs text-muted-foreground">Nothing matched. Failed closed.</p>
+        <p className="text-xs text-muted-foreground">
+          Nothing matched. Failed closed.
+        </p>
       ) : (
         <GrantLine label="Resolved by" grant={grant.resolvedBy} />
       )}
@@ -647,7 +735,10 @@ function GrantLine({
   label: string;
   grant: NonNullable<GrantUse["resolvedBy"]>;
 }) {
-  const exact = grant.specificity === undefined ? "" : ` · specificity ${grant.specificity}`;
+  const exact =
+    grant.specificity === undefined
+      ? ""
+      : ` · specificity ${grant.specificity}`;
   return (
     <p className="font-mono text-[11px] leading-relaxed">
       <span className="text-muted-foreground">{label} </span>
@@ -661,12 +752,23 @@ function GrantLine({
 
 function EffectBadge({ effect }: { effect: GrantUse["effect"] }) {
   const tone =
-    effect === "allow" ? "success" : effect === "ask" ? "warning" : effect === "none" ? "neutral" : "danger";
+    effect === "allow"
+      ? "success"
+      : effect === "ask"
+        ? "warning"
+        : effect === "none"
+          ? "neutral"
+          : "danger";
   return <Badge tone={tone}>{effect}</Badge>;
 }
 
 function SignatureBadge({ status }: { status: SignatureStatus }) {
-  const tone = status === "valid" ? "success" : status === "invalid" ? "danger" : "warning";
+  const tone =
+    status === "valid"
+      ? "success"
+      : status === "invalid"
+        ? "danger"
+        : "warning";
   return <Badge tone={tone}>{status}</Badge>;
 }
 
@@ -720,7 +822,11 @@ function NetworkBlock({ hops }: { hops: readonly NetworkHop[] }) {
             <p className="mt-0.5 flex flex-wrap items-center gap-2 text-muted-foreground">
               <span>{hop.status === null ? "no status" : hop.status}</span>
               <span>{formatBytes(hop.bytes)}</span>
-              {hop.external ? <Badge tone="warning">External</Badge> : <Badge tone="neutral">Internal</Badge>}
+              {hop.external ? (
+                <Badge tone="warning">External</Badge>
+              ) : (
+                <Badge tone="neutral">Internal</Badge>
+              )}
             </p>
           </li>
         ))}

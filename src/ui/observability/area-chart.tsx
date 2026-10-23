@@ -39,7 +39,9 @@ export function AreaChart({
 }: AreaChartProps) {
   const [hover, setHover] = useState<number | null>(null);
   const compareValues =
-    compare !== undefined && compare.length === data.length ? compare : undefined;
+    compare !== undefined && compare.length === data.length
+      ? compare
+      : undefined;
   const max = Math.max(
     0,
     ...data.map((point) => point.value),
@@ -55,7 +57,9 @@ export function AreaChart({
     y: PAD_TOP + innerH - (axisMax <= 0 ? 0 : value / axisMax) * innerH,
   });
   const primary = data.map((point, index) => plot(point.value, index));
-  const secondary = compareValues?.map((point, index) => plot(point.value, index));
+  const secondary = compareValues?.map((point, index) =>
+    plot(point.value, index),
+  );
   const baseline = PAD_TOP + innerH;
   const color = seriesColor(0);
   const compareColor = seriesColor(1);
@@ -150,7 +154,12 @@ export function AreaChart({
             <path d={areaPath(primary, baseline)} fill={color} opacity={0.16} />
           ) : null}
           {primary.length > 1 ? (
-            <path d={linePath(primary)} fill="none" stroke={color} strokeWidth={2} />
+            <path
+              d={linePath(primary)}
+              fill="none"
+              stroke={color}
+              strokeWidth={2}
+            />
           ) : null}
           {secondary !== undefined && secondary.length > 1 ? (
             <path
@@ -183,7 +192,12 @@ export function AreaChart({
                 stroke="var(--foreground)"
                 strokeOpacity={0.45}
               />
-              <circle cx={primary[hover].x} cy={primary[hover].y} r={3.5} fill={color} />
+              <circle
+                cx={primary[hover].x}
+                cy={primary[hover].y}
+                r={3.5}
+                fill={color}
+              />
               {secondary?.[hover] !== undefined ? (
                 <circle
                   cx={secondary[hover].x}

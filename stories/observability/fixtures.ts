@@ -111,7 +111,8 @@ const allowRead: GrantUse = {
 const askShell: GrantUse = {
   effect: "ask",
   blocked: true,
-  blockReason: "The creator grant requires approval before a shell command runs.",
+  blockReason:
+    "The creator grant requires approval before a shell command runs.",
   resolvedBy: shellAsk,
   matching: [shellAsk, shellDeny],
 };
@@ -342,7 +343,8 @@ export const TRACES: Record<string, Trace> = {
           costUsd: 0.07,
         },
         input: "Review the diff for correctness and missing tests.",
-        output: "The trailing comma is the missing token. I will not run the suite until the gate clears.",
+        output:
+          "The trailing comma is the missing token. I will not run the suite until the gate clears.",
       },
       {
         id: "thought",
@@ -374,7 +376,8 @@ export const TRACES: Record<string, Trace> = {
         status: "ok",
         startMs: 52_000,
         durationMs: 400,
-        output: "The assertion expects four tokens. The splitter drops a trailing comma.",
+        output:
+          "The assertion expects four tokens. The splitter drops a trailing comma.",
       },
       {
         id: "tool-shell",
@@ -497,7 +500,10 @@ export const TRACES: Record<string, Trace> = {
         "You edit release notes. Stay inside the workspace. When a write is refused, say so and stop. Do not invent a version number.",
       tools: [
         { name: "read_file", description: "Read one file by its path." },
-        { name: "write_file", description: "Replace one file. Refused outside the workspace." },
+        {
+          name: "write_file",
+          description: "Replace one file. Refused outside the workspace.",
+        },
         { name: "grep", description: "Find a pattern under a path." },
       ],
     },
@@ -612,7 +618,8 @@ export const TRACES: Record<string, Trace> = {
         durationMs: 120,
         nudge: {
           action: "compact",
-          because: "The notes were too long, so the director asked for a shorter history.",
+          because:
+            "The notes were too long, so the director asked for a shorter history.",
         },
       },
       {
@@ -627,13 +634,19 @@ export const TRACES: Record<string, Trace> = {
           compactor: "summarize",
           version: "1",
           reason: "input-budget",
-          detail: "The prompt crossed the input budget, so older turns were folded.",
+          detail:
+            "The prompt crossed the input budget, so older turns were folded.",
           turnsBefore: 6,
           turnsAfter: 2,
           tokensBefore: 4_200,
           tokensAfter: 1_100,
           turns: [
-            { role: "user", title: "Write the notes for the parser fix.", tokens: 180, kept: true },
+            {
+              role: "user",
+              title: "Write the notes for the parser fix.",
+              tokens: 180,
+              kept: true,
+            },
             {
               role: "assistant",
               title: "I will open the existing notes and the diff.",
@@ -684,7 +697,8 @@ export const TRACES: Record<string, Trace> = {
           version: "1",
           trigger: "pre-inference",
           reason: "stale-tool-result",
-          summary: "The prompt dropped the old file listing. The saved history still has it.",
+          summary:
+            "The prompt dropped the old file listing. The saved history still has it.",
         },
       },
       {
@@ -761,7 +775,10 @@ export const TRACES: Record<string, Trace> = {
       systemPrompt:
         "You investigate a failing check. Run the test only after a person approves the command. Report the assertion that failed.",
       tools: [
-        { name: "shell", description: "Run one command. A shell command waits for approval." },
+        {
+          name: "shell",
+          description: "Run one command. A shell command waits for approval.",
+        },
       ],
     },
     spans: [

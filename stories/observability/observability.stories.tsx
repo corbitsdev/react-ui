@@ -1,14 +1,25 @@
 import { ObservabilityApp } from "../../src/blocks/observability/app.js";
 import { AreaChart } from "../../src/ui/observability/area-chart.js";
 import { SessionTable } from "../../src/ui/observability/session-table.js";
-import { WorkflowFinOps, WorkflowsFinOps } from "../../src/ui/observability/slots.js";
-import { AgentTrace, WorkflowTrace } from "../../src/ui/observability/trace-view.js";
+import {
+  WorkflowFinOps,
+  WorkflowsFinOps,
+} from "../../src/ui/observability/slots.js";
+import {
+  AgentTrace,
+  WorkflowTrace,
+} from "../../src/ui/observability/trace-view.js";
 import { FAILURES, SERIES, SESSIONS, TRACES } from "./fixtures.js";
 
 export default { title: "Observability / Spike" };
 
 export const App = () => (
-  <ObservabilityApp sessions={SESSIONS} traces={TRACES} series={SERIES} failures={FAILURES} />
+  <ObservabilityApp
+    sessions={SESSIONS}
+    traces={TRACES}
+    series={SERIES}
+    failures={FAILURES}
+  />
 );
 
 export const Area = () => (
@@ -26,7 +37,11 @@ export const Area = () => (
 
 export const Sessions = () => (
   <div className="p-6">
-    <SessionTable sessions={SESSIONS} selectedId="wf-review" onSelect={() => {}} />
+    <SessionTable
+      sessions={SESSIONS}
+      selectedId="wf-review"
+      onSelect={() => {}}
+    />
   </div>
 );
 

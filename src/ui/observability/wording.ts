@@ -40,9 +40,12 @@ function whatItDid(span: Span): string | undefined {
   const pattern = text(record, "pattern");
   const path = text(record, "path") ?? text(record, "file");
   if (pattern !== undefined && !span.name.includes(pattern)) {
-    return path === undefined ? `Find ${pattern}` : `Find ${pattern} in ${path}`;
+    return path === undefined
+      ? `Find ${pattern}`
+      : `Find ${pattern} in ${path}`;
   }
-  if (path !== undefined && !span.name.includes(path)) return `${verb(span.name)} ${path}`;
+  if (path !== undefined && !span.name.includes(path))
+    return `${verb(span.name)} ${path}`;
   const url = text(record, "url");
   if (url !== undefined) return shortUrl(url);
   return undefined;
@@ -64,7 +67,9 @@ function shortUrl(url: string): string {
   }
 }
 
-function recordOf(input: string | undefined): Record<string, unknown> | undefined {
+function recordOf(
+  input: string | undefined,
+): Record<string, unknown> | undefined {
   if (input === undefined || !input.startsWith("{")) return undefined;
   try {
     const value: unknown = JSON.parse(input);
@@ -79,7 +84,10 @@ function recordOf(input: string | undefined): Record<string, unknown> | undefine
   return undefined;
 }
 
-function text(record: Record<string, unknown>, key: string): string | undefined {
+function text(
+  record: Record<string, unknown>,
+  key: string,
+): string | undefined {
   const value = record[key];
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }

@@ -99,7 +99,10 @@ export function stepKeys(spans: readonly Span[]): ReadonlyMap<string, string> {
   return keys;
 }
 
-export function measures(trace: Trace, sort: MeasureSort = "time"): readonly StepMeasure[] {
+export function measures(
+  trace: Trace,
+  sort: MeasureSort = "time",
+): readonly StepMeasure[] {
   const keys = stepKeys(trace.spans);
   const rows = trace.spans.map((span) => {
     const tokens = spanTokens(span);
@@ -157,7 +160,8 @@ export function rollup(trace: Trace): TraceRollup {
     if (span.status === "denied") denied += 1;
     if (span.grant?.blocked === true) blocked += 1;
     externalHops += span.network?.filter((hop) => hop.external).length ?? 0;
-    if (span.signature === "invalid" || span.signature === "missing") badSignatures += 1;
+    if (span.signature === "invalid" || span.signature === "missing")
+      badSignatures += 1;
     if (span.status === "waiting") waitingMs += span.durationMs;
     if (span.kind === "provision") provisionMs += span.durationMs;
   }
@@ -199,10 +203,15 @@ export function modelShares(trace: Trace): readonly ModelShare[] {
   return [...byKey.values()].sort((a, b) => b.costUsd - a.costUsd);
 }
 
-function quirksFor(trace: Trace, provider: string, model: string): readonly string[] {
+function quirksFor(
+  trace: Trace,
+  provider: string,
+  model: string,
+): readonly string[] {
   const listed =
-    trace.providers?.find((item) => item.provider === provider && item.model === model)
-      ?.quirks ?? [];
+    trace.providers?.find(
+      (item) => item.provider === provider && item.model === model,
+    )?.quirks ?? [];
   const redacted = trace.spans.some(
     (span) => span.redacted === true && modelOf(trace, span) === model,
   );
@@ -210,7 +219,13 @@ function quirksFor(trace: Trace, provider: string, model: string): readonly stri
 }
 
 export function usageOf(trace: Trace): UsageBreakdown {
-  const totals = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, thinking: 0 };
+  const totals = {
+    input: 0,
+    output: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    thinking: 0,
+  };
   for (const span of trace.spans) {
     totals.input += span.usage?.inputTokens ?? 0;
     totals.output += span.usage?.outputTokens ?? 0;
@@ -255,7 +270,9 @@ export function shapeOf(trace: Trace): readonly ShapeNode[] {
   return [...grouped.values()].sort((a, b) => b.durationMs - a.durationMs);
 }
 
-export function observationRows(traces: readonly Trace[]): readonly ObservationRow[] {
+export function observationRows(
+  traces: readonly Trace[],
+): readonly ObservationRow[] {
   const rows: ObservationRow[] = [];
   for (const trace of traces) {
     for (const span of trace.spans) {
@@ -273,7 +290,9 @@ export function observationRows(traces: readonly Trace[]): readonly ObservationR
       });
     }
   }
-  return rows.sort((a, b) => b.costUsd - a.costUsd || b.latencyMs - a.latencyMs);
+  return rows.sort(
+    (a, b) => b.costUsd - a.costUsd || b.latencyMs - a.latencyMs,
+  );
 }
 
 function levelOf(status: Span["status"]): ObservationRow["level"] {
@@ -293,7 +312,10 @@ export function portfolio(traces: readonly Trace[]): readonly ModelShare[] {
         ...current,
         tokens: current.tokens + share.tokens,
         costUsd: current.costUsd + share.costUsd,
-        quirks: current.quirks.length > share.quirks.length ? current.quirks : share.quirks,
+        quirks:
+          current.quirks.length > share.quirks.length
+            ? current.quirks
+            : share.quirks,
       });
     }
   }
@@ -331,7 +353,10 @@ export function findings(trace: Trace): readonly Finding[] {
         id: `${span.id}:${hop.url}`,
         tone: "warning",
         title: `${hop.method} ${hop.url}`,
-        detail: hop.status === null ? "External, no status" : `External · ${hop.status}`,
+        detail:
+          hop.status === null
+            ? "External, no status"
+            : `External · ${hop.status}`,
       });
     }
     if (span.signature === "invalid" || span.signature === "missing") {

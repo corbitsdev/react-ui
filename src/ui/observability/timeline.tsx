@@ -150,18 +150,33 @@ export function TraceTimeline({
           aria-hidden="true"
           onPointerDown={(event) => {
             event.currentTarget.setPointerCapture(event.pointerId);
-            seekAt(event.currentTarget, event.clientX, end, onTimeChange, onPlayingChange);
+            seekAt(
+              event.currentTarget,
+              event.clientX,
+              end,
+              onTimeChange,
+              onPlayingChange,
+            );
           }}
           onPointerMove={(event) => {
             if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-            seekAt(event.currentTarget, event.clientX, end, onTimeChange, onPlayingChange);
+            seekAt(
+              event.currentTarget,
+              event.clientX,
+              end,
+              onTimeChange,
+              onPlayingChange,
+            );
           }}
         >
           {spans.map((span) => (
             <span
               key={span.id}
               title={stepTitle(span)}
-              className={cn("absolute top-1.5 h-3 rounded-full", span.startMs > timeMs && "opacity-35")}
+              className={cn(
+                "absolute top-1.5 h-3 rounded-full",
+                span.startMs > timeMs && "opacity-35",
+              )}
               style={{
                 left: `${(span.startMs / end) * 100}%`,
                 width: `max(4px, ${(Math.max(span.durationMs, 1) / end) * 100}%)`,
