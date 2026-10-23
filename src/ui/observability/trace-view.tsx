@@ -197,7 +197,7 @@ export function TraceView({
   });
   const [representation, setRepresentation] = useControllableState({
     value: representationProp,
-    defaultValue: AUDIENCE_REPRESENTATION[defaultAudience],
+    defaultValue: AUDIENCE_REPRESENTATION[audienceProp ?? defaultAudience],
     onChange: onRepresentationChange,
     name: "representation",
   });
@@ -206,7 +206,7 @@ export function TraceView({
   const placed = placeSpans(shown);
   const selected = trace.spans.find((span) => span.id === selectedId);
   const end = Math.max(trace.durationMs, traceEnd(trace.spans), 1);
-  const liveGrant = layers.grants ? grantAt(trace.spans, timeMs) : undefined;
+  const liveGrant = layers.grants ? grantAt(shown, timeMs) : undefined;
   const index = placed.findIndex((row) => row.span.id === selectedId);
   const rowRefs = useRef(new Map<string, HTMLButtonElement>());
 
@@ -531,7 +531,8 @@ function ink(amount: number): string {
 
 function barColor(span: Span): string {
   if (span.status === "error" || span.status === "denied") return "var(--destructive)";
-  if (span.status === "waiting" || span.status === "running") return "var(--primary)";
+  if (span.status === "waiting") return "var(--warn)";
+  if (span.status === "running") return "var(--foreground)";
   if (span.kind === "network") return seriesColor(0);
   if (span.kind === "mail" || span.kind === "attachment") return seriesColor(1);
   if (span.kind === "provision" || span.kind === "reactor") return seriesColor(3);

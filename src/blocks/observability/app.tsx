@@ -3,6 +3,15 @@
 import { useMemo, useState } from "react";
 
 import { Button } from "../../ui/button.js";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../ui/dialog.js";
 import { EmptyState } from "../../ui/empty-state.js";
 import { FilterBar } from "../../ui/filter-bar.js";
 import { Input } from "../../ui/input.js";
@@ -12,7 +21,6 @@ import type {
   SeriesPoint,
   SessionSummary,
   Trace,
-  TraceKind,
 } from "../../ui/observability/model.js";
 import { observationRows, portfolio, rollup, usageOf } from "../../ui/observability/metrics.js";
 import { Observations } from "../../ui/observability/observations.js";
@@ -59,6 +67,12 @@ export function ObservabilityApp({
   );
 
   const trace = openId === null ? undefined : traces[openId];
+
+  function openTrace(id: string, spanId?: string) {
+    setOpenId(id);
+    setFocusSpan(spanId);
+    setScreen("trace");
+  }
 
   return (
     <div className="flex h-[900px] overflow-hidden rounded-lg border border-border bg-background text-foreground">
@@ -148,11 +162,7 @@ export function ObservabilityApp({
               <SessionTable
                 sessions={visible}
                 {...(openId === null ? {} : { selectedId: openId })}
-                onSelect={(id) => {
-                  setOpenId(id);
-                  setFocusSpan(undefined);
-                  setScreen("trace");
-                }}
+                onSelect={(id) => openTrace(id)}
               />
             )}
           </section>
@@ -161,11 +171,7 @@ export function ObservabilityApp({
           <Observations
             traces={Object.values(traces)}
             wording={wording}
-            onOpen={(traceId, spanId) => {
-              setOpenId(traceId);
-              setFocusSpan(spanId);
-              setScreen("trace");
-            }}
+            onOpen={(traceId, spanId) => openTrace(traceId, spanId)}
           />
         ) : null}
         {screen === "trace" ? (
@@ -187,7 +193,7 @@ export function ObservabilityApp({
                   key={`${trace.id}:${focusSpan ?? ""}`}
                   trace={trace}
                   peers={Object.values(traces)}
-                  onOpen={setOpenId}
+                  onOpen={openTrace}
                   wording={wording}
                   onWordingChange={setWording}
                   {...(focusSpan === undefined ? {} : { defaultSelectedId: focusSpan })}
@@ -198,7 +204,7 @@ export function ObservabilityApp({
                   key={`${trace.id}:${focusSpan ?? ""}`}
                   trace={trace}
                   peers={Object.values(traces)}
-                  onOpen={setOpenId}
+                  onOpen={openTrace}
                   wording={wording}
                   onWordingChange={setWording}
                   {...(focusSpan === undefined ? {} : { defaultSelectedId: focusSpan })}
@@ -213,8 +219,13 @@ export function ObservabilityApp({
         <AddAgent
           token={token}
           onClose={() => setAdding(false)}
-          onMint={(name: TraceKind) => {
-            setToken(`obs_${name}_${Math.random().toString(36).slice(2, 10)}`);
+          onMint={(name) => {
+            const slug = name
+              .trim()
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, "");
+            setToken(`obs_${slug}_${Math.random().toString(36).slice(2, 10)}`);
           }}
         />
       ) : null}
@@ -338,36 +349,42 @@ function AddAgent({
 }: {
   token: string | null;
   onClose: () => void;
-  onMint: (kind: TraceKind) => void;
+  onMint: (name: string) => void;
 }) {
   const [name, setName] = useState("editor");
+  const label = name.trim();
   return (
-    <div className="fixed inset-0 z-20 flex items-center justify-center bg-foreground/20 p-6">
-      <div
-        role="dialog"
-        aria-labelledby="add-agent-title"
-        className="w-full max-w-md rounded-lg border border-border bg-background p-4 shadow-sm"
-      >
-        <h2 id="add-agent-title" className="text-lg font-semibold">
-          Add an agent
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          A token is shown once. The machine that runs the agent keeps it.
-        </p>
-        <label className="mt-4 flex flex-col gap-1 text-sm">
-          Name
-          <Input value={name} onChange={(event) => setName(event.target.value)} />
-        </label>
-        {token === null ? null : (
-          <p className="mt-3 rounded-md bg-muted p-2 font-mono text-xs">{token}</p>
-        )}
-        <div className="mt-4 flex justify-end gap-2">
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add an agent</DialogTitle>
+          <DialogDescription>
+            A token is shown once. The machine that runs the agent keeps it.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <label className="flex flex-col gap-1 text-sm">
+            Name
+            <Input value={name} onChange={(event) => setName(event.target.value)} />
+          </label>
+          {token === null ? null : (
+            <p className="mt-3 rounded-md bg-muted p-2 font-mono text-xs">{token}</p>
+          )}
+        </DialogBody>
+        <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button onClick={() => onMint("agent")}>Mint token</Button>
-        </div>
-      </div>
-    </div>
+          <Button disabled={label.length === 0 || token !== null} onClick={() => onMint(label)}>
+            Mint token
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

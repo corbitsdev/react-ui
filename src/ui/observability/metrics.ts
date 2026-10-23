@@ -121,14 +121,20 @@ export function measures(trace: Trace, sort: MeasureSort = "time"): readonly Ste
       startMs: span.startMs,
     };
   });
+  const kept = (row: StepMeasure) =>
+    row.costUsd > 0 ||
+    row.tokens > 0 ||
+    row.status === "error" ||
+    row.status === "denied" ||
+    row.status === "waiting";
   if (sort === "cost") {
     return rows
-      .filter((row) => row.costUsd > 0 || row.tokens > 0)
+      .filter(kept)
       .sort((a, b) => b.costUsd - a.costUsd || a.startMs - b.startMs);
   }
   if (sort === "duration") {
     return rows
-      .filter((row) => row.durationMs >= 1000 || row.tokens > 0)
+      .filter((row) => row.durationMs >= 1000 || kept(row))
       .sort((a, b) => b.durationMs - a.durationMs || a.startMs - b.startMs);
   }
   return rows;
@@ -227,11 +233,9 @@ export function usageOfSpan(span: Span): UsageBreakdown {
 
 /** Same step name collapsed, with a count. Loops show up as one node. */
 export function shapeOf(trace: Trace): readonly ShapeNode[] {
-  const keys = stepKeys(trace.spans);
   const grouped = new Map<string, ShapeNode>();
   for (const span of trace.spans) {
-    const full = keys.get(span.id) ?? span.id;
-    const key = full.replace(/\.\d+$/, "");
+    const key = `${span.kind}:${span.name}`;
     const current = grouped.get(key) ?? {
       key,
       name: span.name,

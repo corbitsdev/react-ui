@@ -72,7 +72,7 @@ export function nextBoundary(
 ): number | undefined {
   const starts = spans
     .map((span) => span.startMs)
-    .filter((start) => start > timeMs + 1)
+    .filter((start) => start > timeMs)
     .sort((a, b) => a - b);
   return starts[0];
 }
@@ -83,7 +83,7 @@ export function previousBoundary(
 ): number | undefined {
   const starts = spans
     .map((span) => span.startMs)
-    .filter((start) => start < timeMs - 1)
+    .filter((start) => start < timeMs)
     .sort((a, b) => a - b);
   return starts[starts.length - 1];
 }

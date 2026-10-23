@@ -1,8 +1,10 @@
 export function formatDuration(ms: number): string {
   if (ms < 1000) return `${Math.round(ms)} ms`;
-  if (ms < 60_000) return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)} s`;
-  const minutes = Math.floor(ms / 60_000);
-  const seconds = Math.round((ms % 60_000) / 1000);
+  if (ms < 10_000) return `${(ms / 1000).toFixed(1)} s`;
+  const totalSeconds = Math.round(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes === 0) return `${seconds} s`;
   if (seconds === 0) return `${minutes}m`;
   return `${minutes}m ${seconds}s`;
 }
@@ -14,7 +16,7 @@ export function formatClock(ms: number): string {
 
 export function formatTokens(value: number): string {
   if (value < 1000) return String(value);
-  if (value < 1_000_000) return `${(value / 1000).toFixed(1)}k`;
+  if (value < 999_500) return `${(value / 1000).toFixed(1)}k`;
   return `${(value / 1_000_000).toFixed(2)}M`;
 }
 
