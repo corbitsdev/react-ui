@@ -73,33 +73,33 @@ export function ObservabilityApp({
         <NavButton current={screen === "observations"} onClick={() => setScreen("observations")}>
           Observations
         </NavButton>
-        <div className="mt-4 flex flex-col gap-1" role="group" aria-label="Words">
-          <span className="px-2 text-xs text-muted-foreground">Words</span>
-          <div className="flex gap-1 px-1">
-            {(
-              [
-                ["plain", "Plain"],
-                ["precise", "Precise"],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                aria-pressed={wording === id}
-                onClick={() => setWording(id)}
-                className={cn(
-                  "rounded-md border px-2 py-1 text-xs",
-                  wording === id
-                    ? "border-border bg-muted font-medium text-foreground"
-                    : "border-transparent text-muted-foreground hover:bg-muted/70",
-                )}
-              >
-                {label}
-              </button>
-            ))}
+        <div className="mt-auto flex flex-col gap-3 border-t border-border pt-3">
+          <div className="flex flex-col gap-1" role="group" aria-label="Words">
+            <span className="px-2 text-xs text-muted-foreground">Words</span>
+            <div className="flex gap-1 px-1">
+              {(
+                [
+                  ["plain", "Plain"],
+                  ["precise", "Precise"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={wording === id}
+                  onClick={() => setWording(id)}
+                  className={cn(
+                    "rounded-full px-2.5 py-1 text-xs",
+                    wording === id
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="mt-auto">
           <Button className="w-full" onClick={() => setAdding(true)}>
             Add agent
           </Button>
@@ -281,9 +281,9 @@ function Overview({
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold">Cost by model</h2>
-          <ul className="flex flex-col gap-1 text-sm">
+          <ul className="flex flex-col text-sm">
             {shares.map((share) => (
-              <li key={`${share.provider}/${share.model}`} className="flex justify-between gap-3 font-mono text-xs">
+              <li key={`${share.provider}/${share.model}`} className="flex justify-between gap-3 border-b border-border py-1.5 font-mono text-xs">
                 <span>{share.provider} / {share.model}</span>
                 <span>{formatCost(share.costUsd)} · {formatTokens(share.tokens)}</span>
               </li>
@@ -292,11 +292,11 @@ function Overview({
         </section>
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold">Latency by run</h2>
-          <ul className="flex flex-col gap-1 text-sm">
+          <ul className="flex flex-col text-sm">
             {sessions.map((session) => (
-              <li key={session.id} className="flex justify-between gap-3 font-mono text-xs">
+              <li key={session.id} className="flex justify-between gap-3 border-b border-border py-1.5 font-mono text-xs">
                 <span className="truncate">{session.name}</span>
-                <span>{formatDuration(session.durationMs)} · {formatCost(session.costUsd)}</span>
+                <span className="shrink-0">{formatDuration(session.durationMs)} · {formatCost(session.costUsd)}</span>
               </li>
             ))}
           </ul>

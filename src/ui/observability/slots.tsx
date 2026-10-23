@@ -422,7 +422,7 @@ export function UsageMix({ usage }: { readonly usage: UsageBreakdown }) {
           return (
             <li key={key} className="grid grid-cols-[6.5rem_1fr_3.5rem] items-center gap-2">
               <span className="text-xs">{label}</span>
-              <span className="h-2 rounded-sm bg-muted">
+              <span className="h-2.5 rounded-sm bg-muted">
                 <span
                   className={cn("block h-full rounded-sm", USAGE_BAR[key])}
                   style={{ width: `${(value / max) * 100}%` }}
