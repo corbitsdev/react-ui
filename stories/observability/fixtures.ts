@@ -860,3 +860,13 @@ export const TRACES: Record<string, Trace> = {
     ],
   },
 };
+
+export function trace(id: string): Trace {
+  const value = TRACES[id];
+  if (value === undefined) throw new Error(`Missing fixture ${id}`);
+  return value;
+}
+
+export function tracesOf(kind: Trace["kind"]): readonly Trace[] {
+  return Object.values(TRACES).filter((item) => item.kind === kind);
+}

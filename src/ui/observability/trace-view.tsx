@@ -3,50 +3,23 @@
 import { useEffect, useRef } from "react";
 
 import { useControllableState } from "../../hooks/use-controllable-state.js";
-import { seriesColor } from "../../lib/chart-palette.js";
 import { cn } from "../../lib/utils.js";
 import { Badge } from "../badge.js";
+import { InspectorHeader, InspectorShell } from "../inspector-shell.js";
+import { formatClock, formatDuration } from "./format.js";
+import { DEFAULT_LAYERS, type Trace, type TraceLayers } from "./model.js";
+import { deepestAt, grantAt, visibleSpans } from "./playback.js";
+import { AgentBrief, SpanInspector } from "./span-inspector.js";
 import {
-  InspectorHeader,
-  InspectorKv,
-  InspectorShell,
-} from "../inspector-shell.js";
-import {
-  formatBytes,
-  formatClock,
-  formatCost,
-  formatDuration,
-  formatSpeed,
-  formatTokens,
-  spanTokens,
-} from "./format.js";
-import {
-  DEFAULT_LAYERS,
-  type AgentBrief,
-  type Compaction,
-  type ContextChange,
-  type DirectorNudge,
-  type GrantUse,
-  type MediaItem,
-  type NetworkHop,
-  type SignatureStatus,
-  type Span,
-  type SpanStatus,
-  type Trace,
-  type TraceLayers,
-} from "./model.js";
-import { usageOfSpan, type UsageBreakdown } from "./metrics.js";
-import { UsageMix } from "./slots.js";
-import {
-  deepestAt,
-  grantAt,
-  revealedText,
-  spanEnd,
-  visibleSpans,
-} from "./playback.js";
+  LiveGrant,
+  STATUS_LABEL,
+  STATUS_TONE,
+  TraceHeader,
+} from "./trace-header.js";
+import { TraceSteps } from "./trace-steps.js";
 import { TraceTimeline } from "./timeline.js";
 import { placeSpans, traceEnd } from "./tree.js";
-import { compactionLine, rowMarker, stepTitle } from "./wording.js";
+import { rowMarker, stepTitle } from "./wording.js";
 
 export type TraceViewProps = {
   readonly trace: Trace;
@@ -62,22 +35,6 @@ export type TraceViewProps = {
   readonly layers?: TraceLayers;
   readonly className?: string;
 };
-
-const STATUS_LABEL: Record<SpanStatus, string> = {
-  running: "Running",
-  ok: "Done",
-  error: "Failed",
-  waiting: "Waiting",
-  denied: "Denied",
-};
-
-const STATUS_TONE = {
-  running: "info",
-  ok: "success",
-  error: "danger",
-  waiting: "warning",
-  denied: "danger",
-} as const;
 
 export function AgentTrace(props: TraceViewProps) {
   return <TraceView {...props} />;
@@ -126,7 +83,6 @@ export function TraceView({
   const selected = trace.spans.find((span) => span.id === selectedId);
   const end = Math.max(trace.durationMs, traceEnd(trace.spans), 1);
   const liveGrant = layers.grants ? grantAt(shown, timeMs) : undefined;
-  const index = placed.findIndex((row) => row.span.id === selectedId);
   const rowRefs = useRef(new Map<string, HTMLButtonElement>());
 
   useEffect(() => {
@@ -146,66 +102,10 @@ export function TraceView({
     setTimeMs(at);
   }
 
-  function move(delta: number) {
-    const next = placed[index + delta];
-    if (next !== undefined) seek(next.span.id, next.span.startMs);
-  }
-
-  const tokens = trace.spans.reduce((sum, span) => sum + spanTokens(span), 0);
-  const cost = trace.spans.reduce(
-    (sum, span) => sum + (span.usage?.costUsd ?? 0),
-    0,
-  );
-
   return (
     <div className={cn("flex min-h-0 flex-col", className)}>
-      <header className="flex flex-col gap-3 border-b border-border px-4 py-3">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-semibold text-foreground">
-                {trace.name}
-              </h2>
-              <Badge tone="neutral">
-                {trace.kind === "agent" ? "Agent" : "Workflow"}
-              </Badge>
-              <Badge tone={STATUS_TONE[trace.status]}>
-                {STATUS_LABEL[trace.status]}
-              </Badge>
-            </div>
-            <p className="font-mono text-xs text-muted-foreground">
-              {trace.actor} · {trace.startedAt}
-            </p>
-          </div>
-          <dl className="flex gap-6 text-right">
-            <Metric label="Duration" value={formatDuration(trace.durationMs)} />
-            <Metric label="Tokens" value={formatTokens(tokens)} />
-            <Metric label="Cost" value={formatCost(cost)} />
-            <Metric label="Steps" value={String(trace.spans.length)} />
-          </dl>
-        </div>
-        {trace.placement === undefined ? null : (
-          <dl className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-muted-foreground">
-            <PlacementItem label="Sidecar" value={trace.placement.sidecarId} />
-            <PlacementItem label="Host" value={trace.placement.host} />
-            <PlacementItem label="Region" value={trace.placement.region} />
-            <PlacementItem label="Size" value={trace.placement.size} />
-            <PlacementItem
-              label="Package"
-              value={`${trace.placement.packageName}@${trace.placement.packageVersion}`}
-            />
-            <PlacementItem
-              label="Generation"
-              value={String(trace.placement.generation)}
-            />
-            <PlacementItem label="Status" value={trace.placement.status} />
-          </dl>
-        )}
-      </header>
-      {trace.brief === undefined ? null : (
-        <AgentBriefPanel brief={trace.brief} />
-      )}
-
+      <TraceHeader trace={trace} />
+      {trace.brief === undefined ? null : <AgentBrief brief={trace.brief} />}
       <div className="flex flex-col gap-2 border-b border-border px-4 py-3">
         <TraceTimeline
           spans={shown}
@@ -217,92 +117,18 @@ export function TraceView({
         />
         <LiveGrant span={liveGrant} />
       </div>
-
       <div className="flex min-h-0 flex-1">
-        <div
-          className="min-w-0 flex-1 overflow-auto outline-none"
-          role="listbox"
-          aria-label="Trace steps"
-          aria-activedescendant={selectedId === "" ? undefined : selectedId}
-          tabIndex={0}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowDown") {
-              event.preventDefault();
-              move(1);
-            }
-            if (event.key === "ArrowUp") {
-              event.preventDefault();
-              move(-1);
-            }
+        <TraceSteps
+          placed={placed}
+          end={end}
+          timeMs={timeMs}
+          selectedId={selectedId}
+          onSeek={seek}
+          rowRef={(id, node) => {
+            if (node === null) rowRefs.current.delete(id);
+            else rowRefs.current.set(id, node);
           }}
-        >
-          <div className="grid grid-cols-[minmax(0,1fr)_16rem] border-b border-border px-2 py-1 font-mono text-[11px] text-muted-foreground">
-            <span>Step</span>
-            <span className="flex justify-between">
-              <span>0</span>
-              <span>{formatDuration(end)}</span>
-            </span>
-          </div>
-          {placed.map(({ span, depth }) => {
-            const selectedRow = span.id === selectedId;
-            const played = playedRatio(span, timeMs);
-            return (
-              <div
-                key={span.id}
-                className={cn(
-                  "grid grid-cols-[minmax(0,1fr)_16rem] border-b border-border",
-                  selectedRow &&
-                    "bg-muted/70 shadow-[inset_2px_0_0_var(--foreground)]",
-                )}
-              >
-                <button
-                  type="button"
-                  role="option"
-                  id={span.id}
-                  aria-selected={selectedRow}
-                  ref={(node) => {
-                    if (node === null) rowRefs.current.delete(span.id);
-                    else rowRefs.current.set(span.id, node);
-                  }}
-                  className="flex min-w-0 items-center gap-2 py-1.5 text-left"
-                  style={{ paddingLeft: 8 + depth * 14 }}
-                  onClick={() => seek(span.id, span.startMs)}
-                >
-                  <span className="w-28 shrink-0 truncate text-xs text-muted-foreground">
-                    {rowMarker(span)}
-                  </span>
-                  <span className="truncate text-sm">{stepTitle(span)}</span>
-                </button>
-                <div
-                  className="relative"
-                  title={formatDuration(span.durationMs)}
-                  aria-hidden="true"
-                >
-                  <div
-                    className="absolute inset-y-2 overflow-hidden rounded-sm"
-                    style={barBox(span, end)}
-                  >
-                    <div
-                      className="absolute inset-0 opacity-30"
-                      style={{ backgroundColor: barColor(span) }}
-                    />
-                    <div
-                      className="absolute inset-y-0 left-0"
-                      style={{
-                        width: `${played * 100}%`,
-                        backgroundColor: barColor(span),
-                      }}
-                    />
-                  </div>
-                  <span
-                    className="absolute inset-y-0 w-px bg-foreground"
-                    style={{ left: `${(Math.min(timeMs, end) / end) * 100}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        />
         <InspectorShell
           className="w-80 shrink-0"
           header={
@@ -332,7 +158,7 @@ export function TraceView({
             : {})}
         >
           {selected === undefined ? null : (
-            <SpanDetail
+            <SpanInspector
               traceSpans={trace.spans}
               span={selected}
               timeMs={timeMs}
@@ -344,495 +170,4 @@ export function TraceView({
       </div>
     </div>
   );
-}
-
-function playedRatio(span: Span, timeMs: number): number {
-  if (timeMs <= span.startMs) return 0;
-  if (timeMs >= spanEnd(span)) return 1;
-  return (timeMs - span.startMs) / Math.max(span.durationMs, 1);
-}
-
-function barBox(span: Span, end: number): { left: string; width: string } {
-  const width = (Math.max(span.durationMs, 1) / end) * 100;
-  return {
-    left: `${(span.startMs / end) * 100}%`,
-    width: `max(4px, ${width}%)`,
-  };
-}
-
-function ink(amount: number): string {
-  return `color-mix(in oklab, var(--foreground) ${amount}%, transparent)`;
-}
-
-function barColor(span: Span): string {
-  if (span.status === "error" || span.status === "denied")
-    return "var(--destructive)";
-  if (span.status === "waiting") return "var(--warn)";
-  if (span.status === "running") return "var(--foreground)";
-  if (span.kind === "network") return seriesColor(0);
-  if (span.kind === "mail" || span.kind === "attachment") return seriesColor(1);
-  if (span.kind === "provision" || span.kind === "reactor")
-    return seriesColor(3);
-  if (span.kind === "reasoning") return ink(40);
-  if (span.kind === "compact") return seriesColor(2);
-  if (span.kind === "transform") return seriesColor(3);
-  if (span.kind === "nudge") return ink(60);
-  return ink(75);
-}
-
-function usageTotal(usage: UsageBreakdown): number {
-  return (
-    usage.input +
-    usage.output +
-    usage.cacheRead +
-    usage.cacheWrite +
-    usage.thinking
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-[10px] text-muted-foreground">{label}</dt>
-      <dd className="font-mono text-sm font-medium">{value}</dd>
-    </div>
-  );
-}
-
-function PlacementItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex gap-1 after:mx-1 after:text-muted-foreground after:content-['·'] last:after:content-none">
-      <dt>{label}</dt>
-      <dd className="text-foreground">{value}</dd>
-    </div>
-  );
-}
-
-function LiveGrant({ span }: { span: Span | undefined }) {
-  if (span?.grant === undefined) {
-    return (
-      <p className="font-mono text-[11px] text-muted-foreground">
-        No grant at the playhead.
-      </p>
-    );
-  }
-  const grant = span.grant;
-  const winner = grant.resolvedBy;
-  const stopped = grant.blocked ? " · blocked" : "";
-  const by = winner === null ? "" : ` · ${winner.id}`;
-  return (
-    <p className="font-mono text-[11px] text-foreground">
-      <span className="text-muted-foreground">Grant · </span>
-      {stepTitle(span)} · {grant.effect}
-      {stopped}
-      {by}
-    </p>
-  );
-}
-
-function SpanDetail({
-  traceSpans,
-  span,
-  timeMs,
-  layers,
-  playing,
-}: {
-  traceSpans: readonly Span[];
-  span: Span;
-  timeMs: number;
-  layers: TraceLayers;
-  playing: boolean;
-}) {
-  const thoughts = thoughtSpans(traceSpans, span);
-  return (
-    <div className="flex flex-col gap-4">
-      {usageTotal(usageOfSpan(span)) > 0 ? (
-        <UsageMix usage={usageOfSpan(span)} />
-      ) : null}
-      <InspectorKv
-        rows={[
-          { label: "Starts", value: formatClock(span.startMs), mono: true },
-          {
-            label: "Duration",
-            value: formatDuration(span.durationMs),
-            mono: true,
-          },
-          ...(span.usage?.provider === undefined
-            ? []
-            : [{ label: "Provider", value: span.usage.provider, mono: true }]),
-          ...(span.usage?.model === undefined
-            ? []
-            : [{ label: "Model", value: span.usage.model, mono: true }]),
-          ...(span.usage?.cachedTokens === undefined
-            ? []
-            : [
-                {
-                  label: "Cached",
-                  value: formatTokens(span.usage.cachedTokens),
-                  mono: true,
-                },
-              ]),
-          ...(spanTokens(span) === 0
-            ? []
-            : [
-                {
-                  label: "Speed",
-                  value: formatSpeed(
-                    span.durationMs > 0
-                      ? spanTokens(span) / (span.durationMs / 1000)
-                      : null,
-                  ),
-                  mono: true,
-                },
-              ]),
-          ...(span.usage === undefined
-            ? []
-            : [
-                {
-                  label: "Tokens",
-                  value: formatTokens(spanTokens(span)),
-                  mono: true,
-                },
-              ]),
-          ...(span.signature === undefined
-            ? []
-            : [
-                {
-                  label: "Signature",
-                  value: <SignatureBadge status={span.signature} />,
-                },
-              ]),
-          ...(span.attributes ?? []).map((attribute) => ({
-            label: attribute.label,
-            value: attribute.value,
-            mono: true,
-          })),
-        ]}
-      />
-      {span.nudge === undefined ? null : <NudgeBlock nudge={span.nudge} />}
-      {span.compaction === undefined ? null : (
-        <CompactionBlock compaction={span.compaction} />
-      )}
-      {span.contextChange === undefined ? null : (
-        <ContextBlock change={span.contextChange} />
-      )}
-      {layers.grants && span.grant !== undefined ? (
-        <GrantBlock grant={span.grant} />
-      ) : null}
-      {layers.reasoning
-        ? thoughts.map((thought) => (
-            <ThoughtBlock
-              key={thought.id}
-              span={thought}
-              timeMs={timeMs}
-              playing={playing}
-            />
-          ))
-        : null}
-      {layers.io && span.input !== undefined ? (
-        <TextBlock label="Input" text={span.input} />
-      ) : null}
-      {layers.io && span.output !== undefined ? (
-        <TextBlock label="Output" text={span.output} />
-      ) : null}
-      {layers.media && span.media !== undefined && span.media.length > 0 ? (
-        <MediaBlock items={span.media} />
-      ) : null}
-      {layers.network &&
-      span.network !== undefined &&
-      span.network.length > 0 ? (
-        <NetworkBlock hops={span.network} />
-      ) : null}
-      {layers.raw ? (
-        <TextBlock label="Raw" text={span.payload ?? rawSpan(span)} />
-      ) : null}
-    </div>
-  );
-}
-
-function thoughtSpans(spans: readonly Span[], span: Span): readonly Span[] {
-  if (span.thinking !== undefined || span.redacted === true) return [span];
-  return spans.filter(
-    (item) =>
-      item.parentId === span.id &&
-      item.kind === "reasoning" &&
-      (item.thinking !== undefined || item.redacted === true),
-  );
-}
-
-function AgentBriefPanel({ brief }: { brief: AgentBrief }) {
-  return (
-    <div className="grid gap-6 border-b border-border bg-card px-4 py-4 lg:grid-cols-2">
-      <section className="flex min-w-0 flex-col gap-2">
-        <h3 className="text-sm font-semibold">System prompt</h3>
-        <p className="max-h-28 overflow-auto whitespace-pre-wrap text-sm leading-6">
-          {brief.systemPrompt}
-        </p>
-      </section>
-      <section className="flex min-w-0 flex-col gap-2">
-        <h3 className="text-sm font-semibold">Tools</h3>
-        <ul className="flex flex-col gap-2">
-          {brief.tools.map((tool) => (
-            <li
-              key={tool.name}
-              className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3 text-sm"
-            >
-              <span className="truncate font-mono text-xs leading-6">
-                {tool.name}
-              </span>
-              <span className="text-muted-foreground">{tool.description}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </div>
-  );
-}
-
-function NudgeBlock({ nudge }: { nudge: DirectorNudge }) {
-  return (
-    <section className="flex flex-col gap-1">
-      <h3 className="text-xs font-medium">{nudge.action}</h3>
-      <p className="text-sm">{nudge.because}</p>
-    </section>
-  );
-}
-
-function CompactionBlock({ compaction }: { compaction: Compaction }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <div>
-        <h3 className="text-xs font-medium">Compaction</h3>
-        <p className="text-sm">
-          {compaction.turnsBefore} turns down to {compaction.turnsAfter}
-          {` · ${compactionLine(compaction)}`}
-        </p>
-        <p className="text-sm text-muted-foreground">{compaction.detail}</p>
-        <p className="font-mono text-[11px] text-muted-foreground">
-          {compaction.compactor} v{compaction.version} · {compaction.reason}
-        </p>
-      </div>
-      <table className="w-full border-collapse text-left text-xs">
-        <thead className="text-muted-foreground">
-          <tr>
-            <th className="py-1 font-medium">Turn</th>
-            <th className="py-1 text-right font-medium">Tokens</th>
-            <th className="py-1 font-medium">Kept</th>
-          </tr>
-        </thead>
-        <tbody>
-          {compaction.turns.map((turn) => (
-            <tr
-              key={`${turn.role}:${turn.title}`}
-              className="border-t border-border"
-            >
-              <td className="py-1 pr-2">
-                <span className={turn.kept ? "" : "text-muted-foreground"}>
-                  {turn.title}
-                </span>
-                {turn.note === undefined ? null : (
-                  <span className="block text-muted-foreground">
-                    {turn.note}
-                  </span>
-                )}
-              </td>
-              <td className="py-1 text-right font-mono">
-                {formatTokens(turn.tokens)}
-              </td>
-              <td className="py-1">{turn.kept ? "Kept" : "Dropped"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
-  );
-}
-
-function ContextBlock({ change }: { change: ContextChange }) {
-  return (
-    <section className="flex flex-col gap-1">
-      <h3 className="text-xs font-medium">Context transform</h3>
-      <p className="text-sm">{change.summary}</p>
-      <p className="font-mono text-[11px] text-muted-foreground">
-        {change.strategy} v{change.version} · {change.trigger} · {change.reason}
-      </p>
-    </section>
-  );
-}
-
-function ThoughtBlock({
-  span,
-  timeMs,
-  playing,
-}: {
-  span: Span;
-  timeMs: number;
-  playing: boolean;
-}) {
-  const started = timeMs > span.startMs;
-  const done = timeMs >= spanEnd(span);
-  const streaming = playing && started && !done;
-  return (
-    <section className="flex flex-col gap-1">
-      <h3 className="text-xs font-medium">Thinking</h3>
-      {span.redacted === true || span.thinking === undefined ? (
-        <p className="text-sm text-muted-foreground">Redacted by the model.</p>
-      ) : playing && !started ? (
-        <p className="text-sm text-muted-foreground">
-          Starts at {formatClock(span.startMs)}.
-        </p>
-      ) : (
-        <p className="whitespace-pre-wrap text-sm leading-relaxed">
-          {streaming
-            ? revealedText(span.thinking, span, timeMs)
-            : span.thinking}
-          {streaming ? (
-            <span className="ml-0.5 inline-block h-4 w-px align-text-bottom bg-foreground" />
-          ) : null}
-        </p>
-      )}
-    </section>
-  );
-}
-
-function GrantBlock({ grant }: { grant: GrantUse }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <h3 className="text-xs font-medium">Grant</h3>
-        <EffectBadge effect={grant.effect} />
-        {grant.blocked ? <Badge tone="danger">Blocked</Badge> : null}
-      </div>
-      {grant.blockReason === undefined ? null : (
-        <p className="text-sm">{grant.blockReason}</p>
-      )}
-      {grant.resolvedBy === null ? (
-        <p className="text-xs text-muted-foreground">
-          Nothing matched. Failed closed.
-        </p>
-      ) : (
-        <GrantLine label="Resolved by" grant={grant.resolvedBy} />
-      )}
-      {grant.matching.length === 0 ? null : (
-        <ul className="flex flex-col gap-1">
-          {grant.matching.map((item) => (
-            <li key={item.id}>
-              <GrantLine label="Matched" grant={item} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-function GrantLine({
-  label,
-  grant,
-}: {
-  label: string;
-  grant: NonNullable<GrantUse["resolvedBy"]>;
-}) {
-  const exact =
-    grant.specificity === undefined
-      ? ""
-      : ` · specificity ${grant.specificity}`;
-  return (
-    <p className="font-mono text-[11px] leading-relaxed">
-      <span className="text-muted-foreground">{label} </span>
-      {grant.id} · {grant.effect} · {grant.origin}
-      <br />
-      {grant.resource} {grant.action}
-      {exact}
-    </p>
-  );
-}
-
-function EffectBadge({ effect }: { effect: GrantUse["effect"] }) {
-  const tone =
-    effect === "allow"
-      ? "success"
-      : effect === "ask"
-        ? "warning"
-        : effect === "none"
-          ? "neutral"
-          : "danger";
-  return <Badge tone={tone}>{effect}</Badge>;
-}
-
-function SignatureBadge({ status }: { status: SignatureStatus }) {
-  const tone =
-    status === "valid"
-      ? "success"
-      : status === "invalid"
-        ? "danger"
-        : "warning";
-  return <Badge tone={tone}>{status}</Badge>;
-}
-
-function TextBlock({ label, text }: { label: string; text: string }) {
-  return (
-    <section className="flex flex-col gap-1">
-      <h3 className="text-xs font-medium">{label}</h3>
-      <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-2 font-mono text-[11px] leading-relaxed">
-        {text}
-      </pre>
-    </section>
-  );
-}
-
-function MediaBlock({ items }: { items: readonly MediaItem[] }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <h3 className="text-xs font-medium">Attached</h3>
-      <ul className="flex flex-col gap-2">
-        {items.map((item) => (
-          <li key={item.name} className="rounded-md border border-border p-2">
-            {item.mediaType.startsWith("image/") ? (
-              <div className="mb-2 flex h-16 items-end rounded-sm bg-muted p-2 font-mono text-[10px] text-muted-foreground">
-                {item.mediaType}
-              </div>
-            ) : null}
-            <p className="truncate text-sm">{item.name}</p>
-            <p className="font-mono text-[11px] text-muted-foreground">
-              {item.mediaType} · {formatBytes(item.bytes)}
-            </p>
-            {item.note === undefined ? null : (
-              <p className="mt-1 text-xs text-muted-foreground">{item.note}</p>
-            )}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function NetworkBlock({ hops }: { hops: readonly NetworkHop[] }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <h3 className="text-xs font-medium">Network</h3>
-      <ul className="flex flex-col gap-2">
-        {hops.map((hop) => (
-          <li key={`${hop.method} ${hop.url}`} className="text-xs">
-            <p className="font-mono">
-              {hop.method} {hop.url}
-            </p>
-            <p className="mt-0.5 flex flex-wrap items-center gap-2 text-muted-foreground">
-              <span>{hop.status === null ? "no status" : hop.status}</span>
-              <span>{formatBytes(hop.bytes)}</span>
-              {hop.external ? (
-                <Badge tone="warning">External</Badge>
-              ) : (
-                <Badge tone="neutral">Internal</Badge>
-              )}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function rawSpan(span: Span): string {
-  return JSON.stringify(span, null, 2);
 }

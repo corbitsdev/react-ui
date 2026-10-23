@@ -1,6 +1,3 @@
-"use client";
-
-import { seriesColor } from "../../lib/chart-palette.js";
 import { StatGrid, StatGridItem } from "../stat-grid.js";
 import {
   Table,
@@ -10,12 +7,14 @@ import {
   TableHeader,
   TableRow,
 } from "../table.js";
+import { CostBars } from "./cost-bars.js";
 import {
   formatCost,
   formatDuration,
   formatSpeed,
   formatTokens,
 } from "./format.js";
+import { Ledger } from "./ledger.js";
 import {
   measures,
   modelShares,
@@ -24,10 +23,10 @@ import {
   shapeOf,
   stepKeys,
   usageOf,
-  type MeasureSort,
   type UsageBreakdown,
 } from "./metrics.js";
 import type { Trace } from "./model.js";
+import { UsageMix } from "./usage-mix.js";
 import { stepTitle } from "./wording.js";
 
 export function WorkflowsFinOps({
@@ -202,76 +201,7 @@ function ProviderNotes({ shares }: { shares: ReturnType<typeof modelShares> }) {
   );
 }
 
-export function Ledger({
-  trace,
-  sort,
-  selectedId,
-  onSelect,
-}: {
-  readonly trace: Trace;
-  readonly sort: MeasureSort;
-  readonly selectedId?: string;
-  readonly onSelect?: (id: string) => void;
-}) {
-  const rows = measures(trace, sort);
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Step</TableHead>
-          <TableHead>Provider</TableHead>
-          <TableHead>Tokens</TableHead>
-          <TableHead>Cost</TableHead>
-          <TableHead>Time</TableHead>
-          <TableHead>Speed</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((row) => {
-          const span = trace.spans.find((item) => item.id === row.id);
-          const title = span === undefined ? row.name : stepTitle(span);
-          return (
-            <TableRow
-              key={row.id}
-              className={row.id === selectedId ? "bg-muted/70" : undefined}
-            >
-              <TableCell>
-                {onSelect === undefined ? (
-                  title
-                ) : (
-                  <button
-                    type="button"
-                    className="text-left"
-                    onClick={() => onSelect(row.id)}
-                  >
-                    {title}
-                  </button>
-                )}
-              </TableCell>
-              <TableCell className="font-mono text-xs">
-                {row.provider === "—" ? "—" : `${row.provider}/${row.model}`}
-              </TableCell>
-              <TableCell className="font-mono">
-                {row.tokens === 0 ? "—" : formatTokens(row.tokens)}
-              </TableCell>
-              <TableCell className="font-mono">
-                {row.costUsd === 0 ? "—" : formatCost(row.costUsd)}
-              </TableCell>
-              <TableCell className="font-mono">
-                {formatDuration(row.durationMs)}
-              </TableCell>
-              <TableCell className="font-mono">
-                {formatSpeed(row.tokensPerSecond)}
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
-  );
-}
-
-export function CostPicture({ trace }: { readonly trace: Trace }) {
+export function StepCosts({ trace }: { readonly trace: Trace }) {
   const priced = measures(trace, "cost").filter((row) => row.costUsd > 0);
   return (
     <CostBars
@@ -287,66 +217,6 @@ export function CostPicture({ trace }: { readonly trace: Trace }) {
         };
       })}
     />
-  );
-}
-
-const USAGE_PARTS = [
-  ["input", "Input"],
-  ["output", "Output"],
-  ["cacheRead", "Cache read"],
-  ["cacheWrite", "Cache write"],
-  ["thinking", "Thinking"],
-] as const;
-
-const USAGE_BAR = {
-  input: seriesColor(0),
-  output: seriesColor(1),
-  cacheRead: seriesColor(3),
-  cacheWrite: seriesColor(2),
-  thinking: "color-mix(in oklab, var(--foreground) 55%, transparent)",
-} as const;
-
-export function UsageMix({ usage }: { readonly usage: UsageBreakdown }) {
-  const max = Math.max(
-    1,
-    usage.input,
-    usage.output,
-    usage.cacheRead,
-    usage.cacheWrite,
-    usage.thinking,
-  );
-  return (
-    <section className="flex flex-col gap-2">
-      <h3 className="text-sm font-semibold">Usage</h3>
-      <p className="text-xs text-muted-foreground">
-        Cache read is a slice of input, not an extra charge on top of it.
-      </p>
-      <ul className="flex flex-col gap-1.5">
-        {USAGE_PARTS.map(([key, label]) => {
-          const value = usage[key];
-          return (
-            <li
-              key={key}
-              className="grid grid-cols-[6.5rem_1fr_3.5rem] items-center gap-2"
-            >
-              <span className="text-xs">{label}</span>
-              <span className="h-2.5 rounded-sm bg-muted">
-                <span
-                  className="block h-full rounded-sm"
-                  style={{
-                    width: `${(value / max) * 100}%`,
-                    backgroundColor: USAGE_BAR[key],
-                  }}
-                />
-              </span>
-              <span className="text-right font-mono text-xs">
-                {value === 0 ? "—" : formatTokens(value)}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
   );
 }
 
@@ -411,51 +281,4 @@ function titlesFor(
     if (!titles.includes(title)) titles.push(title);
   }
   return titles.join(" · ");
-}
-
-function CostBars({
-  title,
-  description,
-  rows,
-}: {
-  title: string;
-  description: string;
-  rows: readonly {
-    key: string;
-    label: string;
-    value: number;
-    detail: string;
-  }[];
-}) {
-  const max = Math.max(0.0001, ...rows.map((row) => row.value));
-  return (
-    <section className="flex flex-col gap-2">
-      <div>
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </div>
-      <ul className="flex flex-col gap-2">
-        {rows.map((row) => (
-          <li
-            key={row.key}
-            className="grid grid-cols-[minmax(0,1fr)_5rem] items-center gap-3"
-          >
-            <div className="min-w-0">
-              <p className="truncate font-mono text-xs">{row.label}</p>
-              <div className="mt-1 h-2 rounded-sm bg-muted">
-                <div
-                  className="h-full rounded-sm bg-foreground/70"
-                  style={{ width: `${(row.value / max) * 100}%` }}
-                />
-              </div>
-            </div>
-            <p className="text-right font-mono text-xs">
-              {formatCost(row.value)}
-              <span className="block text-muted-foreground">{row.detail}</span>
-            </p>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
 }
