@@ -28,7 +28,6 @@ export type GrantEffect = "allow" | "deny" | "ask";
 
 export type GrantOrigin = "system" | "role" | "creator" | "invoker";
 
-/** One grant that matched a tool call or a gate. Mirrors a resolved grant. */
 export type GrantRef = {
   readonly id: string;
   readonly resource: string;
@@ -80,7 +79,6 @@ export type Usage = {
   readonly costUsd?: number;
 };
 
-/** What a model does that changes the bill, the latency, or the audit. */
 export type ProviderInfo = {
   readonly provider: string;
   readonly model: string;
@@ -105,7 +103,6 @@ export type Attribute = {
   readonly value: string;
 };
 
-/** The instructions and tools the harness handed the model. */
 export type AgentTool = {
   readonly name: string;
   readonly description: string;
@@ -116,7 +113,6 @@ export type AgentBrief = {
   readonly tools: readonly AgentTool[];
 };
 
-/** One turn the compactor kept or dropped. */
 export type CompactionTurn = {
   readonly role: string;
   readonly title: string;
@@ -125,7 +121,6 @@ export type CompactionTurn = {
   readonly note?: string;
 };
 
-/** A director `compact` action and the manifest record it wrote. */
 export type Compaction = {
   readonly compactor: string;
   readonly version: string;
@@ -157,7 +152,6 @@ export type NudgeAction =
   | "suspend"
   | "done";
 
-/** One action the director handed the reactor. */
 export type DirectorNudge = {
   readonly action: NudgeAction;
   readonly because: string;

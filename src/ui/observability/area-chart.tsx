@@ -26,13 +26,7 @@ const PAD_RIGHT = 12;
 const PAD_TOP = 12;
 const PAD_BOTTOM = 22;
 
-/**
- * One or two series over time, with a pointer crosshair.
- *
- * The fill is the line colour at low opacity, so it does not invent another
- * series. Orange is not used: it is the action accent, and a passive series
- * painted orange reads as a button. The table under the frame has the numbers.
- */
+/** Two series over time. The fill is the line colour. Orange stays off the series. */
 export function AreaChart({
   title,
   description,
