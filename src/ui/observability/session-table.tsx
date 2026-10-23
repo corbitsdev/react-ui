@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "../../lib/utils.js";
 import { Badge } from "../badge.js";
 import { formatCost, formatDuration, formatTokens } from "./format.js";
