@@ -230,6 +230,8 @@ export type Trace = {
   readonly startedAt: string;
   readonly durationMs: number;
   readonly spans: readonly Span[];
+  /** Steps in the whole run. Omit to count `spans`. */
+  readonly stepCount?: number;
   readonly placement?: Placement;
   readonly principal?: PrincipalRef;
   readonly tenant?: TenantRef;

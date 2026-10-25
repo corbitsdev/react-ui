@@ -1,7 +1,9 @@
 import { Badge } from "../badge.js";
 import {
-  formatCost,
   formatDuration,
+  formatReportedCost,
+  formatStarted,
+  formatStepCount,
   formatTokens,
   spanTokens,
 } from "./format.js";
@@ -26,10 +28,6 @@ export const STATUS_TONE = {
 
 export function TraceHeader({ trace }: { readonly trace: Trace }) {
   const tokens = trace.spans.reduce((sum, span) => sum + spanTokens(span), 0);
-  const cost = trace.spans.reduce(
-    (sum, span) => sum + (span.usage?.costUsd ?? 0),
-    0,
-  );
   return (
     <header className="flex flex-col gap-3 border-b border-border px-4 py-3">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -46,14 +44,14 @@ export function TraceHeader({ trace }: { readonly trace: Trace }) {
             </Badge>
           </div>
           <p className="font-mono text-xs text-muted-foreground">
-            {trace.actor} · {trace.startedAt}
+            {trace.actor} · {formatStarted(trace.startedAt)}
           </p>
         </div>
         <dl className="flex gap-6 text-right">
           <Metric label="Duration" value={formatDuration(trace.durationMs)} />
           <Metric label="Tokens" value={formatTokens(tokens)} />
-          <Metric label="Cost" value={formatCost(cost)} />
-          <Metric label="Steps" value={String(trace.spans.length)} />
+          <Metric label="Cost" value={formatReportedCost(trace.spans)} />
+          <Metric label="Steps" value={formatStepCount(trace)} />
         </dl>
       </div>
     </header>
