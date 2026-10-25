@@ -1,8 +1,16 @@
+"use client";
+
+import { useRef } from "react";
+
 import { cn } from "../../lib/utils.js";
+import { Badge } from "../../ui/badge.js";
 import { Input, Output, Thinking } from "../../ui/observability/elements.js";
 import { formatDuration } from "../../ui/observability/format.js";
 import type { Span, Trace } from "../../ui/observability/model.js";
-import { STATUS_LABEL } from "../../ui/observability/trace-header.js";
+import {
+  STATUS_LABEL,
+  STATUS_TONE,
+} from "../../ui/observability/trace-header.js";
 import { Run } from "../../ui/observability/trace-view.js";
 import type { PlacedSpan } from "../../ui/observability/tree.js";
 import { rowMarker, stepTitle } from "../../ui/observability/wording.js";
@@ -33,28 +41,11 @@ export function TraceReading({ trace }: { readonly trace: Trace }) {
           {reading.answer === undefined ? null : (
             <ReadingBlock label="Answer">{reading.answer}</ReadingBlock>
           )}
-          <div
-            role="listbox"
-            aria-label="Steps"
-            aria-activedescendant={
-              state.selected === undefined ? undefined : state.selected.id
-            }
-            tabIndex={0}
-            className="outline-none"
-            onKeyDown={(event) =>
-              onStepKey(event, state.placed, state.selected, state.select)
-            }
-          >
-            {state.placed.map((row) => (
-              <StepRow
-                key={row.span.id}
-                span={row.span}
-                depth={row.depth}
-                open={state.selected?.id === row.span.id}
-                onSelect={() => state.select(row.span.id, row.span.startMs)}
-              />
-            ))}
-          </div>
+          <ReadingSteps
+            placed={state.placed}
+            selected={state.selected}
+            select={state.select}
+          />
         </article>
       )}
     </Run>
@@ -96,18 +87,64 @@ function ReadingBlock({
   );
 }
 
+function ReadingSteps({
+  placed,
+  selected,
+  select,
+}: {
+  readonly placed: readonly PlacedSpan[];
+  readonly selected: Span | undefined;
+  readonly select: (id: string, startMs: number) => void;
+}) {
+  const buttons = useRef(new Map<string, HTMLButtonElement>());
+  function onKey(event: {
+    key: string;
+    preventDefault: () => void;
+    target: EventTarget | null;
+  }) {
+    const delta = keyDelta(event.key);
+    if (delta === 0) return;
+    const from = focusedStep(event.target, placed);
+    if (from === undefined) return;
+    const next = neighbor(placed, from, delta);
+    if (next === undefined) return;
+    event.preventDefault();
+    select(next.span.id, next.span.startMs);
+    const node = buttons.current.get(next.span.id);
+    if (node !== undefined) node.focus();
+  }
+  return (
+    <div onKeyDown={onKey}>
+      {placed.map((row, index) => (
+        <StepRow
+          key={row.span.id}
+          span={row.span}
+          depth={row.depth}
+          open={selected?.id === row.span.id}
+          tabIndex={stepTab(row.span.id, selected?.id, index)}
+          onSelect={() => select(row.span.id, row.span.startMs)}
+          buttonRef={(node) => storeButton(buttons.current, row.span.id, node)}
+        />
+      ))}
+    </div>
+  );
+}
+
 function StepRow({
   span,
   depth,
   open,
+  tabIndex,
   onSelect,
+  buttonRef,
 }: {
   readonly span: Span;
   readonly depth: number;
   readonly open: boolean;
+  readonly tabIndex: number;
   readonly onSelect: () => void;
+  readonly buttonRef: (node: HTMLButtonElement | null) => void;
 }) {
-  const mark = span.status === "ok" ? "" : STATUS_LABEL[span.status];
   return (
     <div
       className={cn(
@@ -117,9 +154,10 @@ function StepRow({
     >
       <button
         type="button"
-        role="option"
         id={span.id}
-        aria-selected={open}
+        ref={buttonRef}
+        tabIndex={tabIndex}
+        aria-expanded={open}
         className="flex w-full min-w-0 items-center gap-3 py-2 text-left"
         style={{ paddingLeft: 16 + depth * 14, paddingRight: 16 }}
         onClick={onSelect}
@@ -130,8 +168,10 @@ function StepRow({
         <span className="min-w-0 flex-1 truncate text-sm">
           {stepTitle(span)}
         </span>
-        {mark.length === 0 ? null : (
-          <span className="shrink-0 text-xs text-destructive">{mark}</span>
+        {span.status === "ok" ? null : (
+          <Badge tone={STATUS_TONE[span.status]}>
+            {STATUS_LABEL[span.status]}
+          </Badge>
         )}
         <span className="w-16 shrink-0 text-right font-mono text-xs text-muted-foreground">
           {formatDuration(span.durationMs)}
@@ -161,28 +201,44 @@ function StepBody({
   );
 }
 
-function onStepKey(
-  event: { key: string; preventDefault: () => void },
+function focusedStep(
+  target: EventTarget | null,
   placed: readonly PlacedSpan[],
-  selected: Span | undefined,
-  select: (id: string, startMs: number) => void,
-) {
-  const delta = keyDelta(event.key);
-  if (delta === 0) return;
-  event.preventDefault();
-  const current =
-    selected === undefined
-      ? -1
-      : placed.findIndex((row) => row.span.id === selected.id);
-  const next = placed[fromIndex(current, delta, placed.length) + delta];
-  if (next === undefined) return;
-  select(next.span.id, next.span.startMs);
+): string | undefined {
+  if (!(target instanceof Element)) return undefined;
+  const button = target.closest("button");
+  if (button === null) return undefined;
+  const found = placed.some((row) => row.span.id === button.id);
+  if (!found) return undefined;
+  return button.id;
 }
 
-function fromIndex(current: number, delta: number, length: number): number {
-  if (current >= 0) return current;
-  if (delta > 0) return -1;
-  return length;
+function neighbor(
+  placed: readonly PlacedSpan[],
+  fromId: string,
+  delta: number,
+): PlacedSpan | undefined {
+  const current = placed.findIndex((row) => row.span.id === fromId);
+  if (current < 0) return undefined;
+  return placed[current + delta];
+}
+
+function stepTab(
+  id: string,
+  selectedId: string | undefined,
+  index: number,
+): number {
+  if (selectedId === undefined) return index === 0 ? 0 : -1;
+  return id === selectedId ? 0 : -1;
+}
+
+function storeButton(
+  buttons: Map<string, HTMLButtonElement>,
+  id: string,
+  node: HTMLButtonElement | null,
+) {
+  if (node === null) buttons.delete(id);
+  else buttons.set(id, node);
 }
 
 function keyDelta(key: string): number {
