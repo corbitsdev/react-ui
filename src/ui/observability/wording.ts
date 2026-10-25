@@ -30,13 +30,23 @@ export function compactionLine(compaction: Compaction): string {
   return `${formatTokens(compaction.tokensBefore)} down to ${formatTokens(compaction.tokensAfter)}`;
 }
 
+function clipLine(value: string): string {
+  const first = value.split("\n")[0] ?? value;
+  const trimmed = first.trim();
+  if (trimmed.length <= 80) return trimmed;
+  return `${trimmed.slice(0, 77)}…`;
+}
+
 function whatItDid(span: Span): string | undefined {
   const hop = span.network?.[0];
   if (hop !== undefined) return `${hop.method} ${shortUrl(hop.url)}`;
   const record = recordOf(span.input);
   if (record === undefined) return undefined;
   const command = text(record, "command") ?? text(record, "cmd");
-  if (command !== undefined) return command;
+  if (command !== undefined) {
+    const clipped = clipLine(command);
+    if (clipped.length > 0) return clipped;
+  }
   const pattern = text(record, "pattern");
   const path = text(record, "path") ?? text(record, "file");
   if (pattern !== undefined && !span.name.includes(pattern)) {
