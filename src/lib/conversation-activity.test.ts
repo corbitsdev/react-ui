@@ -218,6 +218,12 @@ describe("summarizeActivity", () => {
     expect(summarizeActivity([thought(65_000)])).toBe("Thought for 1m 05s");
   });
 
+  test("formats durations past an hour in hours and minutes", () => {
+    expect(summarizeActivity([thought(3_599_000)])).toBe("Thought for 59m 59s");
+    expect(summarizeActivity([thought(3_600_000)])).toBe("Thought for 1h 00m");
+    expect(summarizeActivity([thought(5_400_000)])).toBe("Thought for 1h 30m");
+  });
+
   test("reads as work when nothing was thought", () => {
     expect(summarizeActivity([batch("b", [tool("b1"), tool("b2")])])).toBe(
       "Worked through 2 steps",
