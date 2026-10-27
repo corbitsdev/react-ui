@@ -198,11 +198,15 @@ function ConversationControls({
   onWrite,
   onEarlier,
   onTrim,
+  onUnsend,
+  onRemount,
 }: {
   onSend: () => void;
   onWrite: () => void;
   onEarlier: () => void;
   onTrim: () => void;
+  onUnsend: () => void;
+  onRemount: () => void;
 }) {
   const { captureAnchor, restoreAnchor } = useConversation();
   const [loads, setLoads] = useState(0);
@@ -223,6 +227,8 @@ function ConversationControls({
         Load earlier
       </Button>
       <Button onClick={onTrim}>Trim</Button>
+      <Button onClick={onUnsend}>Delete sent</Button>
+      <Button onClick={onRemount}>Remount</Button>
     </div>
   );
 }
@@ -237,6 +243,7 @@ function ConversationScenario({
   const [sentId, setSentId] = useState<string>();
   const [sends, setSends] = useState(0);
   const [pages, setPages] = useState(0);
+  const [mounts, setMounts] = useState(0);
   useEffect(() => {
     const timer = setTimeout(() => setRows(historyRows("h", 30)), 50);
     return () => clearTimeout(timer);
@@ -251,7 +258,7 @@ function ConversationScenario({
       }}
     >
       <Conversation scrollPolicy={policy} sentId={sentId}>
-        <ConversationContent>
+        <ConversationContent key={mounts}>
           {rows.map((row) => (
             <ConversationItem key={row.id} itemId={row.id} data-testid={row.id}>
               <p style={{ height: row.lines * 24, margin: 0 }}>
@@ -289,6 +296,10 @@ function ConversationScenario({
             ]);
           }}
           onTrim={() => setRows((previous) => previous.slice(5))}
+          onUnsend={() =>
+            setRows((previous) => previous.filter((row) => row.id !== sentId))
+          }
+          onRemount={() => setMounts(mounts + 1)}
         />
       </Conversation>
     </div>

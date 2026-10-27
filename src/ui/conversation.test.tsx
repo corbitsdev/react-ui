@@ -6,10 +6,13 @@ import { describe, expect, test } from "bun:test";
 import {
   Conversation,
   ConversationContent,
+  ConversationEmptyState,
   ConversationItem,
   ConversationScrollButton,
   useConversation,
   type ConversationContextValue,
+  type ConversationProps,
+  type ConversationScrollPolicy,
   type ConversationScrollSnapshot,
 } from "./conversation.js";
 import {
@@ -72,6 +75,72 @@ function giveGeometry(
     value: clientHeight,
   });
 }
+
+/** A Conversation over items `ids`, re-rendered with new props by `update`. */
+function mountConversation(
+  props: ConversationProps = {},
+  ids: readonly string[] = ["a"],
+) {
+  let api: ConversationContextValue | null = null;
+  function Probe() {
+    api = useConversation();
+    return null;
+  }
+  const tree = (next: ConversationProps) => (
+    <Conversation {...next}>
+      <ConversationContent>
+        {ids.map((id) => (
+          <ConversationItem key={id} itemId={id}>
+            {id}
+          </ConversationItem>
+        ))}
+      </ConversationContent>
+      <Probe />
+    </Conversation>
+  );
+  const mounted = render(tree(props));
+  const current = () => {
+    if (api === null) throw new Error("expected the conversation API");
+    return api;
+  };
+  const element = scroller(mounted.container);
+  const spacer = () => {
+    const found = element.querySelector<HTMLElement>(
+      "[data-slot='conversation-reserve']",
+    );
+    if (found === null) throw new Error("expected the reserve");
+    return found;
+  };
+  return {
+    mounted,
+    element,
+    current,
+    spacer,
+    update: (next: ConversationProps) => mounted.rerender(tree(next)),
+  };
+}
+
+const mountPolicy = (policy: ConversationScrollPolicy) =>
+  mountConversation({ scrollPolicy: policy });
+
+const sleep = (ms: number) =>
+  act(() => new Promise((resolve) => setTimeout(resolve, ms)));
+
+/** The reader's wheel: input on the container, then the scroll it makes. */
+const wheel = (element: HTMLElement, scrollTop: number) => {
+  element.dispatchEvent(new WheelEvent("wheel"));
+  element.scrollTop = scrollTop;
+  element.dispatchEvent(new Event("scroll"));
+};
+
+/** A flick: a finger down, a short drag, lifted; momentum follows. */
+const flick = (element: HTMLElement, scrollTop: number) => {
+  element.dispatchEvent(new Event("touchstart"));
+  element.dispatchEvent(new Event("touchmove"));
+  element.scrollTop = scrollTop;
+  element.dispatchEvent(new Event("scroll"));
+  element.dispatchEvent(new Event("touchend"));
+};
 
 describe("Conversation context", () => {
   test("scrolling 100 frames re-renders a memoised child zero times", async () => {
@@ -254,6 +323,34 @@ describe("ConversationScrollButton", () => {
     expect(document.activeElement).toBe(element);
     mounted.unmount();
   });
+
+  test("reaching the end another way hands its focus to the log", async () => {
+    const mounted = render(
+      <Conversation>
+        <ConversationContent>
+          <ConversationItem itemId="a">a</ConversationItem>
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>,
+    );
+    const element = scroller(mounted.container);
+    const button = () =>
+      mounted.container.querySelector<HTMLButtonElement>(
+        "[data-slot='conversation-scroll-button']",
+      );
+    giveGeometry(element, 2000, 500);
+    wheel(element, 0);
+    await nextFrame();
+    act(() => button()?.focus());
+    expect(document.activeElement === button()).toBe(true);
+
+    // The reader wheels back to the end with the button focused: it leaves.
+    wheel(element, 1500);
+    await nextFrame();
+    expect(button()).toBeNull();
+    expect(document.activeElement === element).toBe(true);
+    mounted.unmount();
+  });
 });
 
 describe("ConversationContent", () => {
@@ -423,37 +520,6 @@ describe("useConversation scroll access", () => {
 });
 
 describe("reader attribution and scroll listeners", () => {
-  function mountPolicy(policy: "settle" | "stick") {
-    let api: ConversationContextValue | null = null;
-    function Probe() {
-      api = useConversation();
-      return null;
-    }
-    const mounted = render(
-      <Conversation scrollPolicy={policy}>
-        <ConversationContent>
-          <ConversationItem itemId="a">a</ConversationItem>
-        </ConversationContent>
-        <Probe />
-      </Conversation>,
-    );
-    const current = () => {
-      if (api === null) throw new Error("expected the conversation API");
-      return api;
-    };
-    return { mounted, element: scroller(mounted.container), current };
-  }
-
-  const sleep = (ms: number) =>
-    act(() => new Promise((resolve) => setTimeout(resolve, ms)));
-
-  /** The reader's wheel: input on the container, then the scroll it makes. */
-  const wheel = (element: HTMLElement, scrollTop: number) => {
-    element.dispatchEvent(new WheelEvent("wheel"));
-    element.scrollTop = scrollTop;
-    element.dispatchEvent(new Event("scroll"));
-  };
-
   test("the conversation's own follow writes never count as the reader's", async () => {
     const { mounted, element, current } = mountPolicy("stick");
     let scrollHeight = 10_000;
@@ -486,15 +552,6 @@ describe("reader attribution and scroll listeners", () => {
     expect(snapshots.at(-1)?.scrollTop).toBe(scrollHeight - 500);
     mounted.unmount();
   });
-
-  /** A flick: a finger down, a short drag, lifted; momentum follows. */
-  const flick = (element: HTMLElement, scrollTop: number) => {
-    element.dispatchEvent(new Event("touchstart"));
-    element.dispatchEvent(new Event("touchmove"));
-    element.scrollTop = scrollTop;
-    element.dispatchEvent(new Event("scroll"));
-    element.dispatchEvent(new Event("touchend"));
-  };
 
   test("momentum after a flick stays the reader's and keeps a follow broken", async () => {
     const { mounted, element, current } = mountPolicy("stick");
@@ -642,6 +699,244 @@ describe("reader attribution and scroll listeners", () => {
     expect(calls).toHaveLength(2);
     expect(lateCalls).toBe(0);
     unsubscribe();
+    mounted.unmount();
+  });
+});
+
+describe("a scroll no input explains", () => {
+  for (const policy of ["settle", "stick"] as const) {
+    test(`leaving the end while following is kept and breaks the follow (${policy})`, async () => {
+      const { mounted, element, current } = mountPolicy(policy);
+      giveGeometry(element, 10_000, 500);
+      element.scrollTop = 9_500;
+      await nextFrame();
+
+      // Focus moving to an earlier item scrolls it into view, with no wheel,
+      // touch, key or pointer on the log.
+      element.scrollTop = 7_000;
+      element.dispatchEvent(new Event("scroll"));
+      await nextFrame();
+      expect(element.scrollTop).toBe(7_000);
+      expect(current().atBottom).toBe(false);
+
+      // The follow is broken: growth no longer pulls the view to the end.
+      giveGeometry(element, 10_200, 500);
+      current().restoreAnchor();
+      expect(element.scrollTop).toBe(7_000);
+      mounted.unmount();
+    });
+  }
+});
+
+describe("a glide and the reader's scrolls", () => {
+  test("reader momentum during a glide cancels it", async () => {
+    const { mounted, element, current } = mountPolicy("stick");
+    giveGeometry(element, 10_000, 500);
+    element.scrollTop = 9_500;
+    const snapshots: ConversationScrollSnapshot[] = [];
+    current().subscribeScroll((snapshot) => snapshots.push(snapshot));
+    await nextFrame();
+    flick(element, 9_000);
+    await nextFrame();
+    current().scrollToEnd();
+    await nextFrame();
+
+    // The flick's momentum keeps moving the view up under the glide.
+    element.scrollTop = 8_000;
+    element.dispatchEvent(new Event("scroll"));
+    await nextFrame();
+    expect(snapshots.at(-1)?.byReader).toBe(true);
+    await sleep(800);
+    expect(element.scrollTop).toBe(8_000);
+    mounted.unmount();
+  });
+
+  test("momentum that outlasts the cancelled glide stays the reader's", async () => {
+    const { mounted, element, current } = mountPolicy("stick");
+    giveGeometry(element, 10_000, 500);
+    element.scrollTop = 9_500;
+    const snapshots: ConversationScrollSnapshot[] = [];
+    current().subscribeScroll((snapshot) => snapshots.push(snapshot));
+    await nextFrame();
+    flick(element, 9_000);
+    await nextFrame();
+    current().scrollToEnd();
+
+    // A tick every 50ms through what would have been the glide and after it.
+    for (let tick = 0; tick < 16; tick += 1) {
+      await sleep(50);
+      const top = element.scrollTop - 30;
+      element.scrollTop = top;
+      element.dispatchEvent(new Event("scroll"));
+      await nextFrame();
+      expect(element.scrollTop).toBe(top);
+      expect(snapshots.at(-1)?.byReader).toBe(true);
+    }
+    mounted.unmount();
+  });
+
+  test("a key that does not scroll leaves a glide alone", async () => {
+    const { mounted, element, current } = mountPolicy("settle");
+    giveGeometry(element, 10_000, 500);
+    element.scrollTop = 1_000;
+    await nextFrame();
+    current().scrollToEnd();
+    await nextFrame();
+    await nextFrame();
+    element.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Shift", bubbles: true }),
+    );
+    await sleep(900);
+    expect(element.scrollTop).toBe(9_500);
+    mounted.unmount();
+  });
+
+  test("a scroll key cancels a glide", async () => {
+    const { mounted, element, current } = mountPolicy("settle");
+    giveGeometry(element, 10_000, 500);
+    element.scrollTop = 1_000;
+    await nextFrame();
+    current().scrollToEnd();
+    await nextFrame();
+    await nextFrame();
+    element.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }),
+    );
+    const stoppedAt = element.scrollTop;
+    await sleep(900);
+    expect(element.scrollTop).toBe(stoppedAt);
+    expect(stoppedAt).toBeLessThan(9_500);
+    mounted.unmount();
+  });
+});
+
+describe("sentId", () => {
+  test("the value at mount is history: nothing settles, the view follows", async () => {
+    const { mounted, element, current, spacer, update } = mountConversation(
+      { sentId: "a" },
+      ["a", "b"],
+    );
+    giveGeometry(element, 10_000, 500);
+    element.scrollTop = 9_500;
+    await nextFrame();
+    expect(spacer().style.height).toBe("");
+    giveGeometry(element, 10_200, 500);
+    current().restoreAnchor();
+    expect(element.scrollTop).toBe(9_700);
+
+    // The next change is a send.
+    update({ sentId: "b" });
+    expect(spacer().style.height).toBe("500px");
+    mounted.unmount();
+  });
+
+  test("an id that is not an item does not glide under stick", async () => {
+    const { mounted, element, update } = mountConversation({
+      scrollPolicy: "stick",
+    });
+    giveGeometry(element, 10_000, 500);
+    element.scrollTop = 9_500;
+    await nextFrame();
+    wheel(element, 1_000);
+    await sleep(200);
+    update({ scrollPolicy: "stick", sentId: "elsewhere" });
+    await sleep(800);
+    expect(element.scrollTop).toBe(1_000);
+    mounted.unmount();
+  });
+
+  test("an id that is not an item keeps the reserve under settle", async () => {
+    const { mounted, element, spacer, update } = mountConversation();
+    giveGeometry(element, 10_000, 500);
+    element.scrollTop = 9_500;
+    await nextFrame();
+    update({ sentId: "a" });
+    expect(spacer().style.height).toBe("500px");
+    update({ sentId: "elsewhere" });
+    await act(() => Promise.resolve());
+    expect(spacer().style.height).toBe("500px");
+    expect(element.scrollTop).toBe(9_500);
+    mounted.unmount();
+  });
+
+  test("an id that is not an item keeps the follow under settle", async () => {
+    const { mounted, element, current, update } = mountConversation();
+    giveGeometry(element, 10_000, 500);
+    element.scrollTop = 9_500;
+    await nextFrame();
+    update({ sentId: "elsewhere" });
+    giveGeometry(element, 10_200, 500);
+    current().restoreAnchor();
+    expect(element.scrollTop).toBe(9_700);
+    mounted.unmount();
+  });
+});
+
+describe("scrollPolicy changing mid-life", () => {
+  test("stick to settle: back at the end, the view no longer follows", async () => {
+    const { mounted, element, current, update } = mountPolicy("stick");
+    giveGeometry(element, 10_000, 500);
+    element.scrollTop = 9_500;
+    await nextFrame();
+    update({ scrollPolicy: "settle" });
+    expect(
+      mounted.container
+        .querySelector("[data-slot='conversation']")
+        ?.getAttribute("data-scroll-policy"),
+    ).toBe("settle");
+    wheel(element, 1_000);
+    wheel(element, 9_500);
+    giveGeometry(element, 10_200, 500);
+    current().restoreAnchor();
+    expect(element.scrollTop).toBe(9_500);
+    mounted.unmount();
+  });
+
+  test("settle to stick: following is taken from where the view is", async () => {
+    const { mounted, element, current, update } = mountPolicy("settle");
+    giveGeometry(element, 10_000, 500);
+    element.scrollTop = 9_500;
+    await nextFrame();
+    // Under settle, the reader leaving and coming back does not re-follow.
+    wheel(element, 1_000);
+    wheel(element, 9_500);
+    update({ scrollPolicy: "stick" });
+    giveGeometry(element, 10_200, 500);
+    current().restoreAnchor();
+    expect(element.scrollTop).toBe(9_700);
+
+    // Switched while away from the end, it does not follow.
+    wheel(element, 1_000);
+    update({ scrollPolicy: "settle" });
+    update({ scrollPolicy: "stick" });
+    giveGeometry(element, 10_400, 500);
+    current().restoreAnchor();
+    expect(element.scrollTop).toBe(1_000);
+    mounted.unmount();
+  });
+});
+
+describe("ConversationEmptyState", () => {
+  test("shows a default title, or the host's children instead", () => {
+    const mounted = render(
+      <ConversationEmptyState description="Ask the agent anything." />,
+    );
+    const slot = mounted.container.querySelector(
+      "[data-slot='conversation-empty-state']",
+    );
+    expect(slot?.textContent).toContain("No messages yet");
+    expect(slot?.textContent).toContain("Ask the agent anything.");
+
+    mounted.rerender(
+      <ConversationEmptyState title="Unused">
+        <p>Start a workflow</p>
+      </ConversationEmptyState>,
+    );
+    const replaced = mounted.container.querySelector(
+      "[data-slot='conversation-empty-state']",
+    );
+    expect(replaced?.textContent).toBe("Start a workflow");
+    expect(replaced?.querySelector("[data-slot='empty-state']")).toBeNull();
     mounted.unmount();
   });
 });

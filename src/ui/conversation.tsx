@@ -28,6 +28,7 @@ import {
   glideDuration,
   glidePosition,
   rebaseGlide,
+  releasedReserve,
   reservedSpace,
   settleTarget,
   type ConversationAnchor,
@@ -78,7 +79,8 @@ export type ConversationScrollSnapshot = {
    * as momentum continuing a lifted touch or a wheel (at most
    * `CONVERSATION_MOMENTUM_MS` after it). The conversation's own writes
    * (following, glides, anchoring) never count, even then, and neither does
-   * the layout moving the view. */
+   * the layout or the page moving the view (focus, find in page), even when
+   * the conversation keeps where it put the view. */
   readonly byReader: boolean;
 };
 
@@ -181,6 +183,17 @@ function notifyAll<T>(listeners: ReadonlySet<T>, call: (listener: T) => void) {
     }
   }
 }
+
+/** The keys that scroll a focused container vertically. */
+const SCROLL_KEYS: ReadonlySet<string> = new Set([
+  "ArrowUp",
+  "ArrowDown",
+  "PageUp",
+  "PageDown",
+  "Home",
+  "End",
+  " ",
+]);
 
 function isEditable(target: EventTarget | null): boolean {
   return (
@@ -344,7 +357,7 @@ function createConversationEngine() {
 
   const updateReserve = () => {
     if (scroller === null || spacer === null) return;
-    let next = 0;
+    let next: number;
     const element = settledId === null ? undefined : registry.get(settledId);
     if (policy === "settle" && element !== undefined) {
       const view = scroller.getBoundingClientRect();
@@ -356,8 +369,13 @@ function createConversationEngine() {
         contentEnd: toScroll(spacer.getBoundingClientRect().top),
       });
     } else {
-      // The settled item was removed or the policy changed: nothing to hold.
+      // The settled item was removed or the policy changed: release the
+      // reserve, keeping only what holds the view where it is.
       settledId = null;
+      next = releasedReserve({
+        scrollTop: scroller.scrollTop,
+        distanceFromEnd: distance(),
+      });
     }
     if (Math.abs(next - reserved) <= 0.5) return;
     reserved = next;
@@ -404,8 +422,9 @@ function createConversationEngine() {
   };
 
   /** One eased motion towards a target measured afresh every frame; instant
-   * under reduced motion. Reader input or another glide cancels it. Content
-   * that moves above the view mid-glide carries the glide with it (`rebase`). */
+   * under reduced motion. The reader's input or scroll, or another glide,
+   * cancels it. Content that moves above the view mid-glide carries the glide
+   * with it (`rebase`). */
   const glide = (target: () => number | null) => {
     if (scroller === null) return;
     const token = glideToken + 1;
@@ -471,7 +490,12 @@ function createConversationEngine() {
     scrolled = true;
     if (cause === "reader") scrolledByReader = true;
     scheduleAtBottom();
-    if (gliding) return;
+    if (gliding) {
+      // The reader's scroll (momentum already running when the glide began)
+      // stops the glide, as their input does; any other leaves it in charge.
+      if (cause !== "reader") return;
+      cancelGlide();
+    }
     if (cause === "reader") {
       gestureUntil = extendGesture({ now, gestureUntil, momentumUntil });
       const atEnd = distance() <= CONVERSATION_END_THRESHOLD;
@@ -484,15 +508,21 @@ function createConversationEngine() {
       capture();
       return;
     }
-    // The layout moved the view. Following, the end wins. Otherwise a scroll
-    // right after a resize is the resize's clamp, already corrected by the
-    // resize callback, and must not become the anchor; any other is the page
-    // moving the view on purpose (find in page, focus) and is kept.
+    // The layout moved the view. A scroll right after a resize is the
+    // resize's clamp, already corrected by the resize callback, and must not
+    // become the anchor; following, the end wins over it, and over any scroll
+    // that stays at the end. Any other is the page moving the view on purpose
+    // (find in page, focus) and is kept: away from the end, it breaks a follow
+    // as the reader's own scroll would.
+    const afterResize = now - resizedAt <= 100;
     if (following) {
-      write(endTop());
-      return;
+      if (afterResize || distance() <= CONVERSATION_END_THRESHOLD) {
+        write(endTop());
+        return;
+      }
+      following = false;
     }
-    if (now - resizedAt > 100) capture();
+    if (!afterResize) capture();
   };
 
   const onResize = () => {
@@ -503,7 +533,7 @@ function createConversationEngine() {
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
-    if (!isEditable(event.target)) openGesture();
+    if (SCROLL_KEYS.has(event.key) && !isEditable(event.target)) openGesture();
   };
 
   const onPointerDown = (event: PointerEvent) => {
@@ -544,6 +574,8 @@ function createConversationEngine() {
     attach(element: HTMLElement, content: HTMLElement, reserve: HTMLElement) {
       scroller = element;
       spacer = reserve;
+      // A new spacer starts empty, whatever the last one held.
+      reserved = 0;
       const observer = new ResizeObserver(onResize);
       observer.observe(content);
       observer.observe(element);
@@ -558,6 +590,7 @@ function createConversationEngine() {
       element.addEventListener("pointerdown", onPointerDown);
       window.addEventListener("pointerup", onPointerUp);
       window.addEventListener("pointercancel", onPointerUp);
+      updateReserve();
       if (following) write(endTop());
       capture();
       notifiedTop = null;
@@ -599,7 +632,7 @@ function createConversationEngine() {
       reducedMotion = next;
     },
     /** The host's latest sent item. The first value seen is history, not a
-     * send; each change after it is one. */
+     * send; each change after it to a registered item's id is one. */
     sent(id: string | undefined) {
       if (!sentSeeded) {
         sentSeeded = true;
@@ -608,7 +641,7 @@ function createConversationEngine() {
       }
       if (id === lastSent) return;
       lastSent = id;
-      if (id === undefined) return;
+      if (id === undefined || registry.get(id) === undefined) return;
       if (policy === "stick") {
         following = true;
         glide(endTop);
@@ -722,9 +755,12 @@ export type ConversationProps = ComponentProps<"div"> & {
   /** How the view moves as the conversation grows. Defaults to `settle`. */
   readonly scrollPolicy?: ConversationScrollPolicy;
   /**
-   * The id of the reader's latest sent item. Each change is a send: under
-   * `settle` that item glides to the top of the view, under `stick` the view
-   * glides to the end and follows again. The value at mount is history.
+   * The id of the reader's latest sent item. Each change to the `itemId` of a
+   * mounted `ConversationItem` is a send: under `settle` that item glides to
+   * the top of the view, under `stick` the view glides to the end and follows
+   * again. Render the item in the same update that sets its id: an id with no
+   * item changes nothing, and is not a send when the item appears later. The
+   * value at mount is history.
    */
   readonly sentId?: string | undefined;
 };
@@ -735,9 +771,10 @@ export type ConversationProps = ComponentProps<"div"> & {
  * `ConversationItem` around each thing the host renders, and a
  * `ConversationScrollButton` beside it.
  *
- * Only the reader's own input (wheel, touch, keys, the scrollbar) breaks a
- * follow; content resizing never scrolls what they are reading. Jumps are one
- * glide, instant under reduced motion.
+ * Only the reader's own scrolling (wheel, touch, scroll keys, the scrollbar),
+ * or the page moving the view away from the end (focus, find in page), breaks
+ * a follow; content resizing never scrolls what they are reading. Jumps are
+ * one glide, instant under reduced motion.
  */
 export function Conversation({
   scrollPolicy = "settle",
@@ -891,20 +928,40 @@ export type ConversationScrollButtonProps = ComponentProps<"button">;
 
 /**
  * Appears when the end of the conversation is out of view and glides back to
- * it. Focus moves to the conversation as it does, since the button leaves.
+ * it. Focus moves to the conversation as it does, and whenever the button
+ * leaves while it holds focus, however the end came into view.
  */
-export function ConversationScrollButton({
+export function ConversationScrollButton(props: ConversationScrollButtonProps) {
+  const { atBottom } = useConversation();
+  return atBottom ? null : <ScrollToLatest {...props} />;
+}
+
+/** The button itself, mounted only while the end is out of view. */
+function ScrollToLatest({
   "aria-label": label = "Scroll to latest",
   className,
   children,
   onClick,
+  ref,
   ...props
 }: ConversationScrollButtonProps) {
   const engine = useEngine("ConversationScrollButton");
-  const { atBottom, scrollToEnd } = useConversation();
-  if (atBottom) return null;
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const ownButton = useCallback((node: HTMLButtonElement | null) => {
+    buttonRef.current = node;
+  }, []);
+  const mergedRef = useMergedRef(ownButton, ref);
+  // A layout effect's cleanup runs while the leaving button is still in the
+  // document, so it can tell whether it held focus.
+  useLayoutEffect(() => {
+    const button = buttonRef.current;
+    return () => {
+      if (button !== null && button === document.activeElement) engine.focus();
+    };
+  }, [engine]);
   return (
     <button
+      ref={mergedRef}
       type="button"
       data-slot="conversation-scroll-button"
       aria-label={label}
@@ -917,7 +974,7 @@ export function ConversationScrollButton({
         onClick?.(event);
         if (event.defaultPrevented) return;
         engine.focus();
-        scrollToEnd();
+        engine.scrollToEnd();
       }}
     >
       {children ?? <ArrowDown aria-hidden />}

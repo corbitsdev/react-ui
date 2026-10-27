@@ -205,6 +205,24 @@ export function reservedSpace({
   return Math.max(0, viewportHeight - (contentEnd - itemTop));
 }
 
+/**
+ * The reserve to keep once no item is settled (it was removed, or the policy
+ * changed): only the part the view still hangs below the end of the content,
+ * so the container can still reach `scrollTop` and the browser never clamps
+ * the view. As the view leaves that space, the rest is released too. Nothing
+ * at the top of the container, where no clamp can move the view.
+ */
+export function releasedReserve({
+  scrollTop,
+  distanceFromEnd,
+}: {
+  readonly scrollTop: number;
+  /** As `distanceFromEnd` measures it: negative inside the reserve. */
+  readonly distanceFromEnd: number;
+}): number {
+  return scrollTop <= 0 ? 0 : Math.max(0, -distanceFromEnd);
+}
+
 /** How far the end of the content is below the bottom of the view; the
  * reserved space after the content does not count as content. */
 export function distanceFromEnd({
@@ -238,9 +256,10 @@ export type ConversationScrollCause = "reader" | "self" | "layout";
  * wrote `scrollTop` is the container's own (a follow, a glide frame, an anchor
  * restore), even inside a reader's gesture. Otherwise a scroll inside an open
  * gesture (`gestureUntil`, set from the reader's input only) is the reader's.
- * Anything else (content shrinking under the view, an image loading) is the
- * layout's, and must neither break a follow nor be captured as the reader's
- * position.
+ * Anything else is the layout's: content shrinking under the view, an image
+ * loading, or the page moving the view (focus, find in page). It never opens
+ * or extends the reader's gesture; the conversation decides from where it
+ * landed whether to keep it.
  */
 export function classifyScroll({
   scrollTop,

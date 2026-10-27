@@ -153,6 +153,51 @@ test.describe("settle", () => {
     ).toBeLessThanOrEqual(1);
   });
 
+  test("removing the settled item does not move the view", async ({ page }) => {
+    await open(page, "conversation-settle");
+    await page.getByRole("button", { name: "Send" }).click();
+    await settled(page);
+    const before = await offsetOf(page, "a0");
+    await page.getByRole("button", { name: "Delete sent" }).click();
+    await expect(page.getByTestId("s0")).not.toBeAttached();
+    await write(page, 0);
+    expect(Math.abs((await offsetOf(page, "a0")) - before)).toBeLessThanOrEqual(
+      1,
+    );
+  });
+
+  test("a remounted log keeps the reserve, so the end is the content's end", async ({
+    page,
+  }) => {
+    await open(page, "conversation-settle");
+    await page.getByRole("button", { name: "Send" }).click();
+    await settled(page);
+    const reserve = () =>
+      page
+        .locator("[data-slot='conversation-reserve']")
+        .evaluate((element) => element.getBoundingClientRect().height);
+    const held = await reserve();
+    expect(held).toBeGreaterThan(0);
+
+    await page.getByRole("button", { name: "Remount" }).click();
+    await write(page, 0);
+    expect(Math.abs((await reserve()) - held)).toBeLessThanOrEqual(1);
+
+    await page.getByRole("button", { name: "Scroll to latest" }).click();
+    await settled(page);
+    // The content ends at the bottom of the view, not a reserve short of it.
+    const below = await container(page).evaluate((element) => {
+      const spacer = element.querySelector(
+        "[data-slot='conversation-reserve']",
+      );
+      return (
+        (spacer?.getBoundingClientRect().top ?? Number.NaN) -
+        element.getBoundingClientRect().bottom
+      );
+    });
+    expect(Math.abs(below)).toBeLessThanOrEqual(1);
+  });
+
   test("under reduced motion the settle is an instant jump", async ({
     page,
   }) => {
@@ -210,6 +255,34 @@ test.describe("stick", () => {
     await atEnd(page);
   });
 });
+
+for (const policy of ["settle", "stick"]) {
+  test(`${policy}: focus moving to an earlier item keeps the view there`, async ({
+    page,
+  }) => {
+    await open(page, `conversation-${policy}`);
+    // Past the moment after the history's resize, when a scroll is still
+    // taken for the resize's clamp.
+    await settled(page);
+    // Focus moved by the host or assistive tech: no input on the log.
+    await page.getByTestId("h3").evaluate((element) => {
+      element.tabIndex = -1;
+      element.focus();
+    });
+    await settled(page);
+    const offset = await offsetOf(page, "h3");
+    expect(offset).toBeGreaterThanOrEqual(-1);
+    expect(offset).toBeLessThan(400);
+    const before = (await view(page)).scrollTop;
+    await expect(
+      page.getByRole("button", { name: "Scroll to latest" }),
+    ).toBeVisible();
+
+    // The follow is broken: streaming does not pull the view to the end.
+    await write(page, 3);
+    expect((await view(page)).scrollTop).toBe(before);
+  });
+}
 
 type GlideFrame = { readonly t: number; readonly offset: number };
 

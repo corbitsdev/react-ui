@@ -11,6 +11,7 @@ import {
   glideDuration,
   glidePosition,
   rebaseGlide,
+  releasedReserve,
   reservedSpace,
   settleTarget,
   type ConversationSpan,
@@ -76,6 +77,25 @@ describe("reservedSpace", () => {
     expect(
       reservedSpace({ viewportHeight: 600, itemTop: 1000, contentEnd: 1700 }),
     ).toBe(0);
+  });
+});
+
+describe("releasedReserve", () => {
+  test("keeps the part of the view that hangs below the content", () => {
+    // The view's bottom sits 240px past the content's end, inside the reserve.
+    expect(releasedReserve({ scrollTop: 1000, distanceFromEnd: -240 })).toBe(
+      240,
+    );
+  });
+
+  test("is nothing once the content reaches the view's bottom", () => {
+    expect(releasedReserve({ scrollTop: 1000, distanceFromEnd: 0 })).toBe(0);
+    expect(releasedReserve({ scrollTop: 1000, distanceFromEnd: 500 })).toBe(0);
+  });
+
+  test("is nothing at the top, where no clamp can move the view", () => {
+    // Content shorter than the view: nothing needs holding.
+    expect(releasedReserve({ scrollTop: 0, distanceFromEnd: -300 })).toBe(0);
   });
 });
 
