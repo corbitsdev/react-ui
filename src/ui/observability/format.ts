@@ -32,6 +32,44 @@ export function formatCost(usd: number): string {
   return `$${usd.toFixed(2)}`;
 }
 
+export function formatReportedCost(
+  spans: readonly { usage?: { costUsd?: number } }[],
+): string {
+  let total = 0;
+  let known = false;
+  for (const span of spans) {
+    const cost = span.usage?.costUsd;
+    if (cost === undefined) continue;
+    known = true;
+    total += cost;
+  }
+  if (!known) return "—";
+  return formatCost(total);
+}
+
+export function formatStepCount(trace: {
+  stepCount?: number;
+  spans: readonly unknown[];
+}): string {
+  if (trace.stepCount !== undefined) return String(trace.stepCount);
+  return String(trace.spans.length);
+}
+
+export function formatStarted(value: string): string {
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return value;
+  const date = new Date(parsed);
+  const day = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+  const time = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+  return `${day} · ${time}`;
+}
+
 export function spanTokens(span: {
   usage?: { inputTokens?: number; outputTokens?: number };
 }): number {

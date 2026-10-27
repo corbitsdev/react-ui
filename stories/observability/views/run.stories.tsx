@@ -34,6 +34,20 @@ export const NameOnly = () => (
 );
 NameOnly.storyName = "Name only";
 
+export const ParseableStart = () => {
+  const run = {
+    ...review,
+    startedAt: "2026-10-24T15:04:00.000Z",
+    spans: [span("turn", review), span("sub", review)],
+  };
+  return (
+    <div className="border border-border">
+      <TraceHeader trace={run} />
+    </div>
+  );
+};
+ParseableStart.storyName = "Parseable start";
+
 export const WithSteps = () => (
   <div className="h-[640px] border border-border">
     <Run trace={review}>
