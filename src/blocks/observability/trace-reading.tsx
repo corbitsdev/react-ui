@@ -12,7 +12,7 @@ import {
   STATUS_TONE,
 } from "../../ui/observability/trace-header.js";
 import { Run } from "../../ui/observability/trace-view.js";
-import type { PlacedSpan } from "../../ui/observability/tree.js";
+import { compareSpans, type PlacedSpan } from "../../ui/observability/tree.js";
 import { rowMarker, stepTitle } from "../../ui/observability/wording.js";
 
 /**
@@ -52,12 +52,12 @@ export function TraceReading({ trace }: { readonly trace: Trace }) {
   );
 }
 
-/** The first model prompt, and the last model reply, in start order. */
+/** The first model prompt, and the last model reply, in step order. */
 export function turnReading(spans: readonly Span[]): {
   question: string | undefined;
   answer: string | undefined;
 } {
-  const ordered = [...spans].sort(byStart);
+  const ordered = [...spans].sort(compareSpans);
   let question: string | undefined;
   let answer: string | undefined;
   for (const span of ordered) {
@@ -265,11 +265,4 @@ function textOf(value: string | undefined): string | undefined {
   const text = value.trim();
   if (text.length === 0) return undefined;
   return text;
-}
-
-function byStart(left: Span, right: Span): number {
-  if (left.startMs !== right.startMs) return left.startMs - right.startMs;
-  if (left.name < right.name) return -1;
-  if (left.name > right.name) return 1;
-  return 0;
 }

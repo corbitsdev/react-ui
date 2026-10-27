@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type { Span } from "../../ui/observability/model.js";
+import { placeSpans } from "../../ui/observability/tree.js";
 import { turnReading } from "./trace-reading.js";
 
 describe("turnReading", () => {
@@ -28,7 +29,39 @@ describe("turnReading", () => {
     expect(reading.question).toBeUndefined();
     expect(reading.answer).toBeUndefined();
   });
+
+  test("reads turns that share a start in step order", () => {
+    const [left, right] = namesThatTieBreakApart();
+    const spans = [
+      turn(left, 0, `Ask from ${left}`, `Reply from ${left}`),
+      turn(right, 0, `Ask from ${right}`, `Reply from ${right}`),
+    ];
+    const turns = placeSpans(spans).filter((row) => row.span.kind === "turn");
+    const first = turns[0];
+    const last = turns[turns.length - 1];
+    if (first === undefined || last === undefined) {
+      throw new Error("expected two turns");
+    }
+    const reading = turnReading(spans);
+    expect(reading.question).toBe(first.span.input);
+    expect(reading.answer).toBe(last.span.output);
+  });
 });
+
+/** Two names `<` and `localeCompare` order differently. */
+function namesThatTieBreakApart(): readonly [string, string] {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  for (const left of letters) {
+    for (const right of letters) {
+      if (left === right) continue;
+      const codeUnit = left < right ? -1 : 1;
+      if (codeUnit !== Math.sign(left.localeCompare(right))) {
+        return [left, right];
+      }
+    }
+  }
+  throw new Error("expected names whose orders disagree");
+}
 
 function turn(
   id: string,
