@@ -1,8 +1,8 @@
 "use client";
 
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useId, useLayoutEffect, useRef } from "react";
-import type { ComponentProps } from "react";
+import { Component, useId, useRef } from "react";
+import type { ComponentProps, ReactNode, RefObject } from "react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";
 import { cn } from "../lib/utils.js";
@@ -46,6 +46,58 @@ function scrollContainerOf(element: HTMLElement): HTMLElement | null {
   return page instanceof HTMLElement ? page : null;
 }
 
+type FoldAnchorProps = {
+  readonly open: boolean;
+  readonly toggle: RefObject<HTMLButtonElement | null>;
+  readonly children: ReactNode;
+};
+
+type FoldAnchorSnapshot = {
+  readonly scroller: HTMLElement;
+  readonly top: number;
+};
+
+/**
+ * Keeps the fold control where it was on screen when the answer folds, so
+ * the reader's place survives the content above it shrinking. The control's
+ * position has to be read after React decides to fold but before it changes
+ * the DOM, and `getSnapshotBeforeUpdate` is the only React API that runs at
+ * that point; no hook does. It works however the close arrives: a click, a
+ * controlled host committing late, or a host folding it some other way.
+ */
+class FoldAnchor extends Component<FoldAnchorProps> {
+  override getSnapshotBeforeUpdate(
+    previous: FoldAnchorProps,
+  ): FoldAnchorSnapshot | null {
+    const toggle = this.props.toggle.current;
+    if (!previous.open || this.props.open || toggle === null) return null;
+    const scroller = scrollContainerOf(toggle);
+    if (scroller === null) return null;
+    const top = toggle.getBoundingClientRect().top;
+    const bottom =
+      scroller === document.scrollingElement
+        ? window.innerHeight
+        : scroller.getBoundingClientRect().bottom;
+    // Below the visible area nothing the reader sees moves: leave it be.
+    return top > bottom ? null : { scroller, top };
+  }
+
+  override componentDidUpdate(
+    _previous: FoldAnchorProps,
+    _state: unknown,
+    snapshot: FoldAnchorSnapshot | null,
+  ) {
+    const toggle = this.props.toggle.current;
+    if (snapshot === null || toggle === null) return;
+    snapshot.scroller.scrollTop +=
+      toggle.getBoundingClientRect().top - snapshot.top;
+  }
+
+  override render() {
+    return this.props.children;
+  }
+}
+
 /**
  * Folds a very long answer to its opening, with a control to show the rest.
  * Under `threshold`, or while streaming, it renders its children as they are.
@@ -81,21 +133,8 @@ export function MessageFold({
     name: "MessageFold",
   });
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const foldedFrom = useRef<number | null>(null);
   const bodyId = useId();
   const foldable = !streaming && length > threshold;
-
-  useLayoutEffect(() => {
-    const before = foldedFrom.current;
-    const toggle = toggleRef.current;
-    if (before === null || open || toggle === null) return;
-    foldedFrom.current = null;
-    const scroller = scrollContainerOf(toggle);
-    if (scroller === null) return;
-    const delta = toggle.getBoundingClientRect().top - before;
-    scroller.scrollTop += delta;
-  }, [open]);
-
   const folded = foldable && !open;
 
   // One element shape in every state, so the children are never remounted
@@ -103,59 +142,50 @@ export function MessageFold({
   // threshold): only attributes change and the toggle comes and goes beside
   // the body.
   return (
-    <div
-      data-slot="message-fold"
-      data-state={foldable ? (open ? "open" : "folded") : undefined}
-      className={cn("flex min-w-0 flex-col", className)}
-      onFocus={(event) => {
-        onFocus?.(event);
-        if (folded && toggleRef.current?.contains(event.target) !== true) {
-          setOpen(true);
-        }
-      }}
-      {...props}
-    >
+    <FoldAnchor open={open} toggle={toggleRef}>
       <div
-        id={bodyId}
-        data-slot="message-fold-body"
-        className={cn(folded && "max-h-96 overflow-hidden mask-b-from-60%")}
+        data-slot="message-fold"
+        data-state={foldable ? (open ? "open" : "folded") : undefined}
+        className={cn("flex min-w-0 flex-col", className)}
+        onFocus={(event) => {
+          onFocus?.(event);
+          if (folded && toggleRef.current?.contains(event.target) !== true) {
+            setOpen(true);
+          }
+        }}
+        {...props}
       >
-        {children}
-      </div>
-      {foldable ? (
-        <div className={cn("z-10 mt-2 flex", open && "sticky bottom-3")}>
-          <button
-            ref={toggleRef}
-            type="button"
-            aria-expanded={open}
-            aria-controls={bodyId}
-            data-slot="message-fold-toggle"
-            className="inline-flex h-8 items-center gap-1 rounded-full border border-border bg-background px-3 text-xs font-medium text-muted-foreground shadow-surface transition-colors hover:bg-muted hover:text-foreground [&_svg]:size-3.5"
-            onClick={() => {
-              if (open) {
-                foldedFrom.current =
-                  toggleRef.current?.getBoundingClientRect().top ?? null;
-                // A controlled host may keep it open: drop the offset after
-                // this frame so a later close does not apply it.
-                requestAnimationFrame(() => {
-                  foldedFrom.current = null;
-                });
-              }
-              setOpen(!open);
-            }}
-          >
-            {open ? (
-              <>
-                <ChevronUp aria-hidden /> Show less
-              </>
-            ) : (
-              <>
-                <ChevronDown aria-hidden /> Show full answer
-              </>
-            )}
-          </button>
+        <div
+          id={bodyId}
+          data-slot="message-fold-body"
+          className={cn(folded && "max-h-96 overflow-hidden mask-b-from-60%")}
+        >
+          {children}
         </div>
-      ) : null}
-    </div>
+        {foldable ? (
+          <div className={cn("z-10 mt-2 flex", open && "sticky bottom-3")}>
+            <button
+              ref={toggleRef}
+              type="button"
+              aria-expanded={open}
+              aria-controls={bodyId}
+              data-slot="message-fold-toggle"
+              className="inline-flex h-8 items-center gap-1 rounded-full border border-border bg-background px-3 text-xs font-medium text-muted-foreground shadow-surface transition-colors hover:bg-muted hover:text-foreground [&_svg]:size-3.5"
+              onClick={() => setOpen(!open)}
+            >
+              {open ? (
+                <>
+                  <ChevronUp aria-hidden /> Show less
+                </>
+              ) : (
+                <>
+                  <ChevronDown aria-hidden /> Show full answer
+                </>
+              )}
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </FoldAnchor>
   );
 }

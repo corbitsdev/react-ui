@@ -369,7 +369,7 @@ const LONG_ANSWER = Array.from(
 
 export function VeryLongAnswer() {
   return (
-    <div className="h-[32rem] max-w-2xl overflow-y-auto rounded-lg border border-border">
+    <div className="h-128 max-w-2xl overflow-y-auto rounded-lg border border-border">
       <Column>
         <Message from="agent">
           <MessageAvatar name="Ada" />

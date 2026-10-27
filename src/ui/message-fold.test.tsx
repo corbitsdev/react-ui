@@ -173,6 +173,86 @@ describe("MessageFold", () => {
     mounted.unmount();
   });
 
+  test("a close the controlled host commits after a frame keeps the reader's place", async () => {
+    const page = document.scrollingElement as HTMLElement;
+    function Host() {
+      const [open, setOpen] = useState(true);
+      return (
+        <MessageFold
+          length={300}
+          threshold={200}
+          open={open}
+          onOpenChange={(next) => {
+            setTimeout(() => setOpen(next), 60);
+          }}
+        >
+          <p>Long answer</p>
+        </MessageFold>
+      );
+    }
+    const mounted = render(<Host />);
+    const button = toggle(mounted.container)!;
+    // Open, the toggle sits at 500; folded, 400px higher.
+    button.getBoundingClientRect = () =>
+      ({ top: state(mounted.container) === "open" ? 500 : 100 }) as DOMRect;
+    page.scrollTop = 1000;
+    act(() => button.click());
+    await act(() => new Promise((resolve) => setTimeout(resolve, 80)));
+    expect(state(mounted.container)).toBe("folded");
+    expect(page.scrollTop).toBe(600);
+    page.scrollTop = 0;
+    mounted.unmount();
+  });
+
+  test("a host that folds it without the toggle keeps the reader's place too", () => {
+    const page = document.scrollingElement as HTMLElement;
+    const at = (open: boolean) => (
+      <MessageFold
+        length={300}
+        threshold={200}
+        open={open}
+        onOpenChange={() => {}}
+      >
+        <p>Long answer</p>
+      </MessageFold>
+    );
+    const mounted = render(at(true));
+    const button = toggle(mounted.container)!;
+    button.getBoundingClientRect = () =>
+      ({ top: state(mounted.container) === "open" ? 500 : 100 }) as DOMRect;
+    page.scrollTop = 1000;
+    mounted.rerender(at(false));
+    expect(page.scrollTop).toBe(600);
+    page.scrollTop = 0;
+    mounted.unmount();
+  });
+
+  test("a fold below the visible area does not move the page", () => {
+    const page = document.scrollingElement as HTMLElement;
+    const at = (open: boolean) => (
+      <MessageFold
+        length={300}
+        threshold={200}
+        open={open}
+        onOpenChange={() => {}}
+      >
+        <p>Long answer</p>
+      </MessageFold>
+    );
+    const mounted = render(at(true));
+    const button = toggle(mounted.container)!;
+    const below = window.innerHeight + 200;
+    button.getBoundingClientRect = () =>
+      ({
+        top: state(mounted.container) === "open" ? below : below - 400,
+      }) as DOMRect;
+    page.scrollTop = 1000;
+    mounted.rerender(at(false));
+    expect(page.scrollTop).toBe(1000);
+    page.scrollTop = 0;
+    mounted.unmount();
+  });
+
   test("focus moving into the folded part unfolds it", () => {
     const mounted = render(
       <MessageFold length={300} threshold={200}>

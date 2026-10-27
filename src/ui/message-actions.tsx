@@ -3,6 +3,7 @@
 import { Ellipsis } from "lucide-react";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useId,
@@ -181,12 +182,23 @@ export function MessageActionMenu({
   onOpenChange,
   className,
   children,
+  ref,
   ...props
 }: MessageActionMenuProps) {
   const { open, setOpen, rootRef, triggerRef, close } = useDismissablePopover<
     HTMLDivElement,
     HTMLButtonElement
   >({ open: openProp, onOpenChange });
+  // The host's ref must not replace the root ref: outside-click dismissal
+  // and the side flip both measure the root.
+  const setRoot = useCallback(
+    (element: HTMLDivElement | null) => {
+      rootRef.current = element;
+      if (typeof ref === "function") ref(element);
+      else if (ref != null) ref.current = element;
+    },
+    [ref, rootRef],
+  );
   const menuRef = useRef<HTMLDivElement>(null);
   const focusOnOpen = useRef<"first" | "last">("first");
   // Set by a press on the trigger while open. Safari, and Firefox on macOS,
@@ -256,7 +268,7 @@ export function MessageActionMenu({
 
   return (
     <div
-      ref={rootRef}
+      ref={setRoot}
       data-slot="message-action-menu"
       className={cn("relative inline-flex", className)}
       {...props}

@@ -633,6 +633,57 @@ describe("MessageActionMenu", () => {
     expect(document.activeElement).toBe(trigger);
     mounted.unmount();
   });
+
+  test("a click outside closes it when the host passes a ref", () => {
+    const ref = createRef<HTMLDivElement>();
+    const mounted = render(
+      <MessageActionMenu ref={ref}>
+        <MessageAction label="Pin" />
+      </MessageActionMenu>,
+    );
+    expect<HTMLElement | null>(ref.current).toBe(
+      slot(mounted.container, "message-action-menu"),
+    );
+    act(() => button(mounted.container, "More actions").click());
+    expect(mounted.container.querySelector("[role='menu']")).not.toBeNull();
+    act(() => {
+      document.body.dispatchEvent(
+        new PointerEvent("pointerdown", { bubbles: true }),
+      );
+    });
+    expect(mounted.container.querySelector("[role='menu']")).toBeNull();
+    mounted.unmount();
+  });
+
+  test("it flips above a trigger near the bottom when the host passes a ref", () => {
+    const realRect = HTMLElement.prototype.getBoundingClientRect;
+    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+      const height = window.innerHeight;
+      if (this.dataset["slot"] === "message-action-menu") {
+        return { top: height - 40, bottom: height - 12, height: 28 } as DOMRect;
+      }
+      if (this.dataset["slot"] === "message-action-menu-content") {
+        return { top: 0, bottom: 200, height: 200 } as DOMRect;
+      }
+      return realRect.call(this);
+    };
+    try {
+      const mounted = render(
+        <MessageActionMenu ref={createRef<HTMLDivElement>()}>
+          <MessageAction label="Pin" />
+        </MessageActionMenu>,
+      );
+      act(() => button(mounted.container, "More actions").click());
+      expect(
+        mounted.container
+          .querySelector("[role='menu']")
+          ?.getAttribute("data-side"),
+      ).toBe("top");
+      mounted.unmount();
+    } finally {
+      HTMLElement.prototype.getBoundingClientRect = realRect;
+    }
+  });
 });
 
 describe("MessageReactions", () => {
