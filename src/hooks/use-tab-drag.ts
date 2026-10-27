@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type RefObject,
+} from "react";
 import type * as React from "react";
 
 /** How far the pointer travels before a press becomes a drag, in px. */
@@ -43,8 +49,11 @@ export function useTabDrag({
   onMove,
   itemSelector = "[data-slot='panel-tab']",
 }: UseTabDragOptions): UseTabDragResult {
+  // The latest onMove, for a drag that began under an earlier render.
   const onMoveRef = useRef(onMove);
-  onMoveRef.current = onMove;
+  useLayoutEffect(() => {
+    onMoveRef.current = onMove;
+  });
   const stopRef = useRef<(() => void) | null>(null);
 
   useEffect(() => () => stopRef.current?.(), []);
