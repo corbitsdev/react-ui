@@ -439,7 +439,7 @@ export function PromptInputSuggestions({
           }
           data-slot="prompt-input-suggestions"
           className={cn(
-            "absolute inset-x-0 bottom-full z-20 mb-2 flex max-h-60 flex-col gap-0.5 overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground",
+            "absolute inset-x-0 bottom-full z-20 mb-2 flex max-h-60 flex-col gap-px overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground",
             className,
           )}
         >
@@ -490,8 +490,7 @@ export function PromptInputSuggestion({
       data-slot="prompt-input-suggestion"
       data-active={active ? "" : undefined}
       className={cn(
-        "flex cursor-default items-baseline gap-2 rounded-md border-l-2 border-transparent px-2 py-1.5 text-sm",
-        "data-[active]:border-primary data-[active]:bg-muted",
+        "flex cursor-default items-baseline gap-2 rounded-md px-2 py-1 text-sm data-[active]:bg-muted",
         className,
       )}
       onMouseDown={(event) => {
