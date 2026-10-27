@@ -5,6 +5,11 @@ export type PlacedSpan = {
   readonly depth: number;
 };
 
+/** Step order: earlier start first, then `localeCompare` on the name. */
+export function compareSpans(left: Span, right: Span): number {
+  return left.startMs - right.startMs || left.name.localeCompare(right.name);
+}
+
 export function placeSpans(spans: readonly Span[]): readonly PlacedSpan[] {
   const byId = new Map(spans.map((span) => [span.id, span]));
   const depth = (span: Span, guard = 0): number => {
@@ -14,7 +19,7 @@ export function placeSpans(spans: readonly Span[]): readonly PlacedSpan[] {
     return 1 + depth(parent, guard + 1);
   };
   return [...spans]
-    .sort((a, b) => a.startMs - b.startMs || a.name.localeCompare(b.name))
+    .sort(compareSpans)
     .map((span) => ({ span, depth: depth(span) }));
 }
 
