@@ -47,7 +47,7 @@ jobs:
               "Tool", "ToolApproval", "ToolGroup", "Reasoning", "Activity",
               "Message", "MessageFold", "MessageActions", "MessageReactions",
               "MessageReplies", "Attachments", "AttachmentDropZone",
-              "GeneratedImages", "Sources", "MediaViewer",
+              "GeneratedImages", "Sources", "MediaViewer", "MessageParts",
             ];
             const missing = names.filter((n) => m[n] === undefined);
             if (missing.length) throw new Error("missing exports: " + missing.join(", "));
