@@ -105,16 +105,7 @@ export const ClippedShellCommand = () => {
     ...span("tool-shell", review),
     input: JSON.stringify({ command }),
   };
-  return (
-    <div className="max-w-md border border-border">
-      <div role="listbox" aria-label="Clipped shell command">
-        <Step span={shell} selected />
-      </div>
-      <div className="border-t border-border p-3">
-        <Tool span={shell} />
-      </div>
-    </div>
-  );
+  return <Tool span={shell} />;
 };
 ClippedShellCommand.storyName = "Clipped shell command";
 
