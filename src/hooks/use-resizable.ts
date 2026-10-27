@@ -17,6 +17,8 @@ const KEY_STEP_PX = 16;
 const LARGE_STEP_FACTOR = 4;
 /** A drag ending this close to the default width lands on the default. */
 const SNAP_PX = 12;
+/** How far the pointer travels before a press on the handle becomes a drag. */
+const DRAG_THRESHOLD_PX = 4;
 
 export type UseResizableOptions = {
   /**
@@ -114,8 +116,9 @@ function growDirection(element: HTMLElement): 1 | -1 {
  * A pointer drag writes the variable straight to the element each frame and
  * updates the handle's ARIA value by hand, so nothing re-renders until
  * release, when the width is committed once (snapping to the default when
- * close). Like a controlled input, a parent that ignores `onWidthChange`
- * keeps its width: the drag's override is dropped before the commit.
+ * close). A press that never moves is a click and commits nothing. Like a
+ * controlled input, a parent that ignores `onWidthChange` keeps its width:
+ * the drag's override is dropped before the commit.
  *
  * Keys on the handle: Left/Right arrows step (mirrored in right-to-left
  * text), Shift for bigger steps, Home and End jump to the limits, Enter
@@ -239,6 +242,9 @@ export function useResizable(options: UseResizableOptions): UseResizableResult {
     const previousUserSelect = root.style.userSelect;
     let latest = startWidth;
     let frame = 0;
+    // A press that never travels is a click (focus, or half a double-click),
+    // not a resize: it commits nothing.
+    let moved = false;
 
     draggingRef.current = true;
     handle.dataset["dragging"] = "true";
@@ -246,6 +252,9 @@ export function useResizable(options: UseResizableOptions): UseResizableResult {
     root.style.userSelect = "none";
 
     const move = (moveEvent: PointerEvent) => {
+      if (!moved && Math.abs(moveEvent.clientX - startX) < DRAG_THRESHOLD_PX)
+        return;
+      moved = true;
       let next = clamp(
         startWidth + direction * (startX - moveEvent.clientX),
         min,
@@ -280,7 +289,7 @@ export function useResizable(options: UseResizableOptions): UseResizableResult {
 
     function end() {
       stop();
-      commit(latest);
+      if (moved) commit(latest);
     }
 
     handle.addEventListener("pointermove", move);

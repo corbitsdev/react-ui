@@ -217,4 +217,48 @@ describe("Panel", () => {
       console.error = original;
     }
   });
+
+  test("in development, pane values that cannot show one pane log an error", () => {
+    const errors: unknown[][] = [];
+    const original = console.error;
+    console.error = (...args: unknown[]) => errors.push(args);
+    try {
+      const duplicate = mount(
+        <PanelContent value="a">
+          <PanelPane value="a">first</PanelPane>
+          <PanelPane value="a">second</PanelPane>
+        </PanelContent>,
+      );
+      duplicate.unmount();
+      expect(errors).toEqual([
+        ["PanelContent: two PanelPanes share the value `a`."],
+      ]);
+
+      errors.length = 0;
+      const missing = mount(
+        <PanelContent value="missing">
+          <PanelPane value="a">first</PanelPane>
+        </PanelContent>,
+      );
+      missing.unmount();
+      expect(errors).toEqual([
+        [
+          "PanelContent: `value` names none of its panes, so the panel body is empty.",
+        ],
+      ]);
+
+      errors.length = 0;
+      const fine = mount(
+        <PanelContent value="b" keepMounted>
+          <PanelPane value="a">first</PanelPane>
+          <PanelPane value="b">second</PanelPane>
+        </PanelContent>,
+      );
+      fine.render(<PanelContent value="b" />);
+      fine.unmount();
+      expect(errors).toEqual([]);
+    } finally {
+      console.error = original;
+    }
+  });
 });

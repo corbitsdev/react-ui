@@ -5,6 +5,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useId,
   useLayoutEffect,
   useRef,
@@ -18,6 +19,9 @@ import {
 import { inertSiblings } from "../lib/inert-siblings.js";
 import { cn } from "../lib/utils.js";
 import { Button } from "./button.js";
+
+const isProduction =
+  typeof process !== "undefined" && process.env?.NODE_ENV === "production";
 
 const DEFAULT_MIN_WIDTH_PX = 320;
 const DEFAULT_MAIN_MIN_WIDTH_PX = 440;
@@ -38,6 +42,8 @@ function usePanelContext(part: string): PanelContextValue {
 type PanelPanesContextValue = {
   readonly value: string;
   readonly keepMounted: boolean;
+  /** Development only: a pane reports its value; returns its removal. */
+  readonly register: (value: string) => () => void;
 };
 
 const PanelPanesContext = createContext<PanelPanesContextValue | null>(null);
@@ -305,8 +311,36 @@ export function PanelContent({
   className,
   ...props
 }: PanelContentProps) {
+  // Every mounted pane's value, kept in development to catch host mistakes:
+  // panes report from effects, which run before this component's own.
+  const registeredRef = useRef<string[]>([]);
+  const register = useCallback((paneValue: string) => {
+    const registered = registeredRef.current;
+    registered.push(paneValue);
+    return () => {
+      registered.splice(registered.indexOf(paneValue), 1);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isProduction) return;
+    const registered = registeredRef.current;
+    if (registered.length === 0) return;
+    const duplicate = registered.find(
+      (paneValue, index) => registered.indexOf(paneValue) !== index,
+    );
+    if (duplicate !== undefined)
+      console.error(
+        `PanelContent: two PanelPanes share the value \`${duplicate}\`.`,
+      );
+    if (!registered.includes(value))
+      console.error(
+        "PanelContent: `value` names none of its panes, so the panel body is empty.",
+      );
+  });
+
   return (
-    <PanelPanesContext.Provider value={{ value, keepMounted }}>
+    <PanelPanesContext.Provider value={{ value, keepMounted, register }}>
       <div
         data-slot="panel-content"
         className={cn("grid min-h-0 flex-1 grid-cols-1 grid-rows-1", className)}
@@ -330,6 +364,11 @@ export function PanelPane({ value, className, ...props }: PanelPaneProps) {
   const context = useContext(PanelPanesContext);
   if (context === null)
     throw new Error("PanelPane must be inside PanelContent.");
+  const { register } = context;
+  useEffect(
+    () => (isProduction ? undefined : register(value)),
+    [register, value],
+  );
   const shown = context.value === value;
   if (!shown && !context.keepMounted) return null;
   return (

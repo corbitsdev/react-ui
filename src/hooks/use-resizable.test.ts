@@ -61,6 +61,7 @@ type Mounted = {
   readonly handle: HTMLElement;
   readonly changes: (number | null)[];
   press(key: string, init?: KeyboardEventInit): void;
+  pointer(type: string, clientX: number): void;
   rerender(options?: Partial<UseResizableOptions>): void;
   unmount(): void;
 };
@@ -71,7 +72,10 @@ function find(container: HTMLElement, selector: string): HTMLElement {
   return element;
 }
 
-function mount(options: Partial<UseResizableOptions> = {}): Mounted {
+function mount(
+  options: Partial<UseResizableOptions> = {},
+  dir?: "rtl",
+): Mounted {
   const changes: (number | null)[] = [];
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -89,7 +93,11 @@ function mount(options: Partial<UseResizableOptions> = {}): Mounted {
       { "data-row": "" },
       createElement(
         "aside",
-        { ref: resizable.panelRef },
+        {
+          ref: resizable.panelRef,
+          // happy-dom does not derive `direction` from a `dir` attribute.
+          style: dir === undefined ? undefined : { direction: dir },
+        },
         createElement("div", {
           "data-handle": "",
           "aria-label": "Resize",
@@ -106,6 +114,10 @@ function mount(options: Partial<UseResizableOptions> = {}): Mounted {
   });
   render(options);
   const handle = find(container, "[data-handle]");
+  // happy-dom has no pointer capture; the hook only needs it not to throw.
+  handle.setPointerCapture = () => {};
+  handle.releasePointerCapture = () => {};
+  handle.hasPointerCapture = () => false;
   return {
     panel: find(container, "aside"),
     handle,
@@ -114,6 +126,19 @@ function mount(options: Partial<UseResizableOptions> = {}): Mounted {
       act(() => {
         handle.dispatchEvent(
           new KeyboardEvent("keydown", { key, bubbles: true, ...init }),
+        );
+      });
+    },
+    pointer(type, clientX) {
+      act(() => {
+        handle.dispatchEvent(
+          new PointerEvent(type, {
+            bubbles: true,
+            button: 0,
+            isPrimary: true,
+            pointerId: 1,
+            clientX,
+          }),
         );
       });
     },
@@ -241,6 +266,50 @@ describe("useResizable", () => {
     mounted.press("ArrowUp");
     mounted.press("a");
     expect(mounted.changes).toEqual([]);
+    mounted.unmount();
+  });
+
+  test("a drag commits once on release, from where the pointer stopped", () => {
+    const mounted = mount();
+    mounted.pointer("pointerdown", 500);
+    mounted.pointer("pointermove", 450);
+    mounted.pointer("pointermove", 400);
+    expect(mounted.changes).toEqual([]);
+    mounted.pointer("pointerup", 400);
+    expect(mounted.changes).toEqual([744]);
+    mounted.unmount();
+  });
+
+  test("a press that never moves past the drag threshold commits nothing", () => {
+    // The stored 900 renders clamped to 560: a commit would overwrite it.
+    rowWidth = 1000;
+    const clamped = mount({ defaultWidth: 900 });
+    expect(shownWidth(clamped)).toBe(560);
+    clamped.pointer("pointerdown", 500);
+    clamped.pointer("pointermove", 498);
+    clamped.pointer("pointerup", 498);
+    expect(clamped.changes).toEqual([]);
+    clamped.unmount();
+
+    // A stored width equal to the default: a commit would reset it.
+    rowWidth = 1400;
+    const atDefault = mount({ defaultWidth: 644 });
+    atDefault.pointer("pointerdown", 500);
+    atDefault.pointer("pointerup", 500);
+    expect(atDefault.changes).toEqual([]);
+    atDefault.unmount();
+  });
+
+  test("mirrors keys and drags in right-to-left text", () => {
+    const mounted = mount({}, "rtl");
+    mounted.press("ArrowRight");
+    expect(mounted.changes).toEqual([660]);
+    mounted.press("ArrowLeft");
+    expect(mounted.changes).toEqual([660, null]);
+    mounted.pointer("pointerdown", 500);
+    mounted.pointer("pointermove", 600);
+    mounted.pointer("pointerup", 600);
+    expect(mounted.changes).toEqual([660, null, 744]);
     mounted.unmount();
   });
 });
