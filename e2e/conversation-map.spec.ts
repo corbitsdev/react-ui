@@ -269,3 +269,34 @@ test.describe("conversation map", () => {
     );
   });
 });
+
+const tickSizes = (page: Page) =>
+  page.locator("[data-slot='conversation-map-tick']").evaluateAll((ticks) =>
+    ticks.map((element) => {
+      const box = element.getBoundingClientRect();
+      return { width: box.width, height: box.height };
+    }),
+  );
+
+test("with a mouse the rail fits every turn", async ({ page }) => {
+  await open(page);
+  expect((await railState(page)).overflows).toBe(false);
+});
+
+test.describe("on a touch screen", () => {
+  test.use({ hasTouch: true, isMobile: true });
+
+  test("every tick is a 24px target and the rail scrolls instead", async ({
+    page,
+  }) => {
+    await open(page);
+    for (const size of await tickSizes(page)) {
+      expect(size.width).toBeGreaterThanOrEqual(24);
+      expect(size.height).toBeGreaterThanOrEqual(24);
+    }
+    // The current tick, the last turn's, is scrolled into the rail's view.
+    await expect
+      .poll(() => railState(page))
+      .toEqual({ overflows: true, scrolled: true, showsCurrent: true });
+  });
+});

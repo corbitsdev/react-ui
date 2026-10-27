@@ -272,7 +272,10 @@ export function ConversationMap({
               aria-current={current ? "location" : undefined}
               aria-describedby={described ? previewTextId : undefined}
               tabIndex={turn.id === stopId ? 0 : -1}
-              className="group flex min-h-1.5 w-full shrink grow-0 basis-3.5 cursor-pointer items-center rounded-sm focus-visible:-outline-offset-2"
+              // A mouse gets the dense rail, the whole conversation at a
+              // glance. A finger needs a 24px target (WCAG 2.5.8), so on a
+              // touch screen each tick keeps that height and the rail scrolls.
+              className="group flex min-h-1.5 w-full shrink grow-0 basis-3.5 cursor-pointer items-center rounded-sm focus-visible:-outline-offset-2 pointer-coarse:min-h-6 pointer-coarse:shrink-0 pointer-coarse:basis-6"
               onPointerEnter={(event) => {
                 if (event.pointerType === "mouse") {
                   show(turn.id, event.currentTarget);
