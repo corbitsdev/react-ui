@@ -2,12 +2,22 @@ import { describe, expect, spyOn, test } from "bun:test";
 import { act, type ReactNode, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
+import type { PromptToken } from "../lib/prompt-tokens.js";
+import {
+  PromptInput,
+  PromptInputSubmit,
+  PromptInputSuggestions,
+  PromptInputTextarea,
+} from "./prompt-input.js";
 import {
   PromptInputAddMenu,
   PromptInputButton,
   PromptInputContext,
+  PromptInputFloat,
   PromptInputModeSelect,
   PromptInputModelSelect,
+  PromptInputNote,
+  PromptInputToolbar,
   type PromptInputAddMenuItem,
   type PromptInputModelOption,
   type PromptInputModeOption,
@@ -559,5 +569,192 @@ describe("PromptInputContext", () => {
     click(button);
     expect(cleared).toEqual(["clear"]);
     clearable.unmount();
+  });
+});
+
+describe("PromptInputToolbar, PromptInputFloat and PromptInputNote", () => {
+  test("each renders its slot, keeps the host's props and merges its class", () => {
+    const view = mount(
+      <>
+        <PromptInputToolbar aria-label="Message tools" className="host-a">
+          <button type="button">Tool</button>
+        </PromptInputToolbar>
+        <PromptInputFloat id="float" className="host-b">
+          Floating
+        </PromptInputFloat>
+        <PromptInputNote className="host-c">Small print</PromptInputNote>
+      </>,
+    );
+    const toolbar = view.query("[data-slot='prompt-input-toolbar']");
+    expect(toolbar.tagName).toBe("DIV");
+    expect(toolbar.getAttribute("aria-label")).toBe("Message tools");
+    expect(toolbar.classList.contains("basis-full")).toBe(true);
+    expect(toolbar.classList.contains("host-a")).toBe(true);
+    expect(toolbar.textContent).toBe("Tool");
+
+    const float = view.query("[data-slot='prompt-input-float']");
+    expect(float.id).toBe("float");
+    expect(float.classList.contains("absolute")).toBe(true);
+    expect(float.classList.contains("host-b")).toBe(true);
+    expect(float.textContent).toBe("Floating");
+
+    const note = view.query("[data-slot='prompt-input-note']");
+    expect(note.tagName).toBe("P");
+    expect(note.classList.contains("host-c")).toBe(true);
+    expect(note.textContent).toBe("Small print");
+    view.unmount();
+  });
+});
+
+const TOKENS: readonly PromptToken[] = [
+  { id: "ada", kind: "mention", token: "@Ada" },
+];
+
+/** A prompt with a toolbar, as a host would put one together. */
+function Prompt({
+  open,
+  disabled = false,
+  partsDisabled,
+}: {
+  readonly open?: "add" | "model";
+  readonly disabled?: boolean;
+  readonly partsDisabled?: boolean;
+}) {
+  const [value, setValue] = useState("");
+  const own = partsDisabled === undefined ? {} : { disabled: partsDisabled };
+  return (
+    <PromptInput
+      value={value}
+      onValueChange={setValue}
+      onSubmit={() => undefined}
+      tokens={TOKENS}
+      disabled={disabled}
+    >
+      <PromptInputSuggestions />
+      <PromptInputTextarea />
+      <PromptInputToolbar>
+        <PromptInputAddMenu
+          {...own}
+          defaultOpen={open === "add"}
+          items={[{ id: "f", label: "Add files", onSelect: () => undefined }]}
+        />
+        <PromptInputModeSelect {...own} modes={MODES} />
+        <PromptInputModelSelect
+          {...own}
+          models={MODELS}
+          defaultOpen={open === "model"}
+        />
+        <PromptInputButton {...own} aria-label="Voice">
+          v
+        </PromptInputButton>
+        <PromptInputSubmit />
+      </PromptInputToolbar>
+    </PromptInput>
+  );
+}
+
+/** A boolean rather than the element, so a failure prints a line, not a
+ * React tree. */
+function shown(view: { readonly container: HTMLElement }, selector: string) {
+  return view.container.querySelector(selector) !== null;
+}
+
+const POPUPS = {
+  add: { popup: "[role='menu']", trigger: "[aria-haspopup='menu']" },
+  model: {
+    popup: "[role='listbox']",
+    trigger: "[data-slot='prompt-input-model-select'] [role='combobox']",
+  },
+} as const;
+
+describe("toolbar parts inside PromptInput", () => {
+  for (const which of ["add", "model"] as const) {
+    test(`the ${which} popup, opened by the host, closes on Escape from the textarea and focus stays there`, () => {
+      const view = mount(<Prompt open={which} />);
+      const textarea = view.query<HTMLTextAreaElement>("textarea");
+      act(() => textarea.focus());
+      expect(shown(view, POPUPS[which].popup)).toBe(true);
+      press(textarea, "Escape");
+      expect(shown(view, POPUPS[which].popup)).toBe(false);
+      expect(
+        view.query(POPUPS[which].trigger).getAttribute("aria-expanded"),
+      ).toBe("false");
+      expect(document.activeElement).toBe(textarea);
+      view.unmount();
+    });
+  }
+
+  test("with the suggestion list open too, the first Escape closes only the list", () => {
+    const view = mount(<Prompt open="add" />);
+    const textarea = view.query<HTMLTextAreaElement>("textarea");
+    const setValue = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value",
+    )?.set;
+    act(() => {
+      textarea.focus();
+      setValue?.call(textarea, "@");
+      textarea.setSelectionRange(1, 1);
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const list = "[data-slot='prompt-input-suggestions']";
+    expect(shown(view, list)).toBe(true);
+    expect(shown(view, "[role='menu']")).toBe(true);
+
+    press(textarea, "Escape");
+    expect(shown(view, list)).toBe(false);
+    expect(shown(view, "[role='menu']")).toBe(true);
+
+    press(textarea, "Escape");
+    expect(shown(view, "[role='menu']")).toBe(false);
+    expect(document.activeElement).toBe(textarea);
+    view.unmount();
+  });
+
+  test("a popup's own Escape is not handled twice", () => {
+    const changes: boolean[] = [];
+    const view = mount(
+      <PromptInputAddMenu
+        items={menuItems([])}
+        onOpenChange={(open) => changes.push(open)}
+      />,
+    );
+    const trigger = view.query("[aria-haspopup='menu']");
+    click(trigger);
+    press(view.query("[role='menu']"), "Escape");
+    expect(changes).toEqual([true, false]);
+    expect(document.activeElement).toBe(trigger);
+    view.unmount();
+  });
+
+  test("the parts follow PromptInput's disabled", () => {
+    const view = mount(<Prompt disabled />);
+    expect(view.query<HTMLTextAreaElement>("textarea").disabled).toBe(true);
+    const parts = view.all(
+      "[aria-haspopup='menu'], [role='combobox'], [data-slot='prompt-input-button']",
+    );
+    expect(parts).toHaveLength(4);
+    for (const part of parts) {
+      expect((part as HTMLButtonElement).disabled).toBe(true);
+    }
+    view.unmount();
+  });
+
+  test("a part's own disabled wins over PromptInput's", () => {
+    const enabled = mount(<Prompt disabled partsDisabled={false} />);
+    for (const part of enabled.all(
+      "[aria-haspopup='menu'], [role='combobox'], [data-slot='prompt-input-button']",
+    )) {
+      expect((part as HTMLButtonElement).disabled).toBe(false);
+    }
+    enabled.unmount();
+
+    const disabled = mount(<Prompt partsDisabled />);
+    for (const part of disabled.all(
+      "[aria-haspopup='menu'], [role='combobox'], [data-slot='prompt-input-button']",
+    )) {
+      expect((part as HTMLButtonElement).disabled).toBe(true);
+    }
+    disabled.unmount();
   });
 });

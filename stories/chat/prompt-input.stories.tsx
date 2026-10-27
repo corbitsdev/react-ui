@@ -226,7 +226,6 @@ function ToolbarPrompt({
           <PromptInputToolbar>
             {addMenu ? (
               <PromptInputAddMenu
-                disabled={disabled}
                 defaultOpen={openPicker === "add"}
                 items={[
                   {
@@ -255,7 +254,6 @@ function ToolbarPrompt({
                 modes={MODES}
                 value={modeId}
                 onValueChange={setModeId}
-                disabled={disabled}
                 defaultOpen={openPicker === "mode"}
               />
             ) : null}
@@ -265,12 +263,11 @@ function ToolbarPrompt({
                   models={MODELS}
                   value={modelId}
                   onValueChange={setModelId}
-                  disabled={disabled}
                   defaultOpen={openPicker === "model"}
                 />
               ) : null}
               {voice ? (
-                <PromptInputButton aria-label="Voice mode" disabled={disabled}>
+                <PromptInputButton aria-label="Voice mode">
                   <AudioLines className="size-4" aria-hidden />
                 </PromptInputButton>
               ) : null}
@@ -317,8 +314,8 @@ export const WithNote = () => <ToolbarPrompt note />;
 /** The chip says what the next message answers; its button clears it. */
 export const ReplyingChip = () => <ToolbarPrompt replying />;
 
-/** Disabled: the host passes `disabled` to the toolbar parts as well as
- * to the prompt. */
+/** Disabled: the toolbar parts follow the prompt's `disabled`; none is
+ * passed its own. */
 export const ToolbarDisabled = () => (
   <ToolbarPrompt addMenu mode model voice disabled />
 );

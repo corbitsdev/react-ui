@@ -128,6 +128,28 @@ test("Escape closes the add menu and returns focus; Tab closes it and moves on",
   await expect(events(page)).toHaveText("");
 });
 
+test("Escape in the textarea closes a list the host opened, after the suggestion list", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Open models" }).click();
+  const models = page.getByRole("listbox", { name: "Model" });
+  await expect(models).toBeVisible();
+  await message(page).focus();
+  await message(page).pressSequentially("@a");
+  const mentions = page.getByRole("listbox", { name: "Mentions" });
+  await expect(mentions).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(mentions).toBeHidden();
+  await expect(models).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(models).toBeHidden();
+  await expect(model(page)).toHaveAttribute("aria-expanded", "false");
+  await expect(message(page)).toBeFocused();
+  await expect(events(page)).toHaveText("");
+});
+
 test("the toolbar takes its own row, and without it the box is one row", async ({
   page,
 }) => {

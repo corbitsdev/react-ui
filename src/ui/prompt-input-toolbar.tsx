@@ -8,6 +8,7 @@ import { useControllableState } from "../hooks/use-controllable-state.js";
 import { useDismissablePopover } from "../hooks/use-dismissable-popover.js";
 import { useScrollCurrentIntoView } from "../hooks/use-scroll-current-into-view.js";
 import { cn } from "../lib/utils.js";
+import { usePromptInputDisabled } from "./prompt-input.js";
 
 function assignRef<T>(ref: React.Ref<T> | undefined, node: T | null) {
   if (typeof ref === "function") ref(node);
@@ -39,6 +40,31 @@ function stepIndex(
   }
 }
 
+/**
+ * While `open`, Escape pressed with focus outside `rootRef` (in the textarea,
+ * say, beside a popup the host opened) closes the popup and leaves focus
+ * where it is. It listens in the bubble phase and skips a handled Escape, so
+ * the suggestion list, and the popup's own keys, claim theirs first.
+ */
+function useCloseOnEscapeOutside(
+  open: boolean,
+  rootRef: React.RefObject<HTMLElement | null>,
+  setOpen: (open: boolean) => void,
+) {
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      const inside =
+        event.target instanceof Node &&
+        rootRef.current?.contains(event.target) === true;
+      if (!inside) setOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, rootRef, setOpen]);
+}
+
 /** Open state a parent may own, as on every popup here. */
 type PopupStateProps = {
   readonly open?: boolean;
@@ -64,6 +90,9 @@ export type PromptInputToolbarProps = React.ComponentProps<"div">;
  * takes a row of its own; without it the box stays a single row. Put `ms-auto`
  * on the first control that belongs at the far end (a model select, say, or
  * `PromptInputSubmit`).
+ *
+ * Inside a disabled `PromptInput`, the add menu, the selects and
+ * `PromptInputButton` are disabled too unless given their own `disabled`.
  */
 export function PromptInputToolbar({
   className,
@@ -87,15 +116,19 @@ export type PromptInputButtonProps = Omit<
 };
 
 /** An icon button sized for the toolbar: voice, attach, anything the host
- * adds. Never submits the form it sits in. */
+ * adds. Never submits the form it sits in. `disabled` defaults to the
+ * enclosing `PromptInput`'s. */
 export function PromptInputButton({
+  disabled,
   className,
   ...props
 }: PromptInputButtonProps) {
+  const boxDisabled = usePromptInputDisabled();
   return (
     <button
       {...props}
       type="button"
+      disabled={disabled ?? boxDisabled}
       data-slot="prompt-input-button"
       className={cn(ICON_BUTTON, className)}
     />
@@ -122,6 +155,7 @@ export type PromptInputAddMenuProps = Omit<
 > &
   PopupStateProps & {
     readonly items: readonly PromptInputAddMenuItem[];
+    /** Defaults to the enclosing `PromptInput`'s `disabled`. */
     readonly disabled?: boolean;
     /** The trigger's and the menu's accessible name. */
     readonly label?: string;
@@ -135,11 +169,12 @@ export type PromptInputAddMenuProps = Omit<
  * A menu button: Enter, Space or ArrowDown opens it on the first item,
  * ArrowUp on the last; the arrows move round the items, Home and End jump,
  * Escape closes and returns focus to the trigger, Tab closes and moves on.
- * A press outside closes it without taking focus back.
+ * A press outside closes it without taking focus back, as does Escape from
+ * outside it (from the textarea, beside a menu the host opened).
  */
 export function PromptInputAddMenu({
   items,
-  disabled = false,
+  disabled: disabledProp,
   label = "Add",
   align = "start",
   open: openProp,
@@ -156,6 +191,9 @@ export function PromptInputAddMenu({
     closeOnEscape: false,
   });
   const { open, setOpen, rootRef, triggerRef, close } = popover;
+  useCloseOnEscapeOutside(open, rootRef, setOpen);
+  const boxDisabled = usePromptInputDisabled();
+  const disabled = disabledProp ?? boxDisabled;
   const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   // Set only when the person opens the menu from its trigger, so a menu that
@@ -345,6 +383,7 @@ type SelectStateProps = Omit<
      * does not call `onValueChange`. */
     readonly defaultValue?: string;
     readonly onValueChange?: (id: string) => void;
+    /** Defaults to the enclosing `PromptInput`'s `disabled`. */
     readonly disabled?: boolean;
     readonly align?: PromptInputPopupAlign;
   };
@@ -361,8 +400,10 @@ type OptionSelectProps = SelectStateProps & {
  * A select-only combobox: focus stays on the trigger, which points at the
  * current option with `aria-activedescendant` while the list is open, so
  * focus is already home when the list closes. Enter, Space or the arrows
- * open it on the chosen option; the arrows move, Home and End jump, Enter
- * or Space chooses, Escape and Tab close without choosing.
+ * open it on the chosen option, Home and End on the first or last; the
+ * arrows move, Home and End jump, Enter or Space chooses, Escape and Tab
+ * close without choosing. Escape from outside it (from the textarea, beside
+ * a list the host opened) closes it too and leaves focus where it is.
  */
 function OptionSelect({
   slot,
@@ -374,7 +415,7 @@ function OptionSelect({
   open: openProp,
   defaultOpen = false,
   onOpenChange,
-  disabled = false,
+  disabled: disabledProp,
   align = "start",
   className,
   ref,
@@ -397,6 +438,9 @@ function OptionSelect({
     HTMLDivElement,
     HTMLButtonElement
   >({ open: openProp, defaultOpen, onOpenChange, closeOnEscape: false });
+  useCloseOnEscapeOutside(open, rootRef, setOpen);
+  const boxDisabled = usePromptInputDisabled();
+  const disabled = disabledProp ?? boxDisabled;
   const listId = useId();
   const [activeId, setActiveId] = useState<string | undefined>(undefined);
   // However the list closed (a press outside, the host), the next open

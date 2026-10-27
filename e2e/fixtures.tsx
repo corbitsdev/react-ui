@@ -693,10 +693,12 @@ function PanelScenario() {
 
 /** Every toolbar part, with each choice and action recorded. "Toggle
  * toolbar" takes the toolbar out, to compare layouts; clearing the reply
- * chip removes it and "Reply to Ada" brings it back. */
+ * chip removes it and "Reply to Ada" brings it back. "Open models" opens the
+ * model list the way a host would, without focusing it. */
 function PromptToolbarScenario() {
   const [value, setValue] = useState("");
   const [model, setModel] = useState("deep");
+  const [modelOpen, setModelOpen] = useState(false);
   const [mode, setMode] = useState("ask");
   const [toolbar, setToolbar] = useState(true);
   const [replying, setReplying] = useState(true);
@@ -771,6 +773,8 @@ function PromptToolbarScenario() {
                 record(`model:${id}`);
                 setModel(id);
               }}
+              open={modelOpen}
+              onOpenChange={setModelOpen}
             />
             <PromptInputButton
               aria-label="Voice"
@@ -789,6 +793,7 @@ function PromptToolbarScenario() {
         Toggle toolbar
       </Button>
       <Button onClick={() => setReplying(true)}>Reply to Ada</Button>
+      <Button onClick={() => setModelOpen(true)}>Open models</Button>
       {log}
     </div>
   );
