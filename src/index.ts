@@ -15,7 +15,6 @@ export * from "./blocks/login/auth-layout.js";
 export * from "./blocks/login/login-form.js";
 export * from "./hooks/use-command-palette-navigation.js";
 export * from "./hooks/use-controllable-state.js";
-export * from "./hooks/use-delayed-autofocus.js";
 export * from "./hooks/use-dismissable-popover.js";
 export * from "./hooks/use-list-selection.js";
 export * from "./hooks/use-prefers-reduced-motion.js";

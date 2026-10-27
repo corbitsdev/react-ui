@@ -332,8 +332,6 @@ The host app owns the connection to the hub; components only take props.
 The old chat family is removed. The conversation family replaces it: a message is a `ConversationMessage` whose `parts` are a `ConversationPart[]` (discriminated by `kind`), and the components are built from parts you compose rather than one component per screen.
 
 - `Part`, `PartText`, `PartReasoning`, `PartToolTrace`, `PartBlock`, `PartFile`, `PartEvent` and `ToolTraceStatus` are unchanged and still import from the root.
-- `ToolProviderMark` takes the raw tool id as `toolName` instead of a `part` (`<ToolProviderMark toolName={part.name} />`); its props are `ToolProviderMarkProps`.
-- `useDelayedAutofocus` is unchanged.
 
 Removed exports and what replaces them:
 
@@ -369,6 +367,8 @@ Removed exports and what replaces them:
 | `messageText`, `reasoningText`, `toolParts`       | No replacement: filter `message.parts` by `kind`                                                                                                                                        |
 | `isTurnWorking`                                   | `parts.some((p) => p.kind === "tool-trace" && p.status === "running")` (any tool still running; `message.status === "streaming"` is the whole message)                                  |
 | `toolLabel`                                       | No replacement: `ToolHeader` shows the raw tool name, after the `label` you pass                                                                                                        |
+| `ToolProviderMark`, `ToolProviderMarkProps`       | `ProviderMark` with the provider read off the tool id (`name.split("__")[0]`, for ids shaped `provider__operation`)                                                                     |
+| `useDelayedAutofocus`                             | No replacement: focus the element from an effect once its entrance has finished                                                                                                         |
 
 ## Upgrading from 0.1
 

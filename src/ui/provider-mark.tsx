@@ -48,27 +48,3 @@ export function ProviderMark({
     </span>
   );
 }
-
-export type ToolProviderMarkProps = {
-  /** Raw tool id, e.g. `slack__post_message`. */
-  readonly toolName: string;
-  readonly logo?: ReactNode;
-  readonly className?: string | undefined;
-};
-
-/**
- * The provider marker for a tool call in a transcript.
- *
- * The provider is read off the tool id's `provider__operation` prefix, so a
- * tool with no prefix is local and gets no marker rather than a guessed one.
- */
-export function ToolProviderMark({
-  toolName,
-  logo,
-  className,
-}: ToolProviderMarkProps) {
-  const [provider, ...rest] = toolName.split("__");
-  if (rest.length === 0 || provider === undefined || provider === "")
-    return null;
-  return <ProviderMark provider={provider} logo={logo} className={className} />;
-}
