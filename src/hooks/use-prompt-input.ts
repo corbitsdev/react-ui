@@ -125,14 +125,21 @@ export function usePromptInput({
   // A pick that could not go through the browser's editing (see `pick`)
   // set the value directly, which leaves the caret at the end. Put it back
   // after the token, unless the host settled on some other text.
+  //
+  // Any other value the host sets, such as an inserted "@", moves the caret
+  // without a select event, so read it again while the textarea has focus;
+  // the caret held from the last event would point into the old text.
   useLayoutEffect(() => {
     const pending = pendingCaret.current;
-    if (pending === null) return;
     pendingCaret.current = null;
     const element = textareaRef.current;
-    if (element === null || pending.value !== value) return;
-    element.setSelectionRange(pending.caret, pending.caret);
-    setCaret(pending.caret);
+    if (element === null) return;
+    if (pending !== null && pending.value === value) {
+      element.setSelectionRange(pending.caret, pending.caret);
+      setCaret(pending.caret);
+    } else if (element.ownerDocument.activeElement === element) {
+      setCaret(caretOf(element));
+    }
   }, [value, textareaRef]);
 
   const canSubmit = !disabled && !busy && hasSomethingToSend;

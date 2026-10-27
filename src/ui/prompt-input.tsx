@@ -35,8 +35,13 @@ type PromptInputContextValue = {
   readonly textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   readonly listId: string;
   readonly prompt: UsePromptInputResult;
+  /** Whether a `PromptInputSuggestions` part is mounted. */
+  readonly suggest: boolean;
   readonly registerSuggestions: () => () => void;
 };
+
+const isProduction =
+  typeof process !== "undefined" && process.env?.NODE_ENV === "production";
 
 const PromptInputContext = createContext<PromptInputContextValue | null>(null);
 
@@ -107,13 +112,14 @@ export function PromptInput({
     setSuggestionParts((count) => count + 1);
     return () => setSuggestionParts((count) => count - 1);
   }, []);
+  const suggest = suggestionParts > 0;
 
   const prompt = usePromptInput({
     value,
     onValueChange,
     onSubmit,
     tokens,
-    suggest: suggestionParts > 0,
+    suggest,
     busy: status !== "ready",
     disabled,
     canSubmit,
@@ -128,6 +134,7 @@ export function PromptInput({
     textareaRef,
     listId,
     prompt,
+    suggest,
     registerSuggestions,
   };
 
@@ -245,7 +252,7 @@ export function PromptInputTextarea({
   onScroll,
   ...props
 }: PromptInputTextareaProps) {
-  const { value, disabled, tokens, textareaRef, listId, prompt } =
+  const { value, disabled, tokens, textareaRef, listId, prompt, suggest } =
     usePromptInputContext("PromptInputTextarea");
   const mirrorTextRef = useRef<HTMLDivElement>(null);
   const segments = useMemo(
@@ -314,7 +321,11 @@ export function PromptInputTextarea({
         disabled={disabled}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        aria-autocomplete="list"
+        // What the field can do, so set whenever a list part is mounted,
+        // open or not. A textarea may not carry `aria-expanded`, so the
+        // list's opening and closing is announced by its status instead.
+        aria-autocomplete={suggest ? "list" : undefined}
+        aria-haspopup={suggest ? "listbox" : undefined}
         aria-controls={listOpen ? listId : undefined}
         aria-activedescendant={listOpen ? optionId(listId, active) : undefined}
         className={cn(
@@ -352,22 +363,35 @@ export type PromptInputSuggestionsProps = Omit<
   React.ComponentProps<"ul">,
   "children" | "id"
 > & {
-  /** Renders one suggestion; defaults to a `PromptInputSuggestion`. */
+  /** Renders one suggestion, and must return a `PromptInputSuggestion` for
+   * `token`: that element carries the id the textarea's
+   * `aria-activedescendant` names, and the pointer and click handling. Pass
+   * custom content as its children. Defaults to a bare
+   * `PromptInputSuggestion`. */
   readonly children?: (token: PromptToken) => React.ReactNode;
+  /** What a screen reader hears when the list opens or its length changes,
+   * e.g. "3 suggestions". A localized host passes its own wording. */
+  readonly announce?: (count: number) => string;
 };
+
+function announceCount(count: number): string {
+  return count === 1 ? "1 suggestion" : `${count} suggestions`;
+}
 
 /**
  * The list of tokens the `@` or `/` being typed could become. Including it
  * turns suggestions on: ArrowUp and ArrowDown move through it, Enter or Tab
  * picks, Escape closes (see `usePromptInput`). Focus stays in the textarea
  * throughout, which points at the current option with
- * `aria-activedescendant`. Renders nothing while there is nothing to suggest.
- * Its `id` is the one the textarea's `aria-controls` names, so it is not
- * overridable.
+ * `aria-activedescendant`. The list renders only while there is something
+ * to suggest; a visually hidden status beside it stays mounted and announces
+ * how many suggestions there are, and empties when the list closes. Its `id`
+ * is the one the textarea's `aria-controls` names, so it is not overridable.
  */
 export function PromptInputSuggestions({
   className,
   children,
+  announce = announceCount,
   "aria-label": ariaLabel,
   ...props
 }: PromptInputSuggestionsProps) {
@@ -379,31 +403,55 @@ export function PromptInputSuggestions({
     prompt.activeSuggestion?.id ?? "",
   );
 
+  // A render callback that returns its own element leaves the textarea's
+  // `aria-activedescendant` pointing at nothing; say so during development.
+  const activeId =
+    prompt.activeSuggestion === undefined
+      ? undefined
+      : optionId(listId, prompt.activeSuggestion);
+  const statusRef = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const status = statusRef.current;
+    if (isProduction || activeId === undefined || status === null) return;
+    if (status.ownerDocument.getElementById(activeId) !== null) return;
+    console.error(
+      "PromptInputSuggestions: the current suggestion has no element with " +
+        "its id. A render callback must return a PromptInputSuggestion for " +
+        "the token it is given; pass custom content as its children.",
+    );
+  }, [activeId]);
+
   const first = prompt.suggestions[0];
-  if (first === undefined) return null;
   return (
     <SuggestionScrollContext.Provider value={currentRef}>
-      <ul
-        {...props}
-        id={listId}
-        role="listbox"
-        aria-label={
-          ariaLabel ?? (first.kind === "command" ? "Commands" : "Mentions")
-        }
-        data-slot="prompt-input-suggestions"
-        className={cn(
-          "absolute inset-x-0 bottom-full z-20 mb-2 flex max-h-60 flex-col gap-0.5 overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground",
-          className,
-        )}
-      >
-        {prompt.suggestions.map((token) =>
-          children === undefined ? (
-            <PromptInputSuggestion key={token.id} token={token} />
-          ) : (
-            <Fragment key={token.id}>{children(token)}</Fragment>
-          ),
-        )}
-      </ul>
+      {/* Mounted with the part, never with the list: a live region inserted
+          along with its text is not reliably announced. */}
+      <span ref={statusRef} role="status" className="sr-only">
+        {first === undefined ? "" : announce(prompt.suggestions.length)}
+      </span>
+      {first === undefined ? null : (
+        <ul
+          {...props}
+          id={listId}
+          role="listbox"
+          aria-label={
+            ariaLabel ?? (first.kind === "command" ? "Commands" : "Mentions")
+          }
+          data-slot="prompt-input-suggestions"
+          className={cn(
+            "absolute inset-x-0 bottom-full z-20 mb-2 flex max-h-60 flex-col gap-0.5 overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground",
+            className,
+          )}
+        >
+          {prompt.suggestions.map((token) =>
+            children === undefined ? (
+              <PromptInputSuggestion key={token.id} token={token} />
+            ) : (
+              <Fragment key={token.id}>{children(token)}</Fragment>
+            ),
+          )}
+        </ul>
+      )}
     </SuggestionScrollContext.Provider>
   );
 }
@@ -487,6 +535,13 @@ export type PromptInputSubmitProps = Omit<
  * so Stop is where the user's eye already is, and focus stays on it when the
  * reply ends. Its name is "Send" or "Stop" unless the host passes an
  * `aria-label`, which a localized host sets from the same `status`.
+ *
+ * With nothing to send, or a reply in flight and no `onStop`, Send is
+ * `aria-disabled` rather than `disabled`: a disabled button drops focus to
+ * the page, and Send turns unsendable under the user's focus every time a
+ * host clears the draft on submit. A click still submits the form, whose
+ * submit does nothing until `canSubmit`. A host's `disabled` is a real one:
+ * this button's always, `PromptInput`'s for Send.
  */
 export function PromptInputSubmit({
   onStop,
@@ -495,7 +550,8 @@ export function PromptInputSubmit({
   "aria-label": ariaLabel,
   ...props
 }: PromptInputSubmitProps) {
-  const { status, prompt } = usePromptInputContext("PromptInputSubmit");
+  const { status, disabled, prompt } =
+    usePromptInputContext("PromptInputSubmit");
   const stop = status !== "ready" && onStop !== undefined;
   return (
     <button
@@ -504,7 +560,8 @@ export function PromptInputSubmit({
       data-slot="prompt-input-submit"
       data-status={status}
       aria-label={ariaLabel ?? (stop ? "Stop" : "Send")}
-      disabled={disabledProp || (!stop && !prompt.canSubmit)}
+      disabled={disabledProp || (!stop && disabled)}
+      aria-disabled={(!stop && !prompt.canSubmit) || undefined}
       onClick={
         stop
           ? (event) => {
@@ -517,7 +574,7 @@ export function PromptInputSubmit({
           : undefined
       }
       className={cn(
-        "grid size-9 shrink-0 place-items-center rounded-md transition-colors disabled:opacity-40",
+        "grid size-9 shrink-0 place-items-center rounded-md transition-colors disabled:opacity-40 aria-disabled:opacity-40",
         stop
           ? "bg-muted text-foreground hover:bg-secondary"
           : "bg-primary text-primary-foreground hover:bg-primary-active",

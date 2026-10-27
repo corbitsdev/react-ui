@@ -501,6 +501,50 @@ function Prompt() {
   );
 }
 
+/** The usual chat host: a submit clears the draft and starts a reply, which
+ * "Finish reply" ends. That button keeps focus where it is, as a reply
+ * arriving would. Without `stoppable` there is no `onStop`, so Send stays
+ * Send while the reply runs. */
+function PromptChat({ stoppable }: { readonly stoppable: boolean }) {
+  const [value, setValue] = useState("");
+  const [status, setStatus] = useState<PromptInputStatus>("ready");
+  const { log, record } = useEventLog();
+  return (
+    <div style={{ width: 480 }}>
+      <PromptInput
+        value={value}
+        onValueChange={setValue}
+        onSubmit={() => {
+          record(`submit:${value}`);
+          setValue("");
+          setStatus("submitted");
+        }}
+        status={status}
+      >
+        <PromptInputTextarea />
+        <PromptInputSubmit
+          {...(stoppable
+            ? {
+                onStop: () => {
+                  record("stop");
+                  setStatus("ready");
+                },
+              }
+            : {})}
+        />
+      </PromptInput>
+      <Button
+        tabIndex={-1}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => setStatus("ready")}
+      >
+        Finish reply
+      </Button>
+      {log}
+    </div>
+  );
+}
+
 /** A host that sends attachments with the text: "Attach file" toggles one,
  * and with it attached there is something to send even with no text. */
 function PromptWithAttachment() {
@@ -563,4 +607,6 @@ export const scenarios: Record<string, () => ReactNode> = {
   "conversation-empty": () => <ConversationEmptyScenario />,
   "prompt-input": () => <Prompt />,
   "prompt-input-attachment": () => <PromptWithAttachment />,
+  "prompt-input-chat": () => <PromptChat stoppable />,
+  "prompt-input-chat-no-stop": () => <PromptChat stoppable={false} />,
 };

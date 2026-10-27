@@ -26,6 +26,7 @@ type HostProps = {
   readonly submitLabel?: string;
   readonly listId?: string;
   readonly canSubmit?: boolean;
+  readonly disabled?: boolean;
   readonly events: string[];
 };
 
@@ -37,6 +38,7 @@ function Host({
   submitLabel,
   listId,
   canSubmit,
+  disabled,
   events,
 }: HostProps) {
   const [value, setValue] = useState(initial);
@@ -48,6 +50,7 @@ function Host({
       tokens={TOKENS}
       status={status}
       {...(canSubmit === undefined ? {} : { canSubmit })}
+      {...(disabled === undefined ? {} : { disabled })}
     >
       {!suggestions ? null : renderSuggestion === undefined ? (
         // A plain-JS host can still pass `id`; the listbox keeps its own.
@@ -126,34 +129,53 @@ describe("PromptInput", () => {
     view.unmount();
   });
 
-  test("Send is disabled until there is text, then submits", () => {
+  test("Send is aria-disabled until there is text, then submits", () => {
     const events: string[] = [];
     const view = render({ events });
     expect(view.button.getAttribute("aria-label")).toBe("Send");
-    expect(view.button.disabled).toBe(true);
+    expect(view.button.getAttribute("aria-disabled")).toBe("true");
     view.type("hello");
-    expect(view.button.disabled).toBe(false);
+    expect(view.button.hasAttribute("aria-disabled")).toBe(false);
     act(() => view.button.click());
     view.press("Enter");
     expect(events).toEqual(["submit:hello", "submit:hello"]);
     view.unmount();
   });
 
+  test("with nothing to send, Send keeps focus and a click sends nothing", () => {
+    const events: string[] = [];
+    const view = render({ events });
+    // `disabled` would drop focus to the page as Send turns unsendable.
+    expect(view.button.disabled).toBe(false);
+    act(() => view.button.focus());
+    act(() => view.button.click());
+    expect(events).toEqual([]);
+    expect(document.activeElement).toBe(view.button);
+    view.unmount();
+  });
+
+  test("a disabled PromptInput disables Send for real", () => {
+    const view = render({ initial: "hello", disabled: true, events: [] });
+    expect(view.button.disabled).toBe(true);
+    view.unmount();
+  });
+
   test("canSubmit lets an empty prompt send, as with only attachments", () => {
     const events: string[] = [];
     const view = render({ canSubmit: true, events });
-    expect(view.button.disabled).toBe(false);
+    expect(view.button.hasAttribute("aria-disabled")).toBe(false);
     view.press("Enter");
     act(() => view.button.click());
     expect(events).toEqual(["submit:", "submit:"]);
     view.unmount();
   });
 
-  test("canSubmit false keeps Send disabled and Enter inert despite text", () => {
+  test("canSubmit false keeps Send aria-disabled and Enter inert despite text", () => {
     const events: string[] = [];
     const view = render({ initial: "hello", canSubmit: false, events });
-    expect(view.button.disabled).toBe(true);
+    expect(view.button.getAttribute("aria-disabled")).toBe("true");
     view.press("Enter");
+    act(() => view.button.click());
     expect(events).toEqual([]);
     view.unmount();
   });
@@ -197,6 +219,68 @@ describe("PromptInput", () => {
       options[1]?.id ?? "",
     );
     view.unmount();
+  });
+
+  test("the textarea offers list completion only with a suggestions part", () => {
+    const without = render({ suggestions: false, events: [] });
+    expect(without.textarea.hasAttribute("aria-autocomplete")).toBe(false);
+    expect(without.textarea.hasAttribute("aria-haspopup")).toBe(false);
+    without.unmount();
+
+    // A capability, so set while the list is closed too.
+    const view = render({ events: [] });
+    expect(view.container.querySelector("[role='listbox']")).toBeNull();
+    expect(view.textarea.getAttribute("aria-autocomplete")).toBe("list");
+    expect(view.textarea.getAttribute("aria-haspopup")).toBe("listbox");
+    view.unmount();
+  });
+
+  test("a status announces the list opening, narrowing and closing", () => {
+    const view = render({ events: [] });
+    const status = view.container.querySelector("[role='status']");
+    expect(status?.textContent).toBe("");
+    view.type("@a");
+    expect(status?.textContent).toBe("2 suggestions");
+    view.type("@al");
+    expect(status?.textContent).toBe("1 suggestion");
+    view.press("Escape");
+    expect(view.container.querySelector("[role='listbox']")).toBeNull();
+    // The same node throughout: a live region mounted with its text is not
+    // reliably read.
+    expect(view.container.querySelector("[role='status']")).toBe(status);
+    expect(status?.textContent).toBe("");
+    view.unmount();
+  });
+
+  test("a render callback that skips PromptInputSuggestion is reported in development", () => {
+    const errors: unknown[] = [];
+    const originalError = console.error;
+    console.error = (...args: unknown[]) => errors.push(args[0]);
+    try {
+      const fine = render({
+        events: [],
+        renderSuggestion: (token) => <PromptInputSuggestion token={token} />,
+      });
+      fine.type("@a");
+      fine.unmount();
+      expect(errors).toEqual([]);
+
+      const bare = render({
+        events: [],
+        renderSuggestion: (token) => (
+          <li role="option" aria-selected={false}>
+            {token.token}
+          </li>
+        ),
+      });
+      bare.type("@a");
+      bare.unmount();
+    } finally {
+      console.error = originalError;
+    }
+    expect(errors).toEqual([
+      expect.stringContaining("must return a PromptInputSuggestion"),
+    ]);
   });
 
   test("clicking a suggestion picks it", () => {

@@ -37,11 +37,13 @@ function mountPrompt({
   const submitted: string[] = [];
   let prompt: UsePromptInputResult | undefined;
   let text = "";
+  let setText: (next: string) => void = () => undefined;
 
   function Host() {
     const [value, setValue] = useState("");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     text = value;
+    setText = setValue;
     prompt = usePromptInput({
       value,
       onValueChange: setValue,
@@ -81,18 +83,28 @@ function mountPrompt({
         textarea.dispatchEvent(new Event("input", { bubbles: true }));
       });
     },
-    /** Dispatches a keydown; true when the textarea's default action ran. */
-    press(key: string, init: KeyboardEventInit = {}): boolean {
+    /** Sets the text from the host's side, as a toolbar button would. */
+    hostSet(next: string) {
+      act(() => setText(next));
+    },
+    /** Dispatches a keydown; true when the textarea's default action ran.
+     * `keyCode` is set on the event itself: `KeyboardEventInit` drops it. */
+    press(
+      key: string,
+      { keyCode, ...init }: KeyboardEventInit & { keyCode?: number } = {},
+    ): boolean {
+      const event = new KeyboardEvent("keydown", {
+        key,
+        bubbles: true,
+        cancelable: true,
+        ...init,
+      });
+      if (keyCode !== undefined) {
+        Object.defineProperty(event, "keyCode", { value: keyCode });
+      }
       let proceeded = true;
       act(() => {
-        proceeded = textarea.dispatchEvent(
-          new KeyboardEvent("keydown", {
-            key,
-            bubbles: true,
-            cancelable: true,
-            ...init,
-          }),
-        );
+        proceeded = textarea.dispatchEvent(event);
       });
       return proceeded;
     },
@@ -206,6 +218,21 @@ describe("usePromptInput", () => {
     view.unmount();
   });
 
+  test("the Enter Safari sends as a composition ends (keyCode 229) does not submit", () => {
+    const view = mountPrompt();
+    view.type("にほん");
+    act(() => {
+      view.textarea.dispatchEvent(
+        new CompositionEvent("compositionend", { bubbles: true }),
+      );
+    });
+    expect(view.press("Enter", { keyCode: 229 })).toBe(true);
+    expect(view.submitted).toEqual([]);
+    view.press("Enter", { keyCode: 13 });
+    expect(view.submitted).toEqual(["にほん"]);
+    view.unmount();
+  });
+
   test("blank text, a held-down Enter or a busy prompt does not submit", () => {
     const view = mountPrompt();
     view.type("   ");
@@ -258,6 +285,32 @@ describe("usePromptInput", () => {
     expect(view.press("ArrowDown")).toBe(true);
     view.press("Enter");
     expect(view.submitted).toEqual(["@a"]);
+    view.unmount();
+  });
+
+  test("a host-set value is read at the caret it leaves, not the last typed one", () => {
+    const view = mountPrompt();
+    view.type("hi");
+    view.hostSet("hi @");
+    expect(view.textarea.selectionStart).toBe(4);
+    expect(ids(view.prompt.suggestions)).toEqual(["ada", "adam", "alan"]);
+    view.unmount();
+
+    // The caret typed last (6) sits right after "@ad" in the host's text,
+    // but the textarea's caret is at the end, past any token.
+    const stale = mountPrompt();
+    stale.type("abcdef");
+    stale.hostSet("xy @ad z");
+    expect(stale.prompt.suggestions).toEqual([]);
+    stale.unmount();
+  });
+
+  test("a host-set value does not open the list while the textarea is blurred", () => {
+    const view = mountPrompt();
+    view.type("hi");
+    act(() => view.textarea.blur());
+    view.hostSet("hi @");
+    expect(view.prompt.suggestions).toEqual([]);
     view.unmount();
   });
 

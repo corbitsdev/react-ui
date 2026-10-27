@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
 type Box = {
@@ -247,6 +248,90 @@ test("Send becomes Stop while the agent replies and calls onStop", async ({
   await expect(send).toBeFocused();
   await send.click();
   await expect(events(page)).toHaveText("stop,submit:Next step");
+});
+
+/** Settles, then asserts focus is on the submit button and not on the page:
+ * a focused button that turns `disabled` loses focus to `<body>` at the
+ * next rendering update, after which `toBeFocused` alone could pass early. */
+async function expectSubmitFocused(page: Page) {
+  await settle(page);
+  expect(
+    await page.evaluate(() =>
+      document.activeElement?.getAttribute("data-slot"),
+    ),
+  ).toBe("prompt-input-submit");
+}
+
+test("Send keeps focus as a cleared draft makes it unsendable", async ({
+  page,
+}) => {
+  await page.goto("/prompt-input-chat");
+  const textarea = message(page);
+  const submit = page.locator("[data-slot='prompt-input-submit']");
+  const finish = page.getByRole("button", { name: "Finish reply" });
+
+  await textarea.fill("hello");
+  await submit.focus();
+  await page.keyboard.press("Enter");
+  await expect(events(page)).toHaveText("submit:hello");
+  await expect(textarea).toHaveValue("");
+  await expect(submit).toHaveAccessibleName("Stop");
+  await expectSubmitFocused(page);
+
+  // The reply ends: Send again, with nothing to send.
+  await finish.click();
+  await expect(submit).toHaveAccessibleName("Send");
+  await expect(submit).toBeDisabled();
+  await expectSubmitFocused(page);
+
+  // Stop ends it too.
+  await textarea.fill("again");
+  await submit.click();
+  await expect(submit).toHaveAccessibleName("Stop");
+  await submit.click();
+  await expect(events(page)).toHaveText("submit:hello,submit:again,stop");
+  await expect(submit).toHaveAccessibleName("Send");
+  await expectSubmitFocused(page);
+
+  // Enter on the unsendable Send sends nothing.
+  await page.keyboard.press("Enter");
+  await settle(page);
+  await expect(events(page)).toHaveText("submit:hello,submit:again,stop");
+});
+
+test("Send keeps focus while a reply runs with no onStop", async ({ page }) => {
+  await page.goto("/prompt-input-chat-no-stop");
+  const submit = page.getByRole("button", { name: "Send" });
+  await message(page).fill("hello");
+  await submit.click();
+  await expect(events(page)).toHaveText("submit:hello");
+  await expect(submit).toBeDisabled();
+  await expectSubmitFocused(page);
+
+  await page.getByRole("button", { name: "Finish reply" }).click();
+  await expectSubmitFocused(page);
+});
+
+test("an open suggestion list adds no axe violations and is announced", async ({
+  page,
+}) => {
+  await page.goto("/prompt-input");
+  const textarea = message(page);
+  await expect(textarea).toHaveAttribute("aria-haspopup", "listbox");
+  await textarea.pressSequentially("Ask @a");
+  await expect(page.getByRole("listbox", { name: "Mentions" })).toBeVisible();
+  await expect(
+    page.locator("[data-slot='prompt-input'] [role='status']"),
+  ).toHaveText("2 suggestions");
+  const { violations } = await new AxeBuilder({ page })
+    .include("[data-slot='prompt-input']")
+    .analyze();
+  expect(violations.map((violation) => violation.id)).toEqual([]);
+
+  await textarea.press("Escape");
+  await expect(
+    page.locator("[data-slot='prompt-input'] [role='status']"),
+  ).toHaveText("");
 });
 
 test("an attachment alone can be sent with Enter or Send", async ({ page }) => {
