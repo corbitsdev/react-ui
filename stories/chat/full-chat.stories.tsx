@@ -9,6 +9,7 @@ import {
 import {
   Fragment,
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -947,7 +948,7 @@ function ThreadTab({
   const input = useRef<HTMLTextAreaElement>(null);
   const stop = useRef<(() => void) | null>(null);
   const streamingId = useRef<string | null>(null);
-  const stopAnswer = () => {
+  const stopAnswer = useCallback(() => {
     stop.current?.();
     const id = streamingId.current;
     streamingId.current = null;
@@ -958,11 +959,9 @@ function ThreadTab({
           : reply,
       ),
     );
-  };
+  }, [onRepliesChange]);
   // Closing the tab mid-answer stops it where it stands.
-  const stopOnClose = useRef(stopAnswer);
-  stopOnClose.current = stopAnswer;
-  useEffect(() => () => stopOnClose.current(), []);
+  useEffect(() => stopAnswer, [stopAnswer]);
   useEffect(() => {
     if (focusRequest > 0) input.current?.focus();
   }, [focusRequest]);
