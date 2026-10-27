@@ -97,22 +97,66 @@ function settle(tool: PartTool, decision: ToolApprovalDecision): PartTool {
   };
 }
 
+/** `parts` with one call, alone or in a batch, replaced by `change(call)`. */
+function updateCall(
+  parts: readonly ConversationPart[],
+  toolCallId: string,
+  change: (tool: PartTool) => PartTool,
+): readonly ConversationPart[] {
+  return parts.map((part) => {
+    if (part.kind === "tool-trace" && part.toolCallId === toolCallId)
+      return change(part);
+    if (part.kind === "tool-batch")
+      return {
+        ...part,
+        tools: part.tools.map((tool) =>
+          tool.toolCallId === toolCallId ? change(tool) : tool,
+        ),
+      };
+    return part;
+  });
+}
+
 function decideIn(
   parts: readonly ConversationPart[],
   toolCallId: string,
   decision: ToolApprovalDecision,
 ): readonly ConversationPart[] {
-  return parts.map((part) => {
-    if (part.kind === "tool-trace" && part.toolCallId === toolCallId)
-      return settle(part, decision);
+  return updateCall(parts, toolCallId, (tool) => settle(tool, decision));
+}
+
+/** The call stopped waiting with no decision, as the server records it. */
+function lapseIn(
+  parts: readonly ConversationPart[],
+  toolCallId: string,
+  status: "timeout" | "expired",
+): readonly ConversationPart[] {
+  return updateCall(parts, toolCallId, (tool) => {
+    if (tool.approval === undefined) throw new Error("no approval record");
+    return {
+      ...tool,
+      status: "output-denied",
+      approval: { ...tool.approval, status },
+    };
+  });
+}
+
+/** `parts` without one call, alone or in a batch. */
+function dropCall(
+  parts: readonly ConversationPart[],
+  toolCallId: string,
+): readonly ConversationPart[] {
+  return parts.flatMap((part): ConversationPart[] => {
+    if (part.kind === "tool-trace")
+      return part.toolCallId === toolCallId ? [] : [part];
     if (part.kind === "tool-batch")
-      return {
-        ...part,
-        tools: part.tools.map((tool) =>
-          tool.toolCallId === toolCallId ? settle(tool, decision) : tool,
-        ),
-      };
-    return part;
+      return [
+        {
+          ...part,
+          tools: part.tools.filter((tool) => tool.toolCallId !== toolCallId),
+        },
+      ];
+    return [part];
   });
 }
 
@@ -438,5 +482,135 @@ describe("MessageParts focus after a decision", () => {
     expect(
       (document.activeElement as HTMLElement | null)?.dataset["slot"],
     ).toBe("activity-trigger");
+  });
+});
+
+describe("MessageParts focus when a call stops waiting with no decision", () => {
+  const RUN_THEN_WAIT: readonly ConversationPart[] = [
+    call("draft"),
+    waiting("send"),
+  ];
+  const props = (parts: readonly ConversationPart[]) =>
+    inMessage({ parts, onDecide: () => {} });
+  const activeSlot = () =>
+    (document.activeElement as HTMLElement | null)?.dataset["slot"];
+
+  for (const status of ["timeout", "expired"] as const) {
+    test(`a call that ends ${status} with focus on its buttons hands focus to the run`, () => {
+      const { container, render } = mount(props(RUN_THEN_WAIT));
+      act(() => button(container, "Approve").focus());
+      render(props(lapseIn(RUN_THEN_WAIT, "send", status)));
+      expect(container.querySelector("[data-slot='tool-approval']")).toBeNull();
+      expect(activeSlot()).toBe("activity-trigger");
+      expect(document.activeElement?.textContent).toContain(
+        "Worked through 2 steps",
+      );
+    });
+  }
+
+  test("in a batch, focus moves to the next call still waiting, then to the run", () => {
+    const batch: PartToolBatch = {
+      kind: "tool-batch",
+      id: "batch-1",
+      tools: [waiting("one"), call("two"), waiting("three")],
+    };
+    const initial: readonly ConversationPart[] = [call("draft"), batch];
+    const { container, render } = mount(props(initial));
+    act(() => button(container, "Deny").focus());
+    const first = lapseIn(initial, "one", "timeout");
+    render(props(first));
+    const next = document.activeElement as HTMLElement | null;
+    expect(next?.textContent).toBe("Approve");
+    expect(
+      container
+        .querySelector("[data-slot='tool-approval'][data-status='pending']")
+        ?.contains(next),
+    ).toBe(true);
+
+    render(props(lapseIn(first, "three", "expired")));
+    expect(activeSlot()).toBe("activity-trigger");
+    expect(document.activeElement?.textContent).toContain(
+      "Worked through 4 steps",
+    );
+  });
+
+  test("focus that left the buttons for the page is not pulled back", () => {
+    const { container, render } = mount(props(RUN_THEN_WAIT));
+    act(() => button(container, "Approve").focus());
+    // A click on blank page: focus leaves to nothing.
+    act(() => (document.activeElement as HTMLElement).blur());
+    render(props(lapseIn(RUN_THEN_WAIT, "send", "timeout")));
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  test("focus elsewhere in the message is not moved", () => {
+    const { container, render } = mount(props(RUN_THEN_WAIT));
+    act(() => button(container, "Approve").focus());
+    const trigger = container.querySelector<HTMLElement>(
+      "[data-slot='activity-trigger']",
+    );
+    if (trigger === null) throw new Error("expected a trigger");
+    act(() => trigger.focus());
+    render(props([call("draft")]));
+    expect(document.activeElement).toBe(trigger);
+  });
+});
+
+describe("MessageParts focus when the host drops the decided call", () => {
+  /** A host that records a decision by removing the call from `parts`. */
+  function Dropper({
+    initial,
+  }: {
+    readonly initial: readonly ConversationPart[];
+  }) {
+    const [parts, setParts] = useState(initial);
+    return inMessage({
+      parts,
+      onDecide: (tool) =>
+        setParts((current) => dropCall(current, tool.toolCallId)),
+    });
+  }
+
+  test("focus lands on the run the call sat under", () => {
+    const { container } = mount(
+      <Dropper initial={[call("draft"), waiting("send")]} />,
+    );
+    press(button(container, "Approve"));
+    const active = document.activeElement as HTMLElement | null;
+    expect(active?.dataset["slot"]).toBe("activity-trigger");
+    expect(active?.textContent).toContain("Worked through 1 step");
+  });
+
+  test("in a batch, focus moves to the call still waiting", () => {
+    const batch: PartToolBatch = {
+      kind: "tool-batch",
+      id: "batch-1",
+      tools: [waiting("one"), waiting("two")],
+    };
+    const { container } = mount(<Dropper initial={[call("draft"), batch]} />);
+    press(button(container, "Approve"));
+    const active = document.activeElement as HTMLElement | null;
+    expect(active?.textContent).toBe("Approve");
+    expect(
+      container
+        .querySelector("[data-slot='tool-approval'][data-status='pending']")
+        ?.contains(active),
+    ).toBe(true);
+  });
+
+  test("with nothing before it, focus goes to the message's first control", () => {
+    const { container } = mount(
+      <Dropper
+        initial={[
+          waiting("send"),
+          { kind: "text", text: "Then" },
+          call("after"),
+        ]}
+      />,
+    );
+    press(button(container, "Approve"));
+    const active = document.activeElement as HTMLElement | null;
+    expect(active?.dataset["slot"]).toBe("activity-trigger");
+    expect(active?.textContent).toContain("Worked through 1 step");
   });
 });

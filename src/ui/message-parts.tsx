@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef } from "react";
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps, FocusEvent, ReactNode } from "react";
 
 import {
   groupActivity,
@@ -107,19 +107,76 @@ function findTool(
   return parts.flatMap(toolsOf).find((tool) => tool.toolCallId === toolCallId);
 }
 
+/** The group holding a call, and the index in `parts` of the part holding it. */
+function placeOf(
+  groups: readonly PartsGroup[],
+  toolCallId: string,
+): { readonly group: PartsGroup; readonly index: number } | undefined {
+  let index = 0;
+  for (const group of groups)
+    for (const part of partsIn(group)) {
+      if (toolsOf(part).some((tool) => tool.toolCallId === toolCallId))
+        return { group, index };
+      index += 1;
+    }
+  return undefined;
+}
+
+/** The group laid out from the part at `index` in `parts`. */
+function groupAt(
+  groups: readonly PartsGroup[],
+  index: number,
+): PartsGroup | undefined {
+  if (index < 0) return undefined;
+  let end = 0;
+  return groups.find((group) => {
+    end += partsIn(group).length;
+    return index < end;
+  });
+}
+
+/**
+ * A call whose buttons may go away with focus on them: one just decided, or
+ * one waiting with focus inside. `groups` is the layout it was last seen in.
+ */
+type Leaving = {
+  readonly toolCallId: string;
+  readonly groups: readonly PartsGroup[];
+};
+
 const WAITING = "[data-slot='tool-approval'][data-status='pending']";
 
 /**
- * Where focus goes once a decided call has moved: in a batch that still has
- * calls waiting, the next one after it (or the first); otherwise the run it
- * folded into, by its trigger.
+ * The waiting call whose card holds `element`: a call standing on its own,
+ * or, in a batch, the waiting card it is in, counted in order.
+ */
+function waitingCallAt(
+  element: Element,
+  groups: readonly PartsGroup[],
+): PartTool | undefined {
+  const holder = element.closest("[data-part-key]");
+  const key = holder?.getAttribute("data-part-key");
+  const group = groups.find((candidate) => candidate.key === key);
+  if (holder === null || group?.kind !== "part") return undefined;
+  const waiting = toolsOf(group.part).filter(isAwaitingApproval);
+  if (group.part.kind === "tool-trace") return waiting[0];
+  const card = element.closest(WAITING);
+  if (card === null) return undefined;
+  return waiting[[...holder.querySelectorAll(WAITING)].indexOf(card)];
+}
+
+/**
+ * Where focus goes once a call has stopped waiting: in a batch that still
+ * has calls waiting, the next one after it (or the first); otherwise the run
+ * it folded into, by its trigger. With no group, the first control in
+ * `element`.
  */
 function focusTarget(
   element: Element,
-  group: PartsGroup,
+  group: PartsGroup | undefined,
   toolCallId: string,
 ): HTMLElement | null {
-  if (group.kind === "part" && group.part.kind === "tool-batch") {
+  if (group?.kind === "part" && group.part.kind === "tool-batch") {
     const { tools } = group.part;
     const decided = tools.findIndex((tool) => tool.toolCallId === toolCallId);
     const waiting = tools.flatMap((tool, index) =>
@@ -137,6 +194,36 @@ function focusTarget(
   return element.querySelector<HTMLElement>(
     "[data-slot='activity-trigger'], [data-slot='tool-group-header'], button",
   );
+}
+
+/**
+ * Where focus goes, inside `root`, once the `leaving` call stopped waiting.
+ * A call the host dropped from `parts` hands focus to its group if that
+ * still stands (a batch with other calls), else to the group before where
+ * it stood, else to the first control in `root`.
+ */
+function handoffTarget(
+  root: Element,
+  groups: readonly PartsGroup[],
+  leaving: Leaving,
+): HTMLElement | null {
+  const { toolCallId } = leaving;
+  const inGroup = (group: PartsGroup | undefined): HTMLElement | null => {
+    const element =
+      group === undefined
+        ? null
+        : root.querySelector(`[data-part-key='${group.key}']`);
+    return element === null ? null : focusTarget(element, group, toolCallId);
+  };
+  const here = placeOf(groups, toolCallId);
+  if (here !== undefined) return inGroup(here.group);
+  const was = placeOf(leaving.groups, toolCallId);
+  const near =
+    was === undefined
+      ? undefined
+      : (groups.find((group) => group.key === was.group.key) ??
+        groupAt(groups, was.index - 1));
+  return inGroup(near) ?? focusTarget(root, undefined, toolCallId);
 }
 
 /** Records a decision on one call: the call, then the person's answer. */
@@ -168,7 +255,7 @@ export type MessagePartsProps = Omit<
   /**
    * Renders a text part's text, passed to `MessageContent` as `render`: say,
    * markdown through the host's own renderer and sanitiser. Without it the
-   * text is plain.
+   * text is plain. `renderText` takes precedence over it.
    */
   readonly renderMarkdown?: ((text: string) => ReactNode) | undefined;
   /** Renders one step of an opened run. Defaults to `Reasoning`, `Tool` or `ToolGroup`. */
@@ -177,9 +264,17 @@ export type MessagePartsProps = Omit<
    * The overrides below each replace one kind of part. Each returns what to
    * show, `null` for nothing, or `undefined` to keep the default.
    */
-  /** A text part. Defaults to `MessageContent`. */
+  /**
+   * A text part. Defaults to `MessageContent`. Takes precedence over
+   * `renderMarkdown`; return `undefined` to fall back to it.
+   */
   readonly renderText?: ((part: PartText) => ReactNode) | undefined;
-  /** A run of thinking and tool work. Defaults to `Activity`. */
+  /**
+   * A run of thinking and tool work. Defaults to `Activity`. When a call
+   * folds into the run with focus on it, focus moves to the run's first
+   * `[data-slot='activity-trigger']` or `<button>`; a run with neither
+   * leaves focus on the page.
+   */
   readonly renderActivity?:
     | ((
         steps: readonly ActivityStep[],
@@ -189,6 +284,8 @@ export type MessagePartsProps = Omit<
   /**
    * A call waiting on a person. Defaults to `ToolApproval`. Use `decide`
    * rather than `onDecide`, so focus is looked after when the call moves.
+   * The markup needs nothing for that: the call folds into a run, and focus
+   * goes to the run (see `renderActivity`).
    */
   readonly renderApproval?:
     | ((
@@ -199,7 +296,11 @@ export type MessagePartsProps = Omit<
   /**
    * A batch with a call waiting on a person. Defaults to `ToolGroup`. Use
    * `decide` rather than `onDecide`, so focus is looked after when the call
-   * moves.
+   * moves. The handoff finds the waiting calls by their cards: render each
+   * as a `[data-slot='tool-approval'][data-status='pending']` element, in
+   * order, with a `<button>` inside (as `ToolApproval` does). Focus then
+   * moves to the first `<button>` of the next card; once none is left, to
+   * the batch's first `[data-slot='tool-group-header']` or `<button>`.
    */
   readonly renderBatch?:
     | ((part: PartToolBatch, decide: MessagePartsDecide) => ReactNode)
@@ -234,6 +335,9 @@ export type MessagePartsProps = Omit<
  * When that leaves focus on the page, focus moves to the run's trigger, or,
  * in a batch with calls still waiting, to the next one's buttons. A host's
  * own `renderApproval` or `renderBatch` gets the same through its `decide`.
+ * The same happens when a call with focus on its buttons stops waiting with
+ * no decision (it timed out or expired). A call the host drops from `parts`
+ * hands focus to the run it sat under, or else to the first control here.
  */
 export function MessageParts({
   parts,
@@ -252,6 +356,8 @@ export function MessageParts({
   renderImages,
   renderSources,
   className,
+  onFocus,
+  onBlur,
   ...props
 }: MessagePartsProps) {
   const message = useMessageContext();
@@ -259,34 +365,46 @@ export function MessageParts({
   const groups = useMemo(() => groupParts(parts), [parts]);
   const root = useRef<HTMLDivElement | null>(null);
   // The call last decided here, until its decision shows in `parts`.
-  const decided = useRef<string | null>(null);
+  const decided = useRef<Leaving | null>(null);
+  // The waiting call whose card holds focus, while it does.
+  const focused = useRef<Leaving | null>(null);
 
   useLayoutEffect(() => {
-    const toolCallId = decided.current;
-    if (toolCallId === null) return;
+    const leaving = decided.current ?? focused.current;
+    if (leaving === null) return;
+    const { toolCallId } = leaving;
     const tool = findTool(parts, toolCallId);
-    // The host has not recorded it yet; the buttons are still there.
+    // Still waiting: the host has not recorded it yet, and the buttons are
+    // still there.
     if (tool !== undefined && isAwaitingApproval(tool)) return;
     decided.current = null;
+    focused.current = null;
     const active = document.activeElement;
     if (active !== null && active !== document.body) return;
-    const group = groups.find((candidate) =>
-      partsIn(candidate).some((part) =>
-        toolsOf(part).some((held) => held.toolCallId === toolCallId),
-      ),
-    );
-    const element =
-      group === undefined
-        ? null
-        : root.current?.querySelector(`[data-part-key='${group.key}']`);
-    if (group === undefined || element === null || element === undefined)
-      return;
-    focusTarget(element, group, toolCallId)?.focus();
+    if (root.current === null) return;
+    handoffTarget(root.current, groups, leaving)?.focus();
   });
 
   const decide: MessagePartsDecide = (tool, decision) => {
-    decided.current = tool.toolCallId;
+    decided.current = { toolCallId: tool.toolCallId, groups };
     onDecide?.(tool, decision);
+  };
+
+  const trackFocus = (event: FocusEvent<HTMLDivElement>) => {
+    const tool = waitingCallAt(event.target, groups);
+    focused.current =
+      tool === undefined ? null : { toolCallId: tool.toolCallId, groups };
+    onFocus?.(event);
+  };
+
+  const untrackFocus = (event: FocusEvent<HTMLDivElement>) => {
+    // Focus leaving for the page or outside ends the watch. A card's
+    // buttons going away with its call does not reach here: React ignores
+    // blur while it commits, so the watch survives until the effect reads it.
+    const next = event.relatedTarget;
+    if (next === null || !event.currentTarget.contains(next))
+      focused.current = null;
+    onBlur?.(event);
   };
 
   const show = (group: PartsGroup, index: number): ReactNode => {
@@ -360,7 +478,7 @@ export function MessageParts({
             onOpen={
               onOpenImage === undefined
                 ? undefined
-                : (image, opener) => onOpenImage(part, image, opener)
+                : (index, opener) => onOpenImage(part, index, opener)
             }
           />
         );
@@ -393,6 +511,8 @@ export function MessageParts({
       ref={root}
       data-slot="message-parts"
       className={cn("flex min-w-0 flex-col gap-3", className)}
+      onFocus={trackFocus}
+      onBlur={untrackFocus}
       {...props}
     >
       {groups.map((group, index) => (

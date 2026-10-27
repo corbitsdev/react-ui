@@ -936,12 +936,35 @@ function pendingApproval(id: string): ToolApprovalRecord {
   return { id, status: "pending", scope: null, timeoutAt: null };
 }
 
+/** A call that stopped waiting with no decision, as the server reports it. */
+type Lapse = {
+  readonly toolCallId: string;
+  readonly status: "timeout" | "expired";
+};
+
+/**
+ * Calls `onLapse` for each `approval-lapse` event on the window: the specs'
+ * stand-in for the server resolving an approval nobody decided, without
+ * moving focus the way a control on the page would.
+ */
+function useApprovalLapse(onLapse: (lapse: Lapse) => void) {
+  useEffect(() => {
+    const listener = (event: Event) =>
+      onLapse((event as CustomEvent<Lapse>).detail);
+    window.addEventListener("approval-lapse", listener);
+    return () => window.removeEventListener("approval-lapse", listener);
+  });
+}
+
 // A host's view of one agent turn: a finished draft, then a send waiting on a
 // person. Deciding records the outcome on the call, which `MessageParts` then
 // folds into the run before it.
 function ToolApprovalScenario() {
   const { log, record } = useEventLog();
   const [approval, setApproval] = useState(pendingApproval("approval-1"));
+  useApprovalLapse(({ status }) =>
+    setApproval((current) => ({ ...current, status })),
+  );
   const parts: PartTool[] = [
     {
       kind: "tool-trace",
@@ -1055,6 +1078,13 @@ function ToolBatchApprovalScenario() {
     notice: pendingApproval("approval-notice"),
     calendar: pendingApproval("approval-calendar"),
   });
+  const update = (toolCallId: string, change: Partial<ToolApprovalRecord>) =>
+    setApprovals((current) => {
+      const approval = current[toolCallId];
+      if (approval === undefined) return current;
+      return { ...current, [toolCallId]: { ...approval, ...change } };
+    });
+  useApprovalLapse(({ toolCallId, status }) => update(toolCallId, { status }));
   const parts: ConversationPart[] = [
     {
       kind: "tool-trace",
@@ -1092,17 +1122,9 @@ function ToolBatchApprovalScenario() {
       <MessageParts
         parts={parts}
         onDecide={(tool, decision) =>
-          setApprovals((current) => {
-            const approval = current[tool.toolCallId];
-            if (approval === undefined) return current;
-            return {
-              ...current,
-              [tool.toolCallId]: {
-                ...approval,
-                status: decision.outcome,
-                scope: decision.scope,
-              },
-            };
+          update(tool.toolCallId, {
+            status: decision.outcome,
+            scope: decision.scope,
           })
         }
       />

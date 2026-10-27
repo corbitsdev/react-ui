@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { watchFocusOnBody } from "./focus.js";
 
@@ -161,4 +161,63 @@ test("in a group, keyboard decisions keep focus inside it", async ({
       }),
   );
   expect(await bodyFrames()).toBe(0);
+});
+
+/** The server resolves a call nobody decided, the way the fixture hears it. */
+function lapse(
+  page: Page,
+  toolCallId: string,
+  status: "timeout" | "expired",
+): Promise<void> {
+  return page.evaluate(
+    (detail) =>
+      void window.dispatchEvent(new CustomEvent("approval-lapse", { detail })),
+    { toolCallId, status },
+  );
+}
+
+for (const status of ["timeout", "expired"] as const) {
+  test(`a call that ends ${status} under keyboard focus hands focus to the run`, async ({
+    page,
+  }) => {
+    await page.goto("/tool-approval");
+    await page.getByRole("button", { name: "Approve", exact: true }).focus();
+    const stop = await watchFocusOnBody(page);
+    await lapse(page, "send", status);
+
+    await expect(
+      page.locator("[data-slot='tool-approval'][data-status='pending']"),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Worked through 2 steps" }),
+    ).toBeFocused();
+    expect(await stop()).toBe(0);
+  });
+}
+
+test("in a batch, calls that time out under focus hand it on, then to the run", async ({
+  page,
+}) => {
+  await page.goto("/tool-batch-approval");
+  const waiting = page.locator(
+    "[data-slot='tool-approval'][data-status='pending']",
+  );
+  await waiting
+    .first()
+    .getByRole("button", { name: "Deny", exact: true })
+    .focus();
+  const stop = await watchFocusOnBody(page);
+
+  await lapse(page, "notice", "timeout");
+  await expect(waiting).toHaveCount(1);
+  await expect(
+    waiting.getByRole("button", { name: "Approve", exact: true }),
+  ).toBeFocused();
+
+  await lapse(page, "calendar", "expired");
+  await expect(waiting).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Worked through 4 steps" }),
+  ).toBeFocused();
+  expect(await stop()).toBe(0);
 });
