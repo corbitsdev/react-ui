@@ -7,7 +7,12 @@ import type {
   PartTool,
   PartToolBatch,
 } from "../../../src/lib/conversation.js";
-import { assistant, generatedImages, toolStorm } from "./conversations.js";
+import {
+  assistant,
+  generatedImages,
+  samples,
+  toolStorm,
+} from "./conversations.js";
 import { playTurn, turnFrames } from "./play-turn.js";
 
 function turn(parts: readonly ConversationPart[]): ConversationMessage {
@@ -35,6 +40,20 @@ function tool(overrides: Partial<PartTool> = {}): PartTool {
 
 function lastPart(frame: ConversationMessage | undefined) {
   return frame?.parts.at(-1);
+}
+
+function statusesOf(part: ConversationPart | undefined) {
+  return part?.kind === "tool-batch"
+    ? part.tools.map((call) => call.status)
+    : null;
+}
+
+/** How many frames show exactly the parts of the frame before them. */
+function repeatedFrames(frames: readonly ConversationMessage[]): number {
+  return frames.filter(
+    (frame, index) =>
+      index > 0 && Bun.deepEquals(frame.parts, frames[index - 1]?.parts),
+  ).length;
 }
 
 describe("turnFrames", () => {
@@ -130,6 +149,57 @@ describe("turnFrames", () => {
       ),
     );
     expect(new Set(statuses)).toEqual(new Set(["approval-requested"]));
+  });
+
+  test("shows a queued call in its final form at once, never as running", () => {
+    const queued = tool({ status: "pending", output: undefined });
+    expect(turnFrames(turn([queued])).map(lastPart)).toEqual([
+      undefined,
+      queued,
+    ]);
+
+    const batch: PartToolBatch = {
+      kind: "tool-batch",
+      id: "batch",
+      tools: [tool({ toolCallId: "a" }), { ...queued, toolCallId: "b" }],
+    };
+    const queuedStatuses = turnFrames(turn([batch])).flatMap((frame) => {
+      const part = lastPart(frame);
+      return part?.kind === "tool-batch" ? [part.tools[1]?.status] : [];
+    });
+    expect(new Set(queuedStatuses)).toEqual(new Set(["pending"]));
+  });
+
+  test("never repeats a frame after a batch call that has no stage", () => {
+    const batch: PartToolBatch = {
+      kind: "tool-batch",
+      id: "batch",
+      tools: [
+        tool({ toolCallId: "a" }),
+        tool({ toolCallId: "b", status: "running", output: undefined }),
+        tool({ toolCallId: "c" }),
+        tool({ toolCallId: "d", status: "running", output: undefined }),
+      ],
+    };
+    const frames = turnFrames(turn([batch, { kind: "text", text: "ok" }]));
+    expect(repeatedFrames(frames)).toBe(0);
+    expect(frames.map((frame) => statusesOf(frame.parts[0]))).toEqual([
+      null,
+      ["running", "running", "running", "running"],
+      ["output-available", "running", "running", "running"],
+      ["output-available", "running", "output-available", "running"],
+      ["output-available", "running", "output-available", "running"],
+    ]);
+  });
+
+  test("never repeats a frame in any sample message", () => {
+    const messages = samples.flatMap((sample) => [
+      ...sample.messages,
+      ...(sample.thread?.replies ?? []),
+    ]);
+    for (const message of messages) {
+      expect(repeatedFrames(turnFrames(message))).toBe(0);
+    }
   });
 
   test("starts every call in a batch together and finishes them one by one", () => {

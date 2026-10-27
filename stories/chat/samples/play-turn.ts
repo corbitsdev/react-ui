@@ -30,7 +30,8 @@ function prefixes(value: string): readonly string[] {
 /**
  * The forms a tool call takes before its final one. A call with an approval
  * record first waits on a person and never shows as running; a call without
- * one runs, then settles.
+ * one runs, then settles. A call still queued, waiting or running is already
+ * in its earliest form, so it has none.
  */
 function toolStages(part: PartTool): readonly PartTool[] {
   if (part.approval !== undefined) {
@@ -46,7 +47,11 @@ function toolStages(part: PartTool): readonly PartTool[] {
       },
     ];
   }
-  if (part.status === "approval-requested" || part.status === "running") {
+  if (
+    part.status === "pending" ||
+    part.status === "approval-requested" ||
+    part.status === "running"
+  ) {
     return [];
   }
   return [
@@ -96,14 +101,21 @@ function partStages(part: ConversationPart): readonly ConversationPart[] {
     case "tool-trace":
       return toolStages(part);
     case "tool-batch": {
-      // Every call starts together, then they finish one at a time.
-      const started = part.tools.map((tool) => toolStages(tool)[0] ?? tool);
-      return part.tools.map((_, finished) => ({
-        ...part,
-        tools: part.tools.map((tool, index) =>
-          index < finished ? tool : (started[index] ?? tool),
-        ),
-      }));
+      // Every call starts together, then the ones that change finish one at
+      // a time; a call with no earlier form shows its final one throughout.
+      const starts = part.tools.flatMap((tool, index) => {
+        const [start] = toolStages(tool);
+        return start === undefined ? [] : [{ index, start }];
+      });
+      return starts.map((_, finished) => {
+        const unfinished = new Map(
+          starts.slice(finished).map(({ index, start }) => [index, start]),
+        );
+        return {
+          ...part,
+          tools: part.tools.map((tool, index) => unfinished.get(index) ?? tool),
+        };
+      });
     }
     case "image":
       return imageStages(part);
