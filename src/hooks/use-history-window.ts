@@ -1,21 +1,14 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { CONVERSATION_END_THRESHOLD } from "../lib/conversation-scroll.js";
 import { useConversation } from "../ui/conversation.js";
 
-/** Where the window starts: the latest `windowSize` items, or a pinned item. */
+/** Where the window starts: `windowSize` items up to `through`, the last
+ * item when the window was last trimmed, or a pinned item. Either way a new
+ * item only adds to the window until it is trimmed again. */
 type WindowStart =
-  | { readonly kind: "latest" }
+  | { readonly kind: "latest"; readonly through: string | undefined }
   | { readonly kind: "item"; readonly id: string };
-
-const LATEST: WindowStart = { kind: "latest" };
 
 /** A load the host was asked for: the first item it had when asked. */
 type EarlierRequest = {
@@ -26,10 +19,8 @@ type EarlierRequest = {
 type WindowState = {
   readonly start: WindowStart;
   readonly request: EarlierRequest | null;
-  /** The `atBottom` and last item id seen at the last render, so a change
-   * in either is noticed once. */
+  /** The `atBottom` seen at the last render, so a change is noticed once. */
   readonly atBottom: boolean;
-  readonly lastId: string | undefined;
 };
 
 export type UseHistoryWindowOptions<T extends { readonly id: string }> = {
@@ -78,7 +69,10 @@ function startIndex(
   previous: readonly { readonly id: string }[],
 ): number {
   const latest = Math.max(0, items.length - windowSize);
-  if (start.kind === "latest") return latest;
+  if (start.kind === "latest") {
+    const end = items.findIndex((item) => item.id === start.through);
+    return end === -1 ? latest : Math.max(0, end + 1 - windowSize);
+  }
   const at = items.findIndex((item) => item.id === start.id);
   if (at !== -1) return at;
   // The pinned item is gone (deleted, or its id replaced): start at the
@@ -126,7 +120,8 @@ function startIndex(
  * `step` more per load. Each render does one linear id lookup over `items`
  * and slices the window; the slice is reused until `items` or the window
  * start change, and scrolling re-renders the host only when the reader
- * leaves or reaches the bottom.
+ * leaves or reaches the bottom. A new item at the bottom commits twice:
+ * added, then trimmed once the view is read to still be at the end.
  *
  * Page from the server instead (`hasEarlier`, `onLoadEarlier`) when the
  * history is longer than that, when items are heavy enough that holding
@@ -142,23 +137,27 @@ export function useHistoryWindow<T extends { readonly id: string }>({
   hasEarlier = false,
   onLoadEarlier,
 }: UseHistoryWindowOptions<T>): HistoryWindow<T> {
-  const { atBottom, captureAnchor, restoreAnchor, subscribeScroll } =
-    useConversation();
+  const {
+    atBottom,
+    captureAnchor,
+    restoreAnchor,
+    scrollContainer,
+    subscribeScroll,
+  } = useConversation();
   const lastId = items.at(-1)?.id;
   const [state, setState] = useState<WindowState>(() => ({
-    start: LATEST,
+    start: { kind: "latest", through: lastId },
     request: null,
     atBottom,
-    lastId,
   }));
   const previousWindow = useRef<readonly T[]>([]);
 
   let start = state.start;
-  if (state.atBottom !== atBottom || state.lastId !== lastId) {
-    // Back at the bottom, or a new item while there: trim back. The
-    // conversation's anchor is current from the reader's last scroll.
-    if (atBottom) start = LATEST;
-    setState({ ...state, start, atBottom, lastId });
+  if (state.atBottom !== atBottom) {
+    // Back at the bottom: trim back. The conversation's anchor is current
+    // from the reader's last scroll.
+    if (atBottom) start = { kind: "latest", through: lastId };
+    setState({ ...state, start, atBottom });
   }
 
   const index = useMemo(
@@ -194,11 +193,38 @@ export function useHistoryWindow<T extends { readonly id: string }>({
     restoreAnchor();
   }, [firstId, restoreAnchor]);
 
+  // A new last item, committed with nothing removed: trim back to
+  // `windowSize` at the bottom, or slide the window while it is not frozen.
+  // `atBottom` and the freeze are a frame old, so read the view first: if it
+  // moved towards the top since the last frame's scroll pass, a reader may
+  // have scrolled away unseen. The window then keeps the item, and that
+  // pass freezes it if the scroll was theirs.
+  const frameTop = useRef<number | null>(null);
+  const seenLast = useRef(lastId);
+  useLayoutEffect(() => {
+    if (lastId === seenLast.current) return;
+    seenLast.current = lastId;
+    const scroller = scrollContainer();
+    const top = frameTop.current;
+    if (scroller !== null && top !== null && scroller.scrollTop < top - 0.5) {
+      return;
+    }
+    setState((current) => {
+      const { start } = current;
+      if (start.kind === "item" && !atBottom) return current;
+      if (start.kind === "latest" && start.through === lastId) return current;
+      return { ...current, start: { kind: "latest", through: lastId } };
+    });
+  }, [lastId, atBottom, scrollContainer]);
+
   // The reader scrolls away from the end: freeze the start, so new items no
-  // longer slide the window over what they are looking at.
-  useEffect(
+  // longer slide the window over what they are looking at. Subscribed in a
+  // layout effect, so the first frame's pass, which reports the view once the
+  // container mounts, is never missed.
+  useLayoutEffect(
     () =>
       subscribeScroll((snapshot) => {
+        frameTop.current = snapshot.scrollTop;
         if (!snapshot.byReader) return;
         if (snapshot.distanceFromEnd <= CONVERSATION_END_THRESHOLD) return;
         setState((current) => {
@@ -243,12 +269,14 @@ export function useHistoryWindow<T extends { readonly id: string }>({
         request: { first, settled: true },
       }));
     };
-    let result: Promise<void> | void;
+    let result: Promise<void> | void = undefined;
     try {
       result = onLoadEarlier();
     } catch (error) {
-      settle();
-      throw error;
+      // A failed load, like a rejection. Thrown on, it would escape the
+      // marker's observer callback, so report it instead.
+      if (typeof reportError === "function") reportError(error);
+      else console.error(error);
     }
     void Promise.resolve(result).then(settle, settle);
   }, [captureAnchor]);

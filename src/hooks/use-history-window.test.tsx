@@ -24,6 +24,8 @@ type Harness = {
   readonly commits: () => number;
   update(options: UseHistoryWindowOptions<Row>): void;
   leaveBottom(): Promise<void>;
+  /** The reader scrolls away from the end, and the next frame has not run. */
+  leaveBottomUnseen(): void;
   /** The view moves away from the end with no reader input (layout, a glide). */
   driftFromBottom(): Promise<void>;
   returnToBottom(): Promise<void>;
@@ -110,11 +112,14 @@ function mount(
     configurable: true,
     value: 500,
   });
-  /** A scroll to `top`, landing on the next frame. */
-  const scrollTo = async (top: number, byReader: boolean) => {
+  const scroll = (top: number, byReader: boolean) => {
     if (byReader) scroller.dispatchEvent(new WheelEvent("wheel"));
     scroller.scrollTop = top;
     scroller.dispatchEvent(new Event("scroll"));
+  };
+  /** A scroll to `top`, landing on the next frame. */
+  const scrollTo = async (top: number, byReader: boolean) => {
+    scroll(top, byReader);
     await nextFrame();
   };
 
@@ -123,6 +128,7 @@ function mount(
     commits: () => commits,
     update: (options) => act(() => render(options)),
     leaveBottom: () => scrollTo(1_000, true),
+    leaveBottomUnseen: () => scroll(1_000, true),
     driftFromBottom: () => scrollTo(1_000, false),
     returnToBottom: () => scrollTo(99_500, true),
     setHidden: (next) => {
@@ -213,6 +219,24 @@ describe("useHistoryWindow with in-memory history", () => {
     expect(harness.result.current.items).toHaveLength(180);
     harness.update({ items: rows(0, 301) });
     expect(first(harness.result.current)).toBe("r181");
+  });
+
+  test("an item that lands before the frame the reader left in removes nothing", async () => {
+    const harness = mount({ items: rows(0, 300) });
+    const { result } = harness;
+    await harness.returnToBottom();
+    // A host that commits synchronously within the frame (flushSync in a
+    // frame-batched stream) lands its item before the frame's scroll pass.
+    harness.leaveBottomUnseen();
+    harness.update({ items: rows(0, 301) });
+    expect(first(result.current)).toBe("r180");
+    expect(result.current.items).toHaveLength(121);
+
+    // The frame then sees the reader's scroll and freezes the window.
+    await nextFrame();
+    harness.update({ items: rows(0, 302) });
+    expect(first(result.current)).toBe("r180");
+    expect(result.current.items).toHaveLength(122);
   });
 
   test("a removed start item keeps the rest of the window", async () => {
@@ -369,6 +393,31 @@ describe("useHistoryWindow with server paging", () => {
     expect(first(result.current)).toBe("r0");
     expect(calls).toBe(1);
     expect(result.current.stalled).toBe(true);
+  });
+
+  test("a loader that throws stalls and reports the error once", async () => {
+    const reported: unknown[] = [];
+    const original = globalThis.reportError;
+    globalThis.reportError = (error: unknown) => {
+      reported.push(error);
+    };
+    try {
+      const failure = new Error("offline");
+      const { result } = mount({
+        items: rows(250, 300),
+        hasEarlier: true,
+        onLoadEarlier: () => {
+          throw failure;
+        },
+      });
+      // Reached from the marker's observer callback: nothing may escape it.
+      await act(async () => result.current.reachStart());
+      expect(reported).toEqual([failure]);
+      expect(result.current.loading).toBe(false);
+      expect(result.current.stalled).toBe(true);
+    } finally {
+      globalThis.reportError = original;
+    }
   });
 
   test("a load that settles while hidden by Activity is not lost", async () => {
