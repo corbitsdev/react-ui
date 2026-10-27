@@ -1,4 +1,4 @@
-import { FileText, MessageSquare, Table2 } from "lucide-react";
+import { FileText, MessageSquare, Table2, X } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
 
@@ -13,7 +13,12 @@ import {
   PanelHeader,
   PanelPane,
 } from "../../src/ui/panel.js";
-import { PanelTab, PanelTabAdd, PanelTabs } from "../../src/ui/panel-tabs.js";
+import {
+  PanelTab,
+  PanelTabAdd,
+  PanelTabs,
+  panelTabsHeaderClassName,
+} from "../../src/ui/panel-tabs.js";
 
 export default { title: "Chat / Panel Tabs" };
 
@@ -77,6 +82,10 @@ function Pane({ item }: { readonly item: Item }) {
  * A panel of tabs beside a main area. Click, drag or use the keyboard:
  * arrows, Home and End move; Delete or Backspace closes; Ctrl/Cmd+Shift+Arrow moves the
  * tab. Closing the last tab closes the panel.
+ *
+ * The tab's × is hidden from assistive technology, so the header also has a
+ * named "Close tab" button for the selected tab: the close a touch
+ * screen-reader user can reach.
  */
 function TabbedPanel({
   initial,
@@ -85,7 +94,7 @@ function TabbedPanel({
   readonly initial: readonly Item[];
   readonly defaultValue?: string;
 }) {
-  const { tabs, value, open, tabsProps, paneProps } = useTabs<Item>({
+  const { tabs, value, open, close, tabsProps, paneProps } = useTabs<Item>({
     defaultTabs: initial,
     defaultValue,
   });
@@ -116,7 +125,7 @@ function TabbedPanel({
       {shown !== null ? (
         <Panel aria-label="Side panel">
           <PanelHandle />
-          <PanelHeader className="items-end bg-muted pt-1.5 pb-0">
+          <PanelHeader className={panelTabsHeaderClassName}>
             <PanelTabs label="Open items" {...tabsProps}>
               {tabs.map((tab) => (
                 <PanelTab
@@ -137,6 +146,16 @@ function TabbedPanel({
               }}
             />
             <PanelActions className="mb-0.5 self-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Close tab"
+                title="Close tab"
+                className="size-8"
+                onClick={() => close(shown)}
+              >
+                <X aria-hidden />
+              </Button>
               <PanelClose onClick={() => setClosed(true)} />
             </PanelActions>
           </PanelHeader>

@@ -8,6 +8,7 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
 } from "react";
 import type * as React from "react";
 import { flushSync } from "react-dom";
@@ -22,6 +23,16 @@ const isProduction =
   typeof process !== "undefined" && process.env?.NODE_ENV === "production";
 
 const TAB_SELECTOR = "[data-slot='panel-tab']";
+
+/**
+ * The classes for the `PanelHeader` that holds a `PanelTabs`: the row sits on
+ * the header's lower border, so the selected tab joins the content below.
+ */
+export const panelTabsHeaderClassName = "items-end bg-muted pt-1.5 pb-0";
+
+function defaultMovedMessage(position: number, count: number): string {
+  return `Moved to position ${position} of ${count}`;
+}
 
 type PanelTabsContextValue = {
   readonly value: string | null;
@@ -75,6 +86,13 @@ export type PanelTabsProps = Omit<
   /** Called to move a tab to `toIndex`: by drag, or Ctrl/Cmd+Shift+Arrow. */
   readonly onMove?: ((value: string, toIndex: number) => void) | undefined;
   /**
+   * What a screen reader hears once a tab has moved, given its new 1-based
+   * position and the number of tabs. "Moved to position 2 of 3" by default.
+   */
+  readonly movedMessage?:
+    | ((position: number, count: number) => string)
+    | undefined;
+  /**
    * The prefix of each tab's id and its pane's id (see `panelTabIds`). With
    * it the selected tab points at its pane through `aria-controls`; give
    * each pane its id, `role="tabpanel"` and `aria-labelledby`. `useTabs`
@@ -93,7 +111,11 @@ export type PanelTabsProps = Omit<
  * Ctrl/Cmd+Shift with an arrow moves it along the row. Pointer: click
  * selects, drag reorders (the others make room as it passes), middle-click
  * or the × closes. A long row scrolls sideways and keeps the selected tab in
- * view.
+ * view. Every move is announced through a polite status region beside the
+ * row.
+ *
+ * Only a mouse or pen drags: a touch drag scrolls the row instead, since a
+ * long row has no other way to scroll on a touch screen.
  *
  * The × is pointer-only by design: a tablist may contain only tabs, so it is
  * hidden from assistive technology and never takes focus. Keyboard users
@@ -105,9 +127,9 @@ export type PanelTabsProps = Omit<
  *
  * It sits on the panel header's lower edge, with the selected tab joined to
  * the content below. Give the `PanelHeader` that holds it
- * `className="items-end bg-muted pt-1.5 pb-0"` so the row sits on the
- * header's border and the selected tab covers it. A `PanelTabAdd` goes
- * beside it in the header, not inside it.
+ * `className={panelTabsHeaderClassName}` so the row sits on the header's
+ * border and the selected tab covers it. A `PanelTabAdd` goes beside it in
+ * the header, not inside it.
  */
 export function PanelTabs({
   label,
@@ -115,6 +137,7 @@ export function PanelTabs({
   onValueChange,
   onClose,
   onMove,
+  movedMessage = defaultMovedMessage,
   idPrefix,
   ref,
   className,
@@ -123,6 +146,11 @@ export function PanelTabs({
 }: PanelTabsProps) {
   const generatedPrefix = useId();
   const listRef = useRef<HTMLDivElement | null>(null);
+  // Each move is a new node, so the same words twice are still read out.
+  const [announcement, setAnnouncement] = useState<{
+    readonly id: number;
+    readonly text: string;
+  } | null>(null);
   const activeRef = useScrollCurrentIntoView<HTMLDivElement>(value ?? "");
 
   const setList = useCallback(
@@ -177,12 +205,16 @@ export function PanelTabs({
     (closing: string) => {
       const list = listRef.current;
       if (list === null || onClose === undefined) return;
-      const hadFocus = list.contains(document.activeElement);
+      const focused = document.activeElement;
+      const hadFocus = list.contains(focused);
       const panel = list.closest("[data-slot='panel']");
       // Rendered before focus moves, so a held Delete always acts on the
       // tab that has focus now.
       flushSync(() => onClose(closing));
-      if (hadFocus) refocus(list, panel, null);
+      // Focus was in the row, or in the closed tab's pane, which has just
+      // left the document: the × and a middle-click never take focus.
+      if (hadFocus || (focused !== null && !focused.isConnected))
+        refocus(list, panel, null);
     },
     [onClose, refocus],
   );
@@ -192,11 +224,20 @@ export function PanelTabs({
       const list = listRef.current;
       if (list === null || onMove === undefined) return;
       const hadFocus = list.contains(document.activeElement);
+      const position = () =>
+        tabElements(list).findIndex(
+          (element) => element.dataset["value"] === moving,
+        );
+      const from = position();
       flushSync(() => onMove(moving, toIndex));
       // React re-inserts moved nodes, which can drop focus from them.
       if (hadFocus) refocus(list, null, moving);
+      const to = position();
+      if (to === -1 || to === from) return;
+      const text = movedMessage(to + 1, tabElements(list).length);
+      setAnnouncement((previous) => ({ id: (previous?.id ?? 0) + 1, text }));
     },
-    [onMove, refocus],
+    [onMove, movedMessage, refocus],
   );
 
   const { onPointerDown: onTabPointerDown } = useTabDrag({
@@ -281,6 +322,19 @@ export function PanelTabs({
       >
         {children}
       </div>
+      {onMove === undefined ? null : (
+        // Beside the row, not in it: a tablist may hold only tabs.
+        <div
+          role="status"
+          aria-live="polite"
+          data-slot="panel-tabs-status"
+          className="sr-only"
+        >
+          {announcement === null ? null : (
+            <span key={announcement.id}>{announcement.text}</span>
+          )}
+        </div>
+      )}
     </PanelTabsContext.Provider>
   );
 }

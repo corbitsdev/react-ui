@@ -13,11 +13,17 @@ const TABS: readonly Tab[] = [
   { value: "log", title: "Log" },
 ];
 
-function Strip({ withAdd = false }: { readonly withAdd?: boolean }) {
+function Strip({
+  withAdd = false,
+  movedMessage,
+}: {
+  readonly withAdd?: boolean;
+  readonly movedMessage?: (position: number, count: number) => string;
+}) {
   const { tabs, tabsProps, paneProps } = useTabs<Tab>({ defaultTabs: TABS });
   return (
     <section data-slot="panel" tabIndex={-1}>
-      <PanelTabs label="Open items" {...tabsProps}>
+      <PanelTabs label="Open items" movedMessage={movedMessage} {...tabsProps}>
         {tabs.map((tab) => (
           <PanelTab key={tab.value} value={tab.value}>
             {tab.title}
@@ -28,6 +34,33 @@ function Strip({ withAdd = false }: { readonly withAdd?: boolean }) {
       {tabsProps.value === null ? null : (
         <div {...paneProps(tabsProps.value)}>{tabsProps.value}</div>
       )}
+    </section>
+  );
+}
+
+/** Every pane kept mounted, each holding a control, as a host would build them. */
+function KeptPanes() {
+  const { tabs, value, tabsProps, paneProps } = useTabs<Tab>({
+    defaultTabs: TABS,
+  });
+  return (
+    <section data-slot="panel" tabIndex={-1}>
+      <PanelTabs label="Open items" {...tabsProps}>
+        {tabs.map((tab) => (
+          <PanelTab key={tab.value} value={tab.value}>
+            {tab.title}
+          </PanelTab>
+        ))}
+      </PanelTabs>
+      {tabs.map((tab) => (
+        <div
+          key={tab.value}
+          {...paneProps(tab.value)}
+          hidden={tab.value !== value}
+        >
+          <button type="button">{`${tab.title} control`}</button>
+        </div>
+      ))}
     </section>
   );
 }
@@ -248,6 +281,115 @@ describe("PanelTabs", () => {
     expect(tabs(host).map((element) => element.textContent)).toEqual(["Notes"]);
     expect(document.activeElement).toBe(outside);
     outside.remove();
+  });
+
+  describe("closing the selected tab while a control inside its pane has focus", () => {
+    function paneControl(host: HTMLElement, name: string): HTMLElement {
+      const found = [...host.querySelectorAll<HTMLElement>("button")].find(
+        (element) => element.textContent === `${name} control`,
+      );
+      if (found === undefined) throw new Error(`no control named ${name}`);
+      return found;
+    }
+
+    function tabRoot(host: HTMLElement, name: string): HTMLElement {
+      const root = tab(host, name).closest<HTMLElement>(
+        "[data-slot='panel-tab']",
+      );
+      if (root === null) throw new Error(`no root for ${name}`);
+      return root;
+    }
+
+    test("the × moves focus to the newly selected tab", () => {
+      const host = mount(<KeptPanes />);
+      paneControl(host, "Notes").focus();
+      act(() => {
+        tabRoot(host, "Notes")
+          .querySelector<HTMLElement>("[data-slot='panel-tab-close']")
+          ?.click();
+      });
+      expect(tab(host, "Draft").getAttribute("aria-selected")).toBe("true");
+      expect(document.activeElement).toBe(tab(host, "Draft"));
+    });
+
+    test("a middle-click moves focus to the newly selected tab", () => {
+      const host = mount(<KeptPanes />);
+      paneControl(host, "Notes").focus();
+      act(() => {
+        tabRoot(host, "Notes").dispatchEvent(
+          new MouseEvent("auxclick", { button: 1, bubbles: true }),
+        );
+      });
+      expect(tab(host, "Draft").getAttribute("aria-selected")).toBe("true");
+      expect(document.activeElement).toBe(tab(host, "Draft"));
+    });
+
+    test("closing another tab leaves focus on the pane control", () => {
+      const host = mount(<KeptPanes />);
+      paneControl(host, "Notes").focus();
+      act(() => {
+        tabRoot(host, "Log")
+          .querySelector<HTMLElement>("[data-slot='panel-tab-close']")
+          ?.click();
+      });
+      expect(document.activeElement).toBe(paneControl(host, "Notes"));
+    });
+  });
+
+  test("a move is announced politely with the tab's new position", () => {
+    const host = mount(<Strip />);
+    const status = host.querySelector<HTMLElement>("[role='status']");
+    expect(status?.getAttribute("aria-live")).toBe("polite");
+    expect(status?.textContent).toBe("");
+    tab(host, "Notes").focus();
+    press(tab(host, "Notes"), "ArrowRight", { ctrlKey: true, shiftKey: true });
+    expect(status?.textContent).toBe("Moved to position 2 of 3");
+    // The same words again still land as a new node, so they are re-read.
+    const first = status?.firstElementChild;
+    press(tab(host, "Notes"), "ArrowLeft", { ctrlKey: true, shiftKey: true });
+    press(tab(host, "Notes"), "ArrowRight", { ctrlKey: true, shiftKey: true });
+    expect(status?.textContent).toBe("Moved to position 2 of 3");
+    expect(status?.firstElementChild).not.toBe(first);
+  });
+
+  test("the move announcement can be worded by the host", () => {
+    const host = mount(
+      <Strip
+        movedMessage={(position, count) => `Posición ${position} de ${count}`}
+      />,
+    );
+    tab(host, "Notes").focus();
+    press(tab(host, "Notes"), "End", {});
+    press(tab(host, "Log"), "ArrowLeft", { ctrlKey: true, shiftKey: true });
+    expect(host.querySelector("[role='status']")?.textContent).toBe(
+      "Posición 2 de 3",
+    );
+  });
+
+  test("a move the host turns down is not announced", () => {
+    const host = mount(
+      <PanelTabs
+        label="Open items"
+        value="a"
+        onValueChange={() => {}}
+        onMove={() => {}}
+      >
+        <PanelTab value="a">A</PanelTab>
+        <PanelTab value="b">B</PanelTab>
+      </PanelTabs>,
+    );
+    tab(host, "A").focus();
+    press(tab(host, "A"), "ArrowRight", { ctrlKey: true, shiftKey: true });
+    expect(host.querySelector("[role='status']")?.textContent).toBe("");
+  });
+
+  test("a row that cannot move tabs has no status region", () => {
+    const host = mount(
+      <PanelTabs label="Open items" value="a" onValueChange={() => {}}>
+        <PanelTab value="a">A</PanelTab>
+      </PanelTabs>,
+    );
+    expect(host.querySelector("[role='status']")).toBeNull();
   });
 
   test("a tab outside PanelTabs throws", () => {

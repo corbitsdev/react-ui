@@ -140,3 +140,44 @@ test("a long row keeps the selected tab in view", async ({ page }) => {
   await expect(tab(page, "Extra 12")).toBeFocused();
   await expect.poll(() => overflow(page, "Extra 12")).toBeLessThanOrEqual(1);
 });
+
+test("closing the selected tab from its pane moves focus to the next tab", async ({
+  page,
+}) => {
+  const selected = page.getByRole("status", { name: "Selected" });
+  await page.getByRole("tabpanel", { name: "Alpha" }).click();
+  await expect(page.getByRole("tabpanel", { name: "Alpha" })).toBeFocused();
+  await tab(page, "Alpha").hover();
+  await page
+    .locator("[data-slot='panel-tab'][data-value='alpha']")
+    .locator("[data-slot='panel-tab-close']")
+    .click();
+  await expect(order(page)).toHaveText("beta,gamma,delta");
+  await expect(selected).toHaveText("beta");
+  await expect(tab(page, "Beta")).toBeFocused();
+
+  await page.getByRole("tabpanel", { name: "Beta" }).click();
+  await tab(page, "Beta").click({ button: "middle" });
+  await expect(order(page)).toHaveText("gamma,delta");
+  await expect(tab(page, "Gamma")).toBeFocused();
+});
+
+test("the header's Close tab closes the selected tab and keeps focus", async ({
+  page,
+}) => {
+  const close = page.getByRole("button", { name: "Close tab" });
+  await close.click();
+  await expect(order(page)).toHaveText("beta,gamma,delta");
+  await expect(page.getByRole("status", { name: "Selected" })).toHaveText(
+    "beta",
+  );
+  await expect(close).toBeFocused();
+});
+
+test("a move is announced", async ({ page }) => {
+  await tab(page, "Alpha").focus();
+  await page.keyboard.press("ControlOrMeta+Shift+ArrowRight");
+  await expect(page.locator("[data-slot='panel-tabs-status']")).toHaveText(
+    "Moved to position 2 of 4",
+  );
+});

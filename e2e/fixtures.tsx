@@ -46,6 +46,7 @@ import {
   PanelTab,
   PanelTabAdd,
   PanelTabs,
+  panelTabsHeaderClassName,
   useTabs,
 } from "@corbits/react-ui";
 import {
@@ -868,9 +869,10 @@ const TAB_ITEMS: readonly TabScenarioItem[] = [
 ];
 
 function PanelTabsScenario() {
-  const { tabs, value, open, tabsProps, paneProps } = useTabs<TabScenarioItem>({
-    defaultTabs: TAB_ITEMS,
-  });
+  const { tabs, value, open, close, tabsProps, paneProps } =
+    useTabs<TabScenarioItem>({
+      defaultTabs: TAB_ITEMS,
+    });
   const [added, setAdded] = useState(0);
   const openMore = (count: number) => {
     for (let index = 1; index <= count; index += 1) {
@@ -900,7 +902,7 @@ function PanelTabsScenario() {
       </main>
       {value === null ? null : (
         <Panel aria-label="Side panel">
-          <PanelHeader className="items-end bg-muted pt-1.5 pb-0">
+          <PanelHeader className={panelTabsHeaderClassName}>
             <PanelTabs label="Open items" {...tabsProps}>
               {tabs.map((tab) => (
                 <PanelTab key={tab.value} value={tab.value}>
@@ -909,12 +911,23 @@ function PanelTabsScenario() {
               ))}
             </PanelTabs>
             <PanelTabAdd onClick={() => openMore(1)} />
+            <PanelActions>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Close tab"
+                onClick={() => close(value)}
+              >
+                ×
+              </Button>
+            </PanelActions>
           </PanelHeader>
           <PanelContent value={value} keepMounted>
             {tabs.map((tab) => (
               <PanelPane
                 key={tab.value}
                 value={tab.value}
+                tabIndex={0}
                 {...paneProps(tab.value)}
               >
                 {tab.title} pane
