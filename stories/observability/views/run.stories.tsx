@@ -96,6 +96,19 @@ SignalStory.storyName = "Signal";
 export const ToolStory = () => <Tool span={span("tool-shell", review)} />;
 ToolStory.storyName = "Tool";
 
+export const ClippedShellCommand = () => {
+  const command = [
+    "bun test src/parse.test.ts ".repeat(4).trimEnd(),
+    "echo done",
+  ].join("\n");
+  const shell = {
+    ...span("tool-shell", review),
+    input: JSON.stringify({ command }),
+  };
+  return <Tool span={shell} />;
+};
+ClippedShellCommand.storyName = "Clipped shell command";
+
 export const ThinkingStory = () => <Thinking span={span("e3", editor)} />;
 ThinkingStory.storyName = "Thinking";
 

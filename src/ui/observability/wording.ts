@@ -21,7 +21,7 @@ export function stepTitle(span: Span): string {
   if (span.contextChange !== undefined) return span.contextChange.summary;
   if (span.kind === "reasoning" && span.thinking !== undefined) {
     const line = span.thinking.split("\n")[0] ?? span.thinking;
-    return line.length > 88 ? `${line.slice(0, 85)}…` : line;
+    return clipCodePoints(line, 88, 85);
   }
   return span.name;
 }
@@ -30,13 +30,27 @@ export function compactionLine(compaction: Compaction): string {
   return `${formatTokens(compaction.tokensBefore)} down to ${formatTokens(compaction.tokensAfter)}`;
 }
 
+function clipLine(value: string): string {
+  const first = value.split("\n")[0] ?? value;
+  return clipCodePoints(first.trim(), 80, 77);
+}
+
+function clipCodePoints(value: string, whole: number, keep: number): string {
+  const points = Array.from(value);
+  if (points.length <= whole) return value;
+  return `${points.slice(0, keep).join("")}…`;
+}
+
 function whatItDid(span: Span): string | undefined {
   const hop = span.network?.[0];
   if (hop !== undefined) return `${hop.method} ${shortUrl(hop.url)}`;
   const record = recordOf(span.input);
   if (record === undefined) return undefined;
   const command = text(record, "command") ?? text(record, "cmd");
-  if (command !== undefined) return command;
+  if (command !== undefined) {
+    const clipped = clipLine(command);
+    if (clipped.length > 0) return clipped;
+  }
   const pattern = text(record, "pattern");
   const path = text(record, "path") ?? text(record, "file");
   if (pattern !== undefined && !span.name.includes(pattern)) {
