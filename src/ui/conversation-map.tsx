@@ -55,6 +55,18 @@ function nearestTop(rail: HTMLElement, tick: HTMLElement): number | null {
   return null;
 }
 
+/** Scrolls the rail alone to bring `tick` into view: scrollIntoView would
+ * also scroll every ancestor, pulling the page to a conversation below the
+ * fold. */
+function keepInView(
+  rail: HTMLElement,
+  tick: HTMLElement,
+  behavior: ScrollBehavior,
+): void {
+  const top = nearestTop(rail, tick);
+  if (top !== null) rail.scrollTo({ top, behavior });
+}
+
 /**
  * A rail of ticks, one per turn, for finding your way around a long
  * conversation. Ticks are faint, longer and darker for turns on screen, and
@@ -110,8 +122,6 @@ export function ConversationMap({
     card.style.top = `${top}px`;
   }, [preview]);
 
-  // Scrolls the rail alone: scrollIntoView would also scroll every ancestor,
-  // pulling the page to a conversation below the fold.
   useEffect(() => {
     const rail = railRef.current;
     const tick = currentRef.current;
@@ -120,16 +130,27 @@ export function ConversationMap({
       return;
     }
     if (tick === null) return;
-    const top = nearestTop(rail, tick);
     // The first placement is instant; later ones glide unless reduced.
-    if (top !== null) {
-      rail.scrollTo({
-        top,
-        behavior: placedRef.current && !reducedMotion ? "smooth" : "auto",
-      });
-    }
+    keepInView(
+      rail,
+      tick,
+      placedRef.current && !reducedMotion ? "smooth" : "auto",
+    );
     placedRef.current = true;
   }, [currentId, hidden, reducedMotion]);
+
+  // A rail that shrinks (the host's layout, the window) can clip the current
+  // tick: bring it back at once.
+  useEffect(() => {
+    const rail = railRef.current;
+    if (rail === null) return;
+    const observer = new ResizeObserver(() => {
+      const tick = currentRef.current;
+      if (tick !== null) keepInView(rail, tick, "auto");
+    });
+    observer.observe(rail);
+    return () => observer.disconnect();
+  }, [hidden]);
 
   if (hidden) return null;
 
@@ -247,7 +268,6 @@ export function ConversationMap({
               data-slot="conversation-map-tick"
               data-turn-id={turn.id}
               data-visible={onScreen ? "" : undefined}
-              data-current={current ? "" : undefined}
               aria-label={turn.label}
               aria-current={current ? "location" : undefined}
               aria-describedby={described ? previewTextId : undefined}

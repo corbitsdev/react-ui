@@ -63,6 +63,22 @@ const wheel = async (page: Page, deltaY: number) => {
   await settled(page);
 };
 
+/** Whether the rail overflows, has scrolled, and shows the current tick. */
+const railState = (page: Page) =>
+  page.locator("[data-slot='conversation-map-rail']").evaluate((element) => {
+    const tick = element.querySelector("[aria-current='location']");
+    const view = element.getBoundingClientRect();
+    const box = tick?.getBoundingClientRect();
+    return {
+      overflows: element.scrollHeight > element.clientHeight,
+      scrolled: element.scrollTop > 0,
+      showsCurrent:
+        box !== undefined &&
+        box.top >= view.top - 1 &&
+        box.bottom <= view.bottom + 1,
+    };
+  });
+
 const open = async (page: Page) => {
   await page.goto("/conversation-map");
   await expect(page.getByTestId("t19a")).toBeAttached();
@@ -150,24 +166,10 @@ test.describe("conversation map", () => {
     await page.goto("/conversation-map-tall-page");
     await expect(page.getByTestId("t79a")).toBeAttached();
     await expect(current(page)).toHaveAccessibleName("Question 79");
-    const rail = page.locator("[data-slot='conversation-map-rail']");
     // The rail overflows, and has scrolled to bring the last tick into view.
     await expect
-      .poll(() =>
-        rail.evaluate((element) => {
-          const tick = element.querySelector("[aria-current='location']");
-          if (tick === null) return false;
-          const view = element.getBoundingClientRect();
-          const box = tick.getBoundingClientRect();
-          return (
-            element.scrollHeight > element.clientHeight &&
-            element.scrollTop > 0 &&
-            box.top >= view.top - 1 &&
-            box.bottom <= view.bottom + 1
-          );
-        }),
-      )
-      .toBe(true);
+      .poll(() => railState(page))
+      .toEqual({ overflows: true, scrolled: true, showsCurrent: true });
     // Give any late scroll a few frames to land.
     await page.evaluate(
       () =>
@@ -182,6 +184,28 @@ test.describe("conversation map", () => {
         }),
     );
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  });
+
+  test("a rail that shrinks keeps the current tick in view", async ({
+    page,
+  }) => {
+    await open(page);
+    await expect(current(page)).toHaveAccessibleName("Question 19");
+    expect(await railState(page)).toEqual({
+      overflows: false,
+      scrolled: false,
+      showsCurrent: true,
+    });
+    // The host's layout shrinks the map's box below the rail's height.
+    await page
+      .getByRole("navigation", { name: "Conversation map" })
+      .evaluate((element) => {
+        element.style.height = "100px";
+      });
+    await expect(current(page)).toHaveAccessibleName("Question 19");
+    await expect
+      .poll(() => railState(page))
+      .toEqual({ overflows: true, scrolled: true, showsCurrent: true });
   });
 
   test("moving along an overflowing rail keeps the preview open", async ({

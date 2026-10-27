@@ -581,6 +581,51 @@ describe("useReadingPosition", () => {
     expect(removed).toEqual(added);
   });
 
+  test("a jump not yet seen ends when ConversationContent goes away", async () => {
+    let setShow!: (show: boolean) => void;
+    function Host() {
+      const [show, set] = useState(true);
+      setShow = set;
+      return <Chat showContent={show} />;
+    }
+    const mounted = render(<Host />);
+    act(() => onlyObserver().report(["q4", "q4-reply"]));
+    await nextFrame();
+    act(() => tick(mounted.container, "First question").click());
+    await nextFrame();
+    expect(states(mounted.container)[0]).toBe("current");
+    // Gone before the glide brought q1 on screen, then back showing q4.
+    act(() => setShow(false));
+    await nextFrame();
+    act(() => setShow(true));
+    await nextFrame();
+    act(() => onlyObserver().report(["q4", "q4-reply"]));
+    await nextFrame();
+    expect(states(mounted.container)[0]).toBe("faint");
+    expect(states(mounted.container)[3]).toBe("current");
+    mounted.unmount();
+  });
+
+  test("a jump not yet seen ends when its turn is removed", async () => {
+    let setItems!: (items: readonly string[]) => void;
+    function Host() {
+      const [items, set] = useState<readonly string[]>(ITEMS);
+      setItems = set;
+      return <Chat items={items} />;
+    }
+    const mounted = render(<Host />);
+    act(() => onlyObserver().report(["q4", "q4-reply"]));
+    await nextFrame();
+    act(() => tick(mounted.container, "First question").click());
+    await nextFrame();
+    expect(states(mounted.container)[0]).toBe("current");
+    act(() => setItems(ITEMS.filter((id) => !id.startsWith("q1"))));
+    await nextFrame();
+    expect(states(mounted.container)[0]).toBe("faint");
+    expect(states(mounted.container)[3]).toBe("current");
+    mounted.unmount();
+  });
+
   test("a jumped turn stays current until seen, then until it leaves", async () => {
     const mounted = render(<Chat />);
     act(() => onlyObserver().report(["q4", "q4-reply"]));

@@ -146,6 +146,8 @@ export function useReadingPosition(
       observed.clear();
       idOf.clear();
       visible.clear();
+      // A jump does not outlive the view it was gliding, seen or not.
+      pinRef.current = null;
     };
 
     /** Follows the scroll container (`null` while `ConversationContent` is
@@ -178,6 +180,11 @@ export function useReadingPosition(
           idOf.set(element, id);
           observer.observe(element);
         }
+      }
+      // A jumped-to turn removed before it was seen can never release.
+      const pin = pinRef.current;
+      if (pin !== null && items.get(pin.id) === undefined) {
+        pinRef.current = null;
       }
     };
 
