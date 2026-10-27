@@ -45,5 +45,11 @@ describe("formatStarted", () => {
     const shown = formatStarted("2026-10-24T15:04:00.000Z");
     expect(shown.includes("T")).toBe(false);
     expect(shown.includes("2026-10-24")).toBe(false);
+    expect(/\bat\b/i.test(shown)).toBe(false);
+    expect(shown.includes(" · ")).toBe(true);
+  });
+
+  test("leaves a clock time unchanged", () => {
+    expect(formatStarted("09:14:02")).toBe("09:14:02");
   });
 });

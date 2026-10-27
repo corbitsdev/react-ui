@@ -58,12 +58,16 @@ export function formatStepCount(trace: {
 export function formatStarted(value: string): string {
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) return value;
-  return new Intl.DateTimeFormat(undefined, {
+  const date = new Date(parsed);
+  const day = new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
+  }).format(date);
+  const time = new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "2-digit",
-  }).format(new Date(parsed));
+  }).format(date);
+  return `${day} · ${time}`;
 }
 
 export function spanTokens(span: {
