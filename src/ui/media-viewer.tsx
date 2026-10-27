@@ -6,7 +6,7 @@ import type * as React from "react";
 
 import type { MediaViewerState } from "../hooks/use-media-viewer.js";
 import { mediaKindOf } from "../lib/media-kind.js";
-import { safeMediaSrc } from "../lib/media-src.js";
+import { type MediaSink, safeMediaSrc } from "../lib/media-src.js";
 import { cn } from "../lib/utils.js";
 
 /** One thing the viewer can show. */
@@ -14,8 +14,12 @@ export type MediaViewerItem = {
   /** A file name: the dialog's name, and the download's. */
   readonly name: string;
   readonly mediaType: string;
-  /** Where to load it from: `http:`, `https:`, `blob:`, or a `data:` image, video or audio. */
-  readonly src: string;
+  /**
+   * Where to load it from: `http:`, `https:`, `blob:`, or a `data:` image,
+   * video or audio. Leave it out for an item that cannot be loaded; the
+   * viewer then says there is no preview and offers no download.
+   */
+  readonly src?: string;
   /** What an image shows. Defaults to `name`. */
   readonly alt?: string;
   /** A short line under the name, such as the size. */
@@ -122,7 +126,7 @@ function MediaViewerDialog({
   const count = viewer.items.length;
   const many = count > 1;
   const position = many ? `${index + 1} of ${count}` : null;
-  const download = safeMediaSrc(item.src, "media");
+  const download = safeItemSrc(item, "media");
 
   return (
     <dialog
@@ -250,6 +254,16 @@ function MediaViewerDialog({
   );
 }
 
+function safeItemSrc(
+  item: MediaViewerItem,
+  sink: MediaSink,
+): string | undefined {
+  return item.src === undefined ? undefined : safeMediaSrc(item.src, sink);
+}
+
+// In spacing steps (4px): 42 leaves the height of the dialog's padding and
+// the caption bar beneath; 300 (1200px) caps pictures and video, 225 (900px)
+// is a readable page, and 8 is the dialog's side padding on a narrow screen.
 const MEDIA_FRAME =
   "max-h-[calc(100dvh-var(--spacing)*42)] max-w-[min(var(--spacing)*300,100%)] justify-self-center rounded-lg";
 const PAGE_FRAME =
@@ -273,11 +287,11 @@ function MediaViewerContent({ item }: { readonly item: MediaViewerItem }) {
       </pre>
     );
   }
-  const media = safeMediaSrc(item.src, "media");
+  const media = safeItemSrc(item, "media");
   if (kind === "image" && media !== undefined) {
     return (
       <img
-        key={item.src}
+        key={media}
         src={media}
         alt={item.alt ?? item.name}
         data-slot="media-viewer-image"
@@ -291,7 +305,7 @@ function MediaViewerContent({ item }: { readonly item: MediaViewerItem }) {
   if (kind === "video" && media !== undefined) {
     return (
       <video
-        key={item.src}
+        key={media}
         src={media}
         controls
         playsInline
@@ -304,20 +318,21 @@ function MediaViewerContent({ item }: { readonly item: MediaViewerItem }) {
   if (kind === "audio" && media !== undefined) {
     return (
       <audio
-        key={item.src}
+        key={media}
         src={media}
         controls
         aria-label={item.name}
         data-slot="media-viewer-audio"
+        // 120 steps (480px) is wide enough to scrub without stretching.
         className="w-[min(var(--spacing)*120,calc(100vw-var(--spacing)*8))]"
       />
     );
   }
-  const page = safeMediaSrc(item.src, "frame");
+  const page = safeItemSrc(item, "frame");
   if (kind === "pdf" && page !== undefined) {
     return (
       <iframe
-        key={item.src}
+        key={page}
         src={page}
         title={item.name}
         data-slot="media-viewer-page"

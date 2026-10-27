@@ -16,7 +16,9 @@ export function Sources({
   ...props
 }: SourcesProps) {
   return (
+    // `role="list"`: WebKit drops list semantics once the bullets are removed.
     <ol
+      role="list"
       aria-label={label}
       data-slot="sources"
       className={cn("m-0 flex list-none flex-wrap gap-1.5 p-0", className)}
@@ -56,7 +58,9 @@ export function Source({
           {index}
         </span>
       )}
-      <Link aria-hidden className="size-3.5 shrink-0" />
+      {safe === undefined ? null : (
+        <Link aria-hidden className="size-3.5 shrink-0" />
+      )}
       <span className="truncate">{children}</span>
     </>
   );

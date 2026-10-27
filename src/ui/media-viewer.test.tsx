@@ -17,6 +17,11 @@ function Harness({ style }: { readonly style?: React.CSSProperties }) {
   return <MediaViewer viewer={viewer} style={style} />;
 }
 
+function One({ item }: { readonly item: MediaViewerItem }) {
+  const viewer = useMediaViewer({ items: [item], defaultIndex: 0 });
+  return <MediaViewer viewer={viewer} />;
+}
+
 let root: Root | null = null;
 let container: HTMLElement | null = null;
 
@@ -96,4 +101,93 @@ describe("MediaViewer", () => {
     root = null;
     expect(page.getAttribute("style") ?? "").not.toContain("overflow");
   });
+
+  const KINDS: readonly {
+    readonly item: MediaViewerItem;
+    readonly slot: string;
+    readonly download: boolean;
+  }[] = [
+    {
+      item: {
+        name: "clip.mp4",
+        mediaType: "video/mp4",
+        src: "https://media.example.com/clip.mp4",
+      },
+      slot: "media-viewer-video",
+      download: true,
+    },
+    {
+      item: {
+        name: "memo.mp3",
+        mediaType: "audio/mpeg",
+        src: "https://media.example.com/memo.mp3",
+      },
+      slot: "media-viewer-audio",
+      download: true,
+    },
+    {
+      item: {
+        name: "report.pdf",
+        mediaType: "application/pdf",
+        src: "https://media.example.com/report.pdf",
+      },
+      slot: "media-viewer-page",
+      download: true,
+    },
+    {
+      item: {
+        name: "notes.txt",
+        mediaType: "text/plain",
+        src: "https://media.example.com/notes.txt",
+        text: "First line",
+      },
+      slot: "media-viewer-text",
+      download: true,
+    },
+    {
+      // A data: document would run script in the frame.
+      item: {
+        name: "inline.pdf",
+        mediaType: "application/pdf",
+        src: "data:application/pdf;base64,JVBERi0=",
+      },
+      slot: "media-viewer-empty",
+      download: false,
+    },
+    {
+      item: {
+        name: "script.pdf",
+        mediaType: "application/pdf",
+        src: "javascript:alert(1)",
+      },
+      slot: "media-viewer-empty",
+      download: false,
+    },
+    {
+      // An image that cannot be loaded, such as an unsafe generated one.
+      item: { name: "missing.png", mediaType: "image/png" },
+      slot: "media-viewer-empty",
+      download: false,
+    },
+  ];
+
+  for (const { item, slot, download } of KINDS) {
+    test(`${item.name} shows as ${slot}`, () => {
+      render(<One item={item} />);
+      const content = dialog()?.querySelector<HTMLElement>(
+        "[data-slot='media-viewer-figure'] > :first-child",
+      );
+      expect(content?.dataset["slot"]).toBe(slot);
+      if (slot === "media-viewer-text") {
+        expect(content?.textContent).toBe(item.text);
+        expect(content?.getAttribute("aria-label")).toBe(item.name);
+      } else if (slot === "media-viewer-empty") {
+        expect(content?.textContent).toBe("No preview for this file.");
+      } else {
+        expect(content?.getAttribute("src")).toBe(item.src ?? null);
+      }
+      const link = dialog()?.querySelector("a[download]");
+      expect(link === null || link === undefined ? false : true).toBe(download);
+    });
+  }
 });

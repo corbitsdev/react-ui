@@ -204,6 +204,80 @@ describe("GeneratedImages", () => {
     );
     view.unmount();
   });
+
+  test("an unloadable tile offers no actions and cannot open", () => {
+    const calls: string[] = [];
+    const unsafe: PartImage = {
+      ...DONE,
+      images: [
+        {
+          id: "x",
+          mediaType: "application/pdf",
+          width: 10,
+          height: 10,
+          url: "data:application/pdf;base64,JVBERi0=",
+        },
+      ],
+    };
+    const view = render(
+      <GeneratedImages
+        part={unsafe}
+        onOpen={(index) => calls.push(`open:${index}`)}
+        onDownload={(index) => calls.push(`download:${index}`)}
+        onCopy={(index) => calls.push(`copy:${index}`)}
+      />,
+    );
+    const tile = slots(view.container, "generated-image")[0];
+    expect(tile?.dataset["state"]).toBe("error");
+    expect(slots(view.container, "generated-image-actions")).toHaveLength(0);
+    expect(tile?.querySelectorAll("button")).toHaveLength(0);
+    act(() => tile?.click());
+    expect(calls).toEqual([]);
+    view.unmount();
+  });
+
+  test("a tile that failed tries again when its source changes", () => {
+    const remote = (url: string): PartImage => ({
+      ...DONE,
+      images: [{ id: "r", mediaType: "image/png", width: 10, height: 10, url }],
+    });
+    const view = render(
+      <GeneratedImages part={remote("https://images.example.com/1.png")} />,
+    );
+    act(() => {
+      view.container.querySelector("img")?.dispatchEvent(new Event("error"));
+    });
+    const tile = () => slots(view.container, "generated-image")[0];
+    expect(tile()?.dataset["state"]).toBe("error");
+    view.rerender(
+      <GeneratedImages part={remote("https://images.example.com/2.png")} />,
+    );
+    expect(tile()?.dataset["state"]).toBe("loading");
+    expect(view.container.querySelector("img")?.getAttribute("src")).toBe(
+      "https://images.example.com/2.png",
+    );
+    view.unmount();
+  });
+
+  test("an image without alt is named after the prompt", () => {
+    const { alt: _alt, ...plain } = image(1);
+    const view = render(
+      <GeneratedImages
+        part={{ ...DONE, images: [plain] }}
+        onOpen={() => {}}
+        onDownload={() => {}}
+      />,
+    );
+    const labels = [...view.container.querySelectorAll("button")].map(
+      (button) => button.getAttribute("aria-label"),
+    );
+    expect(labels).toEqual([
+      "Open Cover for the quarterly review deck, image 1",
+      "Download Cover for the quarterly review deck, image 1",
+      "Open Cover for the quarterly review deck, image 1 full size",
+    ]);
+    view.unmount();
+  });
 });
 
 describe("conversationImageSrc", () => {
@@ -239,5 +313,22 @@ describe("generatedImageViewerItems", () => {
     ]);
     expect(items[0]?.detail).toBe("1536 × 1024");
     expect(items[1]?.alt).toBe("Cover option 2");
+  });
+
+  test("an image with no safe source becomes an item with no source", () => {
+    const items = generatedImageViewerItems({
+      ...DONE,
+      images: [
+        {
+          id: "x",
+          mediaType: "image/png",
+          width: 10,
+          height: 10,
+          url: "javascript:alert(1)",
+        },
+      ],
+    });
+    expect(items).toHaveLength(1);
+    expect(items[0]?.src).toBe(undefined);
   });
 });

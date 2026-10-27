@@ -50,7 +50,7 @@ export function conversationImageSrc(
 }
 
 /** A file name for one image of a part: the prompt's first words, then which image. */
-export function generatedImageFileName(part: PartImage, index: number): string {
+function generatedImageFileName(part: PartImage, index: number): string {
   const image = part.images[index];
   const subtype = image?.mediaType.split("/")[1]?.split(/[;+]/)[0] ?? "";
   const extension = subtype === "" ? "png" : subtype.toLowerCase();
@@ -64,21 +64,30 @@ export function generatedImageFileName(part: PartImage, index: number): string {
   return `${slug === "" ? "image" : slug}-${index + 1}.${extension}`;
 }
 
-/** A part's images as `MediaViewer` items, in the same order as its tiles. */
+/**
+ * A part's images as `MediaViewer` items, in the same order as its tiles. An
+ * image that cannot be shown safely keeps its place but has no `src`, so the
+ * viewer offers no preview and no download for it.
+ */
 export function generatedImageViewerItems(
   part: PartImage,
 ): readonly MediaViewerItem[] {
-  return part.images.map((image, index) => ({
-    name: generatedImageFileName(part, index),
-    mediaType: image.mediaType,
-    src: conversationImageSrc(image) ?? "",
-    detail: `${image.width} × ${image.height}`,
-    ...(image.alt === undefined ? {} : { alt: image.alt }),
-  }));
+  return part.images.map((image, index) => {
+    const src = conversationImageSrc(image);
+    return {
+      name: generatedImageFileName(part, index),
+      mediaType: image.mediaType,
+      ...(src === undefined ? {} : { src }),
+      detail: `${image.width} × ${image.height}`,
+      ...(image.alt === undefined ? {} : { alt: image.alt }),
+    };
+  });
 }
 
 type GeneratedImagesContextValue = {
   readonly seed: number;
+  /** Names an image that has no `alt`. */
+  readonly prompt: string;
   /** Seen generating in this view: its images are revealed by the grain. */
   readonly watched: boolean;
   readonly onOpen: ((index: number, opener: HTMLElement) => void) | undefined;
@@ -100,6 +109,8 @@ function useGeneratedImagesContext(part: string): GeneratedImagesContextValue {
 type GeneratedImageContextValue = {
   readonly index: number;
   readonly label: string;
+  /** It could not be shown, so there is nothing to open, download or copy. */
+  readonly broken: boolean;
 };
 
 const GeneratedImageContext = createContext<GeneratedImageContextValue | null>(
@@ -113,8 +124,19 @@ function seedOf(id: string): number {
   return sum;
 }
 
-function imageLabel(image: ConversationImage, index: number): string {
-  return image.alt ?? `Image ${index + 1}`;
+/** How many of the prompt's words name an image that has no `alt`. */
+const LABEL_WORDS = 6;
+
+function imageLabel(
+  image: ConversationImage,
+  index: number,
+  prompt: string,
+): string {
+  if (image.alt !== undefined) return image.alt;
+  const opening = prompt.trim().split(/\s+/).slice(0, LABEL_WORDS).join(" ");
+  return opening === ""
+    ? `Image ${index + 1}`
+    : `${opening}, image ${index + 1}`;
 }
 
 // `part` and `onCopy` are also DOM attributes; here they mean the image part
@@ -191,15 +213,23 @@ export function GeneratedImages({
 
   return (
     <GeneratedImagesContext.Provider
-      value={{ seed, watched, onOpen, onDownload, onCopy }}
+      value={{
+        seed,
+        prompt: part.prompt,
+        watched,
+        onOpen,
+        onDownload,
+        onCopy,
+      }}
     >
       <div
         data-slot="generated-images"
         data-state={part.state}
         className={cn(
           "flex max-w-2xl flex-col gap-2",
-          // One image shows large but never taller than about 520px: a tall
-          // one narrows instead of becoming a column.
+          // One image shows large: at most 512px (128 steps) wide, and never
+          // taller than 520px (130 steps), so a tall one narrows instead of
+          // becoming a column.
           single &&
             !failed &&
             "max-w-[min(calc(var(--spacing)*128),calc(var(--spacing)*130*var(--generated-images-ratio)))]",
@@ -379,7 +409,8 @@ export function GeneratedImage({
   children,
   ...props
 }: GeneratedImageProps) {
-  const { seed, watched, onOpen } = useGeneratedImagesContext("GeneratedImage");
+  const { seed, prompt, watched, onOpen } =
+    useGeneratedImagesContext("GeneratedImage");
   const reduce = usePrefersReducedMotion();
   const develop = watched && !reduce;
   const [developing, setDeveloping] = useState(develop);
@@ -387,7 +418,15 @@ export function GeneratedImage({
   const [failed, setFailed] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
   const src = conversationImageSrc(image);
-  const label = imageLabel(image, index);
+  const label = imageLabel(image, index, prompt);
+
+  // A new address for the same tile is a new attempt: it loads afresh.
+  const [attempted, setAttempted] = useState(src);
+  if (attempted !== src) {
+    setAttempted(src);
+    setLoaded(false);
+    setFailed(false);
+  }
 
   // An image that finished loading before React listened for `load` (a
   // cached one) would otherwise stay under the grain.
@@ -423,7 +462,7 @@ export function GeneratedImage({
   );
 
   return (
-    <GeneratedImageContext.Provider value={{ index, label }}>
+    <GeneratedImageContext.Provider value={{ index, label, broken }}>
       <figure
         data-slot="generated-image"
         data-state={broken ? "error" : loaded ? "loaded" : "loading"}
@@ -485,7 +524,8 @@ export type GeneratedImageActionsProps = React.ComponentProps<"div">;
  * Download, Copy and Open over a `GeneratedImage`'s corner, one for each of
  * `GeneratedImages`' `onDownload`, `onCopy` and `onOpen` that is given.
  * Shown on hover or focus, and always where there is no hover. Children add
- * further buttons after them.
+ * further buttons after them. An image that could not be shown gets none of
+ * the three, only the children.
  */
 export function GeneratedImageActions({
   className,
@@ -499,7 +539,8 @@ export function GeneratedImageActions({
   if (tile === null) {
     throw new Error("GeneratedImageActions must be inside GeneratedImage.");
   }
-  const { index, label } = tile;
+  const { index, label, broken } = tile;
+  if (broken && (children === undefined || children === null)) return null;
   return (
     <div
       data-slot="generated-image-actions"
@@ -510,7 +551,7 @@ export function GeneratedImageActions({
       )}
       {...props}
     >
-      {onDownload === undefined ? null : (
+      {broken || onDownload === undefined ? null : (
         <button
           type="button"
           aria-label={`Download ${label}`}
@@ -520,7 +561,7 @@ export function GeneratedImageActions({
           <Download aria-hidden />
         </button>
       )}
-      {onCopy === undefined ? null : (
+      {broken || onCopy === undefined ? null : (
         <button
           type="button"
           aria-label={`Copy ${label}`}
@@ -530,7 +571,7 @@ export function GeneratedImageActions({
           <Copy aria-hidden />
         </button>
       )}
-      {onOpen === undefined ? null : (
+      {broken || onOpen === undefined ? null : (
         <button
           type="button"
           aria-label={`Open ${label} full size`}
