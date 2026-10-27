@@ -1,5 +1,5 @@
 import { FileText, MessageSquare } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { panelTabIds, useTabs } from "../../src/hooks/use-tabs.js";
@@ -111,27 +111,33 @@ const ANSWERS = [
   "The report now shows which follow-ups carried over from last week, so nothing gets lost.",
 ];
 
+type RepliesUpdate = (
+  current: readonly ConversationMessage[],
+) => readonly ConversationMessage[];
+
 /**
  * A thread's tab: the replies and the thread's own input. Sending adds the
  * reader's reply, which settles at the top, and the answer writes in below.
- * Kept mounted while another tab is in front, so the draft stays.
+ * Kept mounted while another tab is in front, so the draft stays. The
+ * replies live with the chat, so the count under the parent keeps up.
  */
 function ThreadTab({
   parent,
-  initialReplies,
+  replies,
+  onRepliesChange,
   scrollPolicy,
   labelledBy,
   focusRequest,
 }: {
   readonly parent: ConversationMessage;
-  readonly initialReplies: readonly ConversationMessage[];
+  readonly replies: readonly ConversationMessage[];
+  readonly onRepliesChange: (parentId: string, update: RepliesUpdate) => void;
   /** The tab that shows the thread, which names its log. */
   readonly labelledBy: string;
   readonly scrollPolicy?: ConversationScrollPolicy | undefined;
   /** Bumped each time the reader opens this thread, to move focus to its input. */
   readonly focusRequest: number;
 }) {
-  const [replies, setReplies] = useState(initialReplies);
   const input = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (focusRequest > 0) input.current?.focus();
@@ -139,13 +145,28 @@ function ThreadTab({
   const [draft, setDraft] = useState("");
   const [sentId, setSentId] = useState<string>();
   const [status, setStatus] = useState<PromptInputStatus>("ready");
-  const [sends, setSends] = useState(0);
   const stop = useRef<(() => void) | null>(null);
-  useEffect(() => () => stop.current?.(), []);
+  const streamingId = useRef<string | null>(null);
+  // Stops the answer where it stands, so the kept reply doesn't read as
+  // still streaming once the tab is gone.
+  const stopAnswer = useCallback(() => {
+    stop.current?.();
+    const id = streamingId.current;
+    if (id === null) return;
+    streamingId.current = null;
+    onRepliesChange(parent.id, (current) =>
+      current.map((reply) =>
+        reply.id === id ? { ...reply, status: "sent" } : reply,
+      ),
+    );
+  }, [onRepliesChange, parent.id]);
+  useEffect(() => stopAnswer, [stopAnswer]);
 
   const send = () => {
-    const count = sends + 1;
-    setSends(count);
+    // The replies outlive the tab, so the count comes from them.
+    const count =
+      replies.filter((reply) => reply.id.startsWith(`${parent.id}-sent-`))
+        .length + 1;
     const sent: ConversationMessage = {
       id: `${parent.id}-sent-${count}`,
       author: you,
@@ -162,18 +183,22 @@ function ThreadTab({
         { kind: "text", text: ANSWERS[(count - 1) % ANSWERS.length] ?? "" },
       ],
     };
-    setReplies((current) => [...current, sent]);
+    onRepliesChange(parent.id, (current) => [...current, sent]);
     setSentId(sent.id);
     setDraft("");
     setStatus("streaming");
+    streamingId.current = answer.id;
     stop.current = playTurn(
       answer,
       (frame) => {
-        setReplies((current) => [
+        onRepliesChange(parent.id, (current) => [
           ...current.filter((reply) => reply.id !== frame.id),
           frame,
         ]);
-        if (frame === answer) setStatus("ready");
+        if (frame === answer) {
+          streamingId.current = null;
+          setStatus("ready");
+        }
       },
       { stepMs: 120 },
     );
@@ -201,7 +226,7 @@ function ThreadTab({
         />
         <PromptInputSubmit
           onStop={() => {
-            stop.current?.();
+            stopAnswer();
             setStatus("ready");
           }}
         />
@@ -240,7 +265,8 @@ function Notes() {
 
 /**
  * The main conversation beside a panel of tabs. A message's replies open its
- * thread as a tab; each thread has its own input.
+ * thread as a tab; each thread has its own input, and a reply sent there
+ * updates the count under its parent.
  */
 function ChatWithThreads({
   messages,
@@ -249,7 +275,7 @@ function ChatWithThreads({
   scrollPolicy,
 }: {
   readonly messages: readonly ConversationMessage[];
-  /** Each thread's replies, by parent id. */
+  /** Each thread's replies at first, by parent id. */
   readonly threads: Readonly<Record<string, readonly ConversationMessage[]>>;
   /** A thread open at first, beside the notes tab. */
   readonly openThread?: string;
@@ -261,6 +287,15 @@ function ChatWithThreads({
     defaultTabs: opened === undefined ? [] : [NOTES, threadTab(opened)],
     defaultValue: opened === undefined ? null : threadTab(opened).value,
   });
+  const [threadReplies, setThreadReplies] = useState(threads);
+  const updateReplies = useCallback(
+    (parentId: string, update: RepliesUpdate) =>
+      setThreadReplies((current) => ({
+        ...current,
+        [parentId]: update(current[parentId] ?? []),
+      })),
+    [],
+  );
   const [closed, setClosed] = useState(false);
   const [focusRequests, setFocusRequests] = useState<
     Readonly<Record<string, number>>
@@ -275,7 +310,7 @@ function ChatWithThreads({
         <Conversation>
           <ConversationContent aria-label="Conversation">
             {messages.map((message) => {
-              const replies = threads[message.id];
+              const replies = threadReplies[message.id];
               const tab = threadTab(message);
               return (
                 <ConversationItem key={message.id} itemId={message.id}>
@@ -285,7 +320,11 @@ function ChatWithThreads({
                       message.replies === undefined ||
                       replies === undefined ? undefined : (
                         <MessageReplies
-                          replies={message.replies}
+                          replies={{
+                            count: replies.length,
+                            lastAt:
+                              replies.at(-1)?.at ?? message.replies.lastAt,
+                          }}
                           now={NOW}
                           aria-expanded={shown === tab.value}
                           onClick={() => {
@@ -342,7 +381,8 @@ function ChatWithThreads({
                   ) : (
                     <ThreadTab
                       parent={parent}
-                      initialReplies={threads[parent.id] ?? []}
+                      replies={threadReplies[parent.id] ?? []}
+                      onRepliesChange={updateReplies}
                       scrollPolicy={scrollPolicy}
                       labelledBy={
                         panelTabIds(tabsProps.idPrefix, tab.value).tab

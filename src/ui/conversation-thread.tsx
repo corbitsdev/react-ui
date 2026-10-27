@@ -12,7 +12,10 @@ import {
 import { ConversationDivider } from "./conversation-divider.js";
 
 export type ConversationThreadLabels = {
-  /** The log's accessible name when no `aria-labelledby` is given. */
+  /**
+   * The log's accessible name when neither `aria-label` nor
+   * `aria-labelledby` is given.
+   */
   readonly log: string;
   /** The rule between the parent and the replies. */
   readonly replies: (count: number) => string;
@@ -44,8 +47,8 @@ export type ConversationThreadProps = Omit<
   /**
    * The id of the reader's latest reply sent in this thread, as on
    * `Conversation`: each change is a send, and the value at mount is
-   * history. Keep it per thread; an id from another conversation is not
-   * among these replies and moves nothing.
+   * history. Keep it per thread: an id that is not one of the thread's
+   * items, one from another conversation say, is ignored.
    */
   readonly sentId?: string | undefined;
   /** Defaults to `settle`. */
@@ -71,7 +74,8 @@ export type ConversationThreadProps = Omit<
  * answer writes in below it.
  *
  * `aria-labelledby` or `aria-label` names the log (the tab that shows the
- * thread, say); every other prop goes to the root.
+ * thread, say); every other prop goes to the root. For styling, the parent's
+ * item carries `data-thread-parent` and the rule `data-thread-divider`.
  */
 export function ConversationThread({
   parent,
