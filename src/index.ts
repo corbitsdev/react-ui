@@ -4,6 +4,7 @@
 // barrel is one module, so any root import would load that peer. They have
 // their own entries in the `exports` map instead:
 //   @corbits/react-ui/ui/command-palette
+//   @corbits/react-ui/ui/sidebar-search
 //   @corbits/react-ui/ui/dialog
 //   @corbits/react-ui/ui/menu
 //   @corbits/react-ui/ui/mic-permission-dialog
