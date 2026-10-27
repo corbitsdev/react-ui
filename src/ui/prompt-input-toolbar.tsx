@@ -78,7 +78,7 @@ export type PromptInputPopupAlign = "start" | "end";
 // Above the textarea (z-10) and the suggestion list (z-20); the popups open
 // upward, over the box, since the box sits at the bottom of the screen.
 const POPUP =
-  "absolute bottom-full z-30 mb-2 flex max-h-72 w-max max-w-80 min-w-48 flex-col gap-0.5 overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg";
+  "absolute bottom-full z-30 mb-2 flex max-h-72 w-max max-w-80 min-w-48 flex-col gap-px overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg";
 
 const ICON_BUTTON =
   "grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50";
@@ -307,7 +307,7 @@ export function PromptInputAddMenu({
               aria-disabled={item.disabled === true ? true : undefined}
               data-slot="prompt-input-add-menu-item"
               className={cn(
-                "flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-start text-sm",
+                "flex w-full items-center gap-2 rounded-md px-2 py-1 text-start text-sm",
                 "hover:bg-muted focus-visible:bg-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent",
               )}
               onClick={() => {
@@ -319,15 +319,15 @@ export function PromptInputAddMenu({
               {item.icon === undefined ? null : (
                 <span
                   aria-hidden
-                  className="mt-0.5 grid size-4 shrink-0 place-items-center text-muted-foreground [&_svg]:size-4"
+                  className="grid size-4 shrink-0 place-items-center text-muted-foreground [&_svg]:size-3.5"
                 >
                   {item.icon}
                 </span>
               )}
-              <span className="flex min-w-0 flex-col">
-                <span>{item.label}</span>
+              <span className="flex min-w-0 items-baseline gap-2">
+                <span className="shrink-0">{item.label}</span>
                 {item.detail === undefined ? null : (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="truncate text-xs text-muted-foreground">
                     {item.detail}
                   </span>
                 )}
@@ -495,8 +495,7 @@ function OptionSelect({
         data-active={active ? "" : undefined}
         data-slot="prompt-input-select-option"
         className={cn(
-          "flex cursor-default items-start gap-2 rounded-md border-s-2 border-transparent px-2 py-1.5 text-sm",
-          "data-[active]:border-primary data-[active]:bg-muted",
+          "flex cursor-default items-center gap-2 rounded-md px-2 py-1 text-sm data-[active]:bg-muted",
         )}
         // Focus stays on the trigger.
         onMouseDown={(event) => event.preventDefault()}
@@ -505,17 +504,17 @@ function OptionSelect({
         }}
         onClick={() => choose(option)}
       >
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="font-medium">{option.name}</span>
+        <span className="flex min-w-0 flex-1 items-baseline gap-2">
+          <span className="shrink-0">{option.name}</span>
           {option.detail === undefined ? null : (
-            <span className="text-xs text-muted-foreground">
+            <span className="truncate text-xs text-muted-foreground">
               {option.detail}
             </span>
           )}
         </span>
         <Check
           aria-hidden
-          className={cn("mt-0.5 size-4 shrink-0", !selected && "invisible")}
+          className={cn("size-3.5 shrink-0", !selected && "invisible")}
         />
       </div>
     );
@@ -612,7 +611,7 @@ function OptionSelect({
                 key={group.name}
                 role="group"
                 aria-labelledby={`${listId}-group-${groupIndex}`}
-                className="flex flex-col gap-0.5"
+                className="flex flex-col gap-px"
               >
                 <div
                   id={`${listId}-group-${groupIndex}`}
