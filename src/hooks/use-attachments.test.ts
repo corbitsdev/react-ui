@@ -133,6 +133,13 @@ function mountHost({ strict = false, initial = [], ...limits }: Options = {}) {
       act(() => setHidden(true));
       act(() => setHidden(false));
     },
+    /** Hides the hook in its `Activity` for longer than a tick, then shows it. */
+    async hideAndShow() {
+      act(() => setHidden(true));
+      await act(microtasks);
+      act(() => setHidden(false));
+      await act(microtasks);
+    },
     unmount() {
       act(() => root.unmount());
       container.remove();
@@ -247,6 +254,21 @@ describe("useAttachments", () => {
     host.unmount();
     await microtasks();
     expect([...revoked].sort()).toEqual([...created].sort());
+  });
+
+  // Nothing tells a hide from an unmount, so the previews go and the held
+  // items keep their dead URLs; `Attachment` rebuilds the pictures from
+  // `file` (see attachments.test.tsx).
+  test("a hide longer than a tick revokes the held previews", async () => {
+    const host = mountHost();
+    const [item] = host.drop([file("a.png", 4, "image/png")]).accepted;
+    if (item === undefined) throw new Error("missing");
+
+    await host.hideAndShow();
+    expect(revoked).toEqual([item.url ?? ""]);
+    expect(host.list).toEqual([item]);
+    expect(host.list[0]?.file).toBeInstanceOf(File);
+    host.unmount();
   });
 
   test("the host's own URLs are never revoked", async () => {

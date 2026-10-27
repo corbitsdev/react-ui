@@ -69,8 +69,13 @@ function nextAttachmentId(): string {
  *
  * The unmount revoke waits a microtask and is called off if the hook mounts
  * again, which is what StrictMode's simulated remount does within one
- * commit. A hook hidden by `<Activity mode="hidden">` counts as unmounted,
- * and its previews are revoked.
+ * commit. A hook hidden by `<Activity mode="hidden">` for longer than that
+ * counts as unmounted: its previews are revoked, and once it shows again
+ * the attachments still held keep URLs that no longer load. `Attachment`
+ * rebuilds their pictures from `file`. Anything else that reads `url`
+ * after such a hide, such as a viewer opened from `AttachmentPreview`'s
+ * `onOpen`, should make its own URL from `file`, or the hook should sit
+ * above the `Activity`.
  */
 export function useAttachments({
   attachments,

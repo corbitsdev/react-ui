@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { act, createElement } from "react";
+import { act, createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import {
@@ -192,16 +192,23 @@ function dropEffectOf(event: Event): unknown {
 
 type Received = { files: readonly File[]; details: FileDropDetails };
 
-function mountTarget({ guard = true }: { guard?: boolean } = {}) {
+function mountTarget({
+  guard = true,
+  disabled: initiallyDisabled = false,
+}: { guard?: boolean; disabled?: boolean } = {}) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
   const received: Received[] = [];
   let over = false;
+  let setDisabled: (disabled: boolean) => void = () => {};
 
   function Target() {
+    const [disabled, setTargetDisabled] = useState(initiallyDisabled);
+    setDisabled = setTargetDisabled;
     const drop = useFileDrop<HTMLDivElement>({
       onFiles: (files, details) => received.push({ files, details }),
+      disabled,
     });
     usePreventStrayDrops(guard);
     over = drop.over;
@@ -223,6 +230,9 @@ function mountTarget({ guard = true }: { guard?: boolean } = {}) {
     get over() {
       return over;
     },
+    disable(disabled = true) {
+      act(() => setDisabled(disabled));
+    },
     fire(target: EventTarget, event: Event) {
       act(() => {
         target.dispatchEvent(event);
@@ -243,6 +253,37 @@ function settle(): Promise<void> {
 }
 
 describe("useFileDrop", () => {
+  // The stray-drop guard is off, so only the hook can claim these events.
+  test("takes no drag while disabled", async () => {
+    const target = mountTarget({ guard: false, disabled: true });
+    const files = source([new File(["a"], "a.txt")]);
+    for (const type of ["dragenter", "dragover", "dragleave", "drop"]) {
+      const event = target.fire(target.zone, dragEvent(type, files));
+      expect(event.defaultPrevented).toBe(false);
+      expect(target.over).toBe(false);
+    }
+    await settle();
+    expect(target.received).toEqual([]);
+    target.unmount();
+  });
+
+  test("disabling mid-drag drops over, and enabling takes drags again", () => {
+    const target = mountTarget({ guard: false });
+    const files = source([new File(["a"], "a.txt")]);
+    target.fire(target.zone, dragEvent("dragenter", files));
+    expect(target.over).toBe(true);
+
+    target.disable();
+    expect(target.over).toBe(false);
+    target.disable(false);
+    expect(target.over).toBe(false);
+
+    const enter = target.fire(target.zone, dragEvent("dragenter", files));
+    expect(enter.defaultPrevented).toBe(true);
+    expect(target.over).toBe(true);
+    target.unmount();
+  });
+
   test("a dropped folder reaches onFiles walked to its files", async () => {
     const target = mountTarget();
     const drop = target.fire(target.zone, dragEvent("drop", source([PROJECT])));
@@ -405,7 +446,7 @@ describe("usePreventStrayDrops", () => {
     expect(after.defaultPrevented).toBe(false);
   });
 
-  test("does nothing when disabled", () => {
+  test("stray-drop guard off leaves body drops alone", () => {
     const target = mountTarget({ guard: false });
     const files = source([new File(["a"], "a.txt")]);
     expect(

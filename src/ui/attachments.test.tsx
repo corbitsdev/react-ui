@@ -1,9 +1,14 @@
-import { act, useRef, useState } from "react";
+import { Activity, act, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
 import {
+  useAttachments,
+  type AttachmentItem,
+} from "../hooks/use-attachments.js";
+import {
   Attachment,
+  AttachmentMore,
   AttachmentPreview,
   AttachmentRemove,
   Attachments,
@@ -113,5 +118,191 @@ describe("Attachments", () => {
     expect(keys).toEqual(["a"]);
     expect(opened).toEqual(["notes.txt"]);
     unmount();
+  });
+
+  test("a preview that opens takes its name from label", () => {
+    const { container, unmount } = mount(
+      <Attachments>
+        <Attachment data={NOTES}>
+          <AttachmentPreview label="View the notes" onOpen={() => {}} />
+        </Attachment>
+      </Attachments>,
+    );
+    expect(button(container, "View the notes").dataset["slot"]).toBe(
+      "attachment-preview",
+    );
+    unmount();
+  });
+
+  test("an uncontrolled list folds until More expands it", () => {
+    const files: readonly AttachmentData[] = ["a.txt", "b.txt", "c.txt"].map(
+      (name) => ({ name, mediaType: "text/plain" }),
+    );
+    const { container, unmount } = mount(
+      <Attachments variant="list">
+        {({ expanded }) => {
+          const shown = expanded ? files : files.slice(0, 1);
+          return (
+            <>
+              {shown.map((data) => (
+                <Attachment key={data.name} data={data}>
+                  <AttachmentRemove />
+                </Attachment>
+              ))}
+              {expanded ? null : <AttachmentMore count={files.length - 1} />}
+            </>
+          );
+        }}
+      </Attachments>,
+    );
+    const names = () =>
+      [...container.querySelectorAll("[data-slot=attachment-remove]")].map(
+        (element) => element.getAttribute("aria-label"),
+      );
+    expect(names()).toEqual(["Remove a.txt"]);
+
+    const more = button(container, "Show 2 more");
+    more.focus();
+    act(() => more.click());
+    expect(names()).toEqual(["Remove a.txt", "Remove b.txt", "Remove c.txt"]);
+    expect(container.querySelector("ul")?.dataset["expanded"]).toBe("true");
+    // Focus goes to the first attachment that was folded away.
+    expect(document.activeElement).toBe(button(container, "Remove b.txt"));
+    unmount();
+  });
+
+  test("defaultExpanded starts an uncontrolled list expanded", () => {
+    const { container, unmount } = mount(
+      <Attachments variant="list" defaultExpanded>
+        {({ expanded }) => (expanded ? <li>all</li> : <li>some</li>)}
+      </Attachments>,
+    );
+    expect(container.textContent).toBe("all");
+    unmount();
+  });
+});
+
+describe("a preview held across a hidden Activity", () => {
+  let live = new Set<string>();
+  let made = 0;
+  const realCreate = URL.createObjectURL;
+  const realRevoke = URL.revokeObjectURL;
+
+  beforeEach(() => {
+    live = new Set();
+    made = 0;
+    URL.createObjectURL = () => {
+      made += 1;
+      const url = `blob:test/${made}`;
+      live.add(url);
+      return url;
+    };
+    URL.revokeObjectURL = (url: string) => {
+      live.delete(url);
+    };
+  });
+
+  afterEach(() => {
+    URL.createObjectURL = realCreate;
+    URL.revokeObjectURL = realRevoke;
+  });
+
+  function tick(): Promise<void> {
+    return act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+  }
+
+  test("is rebuilt from its file once its URL stops loading", async () => {
+    let attach: (files: readonly File[]) => void = () => {};
+    let setHidden: (hidden: boolean) => void = () => {};
+
+    function Composer() {
+      const [held, setHeld] = useState<readonly AttachmentItem[]>([]);
+      const { add } = useAttachments({ attachments: held });
+      attach = (files) => {
+        const { accepted } = add(files);
+        setHeld((previous) => [...previous, ...accepted]);
+      };
+      return (
+        <Attachments variant="tiles">
+          {held.map((item) => (
+            <Attachment key={item.id} data={item}>
+              <AttachmentPreview />
+            </Attachment>
+          ))}
+        </Attachments>
+      );
+    }
+
+    function Route() {
+      const [hidden, setRouteHidden] = useState(false);
+      setHidden = setRouteHidden;
+      return (
+        <Activity mode={hidden ? "hidden" : "visible"}>
+          <Composer />
+        </Activity>
+      );
+    }
+
+    const { container, unmount } = mount(<Route />);
+    act(() => attach([new File(["x"], "shot.png", { type: "image/png" })]));
+    const picture = () => container.querySelector("img");
+    const first = picture()?.getAttribute("src") ?? "";
+    expect(live.has(first)).toBe(true);
+
+    // Hidden for longer than a tick: the hook's previews go.
+    act(() => setHidden(true));
+    await tick();
+    act(() => setHidden(false));
+    await tick();
+    expect(live.has(first)).toBe(false);
+
+    // The browser fails to load the revoked URL.
+    act(() => {
+      picture()?.dispatchEvent(new Event("error"));
+    });
+    const rebuilt = picture()?.getAttribute("src") ?? "";
+    expect(rebuilt).not.toBe(first);
+    expect(live.has(rebuilt)).toBe(true);
+
+    // The rebuilt URL follows the same rule: gone while hidden, made again
+    // on show.
+    act(() => setHidden(true));
+    expect(live.has(rebuilt)).toBe(false);
+    act(() => setHidden(false));
+    const again = picture()?.getAttribute("src") ?? "";
+    expect(live.has(again)).toBe(true);
+
+    unmount();
+    await tick();
+    expect([...live]).toEqual([]);
+  });
+
+  test("falls back to the type when the rebuilt URL fails too", () => {
+    const shot = new File(["x"], "shot.png", { type: "image/png" });
+    const { container, unmount } = mount(
+      <Attachments variant="tiles">
+        <Attachment
+          data={{
+            name: "shot.png",
+            mediaType: "image/png",
+            url: "blob:test/gone",
+            file: shot,
+          }}
+        >
+          <AttachmentPreview />
+        </Attachment>
+      </Attachments>,
+    );
+    const fail = () =>
+      act(() => {
+        container.querySelector("img")?.dispatchEvent(new Event("error"));
+      });
+    fail();
+    expect(container.querySelector("img")).not.toBeNull();
+    fail();
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.textContent).toContain("PNG");
+    unmount();
+    expect([...live]).toEqual([]);
   });
 });

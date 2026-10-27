@@ -54,9 +54,7 @@ export type ReadDroppedFilesOptions = {
 const DEFAULT_MAX_FOLDER_ENTRIES = 500;
 
 /** Whether a drag carries files, as opposed to text or a link. */
-export function carriesFiles(
-  source: Pick<DropSource, "types"> | null,
-): boolean {
+function carriesFiles(source: Pick<DropSource, "types"> | null): boolean {
   return source !== null && source.types.includes("Files");
 }
 

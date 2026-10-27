@@ -30,7 +30,8 @@ export type AttachmentDropZoneProps = Omit<
  * open the file in place of the page.
  *
  * Dropping needs a pointer, so put a file picker (such as `FileInput`)
- * inside it for keyboard and touch.
+ * inside it for keyboard and touch. The zone is a plain `div`: give it
+ * `role="region"` and an `aria-label` when it should be a landmark.
  */
 export function AttachmentDropZone({
   onFiles,

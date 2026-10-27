@@ -34,6 +34,12 @@ export type AttachmentData = {
   readonly size?: number;
   /** Where to show or open it from. */
   readonly url?: string;
+  /**
+   * The local file, when there is one. A picture whose `url` no longer
+   * loads, such as a preview `useAttachments` revoked while it was hidden,
+   * is rebuilt from it.
+   */
+  readonly file?: File;
 };
 
 /**
@@ -67,6 +73,9 @@ type AttachmentContextValue = {
   readonly kind: MediaKind;
   /** Whether the preview shows the file itself rather than its type. */
   readonly pictured: boolean;
+  /** Where the picture loads from: `data.url`, or one rebuilt from the file. */
+  readonly src: string | undefined;
+  /** The picture failed to load. */
   readonly setBroken: () => void;
 };
 
@@ -297,6 +306,48 @@ export type AttachmentProps = React.ComponentProps<"li"> & {
   readonly data: AttachmentData;
 };
 
+/**
+ * Where a picture loads from: `url`, or, once that fails to load and the
+ * file is at hand, a URL made from the file. A URL made here is revoked
+ * when the attachment unmounts or is hidden, and made again when it shows.
+ * A rebuilt URL that fails too leaves no picture.
+ */
+function usePictureSource(
+  url: string | undefined,
+  file: File | undefined,
+): { readonly src: string | undefined; readonly setBroken: () => void } {
+  const [failed, setFailed] = useState<{
+    readonly url: string | undefined;
+    readonly rebuilt: boolean;
+  } | null>(null);
+  const failedHere = failed !== null && failed.url === url;
+  const source =
+    failedHere && !failed.rebuilt && file !== undefined ? file : undefined;
+  const [rebuilt, setRebuilt] = useState<{
+    readonly file: File;
+    readonly url: string;
+  } | null>(null);
+
+  // Before paint, so the picture never flashes its type on the way.
+  useLayoutEffect(() => {
+    if (source === undefined) return;
+    const made = URL.createObjectURL(source);
+    setRebuilt({ file: source, url: made });
+    return () => URL.revokeObjectURL(made);
+  }, [source]);
+
+  const src = !failedHere
+    ? url
+    : source !== undefined && rebuilt?.file === source
+      ? rebuilt.url
+      : undefined;
+  const setBroken = useCallback(
+    () => setFailed({ url, rebuilt: failedHere }),
+    [url, failedHere],
+  );
+  return { src, setBroken };
+}
+
 /** One file in `Attachments`; its parts read the file from here. */
 export function Attachment({
   data,
@@ -308,15 +359,8 @@ export function Attachment({
   const { variant, expanded, focusAfterRemove } =
     useAttachmentsContext("Attachment");
   const kind = mediaKindOf(data.name, data.mediaType);
-  const [brokenURL, setBrokenURL] = useState<string | null>(null);
-  const pictured =
-    (kind === "image" || kind === "video") &&
-    data.url !== undefined &&
-    data.url !== brokenURL;
-  const setBroken = useCallback(
-    () => setBrokenURL(data.url ?? null),
-    [data.url],
-  );
+  const { src, setBroken } = usePictureSource(data.url, data.file);
+  const pictured = (kind === "image" || kind === "video") && src !== undefined;
   const elementRef = useRef<HTMLLIElement | null>(null);
 
   const setElement = useCallback(
@@ -347,7 +391,9 @@ export function Attachment({
   }, [focusAfterRemove]);
 
   return (
-    <AttachmentContext.Provider value={{ data, kind, pictured, setBroken }}>
+    <AttachmentContext.Provider
+      value={{ data, kind, pictured, src, setBroken }}
+    >
       <li
         ref={setElement}
         data-slot="attachment"
@@ -395,24 +441,33 @@ export type AttachmentPreviewProps = Omit<
    * open it. Without it the preview is decorative.
    */
   readonly onOpen?: ((data: AttachmentData) => void) | undefined;
+  /** The accessible name with `onOpen`; defaults to "Open" and the file. */
+  readonly label?: string;
 };
 
 /**
  * The file at a glance: the picture, a video's first frame, or for anything
- * else its type. A picture that fails to load falls back to the type.
+ * else its type. A picture that fails to load is rebuilt from `data.file`
+ * when there is one, and otherwise falls back to the type.
  *
  * Host props reach the element either way; its own role, name and click
- * stay its own.
+ * stay its own. Name it with `label`.
  */
 export function AttachmentPreview({
   onOpen,
+  label,
   className,
   ref,
   ...props
 }: AttachmentPreviewProps) {
   const { variant, expanded } = useAttachmentsContext("AttachmentPreview");
-  const { data, kind, pictured, setBroken } =
-    useAttachmentContext("AttachmentPreview");
+  const {
+    data,
+    kind,
+    pictured,
+    src: url,
+    setBroken,
+  } = useAttachmentContext("AttachmentPreview");
   const setElement = useCallback(
     (element: HTMLElement | null) => {
       if (typeof ref === "function") ref(element);
@@ -420,8 +475,6 @@ export function AttachmentPreview({
     },
     [ref],
   );
-  const url = data.url;
-
   let face: React.ReactNode;
   if (pictured && kind === "image" && url !== undefined) {
     face = (
@@ -506,7 +559,7 @@ export function AttachmentPreview({
       ref={setElement}
       type="button"
       data-slot="attachment-preview"
-      aria-label={`Open ${describe(data)}`}
+      aria-label={label ?? `Open ${describe(data)}`}
       className={cn(shared, "cursor-pointer", pictured && "cursor-zoom-in")}
       onClick={() => onOpen(data)}
     >
@@ -656,6 +709,9 @@ export type AttachmentMoreProps = Omit<
 /**
  * The attachments folded away, as "+N": clicking it expands `Attachments`.
  * In a stack it shows once the deck fans out.
+ *
+ * Render it last, after the attachments shown: once the list expands, focus
+ * moves to whichever attachment takes its place.
  */
 export function AttachmentMore({
   count,
