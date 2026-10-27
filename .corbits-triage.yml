@@ -3,13 +3,32 @@ rules:
   - check: max-files-changed
     text: Flag pull requests over 30 files changed.
     max: 30
+    onFail: ask
     reason: Large pull requests are hard to review.
     evidence:
       - maintainer-stated
   - check: max-lines-changed
     text: Flag pull requests over 3,000 lines changed.
     max: 3000
+    onFail: ask
     reason: Large pull requests are hard to review.
+    evidence:
+      - maintainer-stated
+  - check: focused
+    text: Check the change is focused on one thing.
+    reason: A change that does several things is harder to review and to revert.
+    evidence:
+      - maintainer-stated
+  - check: docs
+    text: Check docs are updated when behavior changes.
+    reason: A behaviour change without a docs or story update leaves the docs wrong.
+    evidence:
+      - maintainer-stated
+    enabled: false
+  - check: linked-issue
+    text: Require a linked issue from GitHub or Linear.
+    tracker: either
+    reason: CONTRIBUTING.md asks every pull request to close an issue.
     evidence:
       - maintainer-stated
   - check: no-merge-conflicts
@@ -22,3 +41,258 @@ rules:
     reason: A change is not ready until CI passes.
     evidence:
       - maintainer-stated
+  - check: no-forbidden-paths
+    text: Never accept changes to node_modules/**.
+    paths:
+      - node_modules/**
+    reason: Dependencies are installed, never committed.
+    evidence:
+      - maintainer-stated
+  - check: conventional-commits
+    text: Titles and commits follow Conventional Commits.
+    types: [feat, fix, refactor, test, docs, build, ci, perf, chore]
+    reason: CONTRIBUTING.md lists these types, with chore kept for releases.
+    evidence:
+      - maintainer-stated
+  - check: hidden-content
+    text: Flag text hidden in the pull request.
+    reason: Hidden text can steer the rules a model judges.
+    evidence:
+      - maintainer-stated
+  - check: no-duplicate
+    text: Flag a pull request whose diff or commits match another open one.
+    reason: Two pull requests for the same change waste a review; the earlier one stays.
+    evidence:
+      - maintainer-stated
+  - check: duplicates-open-pull-request
+    text: Ask when a pull request overlaps another open one.
+    reason: A near duplicate needs a person to pick which one goes on.
+    evidence:
+      - maintainer-stated
+  - check: sensitive-paths
+    text: Note changes to CI configuration and the lockfile.
+    groups:
+      ci: { level: medium, paths: [".github/**"] }
+      locks: { level: medium, paths: ["**/bun.lock"] }
+    reason: A CI or lockfile change deserves a second look before merge.
+    evidence:
+      - maintainer-stated
+  - check: risk
+    text: Ask about high-risk pull requests and label medium-risk ones.
+    reason: A large change with no test touched needs a maintainer's eye.
+    evidence:
+      - maintainer-stated
+  - id: no-ai-attribution
+    check: text
+    text: Titles, descriptions and commits carry no AI attribution.
+    fields: [title, description, commits]
+    failWhen: contains
+    phrases:
+      - "Co-Authored-By:"
+      - "Claude-Session:"
+      - "claude.ai/code/session"
+      - "noreply@anthropic.com"
+      - "Generated with Claude"
+      - "Generated with [Claude"
+    reason: No AI co-author lines, session trailers or links, or generated-with footers.
+    evidence:
+      - maintainer-stated
+  - id: conventions
+    check: code-patterns
+    text: Added code follows the repository's conventions.
+    presets:
+      - convention
+    onFail: label
+    reason: Keeps added code free of invented fallbacks, nested ternaries, IIFEs and promise chains.
+    evidence:
+      - maintainer-stated
+  - id: invented-fallbacks
+    check: code-patterns
+    text: Added code handles a missing value instead of inventing an empty one.
+    patterns:
+      - id: more-invented-fallbacks
+        language: typescript
+        message: Invented fallback (an empty string, || [] or || 0); handle the missing value instead.
+        ignores:
+          [
+            "**/*.{test,spec}.*",
+            "**/{test,tests,Tests,__tests__}/**",
+            "**/*.*{Test,Tests}/**",
+          ]
+        rule:
+          any:
+            - pattern: $X || []
+            - all:
+                - any:
+                    - pattern: $X ?? ""
+                    - pattern: $X ?? ''
+                    - pattern: $X ?? ``
+                    - pattern: $X || ""
+                    - pattern: $X || ''
+                    - pattern: $X || ``
+                - not:
+                    any:
+                      - inside: { kind: template_substitution }
+                      - inside:
+                          {
+                            kind: binary_expression,
+                            has: { field: operator, regex: '^\+$' },
+                          }
+                      - inside:
+                          {
+                            kind: parenthesized_expression,
+                            inside:
+                              {
+                                kind: binary_expression,
+                                has: { field: operator, regex: '^\+$' },
+                              },
+                          }
+                      - has: { field: left, kind: subscript_expression }
+                      - has:
+                          {
+                            field: left,
+                            kind: call_expression,
+                            has:
+                              {
+                                field: function,
+                                regex: '\.(at|get|getAttribute)$',
+                              },
+                          }
+            - all:
+                - pattern: $X || 0
+                - not:
+                    any:
+                      - inside:
+                          {
+                            kind: binary_expression,
+                            has: { field: operator, regex: "^[-+*/%]$" },
+                          }
+                      - inside:
+                          {
+                            kind: parenthesized_expression,
+                            inside:
+                              {
+                                kind: binary_expression,
+                                has: { field: operator, regex: "^[-+*/%]$" },
+                              },
+                          }
+                      - inside: { kind: augmented_assignment_expression }
+      - id: more-invented-fallbacks
+        language: javascript
+        message: Invented fallback (an empty string, || [] or || 0); handle the missing value instead.
+        ignores:
+          [
+            "**/*.{test,spec}.*",
+            "**/{test,tests,Tests,__tests__}/**",
+            "**/*.*{Test,Tests}/**",
+          ]
+        rule:
+          any:
+            - pattern: $X || []
+            - all:
+                - any:
+                    - pattern: $X ?? ""
+                    - pattern: $X ?? ''
+                    - pattern: $X ?? ``
+                    - pattern: $X || ""
+                    - pattern: $X || ''
+                    - pattern: $X || ``
+                - not:
+                    any:
+                      - inside: { kind: template_substitution }
+                      - inside:
+                          {
+                            kind: binary_expression,
+                            has: { field: operator, regex: '^\+$' },
+                          }
+                      - inside:
+                          {
+                            kind: parenthesized_expression,
+                            inside:
+                              {
+                                kind: binary_expression,
+                                has: { field: operator, regex: '^\+$' },
+                              },
+                          }
+                      - has: { field: left, kind: subscript_expression }
+                      - has:
+                          {
+                            field: left,
+                            kind: call_expression,
+                            has:
+                              {
+                                field: function,
+                                regex: '\.(at|get|getAttribute)$',
+                              },
+                          }
+            - all:
+                - pattern: $X || 0
+                - not:
+                    any:
+                      - inside:
+                          {
+                            kind: binary_expression,
+                            has: { field: operator, regex: "^[-+*/%]$" },
+                          }
+                      - inside:
+                          {
+                            kind: parenthesized_expression,
+                            inside:
+                              {
+                                kind: binary_expression,
+                                has: { field: operator, regex: "^[-+*/%]$" },
+                              },
+                          }
+                      - inside: { kind: augmented_assignment_expression }
+    onFail: label
+    reason: A fallback belongs only where a real default exists.
+    evidence:
+      - maintainer-stated
+  - id: no-any
+    check: code-patterns
+    text: Added code uses no any type.
+    patterns:
+      - id: no-any
+        language: typescript
+        message: "`any` turns type checking off; name the type, or take unknown and narrow it."
+        ignores:
+          [
+            "**/*.{test,spec}.*",
+            "**/{test,tests,Tests,__tests__}/**",
+            "**/*.*{Test,Tests}/**",
+          ]
+        rule: { kind: predefined_type, regex: "^any$" }
+    onFail: ask
+    reason: AGENTS.md allows no any without a comment saying why.
+    evidence:
+      - maintainer-stated
+actions:
+  pass:
+    - do: approve
+      when:
+        author:
+          - users:
+              - thegreataxios
+              - brianjfox
+    - do: request-review
+      target:
+        to: users
+        users:
+          - thegreataxios
+      when:
+        author:
+          - external
+  fail:
+    - do: close
+      when:
+        linkedIssue: false
+    - do: request-changes
+  unsure:
+    - do: assign
+      target:
+        to: users
+        users:
+          - thegreataxios
+      when:
+        author:
+          - maintainers
