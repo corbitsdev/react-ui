@@ -33,7 +33,9 @@ export function TraceReading({ trace }: { readonly trace: Trace }) {
             <h1 className="text-lg font-semibold text-foreground">
               {trace.name}
             </h1>
-            <p className="text-sm text-muted-foreground">{metaLine(trace)}</p>
+            <p className="font-mono text-xs text-muted-foreground">
+              {metaLine(trace)}
+            </p>
           </header>
           {question === undefined ? null : (
             <ReadingBlock label="Question">{question}</ReadingBlock>
@@ -80,7 +82,7 @@ function ReadingBlock({
   return (
     <section className="border-b border-border px-4 py-4">
       <h2 className="text-xs font-medium text-muted-foreground">{label}</h2>
-      <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">
+      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground">
         {children}
       </p>
     </section>
@@ -169,7 +171,7 @@ function StepRow({
           {stepTitle(span)}
         </span>
         {span.status === "ok" ? null : (
-          <Badge tone={STATUS_TONE[span.status]}>
+          <Badge tone={STATUS_TONE[span.status]} className="w-20 shrink-0">
             {STATUS_LABEL[span.status]}
           </Badge>
         )}
@@ -189,9 +191,17 @@ function StepBody({
   readonly span: Span;
   readonly depth: number;
 }) {
+  if (
+    span.input === undefined &&
+    span.output === undefined &&
+    span.thinking === undefined &&
+    span.redacted !== true
+  ) {
+    return null;
+  }
   return (
     <div
-      className="flex flex-col gap-3 pb-4"
+      className="flex flex-col gap-4 pt-2 pb-4"
       style={{ paddingLeft: 16 + depth * 14, paddingRight: 16 }}
     >
       <Thinking span={span} />

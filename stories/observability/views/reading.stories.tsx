@@ -7,13 +7,13 @@ const review = trace("wf-review");
 const editor = trace("ag-editor");
 
 export const Review = () => (
-  <div className="h-[640px] border border-border">
+  <div className="flex h-[640px] flex-col overflow-hidden border border-border">
     <TraceReading trace={review} />
   </div>
 );
 
 export const Editor = () => (
-  <div className="h-[640px] border border-border">
+  <div className="flex h-[640px] flex-col overflow-hidden border border-border">
     <TraceReading trace={editor} />
   </div>
 );
