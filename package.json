@@ -40,6 +40,10 @@
       "types": "./dist/ui/command-palette.d.ts",
       "default": "./dist/ui/command-palette.js"
     },
+    "./ui/sidebar-search": {
+      "types": "./dist/ui/sidebar-search.d.ts",
+      "default": "./dist/ui/sidebar-search.js"
+    },
     "./ui/dialog": {
       "types": "./dist/ui/dialog.d.ts",
       "default": "./dist/ui/dialog.js"

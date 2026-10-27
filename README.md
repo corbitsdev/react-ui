@@ -19,12 +19,12 @@ Requires Node 24 or later. Tested on React 19; the peer range also accepts React
 
 Optional peers are needed only by the modules that import them. Those modules are not in the root entry, so import them by subpath:
 
-| Peer                            | Subpaths                                                      |
-| ------------------------------- | ------------------------------------------------------------- |
-| `@radix-ui/react-dialog`        | `ui/dialog`, `ui/command-palette`, `ui/mic-permission-dialog` |
-| `@radix-ui/react-dropdown-menu` | `ui/menu`                                                     |
-| `@radix-ui/react-tooltip`       | `ui/tooltip`                                                  |
-| `sonner`                        | `ui/toast`                                                    |
+| Peer                            | Subpaths                                                                           |
+| ------------------------------- | ---------------------------------------------------------------------------------- |
+| `@radix-ui/react-dialog`        | `ui/dialog`, `ui/command-palette`, `ui/sidebar-search`, `ui/mic-permission-dialog` |
+| `@radix-ui/react-dropdown-menu` | `ui/menu`                                                                          |
+| `@radix-ui/react-tooltip`       | `ui/tooltip`                                                                       |
+| `sonner`                        | `ui/toast`                                                                         |
 
 ## Quickstart
 
@@ -190,27 +190,28 @@ Everything imports from `@corbits/react-ui`, except rows marked "optional peer",
 
 #### Layout
 
-| Component           | What it is                                   |
-| ------------------- | -------------------------------------------- |
-| `PageShell`         | Page margins and scroll ownership            |
-| `PagePanel`         | Bordered page-content frame                  |
-| `TopBar`            | Title, breadcrumbs and actions row           |
-| `Sidebar`           | Collapsible navigation sidebar               |
-| `SidebarPanel`      | Sidebar with pins, body and footer           |
-| `SidebarItemRow`    | One sidebar row                              |
-| `ListDetail`        | Index on the left, open item on the right    |
-| `InspectorShell`    | Side inspector rail                          |
-| `Section`           | Titled block of content                      |
-| `SettingsPanel`     | Settings frame with optional save            |
-| `LibraryPageHeader` | Title, count and controls for a library page |
-| `Card`              | Bordered content card                        |
-| `EmptyState`        | Title, description, icon and action          |
-| `RichEmptyState`    | Empty state with suggested next-step actions |
-| `BootScreen`        | Screen shown before the app loads            |
-| `DitherCanvas`      | Animated dithered background                 |
-| `CorbitsMark`       | Corbits logo                                 |
-| `AuthLayout`        | Sign-in page layout                          |
-| `LoginForm`         | Sign-in and sign-up form, with optional SSO  |
+| Component           | What it is                                                     |
+| ------------------- | -------------------------------------------------------------- |
+| `PageShell`         | Page margins and scroll ownership                              |
+| `PagePanel`         | Bordered page-content frame                                    |
+| `TopBar`            | Title, breadcrumbs and actions row                             |
+| `Sidebar`           | Collapsible navigation sidebar                                 |
+| `SidebarSearch`     | Search row labelled Cmd+K (optional peer, `ui/sidebar-search`) |
+| `SidebarPanel`      | Sidebar with pins, body and footer                             |
+| `SidebarItemRow`    | One sidebar row                                                |
+| `ListDetail`        | Index on the left, open item on the right                      |
+| `InspectorShell`    | Side inspector rail                                            |
+| `Section`           | Titled block of content                                        |
+| `SettingsPanel`     | Settings frame with optional save                              |
+| `LibraryPageHeader` | Title, count and controls for a library page                   |
+| `Card`              | Bordered content card                                          |
+| `EmptyState`        | Title, description, icon and action                            |
+| `RichEmptyState`    | Empty state with suggested next-step actions                   |
+| `BootScreen`        | Screen shown before the app loads                              |
+| `DitherCanvas`      | Animated dithered background                                   |
+| `CorbitsMark`       | Corbits logo                                                   |
+| `AuthLayout`        | Sign-in page layout                                            |
+| `LoginForm`         | Sign-in and sign-up form, with optional SSO                    |
 
 #### Controls
 
@@ -257,7 +258,7 @@ The host app owns the connection to the hub; components only take props.
 
 - Install from npm. Git installs (`github:corbitsdev/react-ui#<sha>`) no longer build `dist/`.
 - Per-module subpaths are gone: import from `@corbits/react-ui` (`import { Button } from "@corbits/react-ui"`).
-- `ui/dialog`, `ui/command-palette`, `ui/mic-permission-dialog`, `ui/menu`, `ui/tooltip` and `ui/toast` are subpath-only, and their peers are optional: `import { Toaster, toast } from "@corbits/react-ui/ui/toast"`. Install the peer for each subpath you keep.
+- `ui/dialog`, `ui/command-palette`, `ui/sidebar-search`, `ui/mic-permission-dialog`, `ui/menu`, `ui/tooltip` and `ui/toast` are subpath-only, and their peers are optional: `import { Toaster, toast } from "@corbits/react-ui/ui/toast"`. Install the peer for each subpath you keep.
 - `lib/csv`, `lib/url`, `lib/utils`, `lib/workflow-registry` and `ui/chat-dock-timing` are internal. Replace `cn` with `twMerge(clsx(...))`.
 - Stateful components ship `"use client"`. Client wrappers you wrote for them still work, and can go.
 - 84 unused modules are removed, `ui/command` is removed, `ActivityBlock` is renamed `ReasoningBlock`, and `AuthLayout` no longer renders `DitherCanvas` by default.

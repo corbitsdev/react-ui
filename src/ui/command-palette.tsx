@@ -520,36 +520,60 @@ export function CommandPaletteInline({
   );
 }
 
+const commandShortcutSubscribers = new Set<() => void>();
+
+function onCommandShortcutKeyDown(event: KeyboardEvent): void {
+  if (
+    event.key.toLowerCase() !== "k" ||
+    !(event.metaKey || event.ctrlKey) ||
+    event.repeat
+  ) {
+    return;
+  }
+  const target = event.target as HTMLElement | null;
+  if (
+    target?.isContentEditable === true ||
+    /^(input|textarea|select)$/i.test(target?.tagName ?? "")
+  ) {
+    return;
+  }
+  const subscriber = commandShortcutSubscribers.values().next().value;
+  if (subscriber === undefined) return;
+  event.preventDefault();
+  subscriber();
+}
+
 /**
  * Binds ⌘K / Ctrl-K to a toggle.
  *
  * A hook and not built into the palette, because plenty of apps already own
  * their global key handling and a second listener fighting theirs is worse
- * than no listener at all. It ignores repeats from a held key and lets the
- * browser keep its own ⌘K where the user is typing into a text field —
+ * than no listener at all. Every mounted caller shares one document listener,
+ * and a shortcut invokes exactly one subscriber, so a host toggle and a search
+ * row cannot undo each other. A later subscriber keeps the listener when the
+ * one that attached it unmounts. It ignores repeats from a held key and lets
+ * the browser keep its own ⌘K where the user is typing into a text field —
  * stealing it there is how a palette becomes the thing that eats your search
- * box.
+ * box. Pass `enabled: false` to stay out of the subscriber set.
  */
 export function useCommandShortcut(onToggle: () => void, enabled = true): void {
+  const onToggleRef = useRef(onToggle);
+  onToggleRef.current = onToggle;
+
   useEffect(() => {
     if (!enabled) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key.toLowerCase() !== "k" ||
-        !(event.metaKey || event.ctrlKey) ||
-        event.repeat
-      )
-        return;
-      const target = event.target as HTMLElement | null;
-      if (
-        target?.isContentEditable === true ||
-        /^(input|textarea|select)$/i.test(target?.tagName ?? "")
-      )
-        return;
-      event.preventDefault();
-      onToggle();
+    const subscriber = () => {
+      onToggleRef.current();
     };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onToggle, enabled]);
+    commandShortcutSubscribers.add(subscriber);
+    if (commandShortcutSubscribers.size === 1) {
+      document.addEventListener("keydown", onCommandShortcutKeyDown);
+    }
+    return () => {
+      commandShortcutSubscribers.delete(subscriber);
+      if (commandShortcutSubscribers.size === 0) {
+        document.removeEventListener("keydown", onCommandShortcutKeyDown);
+      }
+    };
+  }, [enabled]);
 }
