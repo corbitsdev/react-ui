@@ -235,6 +235,24 @@ describe("ToolApproval", () => {
     mounted.unmount();
   });
 
+  test("the resolved line is a named group that reads its outcome, then the call", () => {
+    const mounted = mount(
+      <ToolApproval
+        part={tool({ approval: record("approved", "once") })}
+        onDecide={() => {}}
+      />,
+    );
+    const root = mounted.container.querySelector("[data-slot='tool-approval']");
+    expect(root?.getAttribute("role")).toBe("group");
+    const name = (root?.getAttribute("aria-labelledby") ?? "")
+      .split(" ")
+      .filter((id) => id !== "")
+      .map((id) => document.getElementById(id)?.textContent ?? "")
+      .join(" ");
+    expect(name).toBe("Approved once mail__send");
+    mounted.unmount();
+  });
+
   test("focus dropped to the page is left alone when the record settles", () => {
     const mounted = mount(<ToolApproval part={tool()} onDecide={() => {}} />);
     const input = mounted.container.querySelector<HTMLElement>(

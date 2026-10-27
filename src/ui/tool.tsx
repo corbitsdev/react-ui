@@ -9,7 +9,7 @@ import {
   LoaderCircle,
   ShieldAlert,
 } from "lucide-react";
-import { createContext, useContext, useId } from "react";
+import { createContext, useContext, useId, useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";
@@ -42,9 +42,9 @@ export type ToolProps = Omit<ComponentProps<"div">, "part"> & {
   /** Controlled open state. Pair with `onOpenChange`. */
   readonly open?: boolean | undefined;
   /**
-   * Seeds the open state. Left out, the call is open exactly while it shows
-   * `error`, including when it fails after it mounted, until a person opens
-   * or closes it.
+   * Seeds the open state. Left out, the call opens when it shows `error`,
+   * including when it fails after it mounted, and stays open, also through
+   * a retry that succeeds, until a person closes it.
    */
   readonly defaultOpen?: boolean | undefined;
   readonly onOpenChange?: ((open: boolean) => void) | undefined;
@@ -80,7 +80,13 @@ export function Tool({
           },
     name: "Tool",
   });
-  const open = chosen ?? status === "error";
+  // Once a failure opened the call it stays open, so a retry that succeeds
+  // does not unmount the output focus may be in. Set while rendering
+  // (react.dev, "Storing information from previous renders").
+  const failed = status === "error";
+  const [autoOpened, setAutoOpened] = useState(failed);
+  if (failed && !autoOpened) setAutoOpened(true);
+  const open = chosen ?? autoOpened;
   const hasDetail = part.input !== undefined || part.output !== undefined;
   const settled = part.approval !== undefined && !isAwaitingApproval(part);
 

@@ -53,6 +53,8 @@ import {
   groupActivity,
   type PartTool,
   type ToolApprovalRecord,
+  ToolGroup,
+  type PartToolBatch,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
@@ -1003,6 +1005,70 @@ function ToolApprovalScenario() {
   );
 }
 
+// A batch on its own, two calls waiting on a person. Deciding records the
+// outcome on the call; the group stays open and keeps focus inside it.
+function ToolGroupApprovalScenario() {
+  const { log, record } = useEventLog();
+  const waitingCall = (id: string, name: string): PartTool => ({
+    kind: "tool-trace",
+    toolCallId: id,
+    name,
+    status: "approval-requested",
+    input: { to: "team" },
+    approval: {
+      id: `approval-${id}`,
+      status: "pending",
+      scope: null,
+      timeoutAt: null,
+    },
+  });
+  const [part, setPart] = useState<PartToolBatch>({
+    kind: "tool-batch",
+    id: "batch",
+    tools: [
+      {
+        kind: "tool-trace",
+        toolCallId: "read",
+        name: "files__read",
+        status: "output-available",
+        output: "Notes",
+      },
+      waitingCall("mail", "mail__send"),
+      waitingCall("calendar", "calendar__invite"),
+    ],
+  });
+  return (
+    <>
+      <ToolGroup
+        part={part}
+        onDecide={(tool, decision) => {
+          record(`${tool.name}:${decision.outcome}:${decision.scope}`);
+          setPart((current) => ({
+            ...current,
+            tools: current.tools.map((call) =>
+              call.toolCallId === tool.toolCallId && call.approval !== undefined
+                ? {
+                    ...call,
+                    status:
+                      decision.outcome === "approved"
+                        ? "output-available"
+                        : "output-denied",
+                    approval: {
+                      ...call.approval,
+                      status: decision.outcome,
+                      scope: decision.scope,
+                    },
+                  }
+                : call,
+            ),
+          }));
+        }}
+      />
+      {log}
+    </>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -1046,4 +1112,5 @@ export const scenarios: Record<string, () => ReactNode> = {
   "prompt-input-toolbar-dialog": () => <PromptToolbarInDialog />,
   "panel-tabs": () => <PanelTabsScenario />,
   "tool-approval": () => <ToolApprovalScenario />,
+  "tool-group-approval": () => <ToolGroupApprovalScenario />,
 };

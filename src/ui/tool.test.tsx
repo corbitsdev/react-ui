@@ -1,10 +1,11 @@
-import { act } from "react";
+import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
 import type { ToolTraceStatus } from "../lib/chat-parts.js";
 import type { PartTool, PartToolBatch } from "../lib/conversation.js";
 import { Tool, ToolHeader, ToolInput, ToolOutput } from "./tool.js";
+import type { ToolApprovalDecision } from "./tool-approval.js";
 import { ToolGroup } from "./tool-group.js";
 
 type Mounted = {
@@ -110,6 +111,25 @@ describe("Tool", () => {
     expect(header(mounted.container).getAttribute("aria-expanded")).toBe(
       "false",
     );
+    mounted.unmount();
+  });
+
+  test("a failed call that then succeeds stays open, keeping focus in its output", () => {
+    const mounted = mount(
+      <Tool part={tool({ status: "error", output: "Timed out" })} />,
+    );
+    const box = mounted.container.querySelector<HTMLElement>(
+      "[data-slot='tool-output'] [tabindex='0']",
+    );
+    if (box === null) throw new Error("expected the output box");
+    act(() => box.focus());
+    mounted.render(<Tool part={tool({ output: "Renewed" })} />);
+    expect(header(mounted.container).getAttribute("aria-expanded")).toBe(
+      "true",
+    );
+    expect(box.isConnected).toBe(true);
+    expect(box.textContent).toBe("Renewed");
+    expect(document.activeElement === box).toBe(true);
     mounted.unmount();
   });
 
@@ -356,5 +376,178 @@ describe("ToolGroup", () => {
     click(approve ?? null);
     expect(decisions).toEqual(["b:approved"]);
     mounted.unmount();
+  });
+
+  describe("after a decision", () => {
+    function waitingCall(id: string): PartTool {
+      return tool({
+        toolCallId: id,
+        name: `mail__${id}`,
+        status: "approval-requested",
+        approval: {
+          id: `approval-${id}`,
+          status: "pending",
+          scope: null,
+          timeoutAt: null,
+        },
+      });
+    }
+
+    /** Records each decision on the call, as a host does. */
+    function Host({
+      initial,
+      defaultOpen,
+    }: {
+      readonly initial: PartToolBatch;
+      readonly defaultOpen?: boolean;
+    }) {
+      const [part, setPart] = useState(initial);
+      const decide = (decided: PartTool, decision: ToolApprovalDecision) =>
+        setPart((current) => ({
+          ...current,
+          tools: current.tools.map((call) =>
+            call.toolCallId === decided.toolCallId
+              ? {
+                  ...call,
+                  status:
+                    decision.outcome === "approved"
+                      ? "running"
+                      : "output-denied",
+                  approval: {
+                    id: `approval-${call.toolCallId}`,
+                    status: decision.outcome,
+                    scope: decision.scope,
+                    timeoutAt: null,
+                  },
+                }
+              : call,
+          ),
+        }));
+      return (
+        <ToolGroup part={part} defaultOpen={defaultOpen} onDecide={decide} />
+      );
+    }
+
+    function approveIn(
+      container: HTMLElement,
+      name: string,
+    ): HTMLButtonElement {
+      const card = [
+        ...container.querySelectorAll("[data-slot='tool-approval']"),
+      ].find((element) => element.textContent?.includes(name));
+      const found = [...(card?.querySelectorAll("button") ?? [])].find(
+        (element) => element.textContent === "Approve",
+      );
+      if (found === undefined) throw new Error(`expected Approve on ${name}`);
+      return found;
+    }
+
+    function decideByKeyboard(approve: HTMLButtonElement) {
+      act(() => approve.focus());
+      expect(document.activeElement).toBe(approve);
+      act(() => approve.click());
+    }
+
+    function resolvedLine(container: HTMLElement, name: string): Element {
+      const line = [
+        ...container.querySelectorAll("[data-slot='tool-approval']"),
+      ].find(
+        (element) =>
+          element.getAttribute("data-status") !== "pending" &&
+          element.textContent?.includes(name),
+      );
+      if (line === undefined) throw new Error(`expected ${name}'s outcome`);
+      return line;
+    }
+
+    test("deciding the last waiting call keeps the group open and focus on its outcome", () => {
+      const mounted = mount(
+        <Host initial={batch([tool({ toolCallId: "r" }), waitingCall("a")])} />,
+      );
+      decideByKeyboard(approveIn(mounted.container, "mail__a"));
+      expect(
+        mounted.container
+          .querySelector("[data-slot='tool-group-header']")
+          ?.getAttribute("aria-expanded"),
+      ).toBe("true");
+      expect(mounted.container.textContent).toContain("Approved once");
+      expect(document.activeElement).toBe(
+        resolvedLine(mounted.container, "mail__a"),
+      );
+      mounted.unmount();
+    });
+
+    test("with another call waiting, focus moves to that call's first button", () => {
+      const mounted = mount(
+        <Host initial={batch([waitingCall("a"), waitingCall("c")])} />,
+      );
+      decideByKeyboard(approveIn(mounted.container, "mail__a"));
+      expect(mounted.container.textContent).toContain("Approved once");
+      expect(document.activeElement).toBe(
+        approveIn(mounted.container, "mail__c"),
+      );
+      mounted.unmount();
+    });
+
+    test("the next waiting call is the one after the decided call", () => {
+      const mounted = mount(
+        <Host
+          initial={batch([
+            waitingCall("a"),
+            waitingCall("b"),
+            waitingCall("c"),
+          ])}
+        />,
+      );
+      decideByKeyboard(approveIn(mounted.container, "mail__b"));
+      expect(document.activeElement).toBe(
+        approveIn(mounted.container, "mail__c"),
+      );
+      mounted.unmount();
+    });
+
+    test("in a group a person opened, focus does not fall to the page", () => {
+      const mounted = mount(
+        <Host
+          defaultOpen
+          initial={batch([tool({ toolCallId: "r" }), waitingCall("a")])}
+        />,
+      );
+      decideByKeyboard(approveIn(mounted.container, "mail__a"));
+      expect(mounted.container.textContent).toContain("Approved once");
+      expect(document.activeElement).not.toBe(document.body);
+      expect(document.activeElement).toBe(
+        resolvedLine(mounted.container, "mail__a"),
+      );
+      mounted.unmount();
+    });
+
+    test("a person can still close the group once nothing waits", () => {
+      const mounted = mount(
+        <Host initial={batch([tool({ toolCallId: "r" }), waitingCall("a")])} />,
+      );
+      decideByKeyboard(approveIn(mounted.container, "mail__a"));
+      const groupHeader = mounted.container.querySelector(
+        "[data-slot='tool-group-header']",
+      );
+      click(groupHeader);
+      expect(groupHeader?.getAttribute("aria-expanded")).toBe("false");
+      mounted.unmount();
+    });
+
+    test("focus elsewhere is left alone", () => {
+      const outside = document.createElement("input");
+      document.body.appendChild(outside);
+      const mounted = mount(
+        <Host initial={batch([waitingCall("a"), waitingCall("c")])} />,
+      );
+      const approve = approveIn(mounted.container, "mail__a");
+      act(() => approve.focus());
+      act(() => outside.focus());
+      act(() => approve.click());
+      expect(document.activeElement).toBe(outside);
+      mounted.unmount();
+      outside.remove();
+    });
   });
 });

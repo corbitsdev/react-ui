@@ -44,3 +44,62 @@ test("the decision works from the keyboard", async ({ page }) => {
     "approved:always",
   );
 });
+
+test("in a group, keyboard decisions keep focus inside it", async ({
+  page,
+}) => {
+  await page.goto("/tool-group-approval");
+  const waiting = page.locator(
+    "[data-slot='tool-approval'][data-status='pending']",
+  );
+  await expect(waiting).toHaveCount(2);
+  await waiting
+    .first()
+    .getByRole("button", { name: "Approve", exact: true })
+    .focus();
+  // Counts the frames on which focus sat on the page instead of an element.
+  await page.evaluate(() => {
+    const watched = window as Window & { bodyFrames?: number };
+    watched.bodyFrames = 0;
+    const tick = () => {
+      const active = document.activeElement;
+      if (active === null || active === document.body)
+        watched.bodyFrames = (watched.bodyFrames ?? 0) + 1;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  const bodyFrames = () =>
+    page.evaluate(
+      () => (window as Window & { bodyFrames?: number }).bodyFrames,
+    );
+
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status", { name: "Events" })).toHaveText(
+    "mail__send:approved:once",
+  );
+  await expect(waiting).toHaveCount(1);
+  await expect(
+    waiting.getByRole("button", { name: "Approve", exact: true }),
+  ).toBeFocused();
+
+  await page.keyboard.press("Enter");
+  await expect(waiting).toHaveCount(0);
+  const header = page.locator("[data-slot='tool-group-header']");
+  await expect(header).toHaveAttribute("aria-expanded", "true");
+  const outcome = page.getByRole("group", {
+    name: "Approved once calendar__invite",
+  });
+  await expect(outcome).toBeFocused();
+  // Let a few more frames pass before reading the count.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        let left = 5;
+        const step = () =>
+          --left === 0 ? resolve() : requestAnimationFrame(step);
+        requestAnimationFrame(step);
+      }),
+  );
+  expect(await bodyFrames()).toBe(0);
+});

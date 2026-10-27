@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronRight, Layers } from "lucide-react";
-import { useId } from "react";
+import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";
@@ -40,8 +40,9 @@ export type ToolGroupProps = Omit<
   /** Controlled open state. Pair with `onOpenChange`. */
   readonly open?: boolean | undefined;
   /**
-   * Seeds the open state. Left out, the group is open exactly while one of
-   * its calls waits on a person, until a person opens or closes it.
+   * Seeds the open state. Left out, the group opens when one of its calls
+   * waits on a person and stays open, so the outcome of a decision shows,
+   * until a person closes it.
    */
   readonly defaultOpen?: boolean | undefined;
   readonly onOpenChange?: ((open: boolean) => void) | undefined;
@@ -57,7 +58,14 @@ export type ToolGroupProps = Omit<
   readonly labels?: Partial<ToolGroupLabels> | undefined;
 };
 
-/** Tool calls that ran at the same time: one row saying so, the calls beneath. */
+/**
+ * Tool calls that ran at the same time: one row saying so, the calls beneath.
+ *
+ * When a decision settles a call while focus was inside and nothing else has
+ * taken it, focus moves to the next waiting call's first button, else to the
+ * decided call's outcome, else to the group's row, instead of dropping to
+ * the page.
+ */
 export function ToolGroup({
   part,
   open: openProp,
@@ -66,7 +74,10 @@ export function ToolGroup({
   onDecide,
   renderTool,
   labels: labelOverrides,
+  ref,
   className,
+  onFocus,
+  onBlur,
   ...props
 }: ToolGroupProps) {
   const labels = { ...LABELS, ...labelOverrides };
@@ -84,7 +95,13 @@ export function ToolGroup({
           },
     name: "ToolGroup",
   });
-  const open = chosen ?? awaiting;
+  // Once a waiting call opened the group it stays open after the decision,
+  // so the outcome shows and the focused card is not unmounted with the list.
+  // Set while rendering (react.dev, "Storing information from previous
+  // renders"): an effect would run after the list had already gone.
+  const [autoOpened, setAutoOpened] = useState(awaiting);
+  if (awaiting && !autoOpened) setAutoOpened(true);
+  const open = chosen ?? autoOpened;
 
   const statuses = part.tools.map(displayedToolStatus);
   const active = statuses.filter(
@@ -95,6 +112,40 @@ export function ToolGroup({
   ).length;
   const failed = countFailedTools(part.tools);
   const count = part.tools.length;
+
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const focusInside = useRef(false);
+  // The list item that last held focus: the call a decision was made on.
+  const focusedItem = useRef<HTMLLIElement | null>(null);
+  const wasWaiting = useRef(waiting);
+
+  // A decided call is rendered anew (`Tool` in place of `ToolApproval`), so
+  // its own recovery never runs; the group moves focus instead. A child that
+  // stayed mounted recovers first, and then focus is no longer on the page.
+  useLayoutEffect(() => {
+    const dropped = waiting < wasWaiting.current;
+    wasWaiting.current = waiting;
+    if (!dropped || !focusInside.current) return;
+    const active = document.activeElement;
+    if (active !== null && active !== document.body) return;
+    const root = rootRef.current;
+    if (root === null) return;
+    const item = focusedItem.current?.isConnected ? focusedItem.current : null;
+    const target =
+      nextWaiting(root, item) ??
+      item?.querySelector<HTMLElement>("[data-slot='tool-approval']") ??
+      root.querySelector<HTMLElement>("[data-slot='tool-group-header']");
+    target?.focus();
+  }, [waiting]);
+
+  const setRoot = useCallback(
+    (element: HTMLDivElement | null) => {
+      rootRef.current = element;
+      if (typeof ref === "function") ref(element);
+      else if (ref !== null && ref !== undefined) ref.current = element;
+    },
+    [ref],
+  );
 
   const render =
     renderTool ??
@@ -110,9 +161,23 @@ export function ToolGroup({
 
   return (
     <div
+      ref={setRoot}
       data-slot="tool-group"
       className={cn("flex min-w-0 flex-col text-sm", className)}
       {...props}
+      onFocus={(event) => {
+        focusInside.current = true;
+        onFocus?.(event);
+      }}
+      onBlur={(event) => {
+        // Focus leaving the group, to another element or to nothing, ends
+        // "inside". A decided card going away does not reach here: React
+        // ignores blur while it commits, so the layout effect still sees it.
+        const next = event.relatedTarget;
+        if (next === null || !event.currentTarget.contains(next))
+          focusInside.current = false;
+        onBlur?.(event);
+      }}
     >
       <button
         type="button"
@@ -152,7 +217,13 @@ export function ToolGroup({
           className="ms-3 flex flex-col gap-1 border-s border-dashed border-border-strong ps-3 pt-1"
         >
           {part.tools.map((tool) => (
-            <li key={tool.toolCallId} className="min-w-0">
+            <li
+              key={tool.toolCallId}
+              className="min-w-0"
+              onFocus={(event) => {
+                focusedItem.current = event.currentTarget;
+              }}
+            >
               {render(tool)}
             </li>
           ))}
@@ -160,4 +231,24 @@ export function ToolGroup({
       ) : null}
     </div>
   );
+}
+
+const WAITING = "[data-slot='tool-approval'][data-status='pending']";
+
+/** The first waiting call after the decided one, else the first waiting call. */
+function nextWaiting(
+  root: HTMLElement,
+  decided: HTMLElement | null,
+): HTMLElement | null {
+  const cards = [...root.querySelectorAll(WAITING)];
+  const after =
+    decided === null
+      ? undefined
+      : cards.find(
+          (card) =>
+            (decided.compareDocumentPosition(card) &
+              Node.DOCUMENT_POSITION_FOLLOWING) !==
+            0,
+        );
+  return (after ?? cards[0])?.querySelector<HTMLElement>("button") ?? null;
 }

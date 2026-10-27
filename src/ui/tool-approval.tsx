@@ -108,6 +108,7 @@ export function ToolApproval({
   const labels = { ...LABELS, ...labelOverrides };
   const titleId = useId();
   const inputTitleId = useId();
+  const outcomeId = useId();
   const awaiting = isAwaitingApproval(part);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const focusInside = useRef(false);
@@ -141,6 +142,9 @@ export function ToolApproval({
       ref={setRoot}
       data-slot="tool-approval"
       data-status={awaiting ? "pending" : part.approval?.status}
+      // Settled, the line is where focus lands, so it is named by what it says.
+      role={awaiting ? undefined : "group"}
+      aria-labelledby={awaiting ? undefined : outcomeId}
       tabIndex={-1}
       onFocus={(event) => {
         focusInside.current = true;
@@ -229,26 +233,36 @@ export function ToolApproval({
           </div>
         </section>
       ) : part.approval === undefined ? null : (
-        <ResolvedLine record={part.approval} name={part.name} labels={labels} />
+        <ResolvedLine
+          id={outcomeId}
+          record={part.approval}
+          name={part.name}
+          labels={labels}
+        />
       )}
     </div>
   );
 }
 
 function ResolvedLine({
+  id,
   record,
   name,
   labels,
 }: {
+  readonly id: string;
   readonly record: ToolApprovalRecord;
   readonly name: string;
   readonly labels: ToolApprovalLabels;
 }) {
   const { icon, text } = resolved(record, labels);
   return (
-    <p className="inline-flex max-w-full min-w-0 items-center gap-1.5 text-muted-foreground">
+    <p
+      id={id}
+      className="inline-flex max-w-full min-w-0 items-center gap-1.5 text-muted-foreground"
+    >
       {icon}
-      <span className="shrink-0">{text}</span>
+      <span className="shrink-0">{text}</span>{" "}
       <code className="min-w-0 truncate font-mono text-xs">{name}</code>
     </p>
   );
