@@ -96,6 +96,28 @@ SignalStory.storyName = "Signal";
 export const ToolStory = () => <Tool span={span("tool-shell", review)} />;
 ToolStory.storyName = "Tool";
 
+export const ClippedShellCommand = () => {
+  const command = [
+    "bun test src/parse.test.ts ".repeat(4).trimEnd(),
+    "echo done",
+  ].join("\n");
+  const shell = {
+    ...span("tool-shell", review),
+    input: JSON.stringify({ command }),
+  };
+  return (
+    <div className="max-w-md border border-border">
+      <div role="listbox" aria-label="Clipped shell command">
+        <Step span={shell} selected />
+      </div>
+      <div className="border-t border-border p-3">
+        <Tool span={shell} />
+      </div>
+    </div>
+  );
+};
+ClippedShellCommand.storyName = "Clipped shell command";
+
 export const ThinkingStory = () => <Thinking span={span("e3", editor)} />;
 ThinkingStory.storyName = "Thinking";
 

@@ -21,7 +21,7 @@ export function stepTitle(span: Span): string {
   if (span.contextChange !== undefined) return span.contextChange.summary;
   if (span.kind === "reasoning" && span.thinking !== undefined) {
     const line = span.thinking.split("\n")[0] ?? span.thinking;
-    return line.length > 88 ? `${line.slice(0, 85)}…` : line;
+    return clipCodePoints(line, 88, 85);
   }
   return span.name;
 }
@@ -32,9 +32,13 @@ export function compactionLine(compaction: Compaction): string {
 
 function clipLine(value: string): string {
   const first = value.split("\n")[0] ?? value;
-  const trimmed = first.trim();
-  if (trimmed.length <= 80) return trimmed;
-  return `${trimmed.slice(0, 77)}…`;
+  return clipCodePoints(first.trim(), 80, 77);
+}
+
+function clipCodePoints(value: string, whole: number, keep: number): string {
+  const points = Array.from(value);
+  if (points.length <= whole) return value;
+  return `${points.slice(0, keep).join("")}…`;
 }
 
 function whatItDid(span: Span): string | undefined {
