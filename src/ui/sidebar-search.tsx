@@ -29,17 +29,20 @@ export type SidebarSearchProps = Omit<
 export function SidebarSearch({
   onOpen,
   className,
+  disabled,
   ...props
 }: SidebarSearchProps) {
-  useCommandShortcut(onOpen);
+  const shortcutEnabled = disabled !== true;
+  useCommandShortcut(onOpen, shortcutEnabled);
   return (
     <div className="px-2">
       <button
         {...props}
         type="button"
+        disabled={disabled}
         data-slot="sidebar-search"
         aria-haspopup="dialog"
-        aria-keyshortcuts="Meta+K Control+K"
+        aria-keyshortcuts={shortcutEnabled ? "Meta+K Control+K" : undefined}
         onClick={onOpen}
         className={cn(
           "flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors",
@@ -57,9 +60,11 @@ export function SidebarSearch({
         <span className="min-w-0 flex-1 truncate text-left group-data-[collapsed=true]/sidebar:sr-only">
           Search
         </span>
-        <kbd className="shrink-0 font-mono text-[11px] text-muted-foreground group-data-[collapsed=true]/sidebar:sr-only">
-          Cmd+K
-        </kbd>
+        {shortcutEnabled ? (
+          <kbd className="shrink-0 font-mono text-[11px] text-muted-foreground group-data-[collapsed=true]/sidebar:sr-only">
+            Cmd+K
+          </kbd>
+        ) : null}
       </button>
     </div>
   );
