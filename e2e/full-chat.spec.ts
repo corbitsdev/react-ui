@@ -4,6 +4,13 @@ import { expect, test, type Page } from "@playwright/test";
 // static Storybook build the accessibility sweep also serves.
 const STORIES = "http://localhost:61000";
 
+/** Where the page clock starts when a test drives it. */
+const CLOCK_START = Date.parse("2026-03-04T12:00:00Z");
+/** The story replays an answer one frame every this many milliseconds. */
+const REPLAY_STEP_MS = 120;
+/** More frames than the answer takes to reach its call. */
+const MAX_REPLAY_STEPS = 20;
+
 const open = async (page: Page, story: "settle" | "stick") => {
   await page.goto(
     `${STORIES}/iframe.html?id=chat-full-chat--${story}&viewMode=story&globals=theme:light`,
@@ -50,6 +57,18 @@ for (const [story, decision, outcome] of [
     await expect(run.getByText(outcome)).toBeVisible();
   });
 }
+
+test("an answer's sources show as links under it", async ({ page }) => {
+  await open(page, "settle");
+  const sources = page
+    .getByRole("log", { name: "Conversation" })
+    .getByRole("list", { name: "Sources" });
+  await expect(sources).toHaveCount(1);
+  await expect(
+    sources.getByRole("link", { name: /Retry cap change/ }),
+  ).toHaveAttribute("href", "https://example.com/changes/retry-cap");
+  await expect(sources.locator("[data-slot='source']")).toHaveCount(2);
+});
 
 test("a send takes the attached file into the message and clears the box", async ({
   page,
@@ -124,31 +143,27 @@ test("a file sends on its own, with no text", async ({ page }) => {
 });
 
 test("Stop settles a call that was running as failed", async ({ page }) => {
+  // The answer replays on timers, and its call runs for a single frame. On
+  // the page's clock, held still once the story has loaded, that frame
+  // stays put until the test moves the clock on.
+  await page.clock.install({ time: CLOCK_START });
   await open(page, "settle");
+  await page.clock.pauseAt(CLOCK_START + 60_000);
   const message = page.getByRole("textbox", { name: "Message" });
   await message.fill("Check the runs");
   await message.press("Enter");
-  // The call runs for one frame of the replay, so Stop is pressed in the
-  // page the moment its live line names it.
-  await page.waitForFunction(
-    () => {
-      const trigger = document.querySelector(
-        "[data-item-id='answer-1'] [data-slot='activity-trigger']",
-      );
-      if (trigger?.textContent?.includes("runs__list…") !== true) return false;
-      document
-        .querySelector<HTMLButtonElement>(
-          "main [data-slot='prompt-input-submit']",
-        )
-        ?.click();
-      return true;
-    },
-    undefined,
-    { polling: "raf" },
-  );
 
   const answer = page.locator("[data-item-id='answer-1']");
   const trigger = answer.locator("[data-slot='activity-trigger']");
+  // One replay frame at a time until the live line names the running call.
+  for (let step = 0; step < MAX_REPLAY_STEPS; step += 1) {
+    await page.clock.runFor(REPLAY_STEP_MS);
+    if ((await trigger.textContent())?.includes("runs__list…") === true) break;
+  }
+  await expect(trigger).toContainText("runs__list…");
+  await page.getByRole("main").getByRole("button", { name: "Stop" }).click();
+  await page.clock.resume();
+
   await expect(trigger).toContainText("1 failed");
   await expect(answer.locator("[data-slot='message']")).toHaveAttribute(
     "data-status",

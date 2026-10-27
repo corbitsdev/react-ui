@@ -115,6 +115,7 @@ import {
   assistant,
   generatedImages,
   longChat,
+  shortChat,
   toolStorm,
   withThread,
   you,
@@ -157,12 +158,14 @@ function threadOf(sample: ConversationSample) {
 const sampleThread = threadOf(withThread);
 
 /**
- * The long history, then a thread, generated images and a tool storm that
- * ends on a call waiting for approval. The images sample's last turn is
- * still generating, so it is left out and the chat opens at rest.
+ * The long history, then a short exchange that cites its sources, a thread,
+ * generated images and a tool storm that ends on a call waiting for
+ * approval. The images sample's last turn is still generating, so it is
+ * left out and the chat opens at rest.
  */
 const RECENT = restamp(
   [
+    ...shortChat.messages,
     ...withThread.messages,
     ...generatedImages.messages.slice(0, 6),
     ...toolStorm.messages,
@@ -312,7 +315,12 @@ function settle(tool: PartTool, decision: ToolApprovalDecision): PartTool {
   };
   const { output: _output, ...rest } = tool;
   return decision.outcome === "approved"
-    ? { ...rest, status: "output-available", output: "Done", approval }
+    ? {
+        ...rest,
+        status: "output-available",
+        output: `Ran ${tool.name}`,
+        approval,
+      }
     : { ...rest, status: "output-denied", approval };
 }
 
@@ -467,7 +475,7 @@ function MessageParts({ message }: { readonly message: ConversationMessage }) {
               <GeneratedImages
                 key={group.key}
                 part={part}
-                onOpen={(image, opener) => openImage(part.id, image, opener)}
+                onOpen={(index, opener) => openImage(part.id, index, opener)}
               />
             );
           case "sources":
