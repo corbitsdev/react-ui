@@ -85,6 +85,7 @@ function onlyObserver(): FakeIntersectionObserver {
 
 type Mounted = {
   container: HTMLElement;
+  rerender: (node: ReactElement) => void;
   unmount: () => void;
 };
 
@@ -98,6 +99,7 @@ function render(node: ReactElement): Mounted {
   });
   return {
     container,
+    rerender: (node) => act(() => root.render(node)),
     unmount: () => {
       act(() => root.unmount());
       container.remove();
@@ -460,6 +462,30 @@ describe("ConversationMap", () => {
     });
     expect(mounted.container.querySelector("[role='tooltip']")).toBeNull();
     expect(second.hasAttribute("aria-describedby")).toBe(false);
+    mounted.unmount();
+  });
+
+  test("a focused tick whose turn goes keeps focus on the rail", () => {
+    const mounted = render(<Chat />);
+    act(() => tick(mounted.container, "First question").focus());
+    const rest = TURNS.slice(1);
+    mounted.rerender(
+      <Chat turns={rest} items={ITEMS.filter((id) => !id.startsWith("q1"))} />,
+    );
+    expect(document.activeElement?.getAttribute("aria-label")).toBe(
+      "Second question",
+    );
+    mounted.unmount();
+  });
+
+  test("a focused tick whose rail goes hands focus to the log", () => {
+    const mounted = render(<Chat />);
+    act(() => tick(mounted.container, "First question").focus());
+    mounted.rerender(<Chat turns={TURNS.slice(3)} items={["q4"]} />);
+    expect(
+      mounted.container.querySelector("[data-slot='conversation-map']"),
+    ).toBeNull();
+    expect(document.activeElement).toBe(scroller(mounted.container));
     mounted.unmount();
   });
 });

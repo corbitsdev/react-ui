@@ -13,6 +13,7 @@ import type { ComponentProps, KeyboardEvent } from "react";
 import { useReadingPosition } from "../hooks/use-reading-position.js";
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js";
 import { cn } from "../lib/utils.js";
+import { useConversation } from "./conversation.js";
 
 export type ConversationMapTurn = {
   /** The id of the `ConversationItem` that starts the turn. */
@@ -100,6 +101,7 @@ export function ConversationMap({
 }: ConversationMapProps) {
   const turnIds = useMemo(() => turns.map((turn) => turn.id), [turns]);
   const { currentId, visibleIds, jumpTo } = useReadingPosition(turnIds);
+  const { scrollContainer } = useConversation();
   const currentRef = useRef<HTMLButtonElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
   const placedRef = useRef(false);
@@ -143,6 +145,21 @@ export function ConversationMap({
     );
     placedRef.current = true;
   }, [currentId, hidden, reducedMotion]);
+
+  // The focused tick's turn left `turns` (a history window trimmed it, the
+  // host deleted it): its button is gone, focus fell to the body, and React
+  // reports no blur for it. Hand focus to the rail's tab stop, or to the log
+  // once the rail itself is gone.
+  useLayoutEffect(() => {
+    if (focusedId === null || turnIds.includes(focusedId)) return;
+    setFocusedId(null);
+    const active = document.activeElement;
+    if (active !== null && active !== document.body) return;
+    const stop = [
+      ...(railRef.current?.querySelectorAll<HTMLElement>(TICK) ?? []),
+    ].find((tick) => tick.tabIndex === 0);
+    (stop ?? scrollContainer())?.focus({ preventScroll: true });
+  }, [focusedId, turnIds, scrollContainer]);
 
   // A rail that shrinks (the host's layout, the window) can clip the current
   // tick: bring it back at once.
