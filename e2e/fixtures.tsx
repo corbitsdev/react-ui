@@ -799,6 +799,61 @@ function PromptToolbarScenario() {
   );
 }
 
+/** The toolbar inside an open Radix dialog, which records when it closes.
+ * "Open models" opens the model list the way a host would. */
+function PromptToolbarInDialog() {
+  const [value, setValue] = useState("");
+  const [modelOpen, setModelOpen] = useState(false);
+  const [open, setOpen] = useState(true);
+  const { log, record } = useEventLog();
+  return (
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) record("dialog-closed");
+        }}
+      >
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle>Ask</DialogTitle>
+          <PromptInput
+            value={value}
+            onValueChange={setValue}
+            onSubmit={() => record(`submit:${value}`)}
+            tokens={PROMPT_TOKENS}
+          >
+            <PromptInputSuggestions />
+            <PromptInputTextarea />
+            <PromptInputToolbar>
+              <PromptInputAddMenu
+                items={[
+                  {
+                    id: "files",
+                    label: "Add files",
+                    onSelect: () => record("add:files"),
+                  },
+                ]}
+              />
+              <PromptInputModelSelect
+                className="ms-auto"
+                models={[
+                  { id: "swift", name: "Swift 2", short: "Swift" },
+                  { id: "deep", name: "Deep 4", short: "Deep" },
+                ]}
+                open={modelOpen}
+                onOpenChange={setModelOpen}
+              />
+            </PromptInputToolbar>
+          </PromptInput>
+          <Button onClick={() => setModelOpen(true)}>Open models</Button>
+        </DialogContent>
+      </Dialog>
+      {log}
+    </>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -839,4 +894,5 @@ export const scenarios: Record<string, () => ReactNode> = {
   "prompt-input-chat-no-stop": () => <PromptChat stoppable={false} />,
   panel: () => <PanelScenario />,
   "prompt-input-toolbar": () => <PromptToolbarScenario />,
+  "prompt-input-toolbar-dialog": () => <PromptToolbarInDialog />,
 };

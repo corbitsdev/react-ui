@@ -3,6 +3,7 @@ import { act, type ReactNode, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
 import type { PromptToken } from "../lib/prompt-tokens.js";
+import { Dialog, DialogContent, DialogTitle } from "./dialog.js";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -51,6 +52,9 @@ function mount(node: ReactNode) {
     },
     all(selector: string): HTMLElement[] {
       return [...container.querySelectorAll<HTMLElement>(selector)];
+    },
+    rerender(next: ReactNode) {
+      act(() => root.render(next));
     },
     unmount() {
       act(() => root.unmount());
@@ -428,6 +432,35 @@ describe("PromptInputAddMenu", () => {
     view.unmount();
   });
 
+  test("an ArrowUp the host declined does not make its later open take focus", () => {
+    const asks: boolean[] = [];
+    function Host() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <PromptInputAddMenu
+            items={menuItems([])}
+            open={open}
+            onOpenChange={(next) => asks.push(next)}
+          />
+          <button type="button" data-host onClick={() => setOpen(true)}>
+            Open
+          </button>
+        </>
+      );
+    }
+    const view = mount(<Host />);
+    const trigger = view.query("[aria-haspopup='menu']");
+    act(() => trigger.focus());
+    press(trigger, "ArrowUp");
+    expect(asks).toEqual([true]);
+    expect(view.container.querySelector("[role='menu']")).toBeNull();
+    click(view.query("[data-host]"));
+    expect(view.container.querySelector("[role='menu']")).not.toBeNull();
+    expect(document.activeElement?.getAttribute("aria-haspopup")).toBe("menu");
+    view.unmount();
+  });
+
   test("choosing an item closes the menu, returns focus, then runs it", () => {
     const events: string[] = [];
     const view = mount(<PromptInputAddMenu items={menuItems(events)} />);
@@ -615,10 +648,13 @@ function Prompt({
   open,
   disabled = false,
   partsDisabled,
+  events,
 }: {
   readonly open?: "add" | "model";
   readonly disabled?: boolean;
   readonly partsDisabled?: boolean;
+  /** Records the popups' open changes and choices. */
+  readonly events?: string[];
 }) {
   const [value, setValue] = useState("");
   const own = partsDisabled === undefined ? {} : { disabled: partsDisabled };
@@ -636,13 +672,18 @@ function Prompt({
         <PromptInputAddMenu
           {...own}
           defaultOpen={open === "add"}
-          items={[{ id: "f", label: "Add files", onSelect: () => undefined }]}
+          onOpenChange={(next) => events?.push(`add:${next}`)}
+          items={[
+            { id: "f", label: "Add files", onSelect: () => events?.push("f") },
+          ]}
         />
         <PromptInputModeSelect {...own} modes={MODES} />
         <PromptInputModelSelect
           {...own}
           models={MODELS}
           defaultOpen={open === "model"}
+          onOpenChange={(next) => events?.push(`model:${next}`)}
+          onValueChange={(id) => events?.push(`model=${id}`)}
         />
         <PromptInputButton {...own} aria-label="Voice">
           v
@@ -666,6 +707,83 @@ const POPUPS = {
     trigger: "[data-slot='prompt-input-model-select'] [role='combobox']",
   },
 } as const;
+
+/** `Prompt` in a dialog that records its own open changes. The dialog
+ * renders in a portal, so its contents are queried from `document`. */
+function InDialog({
+  dialog,
+  open,
+}: {
+  readonly dialog: boolean[];
+  readonly open?: "add" | "model";
+}) {
+  const [isOpen, setOpen] = useState(true);
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={(next) => {
+        dialog.push(next);
+        setOpen(next);
+      }}
+    >
+      <DialogContent aria-describedby={undefined}>
+        <DialogTitle>Chat</DialogTitle>
+        <Prompt {...(open === undefined ? {} : { open })} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** A prompt in a dialog whose model list the host opens with a button. */
+function HostModelInDialog({ dialog }: { readonly dialog: boolean[] }) {
+  const [value, setValue] = useState("");
+  const [modelOpen, setModelOpen] = useState(false);
+  return (
+    <Dialog open onOpenChange={(next) => dialog.push(next)}>
+      <DialogContent aria-describedby={undefined}>
+        <DialogTitle>Chat</DialogTitle>
+        <PromptInput
+          value={value}
+          onValueChange={setValue}
+          onSubmit={() => undefined}
+          tokens={TOKENS}
+        >
+          <PromptInputSuggestions />
+          <PromptInputTextarea />
+          <PromptInputToolbar>
+            <PromptInputModelSelect
+              models={MODELS}
+              open={modelOpen}
+              onOpenChange={setModelOpen}
+            />
+          </PromptInputToolbar>
+        </PromptInput>
+        <button type="button" data-host onClick={() => setModelOpen(true)}>
+          Open models
+        </button>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function typeMention(textarea: HTMLTextAreaElement) {
+  const setValue = Object.getOwnPropertyDescriptor(
+    HTMLTextAreaElement.prototype,
+    "value",
+  )?.set;
+  act(() => {
+    textarea.focus();
+    setValue?.call(textarea, "@");
+    textarea.setSelectionRange(1, 1);
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
+
+function inDialog<T extends Element = HTMLElement>(selector: string): T {
+  const element = document.querySelector<T>(`[role='dialog'] ${selector}`);
+  if (element === null) throw new Error(`no ${selector}`);
+  return element;
+}
 
 describe("toolbar parts inside PromptInput", () => {
   for (const which of ["add", "model"] as const) {
@@ -726,6 +844,106 @@ describe("toolbar parts inside PromptInput", () => {
     expect(document.activeElement).toBe(trigger);
     view.unmount();
   });
+
+  test("Escape inside the add menu closes the menu, not an enclosing dialog", () => {
+    const dialog: boolean[] = [];
+    const view = mount(<InDialog dialog={dialog} />);
+    const trigger = inDialog("[aria-haspopup='menu']");
+    click(trigger);
+    const item = inDialog("[role='menuitem']");
+    expect(document.activeElement).toBe(item);
+    press(item, "Escape");
+    expect(dialog).toEqual([]);
+    expect(document.querySelector("[role='dialog'] [role='menu']")).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    view.unmount();
+  });
+
+  test("Escape on an open select closes the list, not an enclosing dialog", () => {
+    const dialog: boolean[] = [];
+    const view = mount(<InDialog dialog={dialog} />);
+    const trigger = inDialog(POPUPS.model.trigger);
+    act(() => trigger.focus());
+    click(trigger);
+    expect(
+      document.querySelector("[role='dialog'] [role='listbox']"),
+    ).not.toBeNull();
+    press(trigger, "Escape");
+    expect(dialog).toEqual([]);
+    expect(
+      document.querySelector("[role='dialog'] [role='listbox']"),
+    ).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    view.unmount();
+  });
+
+  for (const which of ["add", "model"] as const) {
+    test(`Escape from the textarea closes the host-opened ${which} popup, not an enclosing dialog`, () => {
+      const dialog: boolean[] = [];
+      const view = mount(<InDialog dialog={dialog} open={which} />);
+      const textarea = inDialog<HTMLTextAreaElement>("textarea");
+      act(() => textarea.focus());
+      const popup = `[role='dialog'] ${POPUPS[which].popup}`;
+      expect(document.querySelector(popup)).not.toBeNull();
+      press(textarea, "Escape");
+      expect(dialog).toEqual([]);
+      expect(document.querySelector(popup)).toBeNull();
+      expect(document.activeElement).toBe(textarea);
+      view.unmount();
+    });
+  }
+
+  for (const first of ["popup", "list"] as const) {
+    test(`in a dialog, with the ${first} opened first, Escape closes the list, then the popup, and never the dialog`, () => {
+      const dialog: boolean[] = [];
+      const view = mount(<HostModelInDialog dialog={dialog} />);
+      const textarea = inDialog<HTMLTextAreaElement>("textarea");
+      const openPopup = () => click(inDialog("[data-host]"));
+      if (first === "popup") openPopup();
+      typeMention(textarea);
+      if (first === "list") openPopup();
+      const list = "[role='dialog'] [data-slot='prompt-input-suggestions']";
+      const popup = "[role='dialog'] [role='listbox'][aria-label='Model']";
+      expect(document.querySelector(list)).not.toBeNull();
+      expect(document.querySelector(popup)).not.toBeNull();
+
+      press(textarea, "Escape");
+      expect(dialog).toEqual([]);
+      expect(document.querySelector(list)).toBeNull();
+      expect(document.querySelector(popup)).not.toBeNull();
+
+      press(textarea, "Escape");
+      expect(dialog).toEqual([]);
+      expect(document.querySelector(popup)).toBeNull();
+      expect(document.activeElement).toBe(textarea);
+      view.unmount();
+    });
+  }
+
+  for (const which of ["add", "model"] as const) {
+    test(`the ${which} popup, open from the start in a disabled prompt, is not shown`, () => {
+      const events: string[] = [];
+      const view = mount(<Prompt open={which} disabled events={events} />);
+      expect(shown(view, POPUPS[which].popup)).toBe(false);
+      expect(
+        view.query(POPUPS[which].trigger).getAttribute("aria-expanded"),
+      ).toBe("false");
+      expect(events.filter((event) => !event.includes(":"))).toEqual([]);
+      view.unmount();
+    });
+
+    test(`disabling the prompt closes the open ${which} popup for good`, () => {
+      const events: string[] = [];
+      const view = mount(<Prompt open={which} events={events} />);
+      expect(shown(view, POPUPS[which].popup)).toBe(true);
+      view.rerender(<Prompt open={which} disabled events={events} />);
+      expect(shown(view, POPUPS[which].popup)).toBe(false);
+      expect(events).toEqual([`${which}:false`]);
+      view.rerender(<Prompt open={which} events={events} />);
+      expect(shown(view, POPUPS[which].popup)).toBe(false);
+      view.unmount();
+    });
+  }
 
   test("the parts follow PromptInput's disabled", () => {
     const view = mount(<Prompt disabled />);

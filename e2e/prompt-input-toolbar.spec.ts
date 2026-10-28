@@ -201,3 +201,59 @@ test("toolbar buttons never submit the prompt", async ({ page }) => {
   await expect(events(page)).toHaveText("voice");
   await expect(message(page)).toHaveValue("draft");
 });
+
+test.describe("inside a dialog", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/prompt-input-toolbar-dialog");
+  });
+
+  test("Escape in the add menu closes the menu, not the dialog", async ({
+    page,
+  }) => {
+    const dialog = page.getByRole("dialog", { name: "Ask" });
+    await add(page).click();
+    const menu = page.getByRole("menu", { name: "Add" });
+    await expect(
+      page.getByRole("menuitem", { name: "Add files" }),
+    ).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeHidden();
+    await expect(add(page)).toBeFocused();
+    await expect(dialog).toBeVisible();
+
+    await model(page).focus();
+    await page.keyboard.press("Enter");
+    const list = page.getByRole("listbox", { name: "Model" });
+    await expect(list).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(list).toBeHidden();
+    await expect(model(page)).toBeFocused();
+    await expect(dialog).toBeVisible();
+  });
+
+  test("beside the suggestion list, Escape closes the list, then a host-opened popup, then the dialog", async ({
+    page,
+  }) => {
+    const dialog = page.getByRole("dialog", { name: "Ask" });
+    const models = page.getByRole("listbox", { name: "Model" });
+    const mentions = page.getByRole("listbox", { name: "Mentions" });
+    await page.getByRole("button", { name: "Open models" }).click();
+    await expect(models).toBeVisible();
+    await message(page).pressSequentially("@a");
+    await expect(mentions).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(mentions).toBeHidden();
+    await expect(models).toBeVisible();
+    await expect(dialog).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(models).toBeHidden();
+    await expect(message(page)).toBeFocused();
+    await expect(dialog).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(events(page)).toHaveText("dialog-closed");
+  });
+});

@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, ChevronDown, Plus, Reply, X } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type * as React from "react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";
@@ -41,12 +41,17 @@ function stepIndex(
 }
 
 /**
- * While `open`, Escape pressed with focus outside `rootRef` (in the textarea,
- * say, beside a popup the host opened) closes the popup and leaves focus
- * where it is. It listens in the bubble phase and skips a handled Escape, so
- * the suggestion list, and the popup's own keys, claim theirs first.
+ * While `open`, claims Escape for the popup so that one Escape closes only
+ * the popup, not an enclosing dialog as well. A dialog dismisses on Escape
+ * from a capture listener on the document unless the event is already
+ * prevented, so this prevents it earlier, in the window's capture phase.
+ * Escape pressed inside `rootRef` is then the popup's own keys' to close.
+ * Escape pressed outside it (in the textarea, say, beside a popup the host
+ * opened) closes the popup here and leaves focus where it is, unless the
+ * enclosing `PromptInput`'s suggestion list is showing: that Escape is the
+ * list's, so it is left alone.
  */
-function useCloseOnEscapeOutside(
+function useClaimEscape(
   open: boolean,
   rootRef: React.RefObject<HTMLElement | null>,
   setOpen: (open: boolean) => void,
@@ -54,15 +59,47 @@ function useCloseOnEscapeOutside(
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
+      const root = rootRef.current;
+      if (event.key !== "Escape" || event.defaultPrevented || root === null) {
+        return;
+      }
       const inside =
-        event.target instanceof Node &&
-        rootRef.current?.contains(event.target) === true;
+        event.target instanceof Node && root.contains(event.target);
+      if (!inside) {
+        const list = root
+          .closest("[data-slot=prompt-input]")
+          ?.querySelector("[data-slot=prompt-input-suggestions]");
+        if (list !== null && list !== undefined) return;
+      }
+      event.preventDefault();
       if (!inside) setOpen(false);
     };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [open, rootRef, setOpen]);
+}
+
+/**
+ * What a popup shows of its `open` state: closed while `disabled`, whatever
+ * its owner holds, so a disabled part offers nothing to choose. Turning
+ * disabled while open closes it for the owner too, so it stays closed once
+ * the part is enabled again.
+ */
+function useClosedWhileDisabled(
+  open: boolean,
+  disabled: boolean,
+  setOpen: (open: boolean) => void,
+): boolean {
+  // The latest `setOpen`, which is new on every render of a popup the owner
+  // controls, so the owner is asked once per change rather than each render.
+  const setOpenRef = useRef(setOpen);
+  useLayoutEffect(() => {
+    setOpenRef.current = setOpen;
+  });
+  useEffect(() => {
+    if (disabled && open) setOpenRef.current(false);
+  }, [disabled, open]);
+  return open && !disabled;
 }
 
 /** Open state a parent may own, as on every popup here. */
@@ -190,15 +227,19 @@ export function PromptInputAddMenu({
     onOpenChange,
     closeOnEscape: false,
   });
-  const { open, setOpen, rootRef, triggerRef, close } = popover;
-  useCloseOnEscapeOutside(open, rootRef, setOpen);
+  const { setOpen, rootRef, triggerRef, close } = popover;
   const boxDisabled = usePromptInputDisabled();
   const disabled = disabledProp ?? boxDisabled;
+  const open = useClosedWhileDisabled(popover.open, disabled, setOpen);
+  useClaimEscape(open, rootRef, setOpen);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   // Set only when the person opens the menu from its trigger, so a menu that
   // is open from the start (or opened by the host) does not take focus.
-  const focusOnOpen = useRef<"first" | "last" | null>(null);
+  // Dropped when the owner does not open the menu at once, so the owner's
+  // own later open does not take focus either.
+  const [focusOnOpen, setFocusOnOpen] = useState<"first" | "last" | null>(null);
+  if (focusOnOpen !== null && !open) setFocusOnOpen(null);
 
   function enabledItems(): HTMLElement[] {
     const menu = menuRef.current;
@@ -216,18 +257,15 @@ export function PromptInputAddMenu({
   }
 
   useEffect(() => {
-    const which = focusOnOpen.current;
-    if (!open || which === null) return;
-    focusOnOpen.current = null;
-    focusItem(which);
-  }, [open]);
+    if (open && focusOnOpen !== null) focusItem(focusOnOpen);
+  }, [open, focusOnOpen]);
 
   function openOn(which: "first" | "last") {
     if (open) {
       focusItem(which);
       return;
     }
-    focusOnOpen.current = which;
+    setFocusOnOpen(which);
     setOpen(true);
   }
 
@@ -434,13 +472,17 @@ function OptionSelect({
           },
     name: slot,
   });
-  const { open, setOpen, rootRef, triggerRef, close } = useDismissablePopover<
-    HTMLDivElement,
-    HTMLButtonElement
-  >({ open: openProp, defaultOpen, onOpenChange, closeOnEscape: false });
-  useCloseOnEscapeOutside(open, rootRef, setOpen);
+  const popover = useDismissablePopover<HTMLDivElement, HTMLButtonElement>({
+    open: openProp,
+    defaultOpen,
+    onOpenChange,
+    closeOnEscape: false,
+  });
+  const { setOpen, rootRef, triggerRef, close } = popover;
   const boxDisabled = usePromptInputDisabled();
   const disabled = disabledProp ?? boxDisabled;
+  const open = useClosedWhileDisabled(popover.open, disabled, setOpen);
+  useClaimEscape(open, rootRef, setOpen);
   const listId = useId();
   const [activeId, setActiveId] = useState<string | undefined>(undefined);
   // However the list closed (a press outside, the host), the next open
