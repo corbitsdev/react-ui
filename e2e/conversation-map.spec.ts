@@ -1,7 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const container = (page: Page) =>
-  page.locator("[data-slot='conversation-content']");
+import {
+  container,
+  offsetOf,
+  settled,
+  view,
+  wheel,
+} from "./conversation-helpers.js";
 
 const tick = (page: Page, name: string) =>
   page
@@ -11,34 +16,7 @@ const tick = (page: Page, name: string) =>
 const current = (page: Page) =>
   page.locator("[data-slot='conversation-map-tick'][aria-current='location']");
 
-const scrollTop = (page: Page) =>
-  container(page).evaluate((element) => element.scrollTop);
-
-/** Waits for the view to stop moving (a glide or a wheel scroll to land). */
-const settled = async (page: Page) => {
-  let previous = Number.NaN;
-  await expect
-    .poll(
-      async () => {
-        const now = await scrollTop(page);
-        const still = now === previous;
-        previous = now;
-        return still;
-      },
-      { intervals: [100] },
-    )
-    .toBe(true);
-};
-
-/** How far an item's top sits below the top of the view. */
-const offsetOf = (page: Page, id: string) =>
-  container(page).evaluate((element, itemId) => {
-    const item = element.querySelector(`[data-testid='${itemId}']`);
-    if (item === null) throw new Error(`no item ${itemId}`);
-    return (
-      item.getBoundingClientRect().top - element.getBoundingClientRect().top
-    );
-  }, id);
+const scrollTop = async (page: Page) => (await view(page)).scrollTop;
 
 /** The turn whose question last crossed a line a third of the way down. */
 const turnOnReadingLine = (page: Page) =>
@@ -54,14 +32,6 @@ const turnOnReadingLine = (page: Page) =>
     }
     return reading;
   });
-
-const wheel = async (page: Page, deltaY: number) => {
-  const box = await container(page).boundingBox();
-  if (box === null) throw new Error("expected the conversation on screen");
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.wheel(0, deltaY);
-  await settled(page);
-};
 
 /** Whether the rail overflows, has scrolled, and shows the current tick. */
 const railState = (page: Page) =>
