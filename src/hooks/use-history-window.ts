@@ -68,20 +68,20 @@ function startIndex(
   windowSize: number,
   previous: readonly { readonly id: string }[],
 ): number {
-  const latest = Math.max(0, items.length - windowSize);
   if (start.kind === "latest") {
     const end = items.findIndex((item) => item.id === start.through);
-    return end === -1 ? latest : Math.max(0, end + 1 - windowSize);
+    if (end !== -1) return Math.max(0, end + 1 - windowSize);
+  } else {
+    const at = items.findIndex((item) => item.id === start.id);
+    if (at !== -1) return at;
   }
-  const at = items.findIndex((item) => item.id === start.id);
-  if (at !== -1) return at;
-  // The pinned item is gone (deleted, or its id replaced): start at the
-  // first item of the last window that still exists, so nothing above the
-  // reader goes with it.
+  // The item the start is kept by is gone (deleted, or its id replaced):
+  // start at the first item of the last window that still exists, so nothing
+  // above the reader goes with it. At the bottom, the next commit trims back.
   const ids = new Set(items.map((item) => item.id));
   const kept = previous.find((item) => ids.has(item.id));
   return kept === undefined
-    ? latest
+    ? Math.max(0, items.length - windowSize)
     : items.findIndex((item) => item.id === kept.id);
 }
 

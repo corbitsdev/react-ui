@@ -239,6 +239,31 @@ describe("useHistoryWindow with in-memory history", () => {
     expect(result.current.items).toHaveLength(122);
   });
 
+  test("an id swapped at the end as the reader leaves removes nothing", async () => {
+    const harness = mount({ items: rows(0, 300) });
+    const { result } = harness;
+    await harness.returnToBottom();
+    harness.leaveBottomUnseen();
+    // The last item's id is replaced (an optimistic id swapped for the
+    // server's) and a reply appended, in one update.
+    const swapped = [...rows(0, 299), { id: "r299-server" }, { id: "r300" }];
+    harness.update({ items: swapped });
+    expect(first(result.current)).toBe("r180");
+
+    // The frame then sees the reader's scroll and freezes the window there.
+    await nextFrame();
+    harness.update({ items: [...swapped, { id: "r301" }] });
+    expect(first(result.current)).toBe("r180");
+  });
+
+  test("an id swapped at the end at the bottom still slides the window", () => {
+    const harness = mount({ items: rows(0, 300) });
+    const swapped = [...rows(0, 299), { id: "r299-server" }, { id: "r300" }];
+    harness.update({ items: swapped });
+    expect(first(harness.result.current)).toBe("r181");
+    expect(harness.result.current.items).toHaveLength(120);
+  });
+
   test("a removed start item keeps the rest of the window", async () => {
     const harness = mount({ items: rows(0, 300) });
     await harness.leaveBottom();
