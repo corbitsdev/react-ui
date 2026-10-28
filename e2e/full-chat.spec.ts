@@ -162,6 +162,9 @@ test("Stop settles a call that was running as failed", async ({ page }) => {
   }
   await expect(trigger).toContainText("runs__list…");
   await page.getByRole("main").getByRole("button", { name: "Stop" }).click();
+  // With the clock still held, move it on by that many frames again. A
+  // frame still queued after Stop would land now and undo the failed call.
+  await page.clock.runFor(REPLAY_STEP_MS * MAX_REPLAY_STEPS);
   await page.clock.resume();
 
   await expect(trigger).toContainText("1 failed");
@@ -188,6 +191,13 @@ test("a reply in the thread tab adds to the count under its parent", async ({
   const reply = page.getByRole("textbox", { name: "Reply" });
   await reply.fill("Add owners to the follow-ups");
   await reply.press("Enter");
-  // The reply and the answer that streams in after it.
+  // The count reaches 4 as soon as the answer's first, empty frame lands,
+  // so wait for the answer's text. The count then shows the final frame
+  // took the streaming frame's place rather than adding a reply.
+  await expect(
+    page
+      .getByRole("tabpanel")
+      .getByText("Added it to the follow-ups, with an owner and a due date."),
+  ).toBeVisible();
   await expect(log.getByRole("button", { name: /4 replies/ })).toBeVisible();
 });
