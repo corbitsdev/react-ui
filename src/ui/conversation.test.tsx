@@ -643,32 +643,41 @@ describe("reader attribution and scroll listeners", () => {
   });
 
   test("scrolls after the momentum cap are not the reader's", async () => {
-    const { mounted, element, current } = mountPolicy("stick");
-    giveGeometry(element, 10_000, 500);
-    element.scrollTop = 9_500;
-    const seen: { at: number; byReader: boolean }[] = [];
-    current().subscribeScroll((snapshot) =>
-      seen.push({ at: performance.now(), byReader: snapshot.byReader }),
-    );
-    await nextFrame();
-
-    flick(element, 9_000);
-    const lifted = performance.now();
-    let top = 9_000;
-    while (performance.now() - lifted < 2_600) {
-      await sleep(100);
-      top -= 10;
-      element.scrollTop = top;
-      element.dispatchEvent(new Event("scroll"));
+    // A clock the test moves, so a slow machine can't stretch the gap
+    // between two scrolls past the gesture's quiet window.
+    let now = 0;
+    const originalNow = performance.now.bind(performance);
+    performance.now = () => now;
+    try {
+      const { mounted, element, current } = mountPolicy("stick");
+      giveGeometry(element, 10_000, 500);
+      element.scrollTop = 9_500;
+      const seen: { at: number; byReader: boolean }[] = [];
+      current().subscribeScroll((snapshot) =>
+        seen.push({ at: now, byReader: snapshot.byReader }),
+      );
       await nextFrame();
+
+      flick(element, 9_000);
+      const lifted = now;
+      let top = 9_000;
+      while (now - lifted < 2_600) {
+        now += 100;
+        top -= 10;
+        element.scrollTop = top;
+        element.dispatchEvent(new Event("scroll"));
+        await nextFrame();
+      }
+      const early = seen.filter(({ at }) => at > lifted && at - lifted < 2_000);
+      const late = seen.filter(({ at }) => at - lifted > 2_000);
+      expect(early).toHaveLength(19);
+      expect(early.every(({ byReader }) => byReader)).toBe(true);
+      expect(late).toHaveLength(6);
+      expect(late.every(({ byReader }) => !byReader)).toBe(true);
+      mounted.unmount();
+    } finally {
+      performance.now = originalNow;
     }
-    const early = seen.filter(({ at }) => at > lifted && at - lifted < 1_800);
-    const late = seen.filter(({ at }) => at - lifted > 2_200);
-    expect(early.length).toBeGreaterThan(10);
-    expect(early.every(({ byReader }) => byReader)).toBe(true);
-    expect(late.length).toBeGreaterThan(0);
-    expect(late.every(({ byReader }) => !byReader)).toBe(true);
-    mounted.unmount();
   });
 
   test("a glide started inside the reader's window is not the reader's", async () => {
