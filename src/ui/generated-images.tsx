@@ -445,7 +445,8 @@ export function GeneratedImage({
     <img
       ref={imageRef}
       src={src}
-      alt={onOpen === undefined ? (image.alt ?? "") : ""}
+      // With `onOpen` the button carries the name.
+      alt={onOpen === undefined ? label : ""}
       width={image.width}
       height={image.height}
       decoding="async"
@@ -478,7 +479,7 @@ export function GeneratedImage({
       >
         {broken ? (
           <span className="absolute inset-0 grid place-items-center p-3 text-center text-xs text-muted-foreground">
-            {`Couldn't load ${image.alt ?? "this image"}`}
+            {`Couldn't load ${label}`}
           </span>
         ) : onOpen === undefined ? (
           picture

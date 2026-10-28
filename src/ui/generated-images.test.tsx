@@ -308,6 +308,27 @@ describe("GeneratedImages", () => {
     ]);
     view.unmount();
   });
+
+  test("without onOpen, an image without alt keeps the prompt's name", () => {
+    const { alt: _alt, ...plain } = image(1);
+    const view = render(
+      <GeneratedImages
+        part={{
+          ...DONE,
+          // A base64 that is not an image cannot be shown.
+          images: [plain, { ...plain, id: "x", mediaType: "text/html" }],
+        }}
+      />,
+    );
+    const pictures = [...view.container.querySelectorAll("img")];
+    expect(pictures.map((picture) => picture.alt)).toEqual([
+      "Cover for the quarterly review deck, image 1",
+    ]);
+    expect(slots(view.container, "generated-image")[1]?.textContent).toContain(
+      "Couldn't load Cover for the quarterly review deck, image 2",
+    );
+    view.unmount();
+  });
 });
 
 describe("conversationImageSrc", () => {
