@@ -1,4 +1,4 @@
-import { act, memo, useEffect } from "react";
+import { act, createRef, memo, useEffect } from "react";
 import type { ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
@@ -452,6 +452,44 @@ describe("ConversationContent", () => {
       ),
     ).not.toBeNull();
     mounted.unmount();
+  });
+
+  test("the log, an item and the scroll button forward a host ref", async () => {
+    // React 18 drops `ref` from a function component's props: only a
+    // forwardRef component receives it there.
+    for (const part of [
+      ConversationContent,
+      ConversationItem,
+      ConversationScrollButton,
+    ]) {
+      expect(part.$$typeof).toBe(Symbol.for("react.forward_ref"));
+    }
+    const log = createRef<HTMLDivElement>();
+    const item = createRef<HTMLDivElement>();
+    const button = createRef<HTMLButtonElement>();
+    const mounted = render(
+      <Conversation>
+        <ConversationContent ref={log}>
+          <ConversationItem ref={item} itemId="a">
+            a
+          </ConversationItem>
+        </ConversationContent>
+        <ConversationScrollButton ref={button} />
+      </Conversation>,
+    );
+    const element = scroller(mounted.container);
+    expect(log.current === element).toBe(true);
+    expect(item.current?.dataset.itemId).toBe("a");
+    expect(button.current).toBeNull();
+
+    giveGeometry(element, 2000, 500);
+    wheel(element, 0);
+    await nextFrame();
+    expect(button.current?.dataset.slot).toBe("conversation-scroll-button");
+    mounted.unmount();
+    expect(log.current).toBeNull();
+    expect(item.current).toBeNull();
+    expect(button.current).toBeNull();
   });
 
   test("names the log Conversation unless the host names it", () => {

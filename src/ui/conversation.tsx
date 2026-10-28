@@ -3,6 +3,7 @@
 import { ArrowDown } from "lucide-react";
 import {
   createContext,
+  forwardRef,
   useCallback,
   useContext,
   useLayoutEffect,
@@ -874,14 +875,19 @@ export type ConversationContentProps = ComponentProps<"div">;
  * an empty block after the content: the room a settled item needs to reach
  * the top of the view.
  */
-export function ConversationContent({
-  "aria-label": label,
-  "aria-labelledby": labelledBy,
-  className,
-  children,
+export const ConversationContent = forwardRef<
+  HTMLDivElement,
+  ConversationContentProps
+>(function ConversationContent(
+  {
+    "aria-label": label,
+    "aria-labelledby": labelledBy,
+    className,
+    children,
+    ...props
+  },
   ref,
-  ...props
-}: ConversationContentProps) {
+) {
   const engine = useEngine("ConversationContent");
   const scrollerRef = useRef<HTMLDivElement>(null);
   const columnRef = useRef<HTMLDivElement>(null);
@@ -928,7 +934,7 @@ export function ConversationContent({
       <div ref={spacerRef} aria-hidden data-slot="conversation-reserve" />
     </div>
   );
-}
+});
 
 export type ConversationItemProps = ComponentProps<"div"> & {
   /** The registry key: what `scrollToItem`, `sentId` and anchors refer to. */
@@ -939,11 +945,10 @@ export type ConversationItemProps = ComponentProps<"div"> & {
  * One entry in the conversation, registered by `itemId` so the conversation
  * can find it, settle it and anchor on it. Wrap whatever the host renders.
  */
-export function ConversationItem({
-  itemId,
-  ref,
-  ...props
-}: ConversationItemProps) {
+export const ConversationItem = forwardRef<
+  HTMLDivElement,
+  ConversationItemProps
+>(function ConversationItem({ itemId, ...props }, ref) {
   const engine = useEngine("ConversationItem");
   // React 19 runs the cleanup `register` returns. React 18 ignores that
   // return and detaches by calling the ref with null, so release there too.
@@ -968,7 +973,7 @@ export function ConversationItem({
       {...props}
     />
   );
-}
+});
 
 export type ConversationScrollButtonProps = ComponentProps<"button">;
 
@@ -977,20 +982,28 @@ export type ConversationScrollButtonProps = ComponentProps<"button">;
  * it. Focus moves to the conversation as it does, and whenever the button
  * leaves while it holds focus, however the end came into view.
  */
-export function ConversationScrollButton(props: ConversationScrollButtonProps) {
+export const ConversationScrollButton = forwardRef<
+  HTMLButtonElement,
+  ConversationScrollButtonProps
+>(function ConversationScrollButton(props, ref) {
   const { atBottom } = useConversation();
-  return atBottom ? null : <ScrollToLatest {...props} />;
-}
+  return atBottom ? null : <ScrollToLatest ref={ref} {...props} />;
+});
 
 /** The button itself, mounted only while the end is out of view. */
-function ScrollToLatest({
-  "aria-label": label = "Scroll to latest",
-  className,
-  children,
-  onClick,
+const ScrollToLatest = forwardRef<
+  HTMLButtonElement,
+  ConversationScrollButtonProps
+>(function ScrollToLatest(
+  {
+    "aria-label": label = "Scroll to latest",
+    className,
+    children,
+    onClick,
+    ...props
+  },
   ref,
-  ...props
-}: ConversationScrollButtonProps) {
+) {
   const engine = useEngine("ConversationScrollButton");
   const buttonRef = useRef<HTMLButtonElement>(null);
   const ownButton = useCallback((node: HTMLButtonElement | null) => {
@@ -1026,7 +1039,7 @@ function ScrollToLatest({
       {children ?? <ArrowDown aria-hidden />}
     </button>
   );
-}
+});
 
 export type ConversationEmptyStateProps = ComponentProps<"div"> & {
   readonly title?: string;
