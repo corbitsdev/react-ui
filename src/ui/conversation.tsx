@@ -84,12 +84,22 @@ export type ConversationScrollSnapshot = {
   readonly byReader: boolean;
 };
 
+export type ConversationScrollToItemOptions = {
+  /** Called once when the glide ends: `true` when it reached the item,
+   * `false` when it never started (no such item mounted) or was cut short by
+   * the reader's input or scroll, or by another glide. */
+  readonly onEnd?: ((arrived: boolean) => void) | undefined;
+};
+
 export type ConversationContextValue = {
   /** The end of the content is in view (within a few pixels). */
   readonly atBottom: boolean;
   readonly items: ConversationItems;
   /** Glides an item's top to the top of the view. */
-  readonly scrollToItem: (id: string) => void;
+  readonly scrollToItem: (
+    id: string,
+    options?: ConversationScrollToItemOptions,
+  ) => void;
   /** Glides to the end of the content. */
   readonly scrollToEnd: () => void;
   /** Records which items are in view and where, right now; call it just
@@ -202,6 +212,21 @@ function isEditable(target: EventTarget | null): boolean {
   );
 }
 
+/** Controls that Space activates instead of scrolling the log they sit in.
+ * Their other scroll keys (arrows, Page, Home, End) still scroll it. */
+const SPACE_ACTIVATED =
+  "button, summary, [role=button], [role=checkbox], [role=switch], [role=radio], [role=tab], [role=menuitem], [role=option]";
+
+/** The key would scroll the focused log, rather than act on its target. */
+function isScrollKey(event: KeyboardEvent): boolean {
+  if (!SCROLL_KEYS.has(event.key) || isEditable(event.target)) return false;
+  return !(
+    event.key === " " &&
+    event.target instanceof Element &&
+    event.target.matches(SPACE_ACTIVATED)
+  );
+}
+
 /**
  * The scrolling machinery, outside React: it reads and writes the DOM on
  * scroll, resize and animation frames, where re-rendering would be both too
@@ -240,6 +265,8 @@ function createConversationEngine() {
   let settledId: string | null = null;
   let glideToken = 0;
   let gliding = false;
+  /** The glide in flight's `onEnd`, called once as it ends. */
+  let glideEnd: ((arrived: boolean) => void) | undefined;
   /** Where the glide in flight eases from; moves with the content under it. */
   let glideStart = 0;
   let frame = 0;
@@ -416,25 +443,39 @@ function createConversationEngine() {
     });
   };
 
+  const endGlide = (arrived: boolean) => {
+    const onEnd = glideEnd;
+    glideEnd = undefined;
+    onEnd?.(arrived);
+  };
+
   const cancelGlide = () => {
     glideToken += 1;
     gliding = false;
+    endGlide(false);
   };
 
   /** One eased motion towards a target measured afresh every frame; instant
    * under reduced motion. The reader's input or scroll, or another glide,
    * cancels it. Content that moves above the view mid-glide carries the glide
-   * with it (`rebase`). */
-  const glide = (target: () => number | null) => {
-    if (scroller === null) return;
-    const token = glideToken + 1;
-    glideToken = token;
+   * with it (`rebase`). `onEnd` hears whether it arrived. */
+  const glide = (
+    target: () => number | null,
+    onEnd?: (arrived: boolean) => void,
+  ) => {
+    if (scroller === null) {
+      onEnd?.(false);
+      return;
+    }
+    cancelGlide();
+    const token = glideToken;
     const first = target();
     if (first === null) {
-      gliding = false;
+      onEnd?.(false);
       return;
     }
     gliding = true;
+    glideEnd = onEnd;
     const arrive = () => {
       if (token !== glideToken) return;
       gliding = false;
@@ -443,6 +484,7 @@ function createConversationEngine() {
       }
       capture();
       scheduleAtBottom();
+      endGlide(true);
     };
     const start = scroller.scrollTop;
     if (reducedMotion || Math.abs(first - start) <= 1) {
@@ -508,21 +550,25 @@ function createConversationEngine() {
       capture();
       return;
     }
-    // The layout moved the view. A scroll right after a resize is the
-    // resize's clamp, already corrected by the resize callback, and must not
-    // become the anchor; following, the end wins over it, and over any scroll
-    // that stays at the end. Any other is the page moving the view on purpose
-    // (find in page, focus) and is kept: away from the end, it breaks a follow
-    // as the reader's own scroll would.
-    const afterResize = now - resizedAt <= 100;
+    // The layout moved the view. Following, the end wins over any scroll
+    // that stays at the end. A scroll right after a resize that lands at the
+    // last reachable position is the resize's clamp (with the browser's own
+    // anchoring off, a resize moves the view no other way), already handled
+    // by the resize callback, and must not become the anchor. Any other is
+    // the page moving the view on purpose (find in page, focus), even
+    // mid-stream, and is kept: away from the end, it breaks a follow as the
+    // reader's own scroll would.
     if (following) {
-      if (afterResize || distance() <= CONVERSATION_END_THRESHOLD) {
+      if (distance() <= CONVERSATION_END_THRESHOLD) {
         write(endTop());
         return;
       }
       following = false;
     }
-    if (!afterResize) capture();
+    const clamped =
+      now - resizedAt <= 100 &&
+      scroller.scrollTop >= scroller.scrollHeight - scroller.clientHeight - 1;
+    if (!clamped) capture();
   };
 
   const onResize = () => {
@@ -533,7 +579,7 @@ function createConversationEngine() {
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
-    if (SCROLL_KEYS.has(event.key) && !isEditable(event.target)) openGesture();
+    if (isScrollKey(event)) openGesture();
   };
 
   const onPointerDown = (event: PointerEvent) => {
@@ -653,9 +699,9 @@ function createConversationEngine() {
       updateReserve();
       glide(() => itemTarget(id));
     },
-    scrollToItem(id: string) {
+    scrollToItem(id: string, options?: ConversationScrollToItemOptions) {
       following = false;
-      glide(() => itemTarget(id));
+      glide(() => itemTarget(id), options?.onEnd);
     },
     scrollToEnd() {
       glide(endTop);

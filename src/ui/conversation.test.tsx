@@ -1,7 +1,7 @@
 import { act, memo, useEffect } from "react";
 import type { ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
 import {
   Conversation,
@@ -19,6 +19,7 @@ import {
   ConversationDivider,
   ConversationNotice,
 } from "./conversation-divider.js";
+import { clampScrollTop } from "../lib/conversation-scroll.js";
 
 type Mounted = {
   container: HTMLElement;
@@ -141,6 +142,61 @@ const flick = (element: HTMLElement, scrollTop: number) => {
   element.dispatchEvent(new Event("scroll"));
   element.dispatchEvent(new Event("touchend"));
 };
+
+/** A scroll no input explains: focus moving, or find in page. */
+const pageScroll = (element: HTMLElement, scrollTop: number) => {
+  element.scrollTop = scrollTop;
+  element.dispatchEvent(new Event("scroll"));
+};
+
+const ITEM_HEIGHT = 1_000;
+const VIEW_HEIGHT = 500;
+const TEN = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"] as const;
+
+/**
+ * Lays the items out as a browser would: stacked `ITEM_HEIGHT` apart in a
+ * `VIEW_HEIGHT` view, with `scrollTop` clamped to the content. `layout(height)`
+ * changes the content's height, clamping the view as the browser does.
+ */
+function layOut(element: HTMLElement, ids: readonly string[]) {
+  let height = ids.length * ITEM_HEIGHT;
+  let top = element.scrollTop;
+  Object.defineProperty(element, "scrollHeight", {
+    configurable: true,
+    get: () => height,
+  });
+  Object.defineProperty(element, "clientHeight", {
+    configurable: true,
+    value: VIEW_HEIGHT,
+  });
+  Object.defineProperty(element, "scrollTop", {
+    configurable: true,
+    get: () => top,
+    set: (value: number) => {
+      top = clampScrollTop(value, height, VIEW_HEIGHT);
+    },
+  });
+  element.getBoundingClientRect = () =>
+    ({ top: 0, bottom: VIEW_HEIGHT, height: VIEW_HEIGHT }) as DOMRect;
+  ids.forEach((id, index) => {
+    const item = element.querySelector<HTMLElement>(`[data-item-id='${id}']`);
+    if (item === null) throw new Error(`expected item ${id}`);
+    item.getBoundingClientRect = () => {
+      const itemTop = index * ITEM_HEIGHT - top;
+      return {
+        top: itemTop,
+        bottom: itemTop + ITEM_HEIGHT,
+        height: ITEM_HEIGHT,
+      } as DOMRect;
+    };
+  });
+  return {
+    layout(next: number) {
+      height = next;
+      top = clampScrollTop(top, height, VIEW_HEIGHT);
+    },
+  };
+}
 
 describe("Conversation context", () => {
   test("scrolling 100 frames re-renders a memoised child zero times", async () => {
@@ -791,6 +847,38 @@ describe("a glide and the reader's scrolls", () => {
     mounted.unmount();
   });
 
+  test("Space on a control inside an item leaves a glide alone", async () => {
+    const { mounted, element, current } = mountPolicy("settle");
+    giveGeometry(element, 10_000, 500);
+    element.scrollTop = 1_000;
+    const button = document.createElement("button");
+    element.querySelector("[data-slot='conversation-item']")?.append(button);
+    await nextFrame();
+    current().scrollToEnd();
+    await nextFrame();
+    await nextFrame();
+    // Space activates the button; it does not scroll the log.
+    button.dispatchEvent(
+      new KeyboardEvent("keydown", { key: " ", bubbles: true }),
+    );
+    await sleep(900);
+    expect(element.scrollTop).toBe(9_500);
+
+    // An arrow key on the same button does scroll the log.
+    element.scrollTop = 1_000;
+    current().scrollToEnd();
+    await nextFrame();
+    await nextFrame();
+    button.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }),
+    );
+    const stoppedAt = element.scrollTop;
+    await sleep(900);
+    expect(element.scrollTop).toBe(stoppedAt);
+    expect(stoppedAt).toBeLessThan(9_500);
+    mounted.unmount();
+  });
+
   test("a scroll key cancels a glide", async () => {
     const { mounted, element, current } = mountPolicy("settle");
     giveGeometry(element, 10_000, 500);
@@ -806,6 +894,133 @@ describe("a glide and the reader's scrolls", () => {
     await sleep(900);
     expect(element.scrollTop).toBe(stoppedAt);
     expect(stoppedAt).toBeLessThan(9_500);
+    mounted.unmount();
+  });
+});
+
+describe("scrollToItem's onEnd", () => {
+  test("reports arriving, being cancelled and being replaced", async () => {
+    const { mounted, element, current } = mountConversation({}, TEN);
+    layOut(element, TEN);
+    const ends: string[] = [];
+    const report = (label: string) => (arrived: boolean) =>
+      ends.push(`${label}:${arrived}`);
+    await nextFrame();
+
+    current().scrollToItem("b", { onEnd: report("b") });
+    await sleep(900);
+    expect(element.scrollTop).toBe(1_000);
+    expect(ends).toEqual(["b:true"]);
+
+    // The reader's wheel stops the glide, even without moving the view.
+    current().scrollToItem("h", { onEnd: report("h") });
+    await nextFrame();
+    element.dispatchEvent(new WheelEvent("wheel"));
+    expect(ends).toEqual(["b:true", "h:false"]);
+
+    // Another glide replaces the one in flight.
+    current().scrollToItem("j", { onEnd: report("j") });
+    current().scrollToEnd();
+    expect(ends).toEqual(["b:true", "h:false", "j:false"]);
+
+    // An id with nothing mounted never glides.
+    current().scrollToItem("elsewhere", { onEnd: report("elsewhere") });
+    expect(ends).toEqual(["b:true", "h:false", "j:false", "elsewhere:false"]);
+    await sleep(900);
+    expect(ends).toHaveLength(4);
+    mounted.unmount();
+  });
+});
+
+describe("a scroll right after a resize", () => {
+  const OriginalResizeObserver = globalThis.ResizeObserver;
+  let resized: (() => void)[] = [];
+  beforeEach(() => {
+    resized = [];
+    globalThis.ResizeObserver = class {
+      constructor(callback: () => void) {
+        resized.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+  });
+  afterEach(() => {
+    globalThis.ResizeObserver = OriginalResizeObserver;
+  });
+  /** The resize callback the browser runs after a layout change. */
+  const fireResize = () =>
+    act(() => {
+      for (const callback of resized) callback();
+    });
+
+  test("following, a page scroll away from the end is kept (stick)", async () => {
+    const { mounted, element, current } = mountConversation(
+      { scrollPolicy: "stick" },
+      TEN,
+    );
+    const { layout } = layOut(element, TEN);
+    fireResize();
+    await sleep(150);
+    expect(element.scrollTop).toBe(9_500);
+
+    // Streaming: the content grows and the view follows it.
+    layout(10_040);
+    fireResize();
+    expect(element.scrollTop).toBe(9_540);
+    // Find in page moves the view to an earlier item before the next chunk.
+    pageScroll(element, 2_000);
+    await nextFrame();
+    expect(element.scrollTop).toBe(2_000);
+    expect(current().atBottom).toBe(false);
+
+    // The follow is broken: the next chunk leaves the view where it is.
+    layout(10_080);
+    fireResize();
+    expect(element.scrollTop).toBe(2_000);
+    mounted.unmount();
+  });
+
+  test("not following, a page scroll survives the next resize (settle)", async () => {
+    const { mounted, element } = mountConversation({}, TEN);
+    const { layout } = layOut(element, TEN);
+    await nextFrame();
+    wheel(element, 6_000);
+    await sleep(200);
+
+    layout(10_040);
+    fireResize();
+    expect(element.scrollTop).toBe(6_000);
+    pageScroll(element, 2_000);
+    await nextFrame();
+    expect(element.scrollTop).toBe(2_000);
+
+    layout(10_080);
+    fireResize();
+    expect(element.scrollTop).toBe(2_000);
+    mounted.unmount();
+  });
+
+  test("the resize's own clamp is not taken as where the reader is", async () => {
+    const { mounted, element } = mountConversation({}, TEN);
+    const { layout } = layOut(element, TEN);
+    await nextFrame();
+    wheel(element, 6_000);
+    await sleep(200);
+
+    // Content below the view collapses: the browser clamps the view to the
+    // new end, and the resize callback cannot put it back yet.
+    layout(6_300);
+    fireResize();
+    pageScroll(element, element.scrollTop);
+    expect(element.scrollTop).toBe(5_800);
+    await nextFrame();
+
+    // Once the content is back, so is the view.
+    layout(10_000);
+    fireResize();
+    expect(element.scrollTop).toBe(6_000);
     mounted.unmount();
   });
 });

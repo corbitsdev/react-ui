@@ -261,8 +261,7 @@ for (const policy of ["settle", "stick"]) {
     page,
   }) => {
     await open(page, `conversation-${policy}`);
-    // Past the moment after the history's resize, when a scroll is still
-    // taken for the resize's clamp.
+    // Once the history has laid out and the view reached the end.
     await settled(page);
     // Focus moved by the host or assistive tech: no input on the log.
     await page.getByTestId("h3").evaluate((element) => {
