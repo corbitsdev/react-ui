@@ -978,6 +978,44 @@ describe("scrollToItem's onEnd", () => {
     mounted.unmount();
   });
 
+  test("a target that unmounts mid-glide is not an arrival", async () => {
+    let ids = ["a", "b"];
+    let api: ConversationContextValue | null = null;
+    function Probe() {
+      api = useConversation();
+      return null;
+    }
+    const tree = () => (
+      <Conversation>
+        <ConversationContent>
+          {ids.map((id) => (
+            <ConversationItem key={id} itemId={id}>
+              {id}
+            </ConversationItem>
+          ))}
+        </ConversationContent>
+        <Probe />
+      </Conversation>
+    );
+    const mounted = render(tree());
+    const element = scroller(mounted.container);
+    layOut(element, ids);
+    await nextFrame();
+    let arrived: boolean | undefined;
+    if (api === null) throw new Error("expected the conversation API");
+    api.scrollToItem("b", {
+      onEnd: (value) => {
+        arrived = value;
+      },
+    });
+    ids = ["a"];
+    mounted.rerender(tree());
+    await sleep(900);
+    expect(arrived).toBe(false);
+    expect(element.scrollTop).toBe(0);
+    mounted.unmount();
+  });
+
   test("an id with nothing mounted keeps the follow and the glide in flight", async () => {
     const { mounted, element, current } = mountConversation(
       { scrollPolicy: "stick" },

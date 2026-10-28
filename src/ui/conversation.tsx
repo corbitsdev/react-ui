@@ -505,7 +505,14 @@ function createConversationEngine() {
       rebase();
       const progress = Math.min((now - begin) / duration, 1);
       const aim = target();
-      if (aim !== null) write(glidePosition(glideStart, aim, progress));
+      // The item went away. Waiting out the timer would still report
+      // arrival, and the view never moved.
+      if (aim === null) {
+        gliding = false;
+        endGlide(false);
+        return;
+      }
+      write(glidePosition(glideStart, aim, progress));
       capture();
       if (progress < 1) requestAnimationFrame(step);
       else arrive();
