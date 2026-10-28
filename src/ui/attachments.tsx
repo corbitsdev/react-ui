@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import {
   createContext,
+  forwardRef,
   useCallback,
   useContext,
   useLayoutEffect,
@@ -197,89 +198,93 @@ export type AttachmentsProps = Omit<React.ComponentProps<"ul">, "children"> & {
  * the list. Controls of the host's own that go away as they are used ("Show
  * less", "Remove all") move focus themselves.
  */
-export function Attachments({
-  variant = "tiles",
-  expanded: expandedProp,
-  defaultExpanded = false,
-  onExpandedChange,
-  total,
-  returnFocusTo,
-  className,
-  ref,
-  children,
-  ...props
-}: AttachmentsProps) {
-  const [expanded, setExpanded] = useControllableState({
-    value: expandedProp,
-    defaultValue: defaultExpanded,
-    onChange: onExpandedChange,
-    name: "Attachments",
-  });
-  const focusAfterRemove = useRef<HTMLElement | null>(null);
-  const focusAfterExpand = useRef<number | null>(null);
-  const listRef = useRef<HTMLUListElement | null>(null);
-  const setList = useCallback(
-    (element: HTMLUListElement | null) => {
-      listRef.current = element;
-      if (typeof ref === "function") ref(element);
-      else if (ref !== null && ref !== undefined) ref.current = element;
+export const Attachments = forwardRef<HTMLUListElement, AttachmentsProps>(
+  function Attachments(
+    {
+      variant = "tiles",
+      expanded: expandedProp,
+      defaultExpanded = false,
+      onExpandedChange,
+      total,
+      returnFocusTo,
+      className,
+      children,
+      ...props
     },
-    [ref],
-  );
+    ref,
+  ) {
+    const [expanded, setExpanded] = useControllableState({
+      value: expandedProp,
+      defaultValue: defaultExpanded,
+      onChange: onExpandedChange,
+      name: "Attachments",
+    });
+    const focusAfterRemove = useRef<HTMLElement | null>(null);
+    const focusAfterExpand = useRef<number | null>(null);
+    const listRef = useRef<HTMLUListElement | null>(null);
+    const setList = useCallback(
+      (element: HTMLUListElement | null) => {
+        listRef.current = element;
+        if (typeof ref === "function") ref(element);
+        else if (ref !== null && ref !== undefined) ref.current = element;
+      },
+      [ref],
+    );
 
-  // "+N" goes away as the list expands; focus moves to the first attachment
-  // it was folding, not back to the start of the page.
-  useLayoutEffect(() => {
-    const index = focusAfterExpand.current;
-    const list = listRef.current;
-    if (!expanded || index === null || list === null) return;
-    focusAfterExpand.current = null;
-    const revealed = list.children.item(index);
-    const control =
-      revealed?.querySelector<HTMLElement>("button, [tabindex='0']") ?? list;
-    control.focus();
-  }, [expanded]);
+    // "+N" goes away as the list expands; focus moves to the first attachment
+    // it was folding, not back to the start of the page.
+    useLayoutEffect(() => {
+      const index = focusAfterExpand.current;
+      const list = listRef.current;
+      if (!expanded || index === null || list === null) return;
+      focusAfterExpand.current = null;
+      const revealed = list.children.item(index);
+      const control =
+        revealed?.querySelector<HTMLElement>("button, [tabindex='0']") ?? list;
+      control.focus();
+    }, [expanded]);
 
-  return (
-    <AttachmentsContext.Provider
-      value={{
-        variant,
-        expanded,
-        setExpanded,
-        focusAfterRemove,
-        focusAfterExpand,
-        returnFocusTo,
-      }}
-    >
-      <ul
-        ref={setList}
-        data-slot="attachments"
-        data-variant={variant}
-        data-expanded={expanded ? "true" : undefined}
-        data-total={
-          variant === "stack" && total !== undefined && total > 1
-            ? total
-            : undefined
-        }
-        aria-label={
-          total === undefined
-            ? "Attachments"
-            : `${total} ${total === 1 ? "attachment" : "attachments"}`
-        }
-        tabIndex={-1}
-        className={cn(
-          variant === "stack" && expanded
-            ? "flex flex-wrap items-start gap-2"
-            : ROOT[variant],
-          className,
-        )}
-        {...props}
+    return (
+      <AttachmentsContext.Provider
+        value={{
+          variant,
+          expanded,
+          setExpanded,
+          focusAfterRemove,
+          focusAfterExpand,
+          returnFocusTo,
+        }}
       >
-        {typeof children === "function" ? children({ expanded }) : children}
-      </ul>
-    </AttachmentsContext.Provider>
-  );
-}
+        <ul
+          ref={setList}
+          data-slot="attachments"
+          data-variant={variant}
+          data-expanded={expanded ? "true" : undefined}
+          data-total={
+            variant === "stack" && total !== undefined && total > 1
+              ? total
+              : undefined
+          }
+          aria-label={
+            total === undefined
+              ? "Attachments"
+              : `${total} ${total === 1 ? "attachment" : "attachments"}`
+          }
+          tabIndex={-1}
+          className={cn(
+            variant === "stack" && expanded
+              ? "flex flex-wrap items-start gap-2"
+              : ROOT[variant],
+            className,
+          )}
+          {...props}
+        >
+          {typeof children === "function" ? children({ expanded }) : children}
+        </ul>
+      </AttachmentsContext.Provider>
+    );
+  },
+);
 
 function itemClasses(variant: AttachmentsVariant, expanded: boolean): string {
   const card =
@@ -352,69 +357,65 @@ function usePictureSource(
 }
 
 /** One file in `Attachments`; its parts read the file from here. */
-export function Attachment({
-  data,
-  className,
-  ref,
-  children,
-  ...props
-}: AttachmentProps) {
-  const { variant, expanded, focusAfterRemove } =
-    useAttachmentsContext("Attachment");
-  const kind = mediaKindOf(data.name, data.mediaType);
-  const picturable = kind === "image" || kind === "video";
-  // Only a picture is shown from its file; nothing else needs a URL made.
-  const { src, setBroken } = usePictureSource(
-    data.url,
-    picturable ? data.file : undefined,
-  );
-  const pictured = picturable && src !== undefined;
-  const elementRef = useRef<HTMLLIElement | null>(null);
+export const Attachment = forwardRef<HTMLLIElement, AttachmentProps>(
+  function Attachment({ data, className, children, ...props }, ref) {
+    const { variant, expanded, focusAfterRemove } =
+      useAttachmentsContext("Attachment");
+    const kind = mediaKindOf(data.name, data.mediaType);
+    const picturable = kind === "image" || kind === "video";
+    // Only a picture is shown from its file; nothing else needs a URL made.
+    const { src, setBroken } = usePictureSource(
+      data.url,
+      picturable ? data.file : undefined,
+    );
+    const pictured = picturable && src !== undefined;
+    const elementRef = useRef<HTMLLIElement | null>(null);
 
-  const setElement = useCallback(
-    (element: HTMLLIElement | null) => {
-      elementRef.current = element;
-      if (typeof ref === "function") ref(element);
-      else if (ref !== null && ref !== undefined) ref.current = element;
-    },
-    [ref],
-  );
+    const setElement = useCallback(
+      (element: HTMLLIElement | null) => {
+        elementRef.current = element;
+        if (typeof ref === "function") ref(element);
+        else if (ref !== null && ref !== undefined) ref.current = element;
+      },
+      [ref],
+    );
 
-  // A layout cleanup runs while the item is still attached, so `contains`
-  // still sees focus inside it.
-  useLayoutEffect(() => {
-    const element = elementRef.current;
-    return () => {
-      const target = focusAfterRemove.current;
-      if (
-        element === null ||
-        target === null ||
-        !element.contains(document.activeElement)
-      ) {
-        return;
-      }
-      focusAfterRemove.current = null;
-      if (target.isConnected) target.focus();
-    };
-  }, [focusAfterRemove]);
+    // A layout cleanup runs while the item is still attached, so `contains`
+    // still sees focus inside it.
+    useLayoutEffect(() => {
+      const element = elementRef.current;
+      return () => {
+        const target = focusAfterRemove.current;
+        if (
+          element === null ||
+          target === null ||
+          !element.contains(document.activeElement)
+        ) {
+          return;
+        }
+        focusAfterRemove.current = null;
+        if (target.isConnected) target.focus();
+      };
+    }, [focusAfterRemove]);
 
-  return (
-    <AttachmentContext.Provider
-      value={{ data, kind, pictured, src, setBroken }}
-    >
-      <li
-        ref={setElement}
-        data-slot="attachment"
-        data-kind={kind}
-        data-pictured={pictured ? "true" : undefined}
-        className={cn(itemClasses(variant, expanded), className)}
-        {...props}
+    return (
+      <AttachmentContext.Provider
+        value={{ data, kind, pictured, src, setBroken }}
       >
-        {children}
-      </li>
-    </AttachmentContext.Provider>
-  );
-}
+        <li
+          ref={setElement}
+          data-slot="attachment"
+          data-kind={kind}
+          data-pictured={pictured ? "true" : undefined}
+          className={cn(itemClasses(variant, expanded), className)}
+          {...props}
+        >
+          {children}
+        </li>
+      </AttachmentContext.Provider>
+    );
+  },
+);
 
 function previewClasses(
   variant: AttachmentsVariant,
@@ -462,13 +463,10 @@ export type AttachmentPreviewProps = Omit<
  * Host props reach the element either way; its own role, name and click
  * stay its own. Name it with `label`.
  */
-export function AttachmentPreview({
-  onOpen,
-  label,
-  className,
-  ref,
-  ...props
-}: AttachmentPreviewProps) {
+export const AttachmentPreview = forwardRef<
+  HTMLElement,
+  AttachmentPreviewProps
+>(function AttachmentPreview({ onOpen, label, className, ...props }, ref) {
   const { variant, expanded } = useAttachmentsContext("AttachmentPreview");
   const {
     data,
@@ -575,7 +573,7 @@ export function AttachmentPreview({
       {face}
     </button>
   );
-}
+});
 
 function infoClasses(
   variant: AttachmentsVariant,

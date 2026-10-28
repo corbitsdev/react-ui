@@ -134,6 +134,30 @@ describe("Attachments", () => {
     unmount();
   });
 
+  // React 18 hands a function component no `ref` unless it is wrapped in
+  // `forwardRef`; React 19, which these tests run on, hands it either way.
+  test("the list, an attachment and its preview take refs on React 18 too", () => {
+    for (const part of [Attachments, Attachment, AttachmentPreview]) {
+      expect(part.$$typeof).toBe(Symbol.for("react.forward_ref"));
+    }
+    const list = { current: null as HTMLUListElement | null };
+    const item = { current: null as HTMLLIElement | null };
+    const preview = { current: null as HTMLElement | null };
+    const { container, unmount } = mount(
+      <Attachments ref={list}>
+        <Attachment ref={item} data={NOTES}>
+          <AttachmentPreview ref={preview} />
+        </Attachment>
+      </Attachments>,
+    );
+    expect(list.current).toBe(container.querySelector("ul"));
+    expect(item.current).toBe(container.querySelector("li"));
+    expect(preview.current).toBe(
+      container.querySelector("[data-slot=attachment-preview]"),
+    );
+    unmount();
+  });
+
   test("an uncontrolled list folds until More expands it", () => {
     const files: readonly AttachmentData[] = ["a.txt", "b.txt", "c.txt"].map(
       (name) => ({ name, mediaType: "text/plain" }),
