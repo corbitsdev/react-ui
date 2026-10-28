@@ -16,11 +16,14 @@ type EarlierRequest = {
   readonly settled: boolean;
 };
 
-type WindowState = {
+type WindowState<T> = {
   readonly start: WindowStart;
   readonly request: EarlierRequest | null;
   /** The `atBottom` seen at the last render, so a change is noticed once. */
   readonly atBottom: boolean;
+  /** The window at the last render: a start whose item is gone falls back
+   * to what is left of it. */
+  readonly shown: readonly T[];
 };
 
 export type UseHistoryWindowOptions<T extends { readonly id: string }> = {
@@ -120,9 +123,11 @@ function startIndex(
  * The window mounts `windowSize` items at the bottom (120 by default) and
  * `step` more per load. Each render does one linear id lookup over `items`
  * and slices the window; the slice is reused until `items` or the window
- * start change, and scrolling re-renders the host only when the reader
- * leaves or reaches the bottom. A new item at the bottom commits twice:
- * added, then trimmed once the view is read to still be at the end.
+ * start change (a new slice is recorded in state, which runs the host's
+ * body once more before its children render), and scrolling re-renders the
+ * host only when the reader leaves or reaches the bottom. A new item at the
+ * bottom commits twice: added, then trimmed once the view is read to still
+ * be at the end.
  *
  * Page from the server instead (`hasEarlier`, `onLoadEarlier`) when the
  * history is longer than that, when items are heavy enough that holding
@@ -146,26 +151,29 @@ export function useHistoryWindow<T extends { readonly id: string }>({
     subscribeScroll,
   } = useConversation();
   const lastId = items.at(-1)?.id;
-  const [state, setState] = useState<WindowState>(() => ({
+  const [state, setState] = useState<WindowState<T>>(() => ({
     start: { kind: "latest", through: lastId },
     request: null,
     atBottom,
+    shown: [],
   }));
-  const previousWindow = useRef<readonly T[]>([]);
 
+  let next = state;
   let start = state.start;
   if (state.atBottom !== atBottom) {
     // Back at the bottom: trim back. The conversation's anchor is current
     // from the reader's last scroll.
     if (atBottom) start = { kind: "latest", through: lastId };
-    setState({ ...state, start, atBottom });
+    next = { ...next, start, atBottom };
   }
 
   const index = useMemo(
-    () => startIndex(items, start, windowSize, previousWindow.current),
-    [items, start, windowSize],
+    () => startIndex(items, start, windowSize, state.shown),
+    [items, start, windowSize, state.shown],
   );
   const shown = useMemo(() => items.slice(index), [items, index]);
+  if (state.shown !== shown) next = { ...next, shown };
+  if (next !== state) setState(next);
   const firstId = shown[0]?.id;
 
   const request = state.request;
@@ -182,7 +190,6 @@ export function useHistoryWindow<T extends { readonly id: string }>({
   const pending = useRef<object | null>(null);
   useLayoutEffect(() => {
     latest.current = { items, index, step, hasEarlier, onLoadEarlier };
-    previousWindow.current = shown;
   });
 
   // Items above the reader came or went: put what they were reading back.
@@ -231,13 +238,14 @@ export function useHistoryWindow<T extends { readonly id: string }>({
         frameTop.current = snapshot.scrollTop;
         if (snapshot.distanceFromEnd <= CONVERSATION_END_THRESHOLD) return;
         if (!snapshot.byReader && snapshot.delta >= 0) return;
-        setState((current) => {
-          const first = latest.current.items[latest.current.index]?.id;
-          if (current.start.kind !== "latest" || first === undefined) {
-            return current;
-          }
-          return { ...current, start: { kind: "item", id: first } };
-        });
+        const { items, index } = latest.current;
+        const first = items[index]?.id;
+        if (first === undefined) return;
+        setState((current) =>
+          current.start.kind === "latest"
+            ? { ...current, start: { kind: "item", id: first } }
+            : current,
+        );
       }),
     [subscribeScroll],
   );

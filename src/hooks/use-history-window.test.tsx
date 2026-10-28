@@ -336,6 +336,17 @@ describe("useHistoryWindow with in-memory history", () => {
     expect(first(harness.result.current)).toBe("r182");
     expect(harness.result.current.items).toHaveLength(119);
   });
+
+  test("a removed start item falls back within the window rendered last, even while hidden", async () => {
+    const harness = mount({ items: rows(0, 300) });
+    await harness.leaveBottom();
+    // Hidden by Activity, the window keeps rendering with no layout effects.
+    harness.setHidden(true);
+    act(() => harness.result.current.reachStart());
+    expect(first(harness.result.current)).toBe("r120");
+    harness.update({ items: rows(0, 300).filter((row) => row.id !== "r120") });
+    expect(first(harness.result.current)).toBe("r121");
+  });
 });
 
 describe("useHistoryWindow with server paging", () => {
