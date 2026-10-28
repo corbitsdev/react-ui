@@ -516,6 +516,38 @@ describe("ConversationMap", () => {
     expect(document.activeElement).toBe(scroller(mounted.container));
     mounted.unmount();
   });
+
+  test("scrolling the rail measures the previewed tick in the handler, not in render", () => {
+    const mounted = render(
+      <StrictMode>
+        <Chat />
+      </StrictMode>,
+    );
+    const second = tick(mounted.container, "Second question");
+    act(() => second.focus());
+    let reads = 0;
+    Object.defineProperty(second, "getBoundingClientRect", {
+      configurable: true,
+      value: () => {
+        reads += 1;
+        return new DOMRect(0, 40, 24, 14);
+      },
+    });
+    const rail = mounted.container.querySelector(
+      "[data-slot='conversation-map-rail']",
+    );
+    placeAt(rail ?? document.body, 0, 600);
+    act(() => {
+      rail?.dispatchEvent(new Event("scroll"));
+    });
+    // One measurement reads the tick twice. StrictMode runs a state updater
+    // twice, so a measurement made in one would read it four times.
+    expect(reads).toBe(2);
+    expect(
+      mounted.container.querySelector("[role='tooltip']")?.textContent,
+    ).toBe("Second questionSecond answer");
+    mounted.unmount();
+  });
 });
 
 describe("useReadingPosition", () => {

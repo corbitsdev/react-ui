@@ -36,6 +36,9 @@ export type ConversationMapProps = Omit<
   readonly onSelect?: ((id: string) => void) | undefined;
 };
 
+/** The previewed turn, and where its tick's middle sits in the map. */
+type Preview = { readonly id: string; readonly center: number };
+
 const MAP = "[data-slot='conversation-map']";
 const TICK = "[data-slot='conversation-map-tick']";
 const KEYS = ["ArrowUp", "ArrowDown", "Home", "End"];
@@ -108,10 +111,7 @@ export function ConversationMap({
   const reducedMotion = usePrefersReducedMotion();
   const hidden = turns.length < 2;
   const cardRef = useRef<HTMLDivElement>(null);
-  const [preview, setPreview] = useState<{
-    readonly id: string;
-    readonly center: number;
-  } | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const previewTextId = useId();
 
@@ -210,19 +210,22 @@ export function ConversationMap({
   const follow = () => {
     const rail = railRef.current;
     const nav = rail?.closest<HTMLElement>(MAP);
-    if (rail === null || nav === null || nav === undefined) return;
-    // An updater, so a close queued by a wheel this frame is not undone.
-    setPreview((previous) => {
-      if (previous === null) return null;
-      const tick = [...rail.querySelectorAll<HTMLElement>(TICK)].find(
-        (element) => element.dataset["turnId"] === previous.id,
-      );
-      if (tick === undefined) return null;
+    if (preview === null || rail === null || nav === null || nav === undefined)
+      return;
+    const { id } = preview;
+    const tick = [...rail.querySelectorAll<HTMLElement>(TICK)].find(
+      (element) => element.dataset["turnId"] === id,
+    );
+    let measured: Preview | null = null;
+    if (tick !== undefined) {
       const view = rail.getBoundingClientRect();
       const box = tick.getBoundingClientRect();
-      if (box.bottom <= view.top || box.top >= view.bottom) return null;
-      return { id: previous.id, center: centerOf(tick, nav) };
-    });
+      if (box.bottom > view.top && box.top < view.bottom) {
+        measured = { id, center: centerOf(tick, nav) };
+      }
+    }
+    // An updater, so a close queued by a wheel this frame is not undone.
+    setPreview((previous) => (previous?.id === id ? measured : previous));
   };
 
   const move = (event: KeyboardEvent<HTMLElement>) => {
