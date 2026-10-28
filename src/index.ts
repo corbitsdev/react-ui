@@ -137,3 +137,8 @@ export * from "./ui/prompt-input.js";
 export * from "./ui/panel.js";
 export * from "./ui/prompt-input-toolbar.js";
 export * from "./ui/panel-tabs.js";
+export * from "./ui/tool.js";
+export * from "./ui/tool-approval.js";
+export * from "./ui/tool-group.js";
+export * from "./ui/reasoning.js";
+export * from "./ui/activity.js";
