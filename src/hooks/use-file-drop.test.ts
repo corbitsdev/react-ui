@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { act, createElement, useState } from "react";
-import type { DragEvent as ReactDragEvent } from "react";
 import { createRoot } from "react-dom/client";
+
+import { FileInput } from "../ui/file-input.js";
 
 import {
   readDroppedFiles,
@@ -217,12 +218,13 @@ type Received = { files: readonly File[]; details: FileDropDetails };
 function mountTarget({
   guard = true,
   disabled: initiallyDisabled = false,
-  childTakesDrops = false,
-}: { guard?: boolean; disabled?: boolean; childTakesDrops?: boolean } = {}) {
+  picker = false,
+}: { guard?: boolean; disabled?: boolean; picker?: boolean } = {}) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
   const received: Received[] = [];
+  const picked: File[][] = [];
   let over = false;
   let setDisabled: (disabled: boolean) => void = () => {};
 
@@ -238,24 +240,23 @@ function mountTarget({
     return createElement(
       "div",
       { "data-testid": "zone", ...drop.dropProps },
-      createElement(
-        "span",
-        childTakesDrops
-          ? { onDrop: (event: ReactDragEvent) => event.preventDefault() }
-          : null,
-        "Drop here",
-      ),
+      picker
+        ? createElement(FileInput, {
+            onFiles: (files) => picked.push(Array.from(files)),
+          })
+        : createElement("span", null, "Drop here"),
     );
   }
 
   act(() => root.render(createElement(Target)));
   const zone = container.querySelector("[data-testid=zone]");
-  const child = container.querySelector("span");
+  const child = container.querySelector("[data-testid=zone] > *");
   if (zone === null || child === null) throw new Error("no zone");
   return {
     zone,
     child,
     received,
+    picked,
     get over() {
       return over;
     },
@@ -414,17 +415,24 @@ describe("useFileDrop", () => {
     target.unmount();
   });
 
-  // A picker such as FileInput inside the zone reads its own drops.
-  test("a drop a child took itself is left to it", async () => {
-    const target = mountTarget({ childTakesDrops: true });
-    const files = source([new File(["a"], "a.txt")]);
-    target.fire(target.child, dragEvent("dragenter", files));
+  // The picker would take the folder as one unreadable file of its name.
+  test("a folder dropped on a picker inside the target is walked", async () => {
+    const target = mountTarget({ picker: true });
+    const dropped = {
+      ...source([folderEntry("photos", [fileEntry("a.jpg")])]),
+      // As a browser lists a dropped folder.
+      files: [new File([], "photos")],
+    };
+    target.fire(target.child, dragEvent("dragenter", dropped));
     expect(target.over).toBe(true);
-    const drop = target.fire(target.child, dragEvent("drop", files));
+    const drop = target.fire(target.child, dragEvent("drop", dropped));
     expect(drop.defaultPrevented).toBe(true);
     expect(target.over).toBe(false);
     await settle();
-    expect(target.received).toEqual([]);
+    expect(target.picked).toEqual([]);
+    expect(
+      target.received.map(({ files }) => files.map((file) => file.name)),
+    ).toEqual([["photos/a.jpg"]]);
     target.unmount();
   });
 

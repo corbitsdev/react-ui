@@ -27,7 +27,9 @@ export type FileInputProps = Omit<
  *
  * Drag-and-drop is added on top rather than replacing that. A drop-only zone
  * excludes anyone not using a mouse, and every real upload control needs the
- * picker anyway.
+ * picker anyway. A drop that a drop target around the picker has already
+ * taken (called `preventDefault` on), as `AttachmentDropZone` does, is left
+ * to that target.
  *
  * The input is cleared after each selection so choosing the same file twice
  * still fires — the browser's change event will not repeat for an identical
@@ -53,9 +55,9 @@ export function FileInput({
       }}
       onDragLeave={() => setDragging(false)}
       onDrop={(event) => {
-        if (disabled === true) return;
-        event.preventDefault();
         setDragging(false);
+        if (disabled === true || event.isDefaultPrevented()) return;
+        event.preventDefault();
         if (event.dataTransfer.files.length > 0)
           onFiles(event.dataTransfer.files);
       }}

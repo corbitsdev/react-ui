@@ -247,7 +247,8 @@ export type FileDropTargetProps<T extends Element> = {
   readonly onDragEnter: (event: ReactDragEvent<T>) => void;
   readonly onDragOver: (event: ReactDragEvent<T>) => void;
   readonly onDragLeave: (event: ReactDragEvent<T>) => void;
-  readonly onDrop: (event: ReactDragEvent<T>) => void;
+  /** In the capture phase, so the target reads a drop before its children. */
+  readonly onDropCapture: (event: ReactDragEvent<T>) => void;
 };
 
 export type UseFileDropResult<T extends Element> = {
@@ -265,10 +266,13 @@ function report(error: unknown) {
 
 /**
  * Makes an element a target for dropped files and folders. Only drags that
- * carry files are taken; text and links dragged over it behave as usual. A
- * drop that a child handles itself (calls `preventDefault`), as `FileInput`
- * does, is left to the child. A drop still being read when the target
- * unmounts is dropped.
+ * carry files are taken; text and links dragged over it behave as usual.
+ * Every file drop inside the target is the target's: it reads the drop in
+ * the capture phase, before any child, and marks it taken with
+ * `preventDefault`, so a folder dropped on a child is walked like one
+ * dropped anywhere else. A child that takes drops of its own skips one
+ * already taken, as `FileInput` does. A drop still being read when the
+ * target unmounts is dropped.
  *
  * `over` is true while files are held over the target, including over its
  * children. It turns false when the drag leaves the target, is dropped, or
@@ -357,11 +361,11 @@ export function useFileDrop<T extends Element = HTMLElement>({
         depth.current = Math.max(0, depth.current - 1);
         if (depth.current === 0) setOver(false);
       },
-      onDrop: (event) => {
+      onDropCapture: (event) => {
         if (!takes(event)) return;
         depth.current = 0;
         setOver(false);
-        // A child that takes its own drops, such as `FileInput`, took it.
+        // A target around this one took it first.
         if (event.isDefaultPrevented()) return;
         event.preventDefault();
         const options = latest.current.maxFolderEntries;

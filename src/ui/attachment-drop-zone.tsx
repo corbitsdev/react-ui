@@ -17,6 +17,7 @@ export type AttachmentDropZoneProps = Omit<
   | "onDragOver"
   | "onDragLeave"
   | "onDrop"
+  | "onDropCapture"
 > &
   UseFileDropOptions & {
     /** Shown over the zone while files are held over it. */
@@ -30,11 +31,11 @@ export type AttachmentDropZoneProps = Omit<
  * open the file in place of the page.
  *
  * Dropping needs a pointer, so put a file picker (such as `FileInput`)
- * inside it for keyboard and touch. A child that takes its own drops keeps
- * them: a drop right on `FileInput` reaches only the picker's `onFiles`,
- * which reads loose files and does not walk folders. The zone is a plain
- * `div`: give it `role="region"` and an `aria-label` when it should be a
- * landmark.
+ * inside it for keyboard and touch. The zone reads every drop inside it
+ * before its children do, so files and folders dropped on the picker reach
+ * the zone's `onFiles`, folders walked, and not the picker's. The zone is a
+ * plain `div`: give it `role="region"` and an `aria-label` when it should be
+ * a landmark.
  */
 export function AttachmentDropZone({
   onFiles,

@@ -194,73 +194,87 @@ test("past the limit, 100 of 120 files join and the rest are refused", async ({
 // A browser only builds file-system entries for a real drag from the
 // desktop, which Playwright cannot make. The drop's items are stubbed to
 // hand back entries of the same shape, so this covers the zone's walk of
-// them, not the browser's side.
-test("a dropped folder is walked to the files inside it", async ({ page }) => {
-  await page.goto("/attachments");
-  await page.getByTestId("zone").evaluate((zone) => {
-    type Entry = {
-      name: string;
-      isFile: boolean;
-      isDirectory: boolean;
-      file?: (success: (file: File) => void) => void;
-      createReader?: () => {
-        readEntries: (success: (entries: Entry[]) => void) => void;
-      };
-    };
-    const file = (name: string): Entry => ({
-      name,
-      isFile: true,
-      isDirectory: false,
-      file: (success) =>
-        success(new File([name], name, { type: "text/plain" })),
-    });
-    const folder = (name: string, entries: Entry[]): Entry => ({
-      name,
-      isFile: false,
-      isDirectory: true,
-      createReader: () => {
-        let read = false;
-        return {
-          readEntries: (success) => {
-            success(read ? [] : entries);
-            read = true;
-          },
+// them, not the browser's side. On the picker the zone has to read the drop
+// first, or the picker takes the folder as one unreadable file.
+for (const [where, target] of [
+  ["the zone", "[data-testid=zone]"],
+  ["the picker inside it", "[data-testid=zone] label"],
+] as const) {
+  test(`a folder dropped on ${where} is walked to the files inside it`, async ({
+    page,
+  }) => {
+    await page.goto("/attachments");
+    await page.locator(target).evaluate((element) => {
+      type Entry = {
+        name: string;
+        isFile: boolean;
+        isDirectory: boolean;
+        file?: (success: (file: File) => void) => void;
+        createReader?: () => {
+          readEntries: (success: (entries: Entry[]) => void) => void;
         };
-      },
+      };
+      const file = (name: string): Entry => ({
+        name,
+        isFile: true,
+        isDirectory: false,
+        file: (success) =>
+          success(new File([name], name, { type: "text/plain" })),
+      });
+      const folder = (name: string, entries: Entry[]): Entry => ({
+        name,
+        isFile: false,
+        isDirectory: true,
+        createReader: () => {
+          let read = false;
+          return {
+            readEntries: (success) => {
+              success(read ? [] : entries);
+              read = true;
+            },
+          };
+        },
+      });
+      const project = folder("project", [
+        file("README.md"),
+        file(".DS_Store"),
+        folder("src", [file("index.ts"), file("util.ts")]),
+        folder("test", [file("index.ts")]),
+      ]);
+      const items = [
+        {
+          kind: "file",
+          getAsFile: () => null,
+          webkitGetAsEntry: () => project,
+        },
+      ];
+      // A browser lists the folder itself among the files.
+      const files = [new File([], "project")];
+      const data = { types: ["Files"], items, files, dropEffect: "none" };
+      for (const type of ["dragenter", "dragover", "drop"]) {
+        const event = new DragEvent(type, { bubbles: true, cancelable: true });
+        Object.defineProperty(event, "dataTransfer", { value: data });
+        element.dispatchEvent(event);
+      }
     });
-    const project = folder("project", [
-      file("README.md"),
-      file(".DS_Store"),
-      folder("src", [file("index.ts"), file("util.ts")]),
-      folder("test", [file("index.ts")]),
-    ]);
-    const items = [
-      { kind: "file", getAsFile: () => null, webkitGetAsEntry: () => project },
-    ];
-    const data = { types: ["Files"], items, files: [], dropEffect: "none" };
-    for (const type of ["dragenter", "dragover", "drop"]) {
-      const event = new DragEvent(type, { bubbles: true, cancelable: true });
-      Object.defineProperty(event, "dataTransfer", { value: data });
-      zone.dispatchEvent(event);
+
+    await expect(count(page)).toHaveText("4");
+    await expect(page.getByRole("status", { name: "Folders" })).toHaveText(
+      "project",
+    );
+    const stack = page.getByRole("list", { name: "4 attachments" });
+    for (const name of [
+      "project/README.md",
+      "project/src/index.ts",
+      "project/src/util.ts",
+      "project/test/index.ts",
+    ]) {
+      await expect(
+        stack.getByRole("button", { name: `Remove ${name}` }),
+      ).toHaveCount(1);
     }
   });
-
-  await expect(count(page)).toHaveText("4");
-  await expect(page.getByRole("status", { name: "Folders" })).toHaveText(
-    "project",
-  );
-  const stack = page.getByRole("list", { name: "4 attachments" });
-  for (const name of [
-    "project/README.md",
-    "project/src/index.ts",
-    "project/src/util.ts",
-    "project/test/index.ts",
-  ]) {
-    await expect(
-      stack.getByRole("button", { name: `Remove ${name}` }),
-    ).toHaveCount(1);
-  }
-});
+}
 
 test("a drop on the picker inside the zone is taken once", async ({ page }) => {
   await page.goto("/attachments");
