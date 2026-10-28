@@ -1,4 +1,4 @@
-import { act, StrictMode, useState } from "react";
+import { act, createRef, StrictMode, useState } from "react";
 import type { ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
@@ -247,6 +247,23 @@ describe("ConversationMap", () => {
         ),
       ].map((button) => button.getAttribute("aria-label")),
     ).toEqual(TURNS.map((turn) => turn.label));
+    mounted.unmount();
+  });
+
+  test("forwards its ref to the nav", () => {
+    const ref = createRef<HTMLElement>();
+    const mounted = render(
+      <Conversation>
+        <ConversationMap ref={ref} turns={TURNS} />
+        <ConversationContent />
+      </Conversation>,
+    );
+    expect(
+      mounted.container.querySelector<HTMLElement>(
+        "[data-slot='conversation-map']",
+      ),
+    ).toBe(ref.current);
+    expect(ref.current).not.toBeNull();
     mounted.unmount();
   });
 
