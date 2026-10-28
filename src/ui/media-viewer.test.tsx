@@ -1,4 +1,4 @@
-import { act } from "react";
+import { act, StrictMode, useState } from "react";
 import type * as React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, test } from "bun:test";
@@ -124,6 +124,61 @@ describe("MediaViewer", () => {
     act(() => viewer.open(1));
     act(() => viewer.close());
     expect(document.activeElement).toBe(show);
+  });
+
+  test("an opener does not outlive its viewing", () => {
+    let viewer!: MediaViewerState<MediaViewerItem>;
+    let show!: (index: number) => void;
+    function Controlled() {
+      const [index, setIndex] = useState<number | null>(null);
+      show = setIndex;
+      viewer = useMediaViewer({
+        items: ITEMS,
+        index,
+        onIndexChange: setIndex,
+      });
+      return (
+        <>
+          <button type="button">Tile</button>
+          <button type="button">Show all</button>
+          <MediaViewer viewer={viewer} />
+        </>
+      );
+    }
+    render(<Controlled />);
+    const [tile, all] = container!.querySelectorAll("button");
+    act(() => viewer.open(0, tile));
+    act(() => viewer.close());
+    expect(document.activeElement).toBe(tile!);
+    // The host opens the viewer itself, without `open`.
+    all!.focus();
+    act(() => show(2));
+    expect(dialog()?.getAttribute("aria-label")).toBe("swatch-3.png");
+    act(() => viewer.close());
+    expect(document.activeElement).toBe(all!);
+  });
+
+  test("under StrictMode, focus still returns to the opener", () => {
+    let viewer!: MediaViewerState<MediaViewerItem>;
+    function Opener() {
+      viewer = useMediaViewer({ items: ITEMS });
+      return (
+        <>
+          <button type="button">Tile</button>
+          <MediaViewer viewer={viewer} />
+        </>
+      );
+    }
+    render(
+      <StrictMode>
+        <Opener />
+      </StrictMode>,
+    );
+    const tile = container!.querySelector("button")!;
+    act(() => viewer.open(0, tile));
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("Close");
+    act(() => viewer.close());
+    expect(document.activeElement).toBe(tile);
   });
 
   test("holds the page still while open, then restores its overflow", () => {

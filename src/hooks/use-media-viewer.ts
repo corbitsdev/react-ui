@@ -28,7 +28,10 @@ export type MediaViewerState<T> = {
   close(): void;
   next(): void;
   previous(): void;
-  /** The element focus returns to on close, if `open` was given one. */
+  /**
+   * The element focus returns to on close, if `open` was given one.
+   * `MediaViewer` clears it on close, so it serves one viewing.
+   */
   readonly opener: RefObject<HTMLElement | null>;
 };
 

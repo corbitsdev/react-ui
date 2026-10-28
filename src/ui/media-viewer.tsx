@@ -99,8 +99,11 @@ function MediaViewerDialog({
       // close() queues a `close` event that would land after the re-run
       // reopens the dialog.
       if (dialog.open) dialog.close();
-      // The latest `viewer.open` may have named a newer opener.
+      // The latest `viewer.open` may have named a newer opener. It is spent
+      // here, so a later opening that skips `open` (a controlled `index`)
+      // goes back to what had focus then, not to this one.
       const opener = openerRef.current ?? focused;
+      openerRef.current = null;
       if (
         opener instanceof HTMLElement &&
         opener !== document.body &&
