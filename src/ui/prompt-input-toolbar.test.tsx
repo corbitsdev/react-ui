@@ -79,6 +79,7 @@ function click(target: HTMLElement) {
   act(() => target.click());
 }
 
+
 function ControlledModel({
   initial,
   events,
@@ -892,6 +893,57 @@ describe("toolbar parts inside PromptInput", () => {
       view.unmount();
     });
   }
+
+  test("Escape in an unrelated dialog closes the dialog, not a host-opened list", () => {
+    const events: string[] = [];
+    const dialog: boolean[] = [];
+    function Page() {
+      const [isOpen, setOpen] = useState(true);
+      return (
+        <>
+          <Prompt open="model" events={events} />
+          <Dialog
+            open={isOpen}
+            onOpenChange={(next) => {
+              dialog.push(next);
+              setOpen(next);
+            }}
+          >
+            <DialogContent aria-describedby={undefined}>
+              <DialogTitle>Other</DialogTitle>
+              <button type="button" data-other>
+                Other
+              </button>
+            </DialogContent>
+          </Dialog>
+        </>
+      );
+    }
+    const view = mount(<Page />);
+    const other = inDialog("[data-other]");
+    act(() => other.focus());
+    press(other, "Escape");
+    expect(dialog).toEqual([false]);
+    expect(events).toEqual([]);
+    expect(shown(view, POPUPS.model.popup)).toBe(true);
+    view.unmount();
+  });
+
+  test("Escape inside the add menu leaves a host-opened list open", () => {
+    const events: string[] = [];
+    const view = mount(<Prompt open="model" events={events} />);
+    const trigger = view.query(POPUPS.add.trigger);
+    act(() => trigger.focus());
+    press(trigger, "ArrowDown");
+    const item = view.query("[role='menuitem']");
+    expect(document.activeElement).toBe(item);
+    press(item, "Escape");
+    expect(events).toEqual(["add:true", "add:false"]);
+    expect(shown(view, POPUPS.add.popup)).toBe(false);
+    expect(shown(view, POPUPS.model.popup)).toBe(true);
+    expect(document.activeElement).toBe(trigger);
+    view.unmount();
+  });
 
   for (const first of ["popup", "list"] as const) {
     test(`in a dialog, with the ${first} opened first, Escape closes the list, then the popup, and never the dialog`, () => {

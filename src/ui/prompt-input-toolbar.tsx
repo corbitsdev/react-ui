@@ -40,16 +40,28 @@ function stepIndex(
   }
 }
 
+/** The root of a toolbar popup while it is open; each root carries
+ * `data-state="open"` only then. */
+const OPEN_POPUP = [
+  "prompt-input-add-menu",
+  "prompt-input-model-select",
+  "prompt-input-mode-select",
+]
+  .map((slot) => `[data-slot=${slot}][data-state=open]`)
+  .join(",");
+
 /**
  * While `open`, claims Escape for the popup so that one Escape closes only
  * the popup, not an enclosing dialog as well. A dialog dismisses on Escape
  * from a capture listener on the document unless the event is already
  * prevented, so this prevents it earlier, in the window's capture phase.
  * Escape pressed inside `rootRef` is then the popup's own keys' to close.
- * Escape pressed outside it (in the textarea, say, beside a popup the host
- * opened) closes the popup here and leaves focus where it is, unless the
- * enclosing `PromptInput`'s suggestion list is showing: that Escape is the
- * list's, so it is left alone.
+ * Escape pressed elsewhere in the enclosing `PromptInput` (in the textarea,
+ * say, beside a popup the host opened) closes the popup here and leaves
+ * focus where it is. Left alone are an Escape from outside the
+ * `PromptInput`, which belongs to whatever layer it was pressed in, one
+ * inside another open toolbar popup, which that popup closes, and any while
+ * the `PromptInput`'s suggestion list is showing, which the list takes.
  */
 function useClaimEscape(
   open: boolean,
@@ -60,16 +72,28 @@ function useClaimEscape(
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
       const root = rootRef.current;
-      if (event.key !== "Escape" || event.defaultPrevented || root === null) {
+      const { target } = event;
+      if (
+        event.key !== "Escape" ||
+        event.defaultPrevented ||
+        root === null ||
+        !(target instanceof Element)
+      ) {
         return;
       }
-      const inside =
-        event.target instanceof Node && root.contains(event.target);
+      const inside = root.contains(target);
       if (!inside) {
-        const list = root
-          .closest("[data-slot=prompt-input]")
-          ?.querySelector("[data-slot=prompt-input-suggestions]");
-        if (list !== null && list !== undefined) return;
+        const box = root.closest("[data-slot=prompt-input]");
+        if (
+          box === null ||
+          target.closest("[data-slot=prompt-input]") !== box
+        ) {
+          return;
+        }
+        const listShowing =
+          box.querySelector("[data-slot=prompt-input-suggestions]") !== null;
+        const inOther = target.closest(OPEN_POPUP) !== null;
+        if (listShowing || inOther) return;
       }
       event.preventDefault();
       if (!inside) setOpen(false);
@@ -207,7 +231,8 @@ export type PromptInputAddMenuProps = Omit<
  * ArrowUp on the last; the arrows move round the items, Home and End jump,
  * Escape closes and returns focus to the trigger, Tab closes and moves on.
  * A press outside closes it without taking focus back, as does Escape from
- * outside it (from the textarea, beside a menu the host opened).
+ * elsewhere in the enclosing `PromptInput` (the textarea, beside a menu the
+ * host opened).
  */
 export function PromptInputAddMenu({
   items,
@@ -278,6 +303,7 @@ export function PromptInputAddMenu({
         assignRef(ref, node);
       }}
       data-slot="prompt-input-add-menu"
+      data-state={open ? "open" : undefined}
       className={cn("relative inline-flex", className)}
     >
       <button
@@ -440,8 +466,9 @@ type OptionSelectProps = SelectStateProps & {
  * focus is already home when the list closes. Enter, Space or the arrows
  * open it on the chosen option, Home and End on the first or last; the
  * arrows move, Home and End jump, Enter or Space chooses, Escape and Tab
- * close without choosing. Escape from outside it (from the textarea, beside
- * a list the host opened) closes it too and leaves focus where it is.
+ * close without choosing. Escape from elsewhere in the enclosing
+ * `PromptInput` (the textarea, beside a list the host opened) closes it too
+ * and leaves focus where it is.
  */
 function OptionSelect({
   slot,
@@ -570,6 +597,7 @@ function OptionSelect({
         assignRef(ref, node);
       }}
       data-slot={slot}
+      data-state={open ? "open" : undefined}
       className={cn("relative inline-flex min-w-0", className)}
     >
       <button
