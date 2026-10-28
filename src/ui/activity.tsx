@@ -213,7 +213,8 @@ const CONTENT_LABELS: ActivityContentLabels = {
 export type ActivityContentProps = {
   /**
    * Renders one step. Defaults to `Reasoning`, `Tool` or `ToolGroup` by
-   * kind; a call with a settled approval shows its outcome.
+   * kind; a call with a settled approval shows its outcome, and while the
+   * run streams a thought that is its newest step shows as still thinking.
    */
   readonly renderStep?:
     | ((step: ActivityStep, index: number) => ReactNode)
@@ -222,10 +223,10 @@ export type ActivityContentProps = {
   readonly className?: string | undefined;
 };
 
-function defaultStep(step: ActivityStep): ReactNode {
+function defaultStep(step: ActivityStep, live: boolean): ReactNode {
   switch (step.kind) {
     case "reasoning":
-      return <Reasoning part={step} />;
+      return <Reasoning part={step} streaming={live} />;
     case "tool-trace":
       return <Tool part={step} />;
     case "tool-batch":
@@ -246,17 +247,22 @@ function stepKey(step: ActivityStep, index: number): string {
 
 /** The run's steps, while open: the latest ten, with a control for the rest. */
 export function ActivityContent({
-  renderStep = defaultStep,
+  renderStep,
   labels: labelOverrides,
   className,
 }: ActivityContentProps) {
-  const { steps, open, contentId } = useActivityContext("ActivityContent");
+  const { steps, streaming, open, contentId } =
+    useActivityContext("ActivityContent");
   if (!open) return null;
   return (
     <ActivitySteps
       id={contentId}
       steps={steps}
-      renderStep={renderStep}
+      renderStep={
+        renderStep ??
+        ((step, index) =>
+          defaultStep(step, streaming && index === steps.length - 1))
+      }
       labels={{ ...CONTENT_LABELS, ...labelOverrides }}
       className={className}
     />

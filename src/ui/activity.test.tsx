@@ -154,6 +154,32 @@ describe("Activity", () => {
     thinking.unmount();
   });
 
+  test("while streaming, only the newest thought is still thinking", () => {
+    const started: PartReasoning = { kind: "reasoning", text: "" };
+    const mounted = mount(
+      <Activity defaultOpen streaming steps={[thought, call(1), started]} />,
+    );
+    const thoughts = [
+      ...mounted.container.querySelectorAll("[data-slot='reasoning']"),
+    ];
+    // The empty live thought still shows, as thinking; the earlier one is done.
+    expect(thoughts.length).toBe(2);
+    expect(thoughts[0]?.hasAttribute("data-streaming")).toBe(false);
+    expect(thoughts[0]?.textContent).toContain("Thought for");
+    expect(thoughts[1]?.getAttribute("data-streaming")).toBe("true");
+    expect(thoughts[1]?.textContent).toContain("Thinking…");
+    mounted.unmount();
+
+    // Once the run ends, the same thought is finished.
+    const done = mount(<Activity defaultOpen steps={[call(1), thought]} />);
+    expect(
+      done.container
+        .querySelector("[data-slot='reasoning']")
+        ?.hasAttribute("data-streaming"),
+    ).toBe(false);
+    done.unmount();
+  });
+
   test("a settled approval inside the run shows its outcome", () => {
     const mounted = mount(
       <Activity
