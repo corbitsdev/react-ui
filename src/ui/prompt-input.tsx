@@ -398,6 +398,7 @@ export function PromptInputSuggestions({
   children,
   announce = announceCount,
   "aria-label": ariaLabel,
+  onMouseDown,
   ...props
 }: PromptInputSuggestionsProps) {
   const { listId, prompt, registerSuggestions } = usePromptInputContext(
@@ -447,6 +448,13 @@ export function PromptInputSuggestions({
             "absolute inset-x-0 bottom-full z-20 mb-2 flex max-h-60 flex-col gap-px overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground",
             className,
           )}
+          // Held off on the whole list, not each option: a press on its
+          // padding, between rows or on its scrollbar would otherwise blur
+          // the textarea, which closes the list.
+          onMouseDown={(event) => {
+            onMouseDown?.(event);
+            event.preventDefault();
+          }}
         >
           {prompt.suggestions.map((token) =>
             children === undefined ? (
@@ -477,7 +485,6 @@ export function PromptInputSuggestion({
   token,
   className,
   children,
-  onMouseDown,
   onPointerMove,
   onClick,
   ...props
@@ -498,10 +505,6 @@ export function PromptInputSuggestion({
         "flex cursor-default items-baseline gap-2 rounded-md px-2 py-1 text-sm data-[active]:bg-muted",
         className,
       )}
-      onMouseDown={(event) => {
-        onMouseDown?.(event);
-        event.preventDefault();
-      }}
       onPointerMove={(event) => {
         onPointerMove?.(event);
         if (!active) prompt.setActiveSuggestion(token.id);

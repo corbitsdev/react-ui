@@ -228,6 +228,25 @@ test("suggestions follow the keyboard and a pick can be undone", async ({
   await expect(textarea).toHaveValue("Ask @ada and @");
 });
 
+test("a press on the list's padding keeps focus and the list open", async ({
+  page,
+}) => {
+  await page.goto("/prompt-input");
+  const textarea = message(page);
+  const list = page.getByRole("listbox", { name: "Mentions" });
+  await textarea.pressSequentially("Ask @a");
+  await expect(list).toBeVisible();
+
+  // Inside the border, in the padding round the rows.
+  await list.click({ position: { x: 2, y: 2 } });
+  await expect(textarea).toBeFocused();
+  await expect(list).toBeVisible();
+
+  await list.getByRole("option", { name: /@Adam/ }).click();
+  await expect(textarea).toHaveValue("Ask @Adam ");
+  await expect(textarea).toBeFocused();
+});
+
 test("a pick mid-draft leaves the caret past the token on its own line", async ({
   page,
 }) => {

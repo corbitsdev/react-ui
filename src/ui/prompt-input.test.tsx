@@ -295,6 +295,22 @@ describe("PromptInput", () => {
     view.unmount();
   });
 
+  test("a press anywhere in the list leaves focus in the textarea", () => {
+    // Its padding, the gaps between rows and its scrollbar belong to the
+    // list, not to an option; a press there must not blur the textarea.
+    const view = render({ events: [] });
+    view.type("@a");
+    const list = view.container.querySelector<HTMLElement>("[role='listbox']");
+    const option = view.container.querySelector<HTMLElement>("[role='option']");
+    const press = (target: HTMLElement | null) =>
+      target?.dispatchEvent(
+        new MouseEvent("mousedown", { bubbles: true, cancelable: true }),
+      );
+    expect(press(list)).toBe(false);
+    expect(press(option)).toBe(false);
+    view.unmount();
+  });
+
   test("a host aria-label names the submit button in either state", () => {
     const send = render({ submitLabel: "Envoyer", events: [] });
     expect(send.button.getAttribute("aria-label")).toBe("Envoyer");
