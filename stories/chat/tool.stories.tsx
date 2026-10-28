@@ -270,7 +270,9 @@ export const BatchWaiting = () => {
               status:
                 approval.status === "pending"
                   ? "approval-requested"
-                  : "output-available",
+                  : approval.status === "approved"
+                    ? "output-available"
+                    : "output-denied",
               input: { path: "notes/renewals.md" },
               approval,
             },
