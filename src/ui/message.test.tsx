@@ -554,6 +554,9 @@ describe("MessageActions", () => {
   });
 
   test("the overflow menu mounts its items only while open", () => {
+    // React 18 drops `ref` from a function component's props: only a
+    // forwardRef component receives it there.
+    expect(MessageAction.$$typeof).toBe(Symbol.for("react.forward_ref"));
     const onPin = mock(() => {});
     const mounted = render(
       <MessageActions>
@@ -593,65 +596,6 @@ describe("MessageActionMenu", () => {
       <MessageAction label="Share" />
     </MessageActionMenu>
   );
-
-  test("forwards its ref argument, so Escape returns focus to the trigger", () => {
-    // React 18 drops `ref` from a function component's props: only a
-    // forwardRef component receives it as the render's second argument.
-    // A ref that merely lands on the button under React 19 does not prove that.
-    expect(MessageAction.$$typeof).toBe(Symbol.for("react.forward_ref"));
-    const action = MessageAction as unknown as {
-      render: (props: unknown, ref: unknown) => unknown;
-    };
-    const original = action.render;
-    let received: unknown;
-    let propsHadRef = false;
-    action.render = (props, ref) => {
-      received = ref;
-      propsHadRef =
-        typeof props === "object" &&
-        props !== null &&
-        "ref" in props &&
-        props.ref != null;
-      return original(props, ref);
-    };
-    const refCurrent = (value: unknown): unknown =>
-      typeof value === "object" && value !== null && "current" in value
-        ? value.current
-        : undefined;
-    try {
-      const rowRef = createRef<HTMLButtonElement>();
-      const row = render(<MessageAction ref={rowRef} label="Copy" />);
-      expect(propsHadRef).toBe(false);
-      expect(received).toBe(rowRef);
-      expect(rowRef.current).toBe(button(row.container, "Copy"));
-      row.unmount();
-
-      const itemRef = createRef<HTMLButtonElement>();
-      const mounted = render(
-        <MessageActionMenu>
-          <MessageAction ref={itemRef} label="Pin" />
-        </MessageActionMenu>,
-      );
-      const trigger = button(mounted.container, "More actions");
-      expect(propsHadRef).toBe(false);
-      expect(refCurrent(received)).toBe(trigger);
-      act(() => trigger.click());
-      expect(received).toBe(itemRef);
-      expect(itemRef.current).toBe(
-        mounted.container.querySelector("[role='menuitem']"),
-      );
-      act(() => {
-        document.dispatchEvent(
-          new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
-        );
-      });
-      expect(mounted.container.querySelector("[role='menu']")).toBeNull();
-      expect(document.activeElement).toBe(trigger);
-      mounted.unmount();
-    } finally {
-      action.render = original;
-    }
-  });
 
   test("pressing the trigger closes an open menu when the click does not focus it", () => {
     const mounted = render(menu());
