@@ -223,3 +223,31 @@ test("in a batch, calls that time out under focus hand it on, then to the run", 
   ).toBeFocused();
   expect(await stop()).toBe(0);
 });
+
+test("in a batch, the next call lapsing after a keyboard decision hands focus to the run", async ({
+  page,
+}) => {
+  await page.goto("/tool-batch-approval");
+  const waiting = page.locator(
+    "[data-slot='tool-approval'][data-status='pending']",
+  );
+  await waiting
+    .first()
+    .getByRole("button", { name: "Deny", exact: true })
+    .focus();
+  const stop = await watchFocusOnBody(page);
+
+  await page.keyboard.press("Enter");
+  const next = page.getByRole("region", {
+    name: "Needs your approval send__calendar",
+  });
+  await expect(next).toBeFocused();
+
+  // Focus stays where the decision moved it, on the card, as it lapses.
+  await lapse(page, "calendar", "expired");
+  await expect(waiting).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Worked through 4 steps" }),
+  ).toBeFocused();
+  expect(await stop()).toBe(0);
+});

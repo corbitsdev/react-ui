@@ -402,15 +402,24 @@ export function MessageParts({
   const focused = useRef<Leaving | null>(null);
 
   useLayoutEffect(() => {
-    const leaving = decided.current ?? focused.current;
+    // Each watch ends with its own call, as the two can name different
+    // ones: in a batch, focus is on the next card, and watched there, by
+    // the time the decided call shows as recorded; and a decision the host
+    // never records must not hide a call lapsing under focus later. When
+    // both end at once, focus went from the focused call, so the handoff
+    // starts there.
+    let leaving: Leaving | null = null;
+    for (const watch of [focused, decided]) {
+      const call = watch.current;
+      if (call === null) continue;
+      const tool = findTool(parts, call.toolCallId);
+      // Still waiting: the host has not recorded it yet, and the buttons
+      // are still there.
+      if (tool !== undefined && isAwaitingApproval(tool)) continue;
+      watch.current = null;
+      leaving ??= call;
+    }
     if (leaving === null) return;
-    const { toolCallId } = leaving;
-    const tool = findTool(parts, toolCallId);
-    // Still waiting: the host has not recorded it yet, and the buttons are
-    // still there.
-    if (tool !== undefined && isAwaitingApproval(tool)) return;
-    decided.current = null;
-    focused.current = null;
     const active = document.activeElement;
     if (active !== null && active !== document.body) return;
     if (root.current === null) return;

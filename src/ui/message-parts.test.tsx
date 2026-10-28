@@ -571,6 +571,91 @@ describe("MessageParts focus when a call stops waiting with no decision", () => 
     );
   });
 
+  test("after a decision in a batch, the next call lapsing under focus hands focus to the run", () => {
+    const batch: PartToolBatch = {
+      kind: "tool-batch",
+      id: "batch-1",
+      tools: [waiting("one"), waiting("two")],
+    };
+    const initial: readonly ConversationPart[] = [call("draft"), batch];
+    const decisions: ToolApprovalDecision[] = [];
+    const recording = (parts: readonly ConversationPart[]) =>
+      inMessage({ parts, onDecide: (_, decision) => decisions.push(decision) });
+    const { container, render } = mount(recording(initial));
+    press(button(container, "Deny"));
+    const [decision] = decisions;
+    if (decision === undefined) throw new Error("expected a decision");
+    const decided = decideIn(initial, "one", decision);
+    render(recording(decided));
+    const next = document.activeElement as HTMLElement | null;
+    expect(next?.dataset["slot"]).toBe("tool-approval-card");
+    expect(
+      container.querySelector(
+        "[data-slot='tool-approval'][data-status='pending']",
+      )?.textContent,
+    ).toContain("tool__two");
+
+    render(recording(lapseIn(decided, "two", "expired")));
+    expect(activeSlot()).toBe("activity-trigger");
+    expect(document.activeElement?.textContent).toContain(
+      "Worked through 3 steps",
+    );
+  });
+
+  test("a decision the host never records does not hide a later call lapsing under focus", () => {
+    const initial: readonly ConversationPart[] = [
+      call("draft"),
+      waiting("first"),
+      { kind: "text", text: "And then" },
+      waiting("second"),
+    ];
+    const { container, render } = mount(props(initial));
+    const cards = () => [
+      ...container.querySelectorAll<HTMLElement>("[data-slot='tool-approval']"),
+    ];
+    const [first, second] = cards();
+    if (first === undefined || second === undefined)
+      throw new Error("expected two cards");
+    // The host's request fails: the first call stays waiting for good.
+    press(button(first, "Approve"));
+    act(() => button(second, "Approve").focus());
+    render(props(lapseIn(initial, "second", "timeout")));
+    // The lapsed call folds into a run of its own, after the text.
+    const triggers = [
+      ...container.querySelectorAll("[data-slot='activity-trigger']"),
+    ];
+    expect(activeSlot()).toBe("activity-trigger");
+    expect(triggers.indexOf(document.activeElement as Element)).toBe(1);
+  });
+
+  test("an earlier decision recorded as the focused call lapses hands focus from where it was", () => {
+    const initial: readonly ConversationPart[] = [
+      call("draft"),
+      waiting("first"),
+      { kind: "text", text: "And then" },
+      waiting("second"),
+    ];
+    const { container, render } = mount(props(initial));
+    const [first, second] = [
+      ...container.querySelectorAll<HTMLElement>("[data-slot='tool-approval']"),
+    ];
+    if (first === undefined || second === undefined)
+      throw new Error("expected two cards");
+    press(button(first, "Approve"));
+    act(() => button(second, "Approve").focus());
+    // One update records the first decision and lapses the second call.
+    const decided = decideIn(initial, "first", {
+      outcome: "approved",
+      scope: "once",
+    });
+    render(props(lapseIn(decided, "second", "timeout")));
+    const triggers = [
+      ...container.querySelectorAll("[data-slot='activity-trigger']"),
+    ];
+    expect(activeSlot()).toBe("activity-trigger");
+    expect(triggers.indexOf(document.activeElement as Element)).toBe(1);
+  });
+
   test("focus that left the buttons for the page is not pulled back", () => {
     const { container, render } = mount(props(RUN_THEN_WAIT));
     act(() => button(container, "Approve").focus());
