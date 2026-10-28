@@ -33,6 +33,11 @@ import {
   CommandPalette,
   type CommandPaletteGroup,
 } from "@corbits/react-ui/ui/command-palette";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@corbits/react-ui/ui/dialog";
 
 const REQUEST: ApprovalRequest = {
   id: "req-1",
@@ -501,6 +506,38 @@ function Prompt() {
   );
 }
 
+/** The prompt inside an open Radix dialog, which records when it closes. */
+function PromptInDialog() {
+  const [value, setValue] = useState("");
+  const [open, setOpen] = useState(true);
+  const { log, record } = useEventLog();
+  return (
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) record("dialog-closed");
+        }}
+      >
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle>Ask</DialogTitle>
+          <PromptInput
+            value={value}
+            onValueChange={setValue}
+            onSubmit={() => record(`submit:${value}`)}
+            tokens={PROMPT_TOKENS}
+          >
+            <PromptInputSuggestions />
+            <PromptInputTextarea />
+          </PromptInput>
+        </DialogContent>
+      </Dialog>
+      {log}
+    </>
+  );
+}
+
 /** The usual chat host: a submit clears the draft and starts a reply, which
  * "Finish reply" ends. That button keeps focus where it is, as a reply
  * arriving would. Without `stoppable` there is no `onStop`, so Send stays
@@ -607,6 +644,7 @@ export const scenarios: Record<string, () => ReactNode> = {
   "conversation-empty": () => <ConversationEmptyScenario />,
   "prompt-input": () => <Prompt />,
   "prompt-input-attachment": () => <PromptWithAttachment />,
+  "prompt-input-dialog": () => <PromptInDialog />,
   "prompt-input-chat": () => <PromptChat stoppable />,
   "prompt-input-chat-no-stop": () => <PromptChat stoppable={false} />,
 };

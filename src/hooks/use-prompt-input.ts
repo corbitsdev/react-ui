@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type {
   ChangeEvent,
   KeyboardEvent as ReactKeyboardEvent,
@@ -121,6 +121,31 @@ export function usePromptInput({
   );
   const activeSuggestion =
     suggestions.find((token) => token.id === requestedId) ?? suggestions[0];
+  const listOpen = activeSuggestion !== undefined;
+
+  // A Radix dialog or popover around the prompt dismisses on an Escape it
+  // sees in the document's capture phase, before React's handlers run,
+  // unless the event is already marked handled. While the list is open, mark
+  // it first from the window's capture phase; `onKeyDown` still closes the
+  // list, so propagation is left alone.
+  useEffect(() => {
+    const element = textareaRef.current;
+    if (!listOpen || element === null) return;
+    const view = element.ownerDocument.defaultView;
+    if (view === null) return;
+    const claimEscape = (event: KeyboardEvent) => {
+      if (
+        event.key === "Escape" &&
+        event.target === element &&
+        !event.isComposing
+      ) {
+        event.preventDefault();
+      }
+    };
+    view.addEventListener("keydown", claimEscape, { capture: true });
+    return () =>
+      view.removeEventListener("keydown", claimEscape, { capture: true });
+  }, [listOpen, textareaRef]);
 
   // A pick that could not go through the browser's editing (see `pick`)
   // set the value directly, which leaves the caret at the end. Put it back
@@ -201,7 +226,9 @@ export function usePromptInput({
           pick(activeSuggestion);
           return;
         case "Escape":
-          // Kept from an enclosing dialog, which would otherwise close too.
+          // Kept from handlers further out, which would otherwise act on it
+          // too; Radix layers listen earlier and are held off by the effect
+          // above.
           event.preventDefault();
           event.stopPropagation();
           setDismissedKey(keyOf(activeToken));

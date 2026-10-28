@@ -340,8 +340,13 @@ export function PromptInputTextarea({
           prompt.textareaProps.onSelect(event);
         }}
         onKeyDown={(event) => {
+          // An Escape the open list claimed (see `usePromptInput`) arrives
+          // already prevented; it is still the list's to close.
+          const claimed = event.key === "Escape" && event.defaultPrevented;
           onKeyDown?.(event);
-          if (!event.defaultPrevented) prompt.textareaProps.onKeyDown(event);
+          if (claimed || !event.defaultPrevented) {
+            prompt.textareaProps.onKeyDown(event);
+          }
         }}
         onBlur={(event) => {
           onBlur?.(event);

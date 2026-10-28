@@ -263,6 +263,26 @@ test("a pick mid-draft leaves the caret past the token on its own line", async (
   await expect(list).toBeHidden();
 });
 
+test("Escape closes the suggestion list, not the dialog around it", async ({
+  page,
+}) => {
+  await page.goto("/prompt-input-dialog");
+  const dialog = page.getByRole("dialog", { name: "Ask" });
+  const textarea = message(page);
+  const list = page.getByRole("listbox", { name: "Mentions" });
+  await textarea.pressSequentially("@a");
+  await expect(list).toBeVisible();
+
+  await textarea.press("Escape");
+  await expect(list).toBeHidden();
+  await expect(dialog).toBeVisible();
+  await expect(textarea).toBeFocused();
+
+  await textarea.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(events(page)).toHaveText("dialog-closed");
+});
+
 test("Send becomes Stop while the agent replies and calls onStop", async ({
   page,
 }) => {

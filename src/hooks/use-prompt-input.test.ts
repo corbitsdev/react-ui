@@ -250,6 +250,28 @@ describe("usePromptInput", () => {
     view.unmount();
   });
 
+  test("an open list marks Escape handled before a Radix layer sees it", () => {
+    // Radix dialogs and popovers listen here and dismiss unless the Escape
+    // is already marked handled.
+    const seen: boolean[] = [];
+    const layer = (event: KeyboardEvent) => {
+      if (event.key === "Escape") seen.push(event.defaultPrevented);
+    };
+    document.addEventListener("keydown", layer, { capture: true });
+    const view = mountPrompt();
+    try {
+      view.type("@a");
+      view.press("Escape", { isComposing: true });
+      view.press("Escape");
+      expect(view.prompt.suggestions).toEqual([]);
+      view.press("Escape");
+      expect(seen).toEqual([false, true, false]);
+    } finally {
+      view.unmount();
+      document.removeEventListener("keydown", layer, { capture: true });
+    }
+  });
+
   test("Enter with no list submits and keeps the newline out", () => {
     const view = mountPrompt();
     view.type("hello");
