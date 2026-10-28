@@ -512,6 +512,61 @@ describe("ToolGroup", () => {
       mounted.unmount();
     });
 
+    test("a decision that lands as another call starts waiting keeps focus", () => {
+      const decided = (call: PartTool): PartTool => ({
+        ...call,
+        status: "running",
+        approval: {
+          id: `approval-${call.toolCallId}`,
+          status: "approved",
+          scope: "once",
+          timeoutAt: null,
+        },
+      });
+      const a = waitingCall("a");
+      const later = tool({
+        toolCallId: "b",
+        name: "mail__b",
+        status: "running",
+      });
+      const render = (part: PartToolBatch) => (
+        <ToolGroup part={part} onDecide={() => {}} />
+      );
+      const mounted = mount(render(batch([a, later])));
+      act(() => approveIn(mounted.container, "mail__a").focus());
+      // One update: the focused call settles and another starts waiting, so
+      // the number of waiting calls does not change.
+      mounted.render(render(batch([decided(a), waitingCall("b")])));
+      expect(document.activeElement).toBe(cardOf(mounted.container, "mail__b"));
+      mounted.unmount();
+    });
+
+    test("a focused call dropped from the middle hands focus to the one after it", () => {
+      const render = (part: PartToolBatch) => (
+        <ToolGroup part={part} onDecide={() => {}} />
+      );
+      const [a, b, c] = [waitingCall("a"), waitingCall("b"), waitingCall("c")];
+      const mounted = mount(render(batch([a, b, c])));
+      act(() => approveIn(mounted.container, "mail__b").focus());
+      mounted.render(render(batch([a, c])));
+      expect(document.activeElement).toBe(cardOf(mounted.container, "mail__c"));
+      mounted.unmount();
+    });
+
+    test("a dropped call is placed by the call after it, though calls shift", () => {
+      const render = (part: PartToolBatch) => (
+        <ToolGroup part={part} onDecide={() => {}} />
+      );
+      const [a, b, c] = [waitingCall("a"), waitingCall("b"), waitingCall("c")];
+      const first = tool({ toolCallId: "x", name: "files__x" });
+      const mounted = mount(render(batch([a, b, c])));
+      act(() => approveIn(mounted.container, "mail__b").focus());
+      // b goes and a new call lands first, so b's old place now holds a.
+      mounted.render(render(batch([first, a, c])));
+      expect(document.activeElement).toBe(cardOf(mounted.container, "mail__c"));
+      mounted.unmount();
+    });
+
     test("in a group a person opened, focus does not fall to the page", () => {
       const mounted = mount(
         <Host

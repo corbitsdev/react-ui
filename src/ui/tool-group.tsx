@@ -116,28 +116,46 @@ export function ToolGroup({
 
   const rootRef = useRef<HTMLDivElement | null>(null);
   const focusInside = useRef(false);
-  // The list item that last held focus: the call a decision was made on.
-  const focusedItem = useRef<HTMLLIElement | null>(null);
-  const wasWaiting = useRef(waiting);
+  // The call whose list item last held focus: the call a decision was made on.
+  const focusedCall = useRef<string | null>(null);
+  const calls = part.tools.map((tool) => tool.toolCallId);
+  // The calls as last committed, to place a focused call the host dropped.
+  const wasCalls = useRef(calls);
 
-  // A decided call is rendered anew (`Tool` in place of `ToolApproval`), so
-  // its own recovery never runs; the group moves focus instead. A child that
-  // stayed mounted recovers first, and then focus is no longer on the page.
+  // A decided call is rendered anew (`Tool` in place of `ToolApproval`), or
+  // dropped, so its own recovery never runs; the group moves focus instead.
+  // This runs after every update, not only when fewer calls wait: a decision
+  // can land as another call starts waiting. Focus on the page while it was
+  // inside means the focused element went away, since leaving by a click or
+  // Tab clears `focusInside`. A child that stayed mounted recovers first.
   useLayoutEffect(() => {
-    const dropped = waiting < wasWaiting.current;
-    wasWaiting.current = waiting;
-    if (!dropped || !focusInside.current) return;
+    const was = wasCalls.current;
+    wasCalls.current = calls;
+    if (!focusInside.current) return;
     const active = document.activeElement;
     if (active !== null && active !== document.body) return;
     const root = rootRef.current;
     if (root === null) return;
-    const item = focusedItem.current?.isConnected ? focusedItem.current : null;
+    const items = [
+      ...(root.querySelector("[data-slot='tool-group-list']")?.children ?? []),
+    ];
+    const focused = focusedCall.current;
+    const at = focused === null ? -1 : calls.indexOf(focused);
+    // The search starts after the decided call, or, if the host dropped it,
+    // at the call that followed it in the last commit.
+    let start = at + 1;
+    if (focused !== null && at === -1) {
+      const follower = was
+        .slice(was.indexOf(focused) + 1)
+        .find((id) => calls.includes(id));
+      start = follower === undefined ? calls.length : calls.indexOf(follower);
+    }
     const target =
-      nextWaiting(root, item) ??
-      item?.querySelector<HTMLElement>("[data-slot='tool-approval']") ??
+      nextWaiting(items, start) ??
+      items[at]?.querySelector<HTMLElement>("[data-slot='tool-approval']") ??
       root.querySelector<HTMLElement>("[data-slot='tool-group-header']");
     target?.focus();
-  }, [waiting]);
+  });
 
   const setRoot = useCallback(
     (element: HTMLDivElement | null) => {
@@ -221,8 +239,8 @@ export function ToolGroup({
             <li
               key={tool.toolCallId}
               className="min-w-0"
-              onFocus={(event) => {
-                focusedItem.current = event.currentTarget;
+              onFocus={() => {
+                focusedCall.current = tool.toolCallId;
               }}
             >
               {render(tool)}
@@ -236,24 +254,16 @@ export function ToolGroup({
 
 const WAITING = "[data-slot='tool-approval'][data-status='pending']";
 
-/** The card of the first waiting call after the decided one, else of the first. */
+/** The card of the first waiting call from `start`, else of the first. */
 function nextWaiting(
-  root: HTMLElement,
-  decided: HTMLElement | null,
+  items: readonly Element[],
+  start: number,
 ): HTMLElement | null {
-  const cards = [...root.querySelectorAll(WAITING)];
-  const after =
-    decided === null
-      ? undefined
-      : cards.find(
-          (card) =>
-            (decided.compareDocumentPosition(card) &
-              Node.DOCUMENT_POSITION_FOLLOWING) !==
-            0,
-        );
+  const waiting = (item: Element) => item.querySelector(WAITING) !== null;
+  const item = items.slice(start).find(waiting) ?? items.find(waiting);
   return (
-    (after ?? cards[0])?.querySelector<HTMLElement>(
-      "[data-slot='tool-approval-card']",
+    item?.querySelector<HTMLElement>(
+      `${WAITING} [data-slot='tool-approval-card']`,
     ) ?? null
   );
 }
