@@ -18,9 +18,8 @@ const isProduction =
 /**
  * The controlled-or-uncontrolled resolution every prop pair shaped like
  * `open`/`onOpenChange` needs: track state internally, but defer to `value`
- * whenever the caller supplies one. `useDismissablePopover`, `ToolBlock` and
- * `ToolNarrative` each want exactly this and previously each wrote their own
- * ternary for it; this is the one place it lives now.
+ * whenever the caller supplies one. Every such pair resolves through here
+ * rather than writing its own ternary.
  *
  * The returned setter accepts a value or a React-style updater
  * (`setOpen((prev) => !prev)`), same as `useState`.

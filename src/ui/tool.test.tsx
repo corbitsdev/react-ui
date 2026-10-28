@@ -2,8 +2,11 @@ import { act, createRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
-import type { ToolTraceStatus } from "../lib/chat-parts.js";
-import type { PartTool, PartToolBatch } from "../lib/conversation.js";
+import type {
+  PartTool,
+  PartToolBatch,
+  ToolTraceStatus,
+} from "../lib/conversation.js";
 import { Tool, ToolHeader, ToolInput, ToolOutput } from "./tool.js";
 import type { ToolApprovalDecision } from "./tool-approval.js";
 import { ToolGroup } from "./tool-group.js";

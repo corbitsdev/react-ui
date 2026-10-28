@@ -485,21 +485,6 @@
   }
 }
 
-/* The block swap: a small slide-and-fade for whichever block just became
-   active, including the empty-state's own transition into the first block.
-   Keyed by block id so React remounts a fresh node per swap and this plays
-   every time. Used by ui/parts-renderer and ui/tool-block. */
-@keyframes corbits-rail-block-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 /* The typing indicator's three dots. Each dot offsets its own
    animation-delay, so the bounce travels left to right. Used by
    ui/typing-indicator. */

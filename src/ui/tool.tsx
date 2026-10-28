@@ -13,9 +13,8 @@ import { createContext, useContext, useId, useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";
-import type { ToolTraceStatus } from "../lib/chat-parts.js";
 import { isAwaitingApproval } from "../lib/conversation-activity.js";
-import type { PartTool } from "../lib/conversation.js";
+import type { PartTool, ToolTraceStatus } from "../lib/conversation.js";
 import { displayedToolStatus, formatToolValue } from "../lib/tool-display.js";
 import { cn } from "../lib/utils.js";
 import { ToolApproval } from "./tool-approval.js";

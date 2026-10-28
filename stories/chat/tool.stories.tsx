@@ -1,11 +1,11 @@
 import { useState } from "react";
 
-import type { ToolTraceStatus } from "../../src/lib/chat-parts.js";
 import type {
   ConversationPart,
   PartTool,
   PartToolBatch,
   ToolApprovalRecord,
+  ToolTraceStatus,
 } from "../../src/lib/conversation.js";
 import { Tool, ToolHeader, ToolInput, ToolOutput } from "../../src/ui/tool.js";
 import {
