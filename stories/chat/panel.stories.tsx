@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { ReactNode } from "react";
 
 import { Button } from "../../src/ui/button.js";
@@ -23,14 +23,22 @@ const MESSAGES = Array.from({ length: 24 }, (_, index) => ({
       : `Reply ${index + 1}: keep going, and flag anything over the usual range.`,
 }));
 
-/** The main area beside the panel, with a button that reopens it. */
+/**
+ * The main area beside the panel, with the button that opens and closes it.
+ * The button stays mounted while the panel is open, so the panel records it
+ * as the opener and gives it focus back on close.
+ */
 function Main({
   open,
-  onOpen,
+  onToggle,
+  panelId,
+  label,
   children,
 }: {
   readonly open: boolean;
-  readonly onOpen: () => void;
+  readonly onToggle: () => void;
+  readonly panelId: string;
+  readonly label: string;
   readonly children?: ReactNode;
 }) {
   return (
@@ -40,11 +48,15 @@ function Main({
         The conversation keeps at least 440px however wide the panel is dragged.
       </p>
       {children}
-      {open ? null : (
-        <Button variant="outline" className="self-start" onClick={onOpen}>
-          Open thread
-        </Button>
-      )}
+      <Button
+        variant="outline"
+        className="self-start"
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
+        onClick={onToggle}
+      >
+        {label}
+      </Button>
     </main>
   );
 }
@@ -68,11 +80,17 @@ function Thread() {
 
 /** A wide screen: drag the edge, use the arrow keys, or double-click to reset. */
 export const Wide = () => {
+  const panelId = useId();
   const [open, setOpen] = useState(true);
   const [width, setWidth] = useState<number | null>(null);
   return (
     <div className="@container relative flex h-[560px] overflow-hidden rounded-lg border border-border">
-      <Main open={open} onOpen={() => setOpen(true)}>
+      <Main
+        open={open}
+        onToggle={() => setOpen(!open)}
+        panelId={panelId}
+        label="Thread"
+      >
         <p className="text-sm">
           Chosen width:{" "}
           <output aria-label="Panel width">
@@ -81,7 +99,12 @@ export const Wide = () => {
         </p>
       </Main>
       {open ? (
-        <Panel aria-label="Thread" width={width} onWidthChange={setWidth}>
+        <Panel
+          id={panelId}
+          aria-label="Thread"
+          width={width}
+          onWidthChange={setWidth}
+        >
           <PanelHandle label="Resize thread panel" />
           <PanelHeader>
             <h2 className="text-sm font-semibold">Thread</h2>
@@ -102,12 +125,18 @@ export const Wide = () => {
 
 /** A row too narrow for both: the panel covers it and hides its handle. */
 export const NarrowScreenOverlay = () => {
+  const panelId = useId();
   const [open, setOpen] = useState(true);
   return (
     <div className="@container relative flex h-[560px] max-w-sm overflow-hidden rounded-lg border border-border">
-      <Main open={open} onOpen={() => setOpen(true)} />
+      <Main
+        open={open}
+        onToggle={() => setOpen(!open)}
+        panelId={panelId}
+        label="Thread"
+      />
       {open ? (
-        <Panel aria-label="Thread">
+        <Panel id={panelId} aria-label="Thread">
           <PanelHandle label="Resize thread panel" />
           <PanelHeader>
             <h2 className="text-sm font-semibold">Thread</h2>
@@ -139,13 +168,19 @@ type PaneId = (typeof PANES)[number]["id"];
  * back, and both are where you left them.
  */
 export const SeveralPanes = () => {
+  const panelId = useId();
   const [open, setOpen] = useState(true);
   const [shown, setShown] = useState<PaneId>("thread");
   return (
     <div className="@container relative flex h-[560px] overflow-hidden rounded-lg border border-border">
-      <Main open={open} onOpen={() => setOpen(true)} />
+      <Main
+        open={open}
+        onToggle={() => setOpen(!open)}
+        panelId={panelId}
+        label="Side panel"
+      />
       {open ? (
-        <Panel aria-label="Side panel">
+        <Panel id={panelId} aria-label="Side panel">
           <PanelHandle />
           <PanelHeader>
             <div
