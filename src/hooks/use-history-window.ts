@@ -87,9 +87,10 @@ function startIndex(
 
 /**
  * Renders a window of a long conversation: the latest `windowSize` items,
- * with older ones added `step` at a time as the reader nears the top. While
- * the reader is scrolled up the window only grows, so nothing they are
- * reading is removed; back at the bottom it shrinks to `windowSize` again.
+ * with older ones added `step` at a time as the reader nears the top. Once
+ * the view moves up away from the end, by the reader's scroll or a jump to
+ * an item, the window only grows, so nothing they are reading is removed;
+ * back at the bottom it shrinks to `windowSize` again.
  * Each load keeps the item being read where it was, through the
  * conversation's `captureAnchor` / `restoreAnchor`.
  *
@@ -198,7 +199,7 @@ export function useHistoryWindow<T extends { readonly id: string }>({
   // `atBottom` and the freeze are a frame old, so read the view first: if it
   // moved towards the top since the last frame's scroll pass, a reader may
   // have scrolled away unseen. The window then keeps the item, and that
-  // pass freezes it if the scroll was theirs.
+  // pass freezes it.
   const frameTop = useRef<number | null>(null);
   const seenLast = useRef(lastId);
   useLayoutEffect(() => {
@@ -217,16 +218,19 @@ export function useHistoryWindow<T extends { readonly id: string }>({
     });
   }, [lastId, atBottom, scrollContainer]);
 
-  // The reader scrolls away from the end: freeze the start, so new items no
-  // longer slide the window over what they are looking at. Subscribed in a
-  // layout effect, so the first frame's pass, which reports the view once the
-  // container mounts, is never missed.
+  // The view leaves the end: freeze the start, so new items no longer slide
+  // the window over what is in view. Any move up counts, not only the
+  // reader's: a jump to an item, focus or find in page put something there to
+  // be read. Content growing below a view that stays put does not, so the
+  // window still slides then. Subscribed in a layout effect, so the first
+  // frame's pass, which reports the view once the container mounts, is never
+  // missed.
   useLayoutEffect(
     () =>
       subscribeScroll((snapshot) => {
         frameTop.current = snapshot.scrollTop;
-        if (!snapshot.byReader) return;
         if (snapshot.distanceFromEnd <= CONVERSATION_END_THRESHOLD) return;
+        if (!snapshot.byReader && snapshot.delta >= 0) return;
         setState((current) => {
           const first = latest.current.items[latest.current.index]?.id;
           if (current.start.kind !== "latest" || first === undefined) {

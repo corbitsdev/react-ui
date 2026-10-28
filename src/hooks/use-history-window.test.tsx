@@ -6,6 +6,8 @@ import {
   Conversation,
   ConversationContent,
   ConversationItem,
+  useConversation,
+  type ConversationContextValue,
 } from "../ui/conversation.js";
 import {
   useHistoryWindow,
@@ -20,6 +22,7 @@ const rows = (from: number, to: number): Row[] =>
 
 type Harness = {
   readonly result: { current: HistoryWindow<Row> };
+  readonly container: HTMLElement;
   /** React commits of the host component since mount. */
   readonly commits: () => number;
   update(options: UseHistoryWindowOptions<Row>): void;
@@ -28,6 +31,10 @@ type Harness = {
   leaveBottomUnseen(): void;
   /** The view moves away from the end with no reader input (layout, a glide). */
   driftFromBottom(): Promise<void>;
+  /** The page glides an item, 1,000px down the content, to the top. */
+  jumpTo(id: string): Promise<void>;
+  /** The content grows by `height` below a view that stays where it is. */
+  growBelow(height: number): Promise<void>;
   returnToBottom(): Promise<void>;
 };
 
@@ -57,10 +64,12 @@ function mount(
     },
   };
   let commits = 0;
+  let conversation: ConversationContextValue | null = null;
 
   function Host({ options }: { options: UseHistoryWindowOptions<Row> }) {
     const history = useHistoryWindow(options);
     result.current = history;
+    conversation = useConversation();
     useEffect(() => {
       commits += 1;
     });
@@ -104,9 +113,10 @@ function mount(
   );
   if (scroller === null) throw new Error("expected the scroll container");
   // happy-dom does no layout: give the container a tall content box.
+  let height = 100_000;
   Object.defineProperty(scroller, "scrollHeight", {
     configurable: true,
-    value: 100_000,
+    get: () => height,
   });
   Object.defineProperty(scroller, "clientHeight", {
     configurable: true,
@@ -125,11 +135,37 @@ function mount(
 
   return {
     result,
+    container,
     commits: () => commits,
     update: (options) => act(() => render(options)),
     leaveBottom: () => scrollTo(1_000, true),
     leaveBottomUnseen: () => scroll(1_000, true),
     driftFromBottom: () => scrollTo(1_000, false),
+    jumpTo: async (id) => {
+      const item = scroller.querySelector<HTMLElement>(
+        `[data-item-id='${id}']`,
+      );
+      if (item === null || conversation === null) {
+        throw new Error(`expected item ${id} in a conversation`);
+      }
+      item.getBoundingClientRect = () =>
+        ({ top: 1_000 - scroller.scrollTop }) as DOMRect;
+      const { scrollToItem } = conversation;
+      await act(
+        () =>
+          new Promise<void>((resolve) => {
+            scrollToItem(id, { onEnd: () => resolve() });
+          }),
+      );
+      // The scroll event the browser fires for the glide's last write.
+      scroller.dispatchEvent(new Event("scroll"));
+      await nextFrame();
+    },
+    growBelow: async (by) => {
+      height += by;
+      scroller.dispatchEvent(new Event("scroll"));
+      await nextFrame();
+    },
     returnToBottom: () => scrollTo(99_500, true),
     setHidden: (next) => {
       hidden = next;
@@ -192,7 +228,7 @@ describe("useHistoryWindow with in-memory history", () => {
     expect(result.current.items).toHaveLength(120);
   });
 
-  test("only the reader's own scroll freezes the window", async () => {
+  test("a move up that was not the reader's freezes the window too", async () => {
     const harness = mount({ items: rows(0, 300) });
     // Away and back once, so the conversation no longer follows the end and
     // a layout scroll can leave it.
@@ -201,6 +237,30 @@ describe("useHistoryWindow with in-memory history", () => {
     // Let the reader's gesture, and its momentum allowance, end.
     await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
     await harness.driftFromBottom();
+    harness.update({ items: rows(0, 301) });
+    expect(first(harness.result.current)).toBe("r180");
+    expect(harness.result.current.items).toHaveLength(121);
+  });
+
+  test("a jump to an item keeps it in the window", async () => {
+    const harness = mount({ items: rows(0, 300) });
+    await harness.returnToBottom();
+    await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
+    await harness.jumpTo("r180");
+    harness.update({ items: rows(0, 301) });
+    expect(first(harness.result.current)).toBe("r180");
+    expect(
+      harness.container.querySelector("[data-item-id='r180']"),
+    ).not.toBeNull();
+  });
+
+  test("content growing below a view that stays put slides the window", async () => {
+    const harness = mount({ items: rows(0, 300) });
+    await harness.leaveBottom();
+    await harness.returnToBottom();
+    await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
+    // The conversation no longer follows: the end moves away below the view.
+    await harness.growBelow(5_000);
     harness.update({ items: rows(0, 301) });
     expect(first(harness.result.current)).toBe("r181");
     expect(harness.result.current.items).toHaveLength(120);
