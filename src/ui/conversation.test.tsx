@@ -1282,7 +1282,7 @@ describe("ConversationEmptyState", () => {
 });
 
 describe("ConversationDivider and ConversationNotice", () => {
-  test("a bare divider is a separator; a labelled one reads its label", () => {
+  test("a bare divider is an hr; a labelled one reads its label", () => {
     const mounted = render(
       <>
         <ConversationDivider data-testid="bare" />
@@ -1291,8 +1291,10 @@ describe("ConversationDivider and ConversationNotice", () => {
     );
     const bare = mounted.container.querySelector("[data-testid='bare']");
     const day = mounted.container.querySelector("[data-testid='day']");
-    expect(bare?.getAttribute("role")).toBe("separator");
-    expect(day?.getAttribute("role")).toBeNull();
+    expect(bare?.hasAttribute("role")).toBe(false);
+    expect(bare?.querySelectorAll("hr")).toHaveLength(1);
+    expect(day?.hasAttribute("role")).toBe(false);
+    expect(day?.querySelector("hr")).toBeNull();
     expect(day?.textContent).toBe("Today");
     mounted.unmount();
   });

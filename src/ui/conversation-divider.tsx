@@ -6,8 +6,9 @@ export type ConversationDividerProps = ComponentProps<"div">;
 
 /**
  * A rule across the conversation with an optional label in the middle: a day
- * ("Today", "March 3") or any other break. Without a label it is a plain
- * separator; with one, the label is ordinary text so it is read in place.
+ * ("Today", "March 3") or any other break. Without a label the rule is an
+ * `<hr>`, a plain separator; with one, the label is ordinary text so it is
+ * read in place and the rules are decoration.
  */
 export function ConversationDivider({
   className,
@@ -18,20 +19,21 @@ export function ConversationDivider({
   return (
     <div
       data-slot="conversation-divider"
-      role={labelled ? undefined : "separator"}
       className={cn(
         "flex items-center gap-3 text-xs font-medium text-muted-foreground",
         className,
       )}
       {...props}
     >
-      <span aria-hidden className="h-px flex-1 bg-border" />
       {labelled ? (
         <>
+          <span aria-hidden className="h-px flex-1 bg-border" />
           {children}
           <span aria-hidden className="h-px flex-1 bg-border" />
         </>
-      ) : null}
+      ) : (
+        <hr className="h-px flex-1 border-0 bg-border" />
+      )}
     </div>
   );
 }
