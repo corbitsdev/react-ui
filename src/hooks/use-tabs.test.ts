@@ -146,6 +146,43 @@ describe("useTabs", () => {
     expect(hook.result.current.value).toBe("b");
   });
 
+  test("closing a tab that is not selected reports no selection", () => {
+    const onValueChange = mock();
+    const hook = setup({ defaultValue: "a", onValueChange });
+    act(() => hook.result.current.close("c"));
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(hook.result.current.value).toBe("a");
+  });
+
+  test("closes in one event chain with a controlled selection", () => {
+    const onValueChange = mock();
+    const hook = setup({ value: "a", onValueChange });
+    act(() => {
+      for (const tab of TABS) hook.result.current.close(tab.value);
+    });
+    expect(hook.result.current.tabs).toEqual([]);
+    expect(onValueChange.mock.calls).toEqual([["b"], ["c"], ["d"], [null]]);
+  });
+
+  test("a select a controlled parent turns down does not steer a later close", () => {
+    const onValueChange = mock();
+    const hook = setup({ value: "a", onValueChange });
+    act(() => hook.result.current.select("c"));
+    expect(onValueChange).toHaveBeenLastCalledWith("c");
+    onValueChange.mockClear();
+    act(() => hook.result.current.close("c"));
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  test("a select and a close in one event chain when uncontrolled", () => {
+    const hook = setup({ defaultValue: "a" });
+    act(() => {
+      hook.result.current.select("c");
+      hook.result.current.close("c");
+    });
+    expect(hook.result.current.value).toBe("d");
+  });
+
   test("tabsProps and paneProps name the same ids", () => {
     const hook = setup();
     const { tabsProps, paneProps } = hook.result.current;

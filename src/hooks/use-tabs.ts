@@ -1,4 +1,4 @@
-import { useCallback, useId, useRef, useState } from "react";
+import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
 
 import { useControllableState } from "./use-controllable-state.js";
 
@@ -62,7 +62,10 @@ export type UseTabsResult<Tab extends TabItem> = {
    */
   readonly update: (value: string, patch: Partial<Omit<Tab, "value">>) => void;
   readonly select: (value: string) => void;
-  /** Closes a tab. Closing the selected one selects its right neighbour, else its left. */
+  /**
+   * Closes a tab. Closing the selected one selects its right neighbour, else
+   * its left; closing another leaves the selection alone and reports nothing.
+   */
   readonly close: (value: string) => void;
   /** Moves a tab to `toIndex`, held within the row. */
   readonly move: (value: string, toIndex: number) => void;
@@ -88,7 +91,7 @@ export function useTabs<Tab extends TabItem>(
   const [tabs, setTabsState] = useState<readonly Tab[]>(defaultTabs);
   // Mirrors the row synchronously, so two changes in one event chain.
   const latestTabs = useRef(tabs);
-  const [value, setValue] = useControllableState<string | null>({
+  const [value, setSelected] = useControllableState<string | null>({
     value: options.value,
     defaultValue:
       options.defaultValue === undefined
@@ -97,7 +100,24 @@ export function useTabs<Tab extends TabItem>(
     onChange: options.onValueChange,
     name: "useTabs",
   });
+  // The selection as this event has left it, so a close sees an open or
+  // close before it in the same event, controlled or not. Each commit puts
+  // back the rendered selection, which is what a controlled parent decided.
+  const latestValue = useRef(value);
+  useLayoutEffect(() => {
+    latestValue.current = value;
+  });
+  const controlled = options.value !== undefined;
   const idPrefix = useId();
+
+  /** Selects alongside a change to the row, which always renders. */
+  const setValue = useCallback(
+    (next: string | null) => {
+      latestValue.current = next;
+      setSelected(next);
+    },
+    [setSelected],
+  );
 
   const setTabs = useCallback(
     (next: readonly Tab[]) => {
@@ -143,10 +163,13 @@ export function useTabs<Tab extends TabItem>(
 
   const select = useCallback(
     (next: string) => {
-      if (latestTabs.current.some((item) => item.value === next))
-        setValue(next);
+      if (!latestTabs.current.some((item) => item.value === next)) return;
+      // A controlled parent can turn a bare select down without rendering,
+      // and then no commit would put the ref back.
+      if (!controlled) latestValue.current = next;
+      setSelected(next);
     },
-    [setValue],
+    [controlled, setSelected],
   );
 
   const close = useCallback(
@@ -156,7 +179,7 @@ export function useTabs<Tab extends TabItem>(
       if (index === -1) return;
       const after = (previous[index + 1] ?? previous[index - 1])?.value ?? null;
       setTabs(previous.filter((_, at) => at !== index));
-      setValue((current) => (current === closing ? after : current));
+      if (latestValue.current === closing) setValue(after);
     },
     [setTabs, setValue],
   );
