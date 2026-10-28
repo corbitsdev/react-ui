@@ -15,6 +15,39 @@ const TOKENS: readonly PromptToken[] = [
   { id: "brief", kind: "command", token: "/brief" },
 ];
 
+const setNativeValue = Object.getOwnPropertyDescriptor(
+  HTMLTextAreaElement.prototype,
+  "value",
+)?.set;
+
+/**
+ * Stands in for the browser's `insertText`, which the test DOM lacks, so a
+ * pick takes the path it takes in a browser: the selection is replaced, the
+ * caret is left after the inserted text and `input` fires. Returns the undo.
+ */
+function installInsertText(): () => void {
+  const execCommand = (command: string, _showUi?: boolean, text = "") => {
+    const element = document.activeElement;
+    if (command !== "insertText" || !(element instanceof HTMLTextAreaElement)) {
+      return false;
+    }
+    const { selectionStart, selectionEnd, value } = element;
+    setNativeValue?.call(
+      element,
+      `${value.slice(0, selectionStart)}${text}${value.slice(selectionEnd)}`,
+    );
+    const caret = selectionStart + text.length;
+    element.setSelectionRange(caret, caret);
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+  };
+  Object.defineProperty(document, "execCommand", {
+    value: execCommand,
+    configurable: true,
+  });
+  return () => Reflect.deleteProperty(document, "execCommand");
+}
+
 type Options = {
   readonly suggest?: boolean;
   readonly busy?: boolean;
@@ -67,19 +100,16 @@ function mountPrompt({
   });
   const textarea = container.querySelector("textarea");
   if (textarea === null) throw new Error("expected a textarea");
-  const setNativeValue = Object.getOwnPropertyDescriptor(
-    HTMLTextAreaElement.prototype,
-    "value",
-  )?.set;
 
   return {
     textarea,
-    /** Replaces the text as if typed, leaving the caret at its end. */
-    type(next: string) {
+    /** Replaces the text as if typed, leaving the caret at `caret`, or at
+     * the end. */
+    type(next: string, caret = next.length) {
       act(() => {
         textarea.focus();
         setNativeValue?.call(textarea, next);
-        textarea.setSelectionRange(next.length, next.length);
+        textarea.setSelectionRange(caret, caret);
         textarea.dispatchEvent(new Event("input", { bubbles: true }));
       });
     },
@@ -170,6 +200,35 @@ describe("usePromptInput", () => {
     expect(view.submitted).toEqual([]);
     view.unmount();
   });
+
+  test.each([
+    ["the browser's editing", true],
+    ["a directly set value", false],
+  ])(
+    "a pick through %s leaves the caret past the token, so Enter then sends",
+    (_path, browserEditing) => {
+      const uninstall = browserEditing ? installInsertText() : undefined;
+      const view = mountPrompt();
+      try {
+        view.type("ask @ad now", "ask @ad".length);
+        view.press("Enter");
+        expect(view.text).toBe("ask @Ada now");
+        expect(view.textarea.selectionStart).toBe("ask @Ada ".length);
+        expect(view.prompt.suggestions).toEqual([]);
+        view.press("Enter");
+        expect(view.submitted).toEqual(["ask @Ada now"]);
+
+        view.type("ask @ad\nnext", "ask @ad".length);
+        view.press("Enter");
+        expect(view.text).toBe("ask @Ada \nnext");
+        expect(view.textarea.selectionStart).toBe("ask @Ada ".length);
+        expect(view.prompt.suggestions).toEqual([]);
+      } finally {
+        view.unmount();
+        uninstall?.();
+      }
+    },
+  );
 
   test("Tab picks too", () => {
     const view = mountPrompt();

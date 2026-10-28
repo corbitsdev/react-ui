@@ -90,6 +90,15 @@ describe("insertPromptToken", () => {
       caret: 9,
     });
   });
+
+  test("adds a space before a line break and keeps the caret on its line", () => {
+    const active = findActivePromptToken("ask @ad\nnext", 7);
+    if (active === null) throw new Error("expected an active token");
+    expect(insertPromptToken("ask @ad\nnext", active, ADA)).toEqual({
+      value: "ask @Ada \nnext",
+      caret: 9,
+    });
+  });
 });
 
 describe("splitPromptSegments", () => {

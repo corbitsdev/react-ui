@@ -31,6 +31,7 @@ export type PromptSegment = {
 
 const WORD_CHARACTER = /[\p{L}\p{N}_-]/u;
 const WHITESPACE = /\s/u;
+const SPACE_IN_LINE = /[^\S\n\r]/u;
 
 function isWordCharacter(character: string): boolean {
   return character !== "" && WORD_CHARACTER.test(character);
@@ -89,8 +90,9 @@ export function matchPromptTokens(
 
 /**
  * The text with the active token replaced by `token` and a space after it,
- * and where the caret goes: past that space. A space that already follows is
- * reused rather than doubled.
+ * and where the caret goes: past that space, so it leaves the token and the
+ * list closes. A space that already follows is reused rather than doubled; a
+ * line break is not, or the caret would land on the next line.
  */
 export function insertPromptToken(
   value: string,
@@ -98,7 +100,7 @@ export function insertPromptToken(
   token: PromptToken,
 ): { readonly value: string; readonly caret: number } {
   const after = value.slice(active.end);
-  const spaced = WHITESPACE.test(after.charAt(0));
+  const spaced = SPACE_IN_LINE.test(after.charAt(0));
   const inserted = spaced ? token.token : `${token.token} `;
   return {
     value: `${value.slice(0, active.start)}${inserted}${after}`,

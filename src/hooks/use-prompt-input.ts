@@ -162,7 +162,13 @@ export function usePromptInput({
       );
       element.focus();
       element.setSelectionRange(activeToken.start, activeToken.end);
-      if (document.execCommand("insertText", false, inserted)) return;
+      if (document.execCommand("insertText", false, inserted)) {
+        // The browser leaves the caret after the inserted text, which is
+        // still inside the token when a following space was reused.
+        element.setSelectionRange(next.caret, next.caret);
+        setCaret(next.caret);
+        return;
+      }
     }
     pendingCaret.current = next;
     onValueChange(next.value);

@@ -228,6 +228,41 @@ test("suggestions follow the keyboard and a pick can be undone", async ({
   await expect(textarea).toHaveValue("Ask @ada and @");
 });
 
+test("a pick mid-draft leaves the caret past the token on its own line", async ({
+  page,
+}) => {
+  await page.goto("/prompt-input");
+  const textarea = message(page);
+  const list = page.getByRole("listbox", { name: "Mentions" });
+  const caret = () =>
+    textarea.evaluate((element: HTMLTextAreaElement) => element.selectionStart);
+
+  await textarea.pressSequentially("Ask @ad now");
+  await textarea.press("ArrowLeft");
+  await textarea.press("ArrowLeft");
+  await textarea.press("ArrowLeft");
+  await textarea.press("ArrowLeft");
+  await expect(list).toBeVisible();
+  await textarea.press("Enter");
+  await expect(textarea).toHaveValue("Ask @Ada now");
+  expect(await caret()).toBe("Ask @Ada ".length);
+  await expect(list).toBeHidden();
+  await textarea.press("Enter");
+  await expect(events(page)).toHaveText("submit:Ask @Ada now");
+
+  await textarea.fill("");
+  await textarea.pressSequentially("Ask @ad");
+  await textarea.press("Shift+Enter");
+  await textarea.pressSequentially("next");
+  await textarea.press("Home");
+  await textarea.press("ArrowLeft");
+  await expect(list).toBeVisible();
+  await textarea.press("Enter");
+  await expect(textarea).toHaveValue("Ask @Ada \nnext");
+  expect(await caret()).toBe("Ask @Ada ".length);
+  await expect(list).toBeHidden();
+});
+
 test("Send becomes Stop while the agent replies and calls onStop", async ({
   page,
 }) => {
