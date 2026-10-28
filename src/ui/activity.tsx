@@ -58,7 +58,8 @@ export type ActivityProps = ComponentProps<"div"> & {
  * block. Folded by default, live or done: closed, it is one summary line
  * ("Thought for 4s · 3 steps") and nothing of the steps is in the page.
  * Opened, it lists every step in order, newest last, the latest ten first
- * with the rest behind a control.
+ * with the rest behind a control. A finished thought with no text has
+ * nothing to show and is left out.
  *
  * Without children it renders `ActivityTrigger` and `ActivityContent`.
  * Renders nothing for a run with no steps.
@@ -215,6 +216,8 @@ export type ActivityContentProps = {
    * Renders one step. Defaults to `Reasoning`, `Tool` or `ToolGroup` by
    * kind; a call with a settled approval shows its outcome, and while the
    * run streams a thought that is its newest step shows as still thinking.
+   * `index` is the step's place in the run. It is not called for a finished
+   * thought with no text.
    */
   readonly renderStep?:
     | ((step: ActivityStep, index: number) => ReactNode)
@@ -222,6 +225,8 @@ export type ActivityContentProps = {
   readonly labels?: Partial<ActivityContentLabels> | undefined;
   readonly className?: string | undefined;
 };
+
+type ShownStep = { readonly step: ActivityStep; readonly index: number };
 
 function defaultStep(step: ActivityStep, live: boolean): ReactNode {
   switch (step.kind) {
@@ -245,7 +250,11 @@ function stepKey(step: ActivityStep, index: number): string {
   }
 }
 
-/** The run's steps, while open: the latest ten, with a control for the rest. */
+/**
+ * The run's steps, while open: the latest ten, with a control for the rest.
+ * A finished thought with no text is left out, as `Reasoning` shows nothing
+ * for it.
+ */
 export function ActivityContent({
   renderStep,
   labels: labelOverrides,
@@ -254,14 +263,20 @@ export function ActivityContent({
   const { steps, streaming, open, contentId } =
     useActivityContext("ActivityContent");
   if (!open) return null;
+  const live = (index: number) => streaming && index === steps.length - 1;
+  // An empty item would still be read as a list item, take focus from "Show
+  // earlier" and count toward the ten shown. Each keeps its index in the run.
+  const shown = steps.flatMap((step, index): ShownStep[] =>
+    step.kind === "reasoning" && !live(index) && step.text.trim().length === 0
+      ? []
+      : [{ step, index }],
+  );
   return (
     <ActivitySteps
       id={contentId}
-      steps={steps}
+      steps={shown}
       renderStep={
-        renderStep ??
-        ((step, index) =>
-          defaultStep(step, streaming && index === steps.length - 1))
+        renderStep ?? ((step, index) => defaultStep(step, live(index)))
       }
       labels={{ ...CONTENT_LABELS, ...labelOverrides }}
       className={className}
@@ -278,7 +293,7 @@ function ActivitySteps({
   className,
 }: {
   readonly id: string;
-  readonly steps: readonly ActivityStep[];
+  readonly steps: readonly ShownStep[];
   readonly renderStep: (step: ActivityStep, index: number) => ReactNode;
   readonly labels: ActivityContentLabels;
   readonly className: string | undefined;
@@ -320,19 +335,16 @@ function ActivitySteps({
           </button>
         </li>
       ) : null}
-      {steps.slice(hidden).map((step, offset) => {
-        const index = hidden + offset;
-        return (
-          <li
-            key={stepKey(step, index)}
-            data-step={step.kind}
-            tabIndex={-1}
-            className="min-w-0 rounded-md"
-          >
-            {renderStep(step, index)}
-          </li>
-        );
-      })}
+      {steps.slice(hidden).map(({ step, index }) => (
+        <li
+          key={stepKey(step, index)}
+          data-step={step.kind}
+          tabIndex={-1}
+          className="min-w-0 rounded-md"
+        >
+          {renderStep(step, index)}
+        </li>
+      ))}
     </ol>
   );
 }

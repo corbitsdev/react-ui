@@ -180,6 +180,25 @@ describe("Activity", () => {
     done.unmount();
   });
 
+  test("a finished thought with no text gets no step of its own", () => {
+    const blank: PartReasoning = { kind: "reasoning", text: " " };
+    const steps = [blank, ...Array.from({ length: 11 }, (_, i) => call(i))];
+    const mounted = mount(<Activity defaultOpen steps={steps} />);
+    const items = [...mounted.container.querySelectorAll("li[data-step]")];
+    expect(items.every((item) => item.innerHTML !== "")).toBe(true);
+    expect(
+      mounted.container.querySelector("li[data-step='reasoning']"),
+    ).toBeNull();
+    // It does not count toward the ten shown or the ones held back.
+    expect(mounted.container.textContent).toContain("Show 1 earlier step");
+    const more = [...mounted.container.querySelectorAll("button")].find(
+      (button) => button.textContent === "Show 1 earlier step",
+    );
+    act(() => more?.click());
+    expect(document.activeElement?.textContent).toContain("files__read_0");
+    mounted.unmount();
+  });
+
   test("a settled approval inside the run shows its outcome", () => {
     const mounted = mount(
       <Activity
