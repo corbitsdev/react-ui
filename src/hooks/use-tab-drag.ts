@@ -15,6 +15,12 @@ export type UseTabDragOptions = {
   readonly listRef: RefObject<HTMLElement | null>;
   /** Called once on release, when the tab lands somewhere new. */
   readonly onMove: ((value: string, toIndex: number) => void) | undefined;
+  /**
+   * Called once after every drag, after any `onMove`: dropped somewhere
+   * new, dropped where it began, or cancelled. The press that began it may
+   * have focused the item, which a drag never selects.
+   */
+  readonly onDragEnd?: (() => void) | undefined;
   /** Matches each draggable item; each carries its value in `data-value`. */
   readonly itemSelector?: string | undefined;
 };
@@ -41,18 +47,22 @@ function clamp(value: number, min: number, max: number): number {
  * dragged item get `data-dragging` for styling the slide.
  *
  * Mouse and pen only: a touch drag is left to scroll the row. Escape or a
- * cancelled pointer puts everything back without a move, and the click that
- * ends a drag is swallowed so it does not also act on the item.
+ * cancelled pointer puts everything back without a move. The click that
+ * ends a drag, or the release of one cancelled with Escape, is swallowed so
+ * it does not also act on the item.
  */
 export function useTabDrag({
   listRef,
   onMove,
+  onDragEnd,
   itemSelector = "[data-slot='panel-tab']",
 }: UseTabDragOptions): UseTabDragResult {
-  // The latest onMove, for a drag that began under an earlier render.
+  // The latest callbacks, for a drag that began under an earlier render.
   const onMoveRef = useRef(onMove);
+  const onDragEndRef = useRef(onDragEnd);
   useLayoutEffect(() => {
     onMoveRef.current = onMove;
+    onDragEndRef.current = onDragEnd;
   });
   const stopRef = useRef<(() => void) | null>(null);
 
@@ -128,7 +138,16 @@ export function useTabDrag({
         clickEvent.stopPropagation();
       };
 
-      const finish = (commit: boolean) => {
+      // The click a release makes comes in the same task as its pointerup.
+      const swallowReleaseClick = () => {
+        window.addEventListener("click", swallowClick, true);
+        setTimeout(() =>
+          window.removeEventListener("click", swallowClick, true),
+        );
+      };
+
+      /** `stop` is an unmount or a new press: no click follows, no callback. */
+      const finish = (end: "drop" | "cancel" | "stop") => {
         window.removeEventListener("pointermove", onPointerMove);
         window.removeEventListener("pointerup", onPointerUp);
         window.removeEventListener("pointercancel", onCancel);
@@ -142,31 +161,50 @@ export function useTabDrag({
         delete dragged.dataset["dragging"];
         if (dragged.hasPointerCapture(pointerId))
           dragged.releasePointerCapture(pointerId);
-        window.addEventListener("click", swallowClick, true);
-        setTimeout(() =>
-          window.removeEventListener("click", swallowClick, true),
-        );
-        if (commit && target !== from) onMoveRef.current?.(value, target);
+        if (end === "drop") {
+          swallowReleaseClick();
+          if (target !== from) onMoveRef.current?.(value, target);
+        }
+        if (end !== "stop") onDragEndRef.current?.();
+      };
+
+      // After Escape the button is still down, and letting go over the item
+      // clicks it. Swallow that click, and no later one: a press seen first
+      // means the release never reached the page.
+      const onReleaseAfterEscape = (releaseEvent: PointerEvent) => {
+        if (releaseEvent.pointerId !== pointerId) return;
+        stopAwaitingRelease();
+        if (releaseEvent.type === "pointerup") swallowReleaseClick();
+      };
+      const stopAwaitingRelease = () => {
+        window.removeEventListener("pointerup", onReleaseAfterEscape);
+        window.removeEventListener("pointercancel", onReleaseAfterEscape);
+        window.removeEventListener("pointerdown", onReleaseAfterEscape);
+        stopRef.current = null;
       };
 
       function onPointerUp(upEvent: PointerEvent) {
-        if (upEvent.pointerId === pointerId) finish(true);
+        if (upEvent.pointerId === pointerId) finish("drop");
       }
       function onCancel(cancelEvent: PointerEvent) {
-        if (cancelEvent.pointerId === pointerId) finish(false);
+        if (cancelEvent.pointerId === pointerId) finish("cancel");
       }
       function onKeyDown(keyEvent: KeyboardEvent) {
         if (keyEvent.key !== "Escape" || !dragging) return;
         keyEvent.preventDefault();
         keyEvent.stopPropagation();
-        finish(false);
+        finish("cancel");
+        window.addEventListener("pointerup", onReleaseAfterEscape);
+        window.addEventListener("pointercancel", onReleaseAfterEscape);
+        window.addEventListener("pointerdown", onReleaseAfterEscape);
+        stopRef.current = stopAwaitingRelease;
       }
 
       window.addEventListener("pointermove", onPointerMove);
       window.addEventListener("pointerup", onPointerUp);
       window.addEventListener("pointercancel", onCancel);
       window.addEventListener("keydown", onKeyDown, true);
-      stopRef.current = () => finish(false);
+      stopRef.current = () => finish("stop");
     },
     [listRef, itemSelector],
   );

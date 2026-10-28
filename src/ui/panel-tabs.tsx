@@ -219,8 +219,12 @@ export function PanelTabs({
     [onClose, refocus],
   );
 
+  /**
+   * Moves a tab and announces it. Focus that was in the row goes to
+   * `focusing`, or to the selected tab when it is `null`.
+   */
   const move = useCallback(
-    (moving: string, toIndex: number) => {
+    (moving: string, toIndex: number, focusing: string | null) => {
       const list = listRef.current;
       if (list === null || onMove === undefined) return;
       const hadFocus = list.contains(document.activeElement);
@@ -231,7 +235,7 @@ export function PanelTabs({
       const from = position();
       flushSync(() => onMove(moving, toIndex));
       // React re-inserts moved nodes, which can drop focus from them.
-      if (hadFocus) refocus(list, null, moving);
+      if (hadFocus) refocus(list, null, focusing);
       const to = position();
       if (to === -1 || to === from) return;
       const text = movedMessage(to + 1, tabElements(list).length);
@@ -240,9 +244,20 @@ export function PanelTabs({
     [onMove, movedMessage, refocus],
   );
 
+  // The press that starts a drag focuses its tab, but a drag never selects
+  // it: afterwards focus in the row goes back to the selected tab, the
+  // row's one tab stop, whether the tab moved or not.
   const { onPointerDown: onTabPointerDown } = useTabDrag({
     listRef,
-    onMove: onMove === undefined ? undefined : move,
+    onMove:
+      onMove === undefined
+        ? undefined
+        : (dragged, toIndex) => move(dragged, toIndex, null),
+    onDragEnd: () => {
+      const list = listRef.current;
+      if (list !== null && list.contains(document.activeElement))
+        refocus(list, null, null);
+    },
     itemSelector: TAB_SELECTOR,
   });
 
@@ -268,7 +283,7 @@ export function PanelTabs({
       if (onMove === undefined) return;
       event.preventDefault();
       const to = Math.min(Math.max(index + step, 0), values.length - 1);
-      if (to !== index) move(current, to);
+      if (to !== index) move(current, to, current);
       return;
     }
     if (event.altKey || event.ctrlKey || event.metaKey) return;

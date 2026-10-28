@@ -45,10 +45,37 @@ test("dragging a tab to the last slot moves it there", async ({ page }) => {
   await expect(
     page.locator("[data-slot='panel-tab'][style*='translate']"),
   ).toHaveCount(0);
-  // The release does not also click the tab.
+  // The release does not also click the tab, and focus goes back to the
+  // selected tab, the row's tab stop.
   await expect(page.getByRole("status", { name: "Selected" })).toHaveText(
     "alpha",
   );
+  await expect(tab(page, "Alpha")).toBeFocused();
+});
+
+test("a drag dropped where it began leaves focus on the selected tab", async ({
+  page,
+}) => {
+  const box = await tab(page, "Beta").boundingBox();
+  if (box === null) throw new Error("missing box");
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 12, y, { steps: 3 });
+  await expect(
+    page.locator("[data-slot='panel-tab'][data-value='beta']"),
+  ).toHaveAttribute("data-dragging", "true");
+  await page.mouse.up();
+
+  await expect(order(page)).toHaveText("alpha,beta,gamma,delta");
+  await expect(page.getByRole("status", { name: "Selected" })).toHaveText(
+    "alpha",
+  );
+  await expect(tab(page, "Alpha")).toBeFocused();
+  // Delete acts on the selected tab, not on the one that was dragged.
+  await page.keyboard.press("Delete");
+  await expect(order(page)).toHaveText("beta,gamma,delta");
 });
 
 test("Escape cancels a drag", async ({ page }) => {
@@ -62,6 +89,30 @@ test("Escape cancels a drag", async ({ page }) => {
   await page.keyboard.press("Escape");
   await page.mouse.up();
   await expect(order(page)).toHaveText("alpha,beta,gamma,delta");
+});
+
+test("releasing a drag cancelled with Escape does not select the tab", async ({
+  page,
+}) => {
+  const selected = page.getByRole("status", { name: "Selected" });
+  const box = await tab(page, "Beta").boundingBox();
+  if (box === null) throw new Error("missing box");
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 12, y, { steps: 3 });
+  await page.keyboard.press("Escape");
+  // A person lets go a moment later, over the tab they pressed.
+  await page.waitForTimeout(50);
+  await page.mouse.up();
+  await expect(order(page)).toHaveText("alpha,beta,gamma,delta");
+  await expect(selected).toHaveText("alpha");
+  await expect(tab(page, "Alpha")).toBeFocused();
+
+  // Only that press's click is swallowed: the next click selects.
+  await tab(page, "Beta").click();
+  await expect(selected).toHaveText("beta");
 });
 
 test("the keyboard selects and moves tabs", async ({ page }) => {
