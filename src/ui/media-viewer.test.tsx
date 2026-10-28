@@ -3,7 +3,10 @@ import type * as React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, test } from "bun:test";
 
-import { useMediaViewer } from "../hooks/use-media-viewer.js";
+import {
+  type MediaViewerState,
+  useMediaViewer,
+} from "../hooks/use-media-viewer.js";
 import { MediaViewer, type MediaViewerItem } from "./media-viewer.js";
 
 const ITEMS: readonly MediaViewerItem[] = [1, 2, 3].map((n) => ({
@@ -78,6 +81,49 @@ describe("MediaViewer", () => {
     press("ArrowRight");
     press("ArrowRight");
     expect(dialog()?.getAttribute("aria-label")).toBe("swatch-1.png");
+  });
+
+  test("on close, focus returns to the latest opener", () => {
+    let viewer!: MediaViewerState<MediaViewerItem>;
+    function Openers() {
+      viewer = useMediaViewer({ items: ITEMS });
+      return (
+        <>
+          <button type="button">First</button>
+          <button type="button">Second</button>
+          <MediaViewer viewer={viewer} />
+        </>
+      );
+    }
+    render(<Openers />);
+    const [first, second] = container!.querySelectorAll("button");
+    act(() => viewer.open(0, first));
+    // A host shortcut opens another item while the viewer is up.
+    act(() => viewer.open(1, second));
+    act(() => viewer.close());
+    expect(dialog()).toBe(null);
+    expect(document.activeElement).toBe(second!);
+  });
+
+  test("on close without an opener, focus returns to what had it on open", () => {
+    let viewer!: MediaViewerState<MediaViewerItem>;
+    function Opener() {
+      viewer = useMediaViewer({ items: ITEMS });
+      return (
+        <>
+          <button type="button">Show</button>
+          <MediaViewer viewer={viewer} />
+        </>
+      );
+    }
+    render(<Opener />);
+    const show = container!.querySelector("button")!;
+    show.focus();
+    act(() => viewer.open(0));
+    expect(document.activeElement).not.toBe(show);
+    act(() => viewer.open(1));
+    act(() => viewer.close());
+    expect(document.activeElement).toBe(show);
   });
 
   test("holds the page still while open, then restores its overflow", () => {

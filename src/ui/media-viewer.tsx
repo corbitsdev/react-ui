@@ -47,7 +47,8 @@ const CONTROL =
  * through them, stopping at either end. Download opens a new tab where the
  * browser will not download the file. On close, focus goes back to the
  * element given to `viewer.open`, or else to whatever had it when the viewer
- * opened.
+ * opened. Escape pressed inside a PDF goes to the browser's PDF viewer, not
+ * the dialog; Tab leaves the PDF and reaches Close.
  *
  * Renders nothing while `viewer` is closed.
  */
@@ -89,7 +90,7 @@ function MediaViewerDialog({
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
     if (dialog === null) return;
-    const opener = openerRef.current ?? document.activeElement;
+    const focused = document.activeElement;
     if (!dialog.open) dialog.showModal();
     // showModal focuses the first control; Close is the safer start.
     closeRef.current?.focus();
@@ -98,6 +99,8 @@ function MediaViewerDialog({
       // close() queues a `close` event that would land after the re-run
       // reopens the dialog.
       if (dialog.open) dialog.close();
+      // The latest `viewer.open` may have named a newer opener.
+      const opener = openerRef.current ?? focused;
       if (
         opener instanceof HTMLElement &&
         opener !== document.body &&

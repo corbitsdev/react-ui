@@ -259,6 +259,36 @@ describe("GeneratedImages", () => {
     view.unmount();
   });
 
+  test("a revealed watched tile goes back under the grain when its source changes", () => {
+    const remote = (url: string): PartImage => ({
+      ...DONE,
+      images: [{ id: "r", mediaType: "image/png", width: 10, height: 10, url }],
+    });
+    const view = render(<GeneratedImages part={GENERATING} />);
+    view.rerender(
+      <GeneratedImages part={remote("https://images.example.com/1.png")} />,
+    );
+    const grain = () => slots(view.container, "generated-image-grain");
+    const load = () =>
+      act(() => {
+        view.container.querySelector("img")?.dispatchEvent(new Event("load"));
+      });
+    expect(grain()).toHaveLength(1);
+    load();
+    expect(grain()).toHaveLength(0);
+    // The browser keeps painting the old picture until the new one loads.
+    view.rerender(
+      <GeneratedImages part={remote("https://images.example.com/2.png")} />,
+    );
+    expect(slots(view.container, "generated-image")[0]?.dataset["state"]).toBe(
+      "loading",
+    );
+    expect(grain()).toHaveLength(1);
+    load();
+    expect(grain()).toHaveLength(0);
+    view.unmount();
+  });
+
   test("an image without alt is named after the prompt", () => {
     const { alt: _alt, ...plain } = image(1);
     const view = render(

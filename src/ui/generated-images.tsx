@@ -420,12 +420,15 @@ export function GeneratedImage({
   const src = conversationImageSrc(image);
   const label = imageLabel(image, index, prompt);
 
-  // A new address for the same tile is a new attempt: it loads afresh.
+  // A new address for the same tile is a new attempt: it loads afresh. The
+  // browser keeps painting the old picture until then, so a watched tile
+  // goes back under the grain.
   const [attempted, setAttempted] = useState(src);
   if (attempted !== src) {
     setAttempted(src);
     setLoaded(false);
     setFailed(false);
+    setDeveloping(develop);
   }
 
   // An image that finished loading before React listened for `load` (a
