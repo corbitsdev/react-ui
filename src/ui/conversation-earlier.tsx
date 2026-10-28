@@ -1,7 +1,13 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import type { ComponentProps } from "react";
 
 import { cn } from "../lib/utils.js";
@@ -35,19 +41,24 @@ export type ConversationEarlierProps = ComponentProps<"div"> & {
  * moves the reader. Pressing the button moves focus to the marker while the
  * load runs, and back to the button if it stalls again.
  */
-export function ConversationEarlier({
-  hasEarlier,
-  loading = false,
-  stalled = false,
-  onReachStart,
-  distance = 1200,
-  className,
-  children,
+export const ConversationEarlier = forwardRef<
+  HTMLDivElement,
+  ConversationEarlierProps
+>(function ConversationEarlier(
+  {
+    hasEarlier,
+    loading = false,
+    stalled = false,
+    onReachStart,
+    distance = 1200,
+    className,
+    children,
+    onFocus,
+    onBlur,
+    ...props
+  },
   ref,
-  onFocus,
-  onBlur,
-  ...props
-}: ConversationEarlierProps) {
+) {
   const { items, scrollContainer } = useConversation();
   const markerRef = useRef<HTMLDivElement | null>(null);
   const reach = useRef(onReachStart);
@@ -170,4 +181,4 @@ export function ConversationEarlier({
       )}
     </div>
   );
-}
+});

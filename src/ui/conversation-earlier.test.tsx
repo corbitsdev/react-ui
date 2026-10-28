@@ -1,4 +1,4 @@
-import { act } from "react";
+import { act, createRef } from "react";
 import type { ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
@@ -119,6 +119,19 @@ describe("ConversationEarlier", () => {
     );
     expect(marker(container)).toBeNull();
     expect(FakeObserver.live.size).toBe(0);
+  });
+
+  test("forwards its ref to the marker", () => {
+    const ref = createRef<HTMLDivElement>();
+    const { container } = render(
+      <Conversation>
+        <ConversationContent>
+          <ConversationEarlier ref={ref} hasEarlier onReachStart={() => {}} />
+        </ConversationContent>
+      </Conversation>,
+    );
+    expect(ref.current).not.toBeNull();
+    expect(marker(container)).toBe(ref.current);
   });
 
   test("asks for more when it comes within reach of the view", () => {
