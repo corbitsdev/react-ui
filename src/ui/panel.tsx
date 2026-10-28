@@ -76,7 +76,8 @@ export type PanelProps = React.ComponentProps<"aside"> & {
  * query), the panel covers the row instead: it takes focus, hides its
  * handle, and makes the rest of the row inert so focus and assistive
  * technology cannot reach what it covers. This follows the row's size while
- * the panel is open.
+ * the panel is open; when the row widens again, focus still on the panel
+ * itself goes back to what the overlay took it from.
  *
  * However it closes, focus that was inside the panel goes back to whatever
  * had it before the panel opened.
@@ -92,6 +93,7 @@ export function Panel({
   style,
   className,
   children,
+  onFocus,
   ...props
 }: PanelProps) {
   const generatedId = useId();
@@ -104,6 +106,14 @@ export function Panel({
     mainMinWidth,
   });
   const elementRef = useRef<HTMLElement | null>(null);
+  // Where focus came from when it last moved into the panel. An `autoFocus`
+  // field in a pane takes focus before the mount effect below runs, and
+  // this is how that effect still finds the opener.
+  const focusedFromRef = useRef<Element | null>(null);
+  // What had focus inside the panel when the mount effect last cleaned up.
+  // Only StrictMode's simulated remount runs the effect again, and it gives
+  // that element its focus back.
+  const focusedOnCleanupRef = useRef<HTMLElement | null>(null);
 
   const setElement = useCallback(
     (element: HTMLElement | null) => {
@@ -118,24 +128,42 @@ export function Panel({
   useLayoutEffect(() => {
     const panel = elementRef.current;
     if (panel === null) return;
-    const opener = document.activeElement;
+    const opener = panel.contains(document.activeElement)
+      ? focusedFromRef.current
+      : document.activeElement;
     let restoreSiblings: (() => void) | null = null;
+    // What had focus when the panel became an overlay and took it.
+    let covered: HTMLElement | null = null;
     // The `@container` query decides whether the panel covers the row, so
     // its computed position is the signal. As an overlay, the panel takes
     // focus and makes the covered main area inert; side by side again, the
-    // main area comes back. Re-checked whenever the row resizes, as plain
-    // DOM work with no React render.
+    // main area comes back, and so does focus the overlay took if it is
+    // still on the panel itself. Re-checked whenever the row resizes, as
+    // plain DOM work with no React render.
     const syncOverlay = () => {
       const overlay = getComputedStyle(panel).position === "absolute";
       if (overlay && restoreSiblings === null) {
-        if (!panel.contains(document.activeElement)) panel.focus();
+        const active = document.activeElement;
+        if (!panel.contains(active)) {
+          covered =
+            active instanceof HTMLElement && active !== document.body
+              ? active
+              : null;
+          panel.focus();
+        }
         restoreSiblings = inertSiblings(panel);
       } else if (!overlay && restoreSiblings !== null) {
         restoreSiblings();
         restoreSiblings = null;
+        if (document.activeElement === panel && covered?.isConnected)
+          covered.focus();
+        covered = null;
       }
     };
     syncOverlay();
+    const refocus = focusedOnCleanupRef.current;
+    focusedOnCleanupRef.current = null;
+    if (refocus?.isConnected && panel.contains(refocus)) refocus.focus();
     const row = panel.parentElement;
     const observer =
       row === null || typeof ResizeObserver === "undefined"
@@ -149,6 +177,8 @@ export function Panel({
       const active = document.activeElement;
       const focusLeftWithPanel =
         active === null || active === document.body || panel.contains(active);
+      focusedOnCleanupRef.current =
+        active instanceof HTMLElement && panel.contains(active) ? active : null;
       // The opener is usually in the main area, so lift its inertness first.
       restoreSiblings?.();
       if (
@@ -175,6 +205,11 @@ export function Panel({
         tabIndex={-1}
         data-slot="panel"
         style={{ ...sizing, ...style }}
+        onFocus={(event) => {
+          onFocus?.(event);
+          if (!event.currentTarget.contains(event.relatedTarget))
+            focusedFromRef.current = event.relatedTarget;
+        }}
         className={cn(
           "relative flex h-full min-h-0 shrink-0 flex-col border-s border-border bg-background text-foreground focus-visible:-outline-offset-2",
           "w-[var(--resizable-width,clamp(calc(var(--spacing)*120),46%,calc(var(--spacing)*190)))]",

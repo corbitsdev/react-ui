@@ -1,4 +1,4 @@
-import { act, useState } from "react";
+import { act, StrictMode, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
@@ -147,6 +147,84 @@ describe("Panel", () => {
     if (close === null) throw new Error("expected the close button");
     close.focus();
     act(() => close.click());
+    expect(mounted.container.querySelector("aside")).toBeNull();
+    expect(document.activeElement).toBe(opener);
+    mounted.unmount();
+  });
+
+  test("closing returns focus to the opener when a pane autofocused a field", () => {
+    function Host() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open thread
+          </button>
+          <button type="button" onClick={() => setOpen(false)}>
+            Hide thread
+          </button>
+          {open ? (
+            <Panel aria-label="Thread">
+              <PanelContent value="reply">
+                <PanelPane value="reply">
+                  <input aria-label="Reply" autoFocus />
+                </PanelPane>
+              </PanelContent>
+            </Panel>
+          ) : null}
+        </>
+      );
+    }
+    const mounted = mount(<Host />);
+    const [opener, hide] = mounted.container.querySelectorAll("button");
+    if (opener === undefined || hide === undefined)
+      throw new Error("expected the host's buttons");
+    opener.focus();
+    act(() => opener.click());
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("Reply");
+    // Closed by the host while focus is still in the panel, as a shortcut
+    // would: a click on the button would move focus to it first.
+    act(() => hide.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    expect(mounted.container.querySelector("aside")).toBeNull();
+    expect(document.activeElement).toBe(opener);
+    mounted.unmount();
+  });
+
+  test("under StrictMode an autofocused field keeps focus, and close returns it", () => {
+    function Host() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open thread
+          </button>
+          <button type="button" onClick={() => setOpen(false)}>
+            Hide thread
+          </button>
+          {open ? (
+            <Panel aria-label="Thread">
+              <PanelContent value="reply">
+                <PanelPane value="reply">
+                  <input aria-label="Reply" autoFocus />
+                </PanelPane>
+              </PanelContent>
+            </Panel>
+          ) : null}
+        </>
+      );
+    }
+    const mounted = mount(
+      <StrictMode>
+        <Host />
+      </StrictMode>,
+    );
+    const [opener, hide] = mounted.container.querySelectorAll("button");
+    if (opener === undefined || hide === undefined)
+      throw new Error("expected the host's buttons");
+    opener.focus();
+    act(() => opener.click());
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("Reply");
+    act(() => hide.dispatchEvent(new MouseEvent("click", { bubbles: true })));
     expect(mounted.container.querySelector("aside")).toBeNull();
     expect(document.activeElement).toBe(opener);
     mounted.unmount();

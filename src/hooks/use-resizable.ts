@@ -226,7 +226,6 @@ export function useResizable(options: UseResizableOptions): UseResizableResult {
     const element = elementRef.current;
     const handle = event.currentTarget;
     if (element === null || event.button !== 0 || !event.isPrimary) return;
-    event.preventDefault();
     stopDragRef.current?.();
     handle.setPointerCapture(event.pointerId);
 
@@ -249,6 +248,8 @@ export function useResizable(options: UseResizableOptions): UseResizableResult {
     draggingRef.current = true;
     handle.dataset["dragging"] = "true";
     root.style.cursor = "col-resize";
+    // This, not preventing the press's default, keeps the drag from
+    // selecting text: the default is what focuses the handle.
     root.style.userSelect = "none";
 
     const move = (moveEvent: PointerEvent) => {

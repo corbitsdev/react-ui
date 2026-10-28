@@ -81,6 +81,22 @@ test("double-click and Enter reset the width", async ({ page }) => {
   expect(Math.round(await width(page, "panel"))).toBe(start);
 });
 
+test("a click on the handle focuses it for the arrow keys", async ({
+  page,
+}) => {
+  await page.goto("/panel");
+  const handle = page.getByRole("separator", { name: "Resize panel" });
+  const output = page.getByRole("status", { name: "Width" });
+  const start = Math.round(await width(page, "panel"));
+  await page.getByRole("button", { name: "Show notes" }).focus();
+
+  await handle.click();
+  await expect(handle).toBeFocused();
+  await expect(output).toHaveText("default");
+  await page.keyboard.press("ArrowLeft");
+  await expect(output).toHaveText(String(start + 16));
+});
+
 test("the main area keeps its minimum width", async ({ page }) => {
   await page.goto("/panel");
   const handle = page.getByRole("separator", { name: "Resize panel" });
@@ -215,4 +231,6 @@ test("narrowing the row while the panel is open turns it into an overlay", async
   await page.setViewportSize({ width: 1280, height: 720 });
   await expect(main).not.toHaveAttribute("inert");
   await expect(page.getByRole("separator")).toBeVisible();
+  // Side by side again, focus goes back to what the overlay covered.
+  await expect(page.getByRole("button", { name: "Show notes" })).toBeFocused();
 });
