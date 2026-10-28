@@ -22,11 +22,22 @@ import {
   type ChatMessage,
   type ConversationScrollPolicy,
   useConversation,
+  PromptInput,
+  PromptInputSubmit,
+  PromptInputSuggestions,
+  PromptInputTextarea,
+  type PromptInputStatus,
+  type PromptToken,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
   type CommandPaletteGroup,
 } from "@corbits/react-ui/ui/command-palette";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@corbits/react-ui/ui/dialog";
 
 const REQUEST: ApprovalRequest = {
   id: "req-1",
@@ -459,6 +470,145 @@ function ConversationEmptyScenario() {
   );
 }
 
+const PROMPT_TOKENS: PromptToken[] = [
+  { id: "ada", kind: "mention", token: "@Ada", detail: "Research agent" },
+  { id: "adam", kind: "mention", token: "@Adam", detail: "Review agent" },
+  { id: "brief", kind: "command", token: "/brief", detail: "Summarize" },
+];
+
+/** Records every submit with its text, and every stop. "Reply" puts the
+ * prompt into the streaming state a host is in while an agent answers. */
+function Prompt() {
+  const [value, setValue] = useState("");
+  const [status, setStatus] = useState<PromptInputStatus>("ready");
+  const { log, record } = useEventLog();
+  return (
+    <div style={{ width: 480, paddingTop: 160 }}>
+      <PromptInput
+        value={value}
+        onValueChange={setValue}
+        onSubmit={() => record(`submit:${value}`)}
+        tokens={PROMPT_TOKENS}
+        status={status}
+      >
+        <PromptInputSuggestions />
+        <PromptInputTextarea />
+        <PromptInputSubmit
+          onStop={() => {
+            record("stop");
+            setStatus("ready");
+          }}
+        />
+      </PromptInput>
+      <Button onClick={() => setStatus("streaming")}>Reply</Button>
+      {log}
+    </div>
+  );
+}
+
+/** The prompt inside an open Radix dialog, which records when it closes. */
+function PromptInDialog() {
+  const [value, setValue] = useState("");
+  const [open, setOpen] = useState(true);
+  const { log, record } = useEventLog();
+  return (
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) record("dialog-closed");
+        }}
+      >
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle>Ask</DialogTitle>
+          <PromptInput
+            value={value}
+            onValueChange={setValue}
+            onSubmit={() => record(`submit:${value}`)}
+            tokens={PROMPT_TOKENS}
+          >
+            <PromptInputSuggestions />
+            <PromptInputTextarea />
+          </PromptInput>
+        </DialogContent>
+      </Dialog>
+      {log}
+    </>
+  );
+}
+
+/** The usual chat host: a submit clears the draft and starts a reply, which
+ * "Finish reply" ends. That button keeps focus where it is, as a reply
+ * arriving would. Without `stoppable` there is no `onStop`, so Send stays
+ * Send while the reply runs. */
+function PromptChat({ stoppable }: { readonly stoppable: boolean }) {
+  const [value, setValue] = useState("");
+  const [status, setStatus] = useState<PromptInputStatus>("ready");
+  const { log, record } = useEventLog();
+  return (
+    <div style={{ width: 480 }}>
+      <PromptInput
+        value={value}
+        onValueChange={setValue}
+        onSubmit={() => {
+          record(`submit:${value}`);
+          setValue("");
+          setStatus("submitted");
+        }}
+        status={status}
+      >
+        <PromptInputTextarea />
+        <PromptInputSubmit
+          {...(stoppable
+            ? {
+                onStop: () => {
+                  record("stop");
+                  setStatus("ready");
+                },
+              }
+            : {})}
+        />
+      </PromptInput>
+      <Button
+        tabIndex={-1}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => setStatus("ready")}
+      >
+        Finish reply
+      </Button>
+      {log}
+    </div>
+  );
+}
+
+/** A host that sends attachments with the text: "Attach file" toggles one,
+ * and with it attached there is something to send even with no text. */
+function PromptWithAttachment() {
+  const [value, setValue] = useState("");
+  const [attached, setAttached] = useState(false);
+  const { log, record } = useEventLog();
+  return (
+    <div style={{ width: 480 }}>
+      <PromptInput
+        value={value}
+        onValueChange={setValue}
+        onSubmit={() =>
+          record(`submit:${value}${attached ? "+attachment" : ""}`)
+        }
+        canSubmit={value.trim() !== "" || attached}
+      >
+        <PromptInputTextarea />
+        <PromptInputSubmit />
+      </PromptInput>
+      <Button aria-pressed={attached} onClick={() => setAttached(!attached)}>
+        Attach file
+      </Button>
+      {log}
+    </div>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -492,4 +642,9 @@ export const scenarios: Record<string, () => ReactNode> = {
   "conversation-stick": () => <ConversationScenario policy="stick" />,
   "conversation-glide": () => <ConversationGlideScenario />,
   "conversation-empty": () => <ConversationEmptyScenario />,
+  "prompt-input": () => <Prompt />,
+  "prompt-input-attachment": () => <PromptWithAttachment />,
+  "prompt-input-dialog": () => <PromptInDialog />,
+  "prompt-input-chat": () => <PromptChat stoppable />,
+  "prompt-input-chat-no-stop": () => <PromptChat stoppable={false} />,
 };
