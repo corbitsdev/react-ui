@@ -79,6 +79,17 @@ function click(target: HTMLElement) {
   act(() => target.click());
 }
 
+/** Whether a press on `target` keeps the browser from moving focus. */
+function pressKeepsFocus(target: Element): boolean {
+  const event = new MouseEvent("mousedown", {
+    bubbles: true,
+    cancelable: true,
+  });
+  act(() => {
+    target.dispatchEvent(event);
+  });
+  return event.defaultPrevented;
+}
 
 function ControlledModel({
   initial,
@@ -123,6 +134,20 @@ describe("PromptInputModelSelect", () => {
     expect(
       view.all("[role='option']").map((option) => option.textContent),
     ).toEqual(["Swift 2", "Lite 1", "Deep 4"]);
+    view.unmount();
+  });
+
+  test("a press anywhere in the open list keeps focus on the trigger", () => {
+    const view = mount(<PromptInputModelSelect models={MODELS} />);
+    click(view.query("[role='combobox']"));
+    const list = view.query("[role='listbox']");
+    const heading = document.getElementById(
+      view.query("[role='group']").getAttribute("aria-labelledby") ?? "",
+    );
+    if (heading === null) throw new Error("no heading");
+    expect(pressKeepsFocus(list)).toBe(true);
+    expect(pressKeepsFocus(heading)).toBe(true);
+    expect(pressKeepsFocus(view.query("[role='option']"))).toBe(true);
     view.unmount();
   });
 
@@ -421,6 +446,14 @@ describe("PromptInputAddMenu", () => {
     expect(document.activeElement).toBe(items[2] ?? null);
     press(menu, "Home");
     expect(document.activeElement).toBe(items[0] ?? null);
+    view.unmount();
+  });
+
+  test("a press anywhere in the open menu keeps focus where it is", () => {
+    const view = mount(<PromptInputAddMenu items={menuItems([])} />);
+    click(view.query("[aria-haspopup='menu']"));
+    expect(pressKeepsFocus(view.query("[role='menu']"))).toBe(true);
+    expect(pressKeepsFocus(view.query("[role='menuitem']"))).toBe(true);
     view.unmount();
   });
 

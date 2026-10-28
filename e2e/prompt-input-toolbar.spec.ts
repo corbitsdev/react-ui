@@ -128,6 +128,37 @@ test("Escape closes the add menu and returns focus; Tab closes it and moves on",
   await expect(events(page)).toHaveText("");
 });
 
+test("a press between rows of an open popup leaves its keys working", async ({
+  page,
+}) => {
+  await model(page).focus();
+  await page.keyboard.press("Enter");
+  const current = page.locator(
+    "[data-slot='prompt-input-select-option'][data-active]",
+  );
+  await expect(current).toHaveText("Deep 4");
+  await page.getByText("Fast", { exact: true }).click();
+  await expect(model(page)).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(current).toHaveText("Lite 1");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("listbox", { name: "Model" })).toBeHidden();
+  await expect(model(page)).toBeFocused();
+
+  await add(page).focus();
+  await page.keyboard.press("Enter");
+  const menu = page.getByRole("menu", { name: "Add" });
+  await expect(page.getByRole("menuitem", { name: "Add files" })).toBeFocused();
+  // The menu's padding, above its first item.
+  await menu.click({ position: { x: 8, y: 2 } });
+  await expect(page.getByRole("menuitem", { name: "Add files" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(
+    page.getByRole("menuitem", { name: "Mention an agent" }),
+  ).toBeFocused();
+  await expect(events(page)).toHaveText("");
+});
+
 test("Escape in the textarea closes a list the host opened, after the suggestion list", async ({
   page,
 }) => {

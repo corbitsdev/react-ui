@@ -338,6 +338,10 @@ export function PromptInputAddMenu({
           aria-label={label}
           data-slot="prompt-input-add-menu-list"
           className={cn(POPUP, align === "start" ? "start-0" : "end-0")}
+          // Focus stays where the menu's keys reach it, on an item or the
+          // trigger, rather than falling to the page on a press between
+          // items; a click still chooses.
+          onMouseDown={(event) => event.preventDefault()}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               event.preventDefault();
@@ -566,8 +570,6 @@ function OptionSelect({
         className={cn(
           "flex cursor-default items-center gap-2 rounded-md px-2 py-1 text-sm data-[active]:bg-muted",
         )}
-        // Focus stays on the trigger.
-        onMouseDown={(event) => event.preventDefault()}
         onPointerMove={() => {
           if (!active) setActiveId(option.id);
         }}
@@ -672,6 +674,9 @@ function OptionSelect({
           aria-label={label}
           data-slot="prompt-input-select-list"
           className={cn(POPUP, align === "start" ? "start-0" : "end-0")}
+          // Focus stays on the trigger, whose keys work the list, wherever
+          // the press lands: an option, a group heading, the padding.
+          onMouseDown={(event) => event.preventDefault()}
         >
           {groups.map((group, groupIndex) =>
             group.name === undefined ? (
