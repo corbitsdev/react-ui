@@ -54,7 +54,10 @@ export type UsePromptInputResult = {
   /** Whether there is something to send and nothing stops sending it. */
   readonly canSubmit: boolean;
   readonly submit: () => void;
-  /** Spread onto the textarea. */
+  /** Spread onto the textarea. While the list is open, Escape reaches
+   * `onKeyDown` with `defaultPrevented` already set (see `usePromptInput`).
+   * A host that wraps `onKeyDown` and skips this one for a prevented key
+   * must still pass that Escape on, or the list never closes. */
   readonly textareaProps: {
     readonly onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
     readonly onSelect: (event: SyntheticEvent<HTMLTextAreaElement>) => void;
@@ -86,9 +89,14 @@ function keyOf(token: ActivePromptToken): string {
  *
  * Keys: while suggestions show, ArrowDown and ArrowUp move through them and
  * wrap, Enter or Tab picks the current one and Escape closes the list until
- * the token changes or the caret leaves it. Otherwise Enter submits and Shift+Enter inserts a
- * newline. Nothing happens during IME composition, where Enter commits a
- * candidate rather than the message.
+ * the token changes or the caret leaves it. Otherwise Enter submits and
+ * Shift+Enter inserts a newline. Nothing happens during IME composition,
+ * where Enter commits a candidate rather than the message.
+ *
+ * While the list is open, an Escape in the textarea is prevented from the
+ * window's capture phase, before any React handler runs, so an enclosing
+ * dialog or popover leaves it to the list. It still reaches
+ * `textareaProps.onKeyDown`, which closes the list.
  *
  * The current suggestion is held by id, not index, so it stays on the same
  * row while typing narrows the list.
