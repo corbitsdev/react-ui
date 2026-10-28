@@ -313,9 +313,6 @@ describe("useAttachments", () => {
     expect([...revoked].sort()).toEqual([...created].sort());
   });
 
-  // StrictMode replays effects only at mount, before any URL is made, so
-  // the replay here comes after: the effects are torn down and set up again
-  // while the previews are on screen.
   // A drop still being read, or any other late caller.
   test("an add after unmounting makes no preview URL", async () => {
     const host = mountHost();
@@ -327,6 +324,9 @@ describe("useAttachments", () => {
     expect(created).toEqual([]);
   });
 
+  // StrictMode replays effects only at mount, before any URL is made, so
+  // the replay here comes after: the effects are torn down and set up again
+  // while the previews are on screen.
   test("an effect replay while previews are held revokes nothing", async () => {
     const host = mountHost({ strict: true });
     host.drop([file("a.txt"), file("b.txt")]);
