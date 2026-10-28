@@ -1,4 +1,4 @@
-import { act, createRef } from "react";
+import { act, createRef, useState } from "react";
 import type { ReactElement } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
@@ -631,6 +631,81 @@ describe("MessageActionMenu", () => {
     });
     expect(mounted.container.querySelector("[role='menu']")).toBeNull();
     expect(document.activeElement).toBe(trigger);
+    mounted.unmount();
+  });
+
+  test("a click opens on the first item after a host ignored an ArrowUp open", () => {
+    let allow = false;
+    function Host() {
+      const [open, setOpen] = useState(false);
+      return (
+        <MessageActionMenu
+          open={open}
+          onOpenChange={(next) => {
+            if (next && !allow) return;
+            setOpen(next);
+          }}
+        >
+          <MessageAction label="Pin" />
+          <MessageAction label="Share" />
+          <MessageAction label="Delete" />
+        </MessageActionMenu>
+      );
+    }
+    const mounted = render(<Host />);
+    const trigger = button(mounted.container, "More actions");
+    trigger.focus();
+    act(() => {
+      trigger.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowUp",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    expect(mounted.container.querySelector("[role='menu']")).toBeNull();
+    allow = true;
+    act(() => trigger.click());
+    expect(document.activeElement?.textContent).toBe("Pin");
+    mounted.unmount();
+  });
+
+  test("the host's own open after an ignored ArrowUp lands on the first item", () => {
+    let allow = false;
+    let openFromHost = () => {};
+    function Host() {
+      const [open, setOpen] = useState(false);
+      openFromHost = () => setOpen(true);
+      return (
+        <MessageActionMenu
+          open={open}
+          onOpenChange={(next) => {
+            if (next && !allow) return;
+            setOpen(next);
+          }}
+        >
+          <MessageAction label="Pin" />
+          <MessageAction label="Share" />
+          <MessageAction label="Delete" />
+        </MessageActionMenu>
+      );
+    }
+    const mounted = render(<Host />);
+    const trigger = button(mounted.container, "More actions");
+    trigger.focus();
+    act(() => {
+      trigger.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowUp",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    expect(mounted.container.querySelector("[role='menu']")).toBeNull();
+    act(() => openFromHost());
+    expect(document.activeElement?.textContent).toBe("Pin");
     mounted.unmount();
   });
 

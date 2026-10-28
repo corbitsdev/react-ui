@@ -169,7 +169,8 @@ function clipBounds(element: HTMLElement): { top: number; bottom: number } {
  * Opening it moves focus to the first item (ArrowUp on the trigger: the
  * last). Arrow keys, Home and End move between items; Escape closes it and
  * returns focus to the trigger, as do choosing an item, Shift+Tab and
- * pressing the trigger again; focus leaving it or a click outside closes it.
+ * pressing the trigger again; focus leaving it or a click outside closes it
+ * without taking focus back.
  * It opens on `side` unless that side would clip it and the other has more
  * room.
  */
@@ -200,7 +201,11 @@ export function MessageActionMenu({
     [ref, rootRef],
   );
   const menuRef = useRef<HTMLDivElement>(null);
-  const focusOnOpen = useRef<"first" | "last">("first");
+  // Which item the next open focuses. An ArrowUp on the trigger asks for the
+  // last; the request is dropped when the host does not open the menu at
+  // once, so a later open, by a click or by the host, starts on the first.
+  const [focusOnOpen, setFocusOnOpen] = useState<"first" | "last">("first");
+  if (focusOnOpen === "last" && !open) setFocusOnOpen("first");
   // Set by a press on the trigger while open. Safari, and Firefox on macOS,
   // do not focus a button on click, so the press blurs the menu with no
   // `relatedTarget`; that blur must leave closing to the trigger's click.
@@ -233,15 +238,14 @@ export function MessageActionMenu({
   useEffect(() => {
     if (!open) return;
     const items = menuItems(menuRef.current);
-    const target = focusOnOpen.current === "last" ? items.at(-1) : items[0];
+    const target = focusOnOpen === "last" ? items.at(-1) : items[0];
     (target ?? menuRef.current)?.focus();
-    focusOnOpen.current = "first";
-  }, [open]);
+  }, [open, focusOnOpen]);
 
   const onTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     event.preventDefault();
-    focusOnOpen.current = event.key === "ArrowUp" ? "last" : "first";
+    setFocusOnOpen(event.key === "ArrowUp" ? "last" : "first");
     setOpen(true);
   };
 
@@ -296,8 +300,11 @@ export function MessageActionMenu({
         }}
         onClick={() => {
           pressingTrigger.current = false;
-          if (open) close();
-          else setOpen(true);
+          if (open) {
+            close();
+            return;
+          }
+          setOpen(true);
         }}
         onKeyDown={onTriggerKeyDown}
       >

@@ -16,7 +16,8 @@ export type UseCopyResult = {
  * Copy to the clipboard with a short-lived "copied" state for the control
  * that did it. A failed or unavailable clipboard leaves `copied` off, so a
  * control never claims a copy that did not happen. Copying again restarts the
- * timer; unmounting clears it.
+ * timer; only the latest copy sets `copied`, even when an earlier write
+ * settles after it. Unmounting clears the timer.
  */
 export function useCopy({
   timeout = 2000,
@@ -24,6 +25,7 @@ export function useCopy({
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  const latestRef = useRef(0);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -36,13 +38,14 @@ export function useCopy({
 
   const copy = useCallback(
     async (text: string) => {
+      const call = ++latestRef.current;
       let written = true;
       try {
         await navigator.clipboard.writeText(text);
       } catch {
         written = false;
       }
-      if (!mountedRef.current) return written;
+      if (!mountedRef.current || call !== latestRef.current) return written;
       if (timerRef.current !== null) clearTimeout(timerRef.current);
       timerRef.current = null;
       setCopied(written);

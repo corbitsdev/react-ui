@@ -13,6 +13,16 @@ function stubClipboard(writeText: (text: string) => Promise<void>) {
   });
 }
 
+/** Stubs a clipboard whose writes settle only when the test says so. */
+function holdClipboard() {
+  const pending: { resolve: () => void; reject: (error: Error) => void }[] = [];
+  stubClipboard(
+    () =>
+      new Promise<void>((resolve, reject) => pending.push({ resolve, reject })),
+  );
+  return pending;
+}
+
 const wait = (ms: number) =>
   act(() => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
@@ -91,6 +101,52 @@ describe("useCopy", () => {
       await hook.result.current.copy("two");
     });
     expect(hook.result.current.copied).toBe(false);
+    hook.unmount();
+  });
+
+  test("a stale write that settles last does not override a newer one", async () => {
+    const pending = holdClipboard();
+    const hook = renderHook(() => useCopy({ timeout: 1000 }));
+    let first!: Promise<boolean>;
+    let second!: Promise<boolean>;
+    act(() => {
+      first = hook.result.current.copy("one");
+      second = hook.result.current.copy("two");
+    });
+    await act(async () => {
+      pending[1]!.reject(new Error("denied"));
+      await second;
+    });
+    expect(hook.result.current.copied).toBe(false);
+    let written: boolean | undefined;
+    await act(async () => {
+      pending[0]!.resolve();
+      written = await first;
+    });
+    expect(written).toBe(true);
+    expect(hook.result.current.copied).toBe(false);
+    hook.unmount();
+  });
+
+  test("a stale failure that settles last does not clear a newer copy", async () => {
+    const pending = holdClipboard();
+    const hook = renderHook(() => useCopy({ timeout: 1000 }));
+    let first!: Promise<boolean>;
+    let second!: Promise<boolean>;
+    act(() => {
+      first = hook.result.current.copy("one");
+      second = hook.result.current.copy("two");
+    });
+    await act(async () => {
+      pending[1]!.resolve();
+      await second;
+    });
+    expect(hook.result.current.copied).toBe(true);
+    await act(async () => {
+      pending[0]!.reject(new Error("denied"));
+      await first;
+    });
+    expect(hook.result.current.copied).toBe(true);
     hook.unmount();
   });
 
