@@ -62,9 +62,10 @@ export type ToolGroupProps = Omit<
  * Tool calls that ran at the same time: one row saying so, the calls beneath.
  *
  * When a decision settles a call while focus was inside and nothing else has
- * taken it, focus moves to the next waiting call's first button, else to the
- * decided call's outcome, else to the group's row, instead of dropping to
- * the page.
+ * taken it, focus moves to the next waiting call's card, else to the decided
+ * call's outcome, else to the group's row, instead of dropping to the page.
+ * The card, not its Approve button: a held Enter repeats onto whatever has
+ * focus, and would decide a call the person never chose.
  */
 export function ToolGroup({
   part,
@@ -235,7 +236,7 @@ export function ToolGroup({
 
 const WAITING = "[data-slot='tool-approval'][data-status='pending']";
 
-/** The first waiting call after the decided one, else the first waiting call. */
+/** The card of the first waiting call after the decided one, else of the first. */
 function nextWaiting(
   root: HTMLElement,
   decided: HTMLElement | null,
@@ -250,5 +251,9 @@ function nextWaiting(
               Node.DOCUMENT_POSITION_FOLLOWING) !==
             0,
         );
-  return (after ?? cards[0])?.querySelector<HTMLElement>("button") ?? null;
+  return (
+    (after ?? cards[0])?.querySelector<HTMLElement>(
+      "[data-slot='tool-approval-card']",
+    ) ?? null
+  );
 }

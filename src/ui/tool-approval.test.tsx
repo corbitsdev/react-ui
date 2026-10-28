@@ -94,7 +94,13 @@ describe("ToolApproval", () => {
     );
     const section = mounted.container.querySelector("section");
     expect(section?.className).toContain("bg-attention-wash");
-    expect(section?.getAttribute("aria-labelledby")).not.toBeNull();
+    // Named by the question and the call, so two waiting cards differ.
+    const name = section
+      ?.getAttribute("aria-labelledby")
+      ?.split(" ")
+      .map((id) => document.getElementById(id)?.textContent)
+      .join(" ");
+    expect(name).toBe("Needs your approval mail__send");
     expect(mounted.container.textContent).toContain("Needs your approval");
     expect(mounted.container.textContent).toContain("mail__send");
     expect(mounted.container.textContent).toContain('"to": "team"');
@@ -118,6 +124,30 @@ describe("ToolApproval", () => {
     expect(approve.getAttribute("aria-disabled")).toBe("true");
     act(() => approve.click());
     expect(decisions).toEqual([]);
+    mounted.unmount();
+  });
+
+  test("inside a form, the buttons decide without submitting it", () => {
+    const decisions: ToolApprovalDecision[] = [];
+    let submits = 0;
+    const mounted = mount(
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          submits += 1;
+        }}
+      >
+        <input aria-label="Note" />
+        <ToolApproval part={tool()} onDecide={(d) => decisions.push(d)} />
+      </form>,
+    );
+    for (const [name] of cases) {
+      const element = button(mounted.container, name);
+      expect(element.type).toBe("button");
+      act(() => element.click());
+    }
+    expect(submits).toBe(0);
+    expect(decisions.length).toBe(3);
     mounted.unmount();
   });
 

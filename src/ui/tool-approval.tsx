@@ -107,6 +107,7 @@ export function ToolApproval({
 }: ToolApprovalProps) {
   const labels = { ...LABELS, ...labelOverrides };
   const titleId = useId();
+  const nameId = useId();
   const inputTitleId = useId();
   const outcomeId = useId();
   const awaiting = isAwaitingApproval(part);
@@ -165,7 +166,9 @@ export function ToolApproval({
     >
       {awaiting ? (
         <section
-          aria-labelledby={titleId}
+          data-slot="tool-approval-card"
+          aria-labelledby={`${titleId} ${nameId}`}
+          tabIndex={-1}
           className="flex flex-col gap-3 rounded-lg border border-primary-emphasis bg-attention-wash p-4 text-foreground"
         >
           <header className="flex min-w-0 flex-wrap items-center gap-2">
@@ -176,7 +179,10 @@ export function ToolApproval({
             <p id={titleId} className="font-semibold">
               {labels.title}
             </p>
-            <code className="ms-auto min-w-0 truncate font-mono text-xs">
+            <code
+              id={nameId}
+              className="ms-auto min-w-0 truncate font-mono text-xs"
+            >
               {part.name}
             </code>
           </header>
@@ -205,6 +211,7 @@ export function ToolApproval({
           )}
           <div className="flex flex-wrap items-center gap-2">
             <Button
+              type="button"
               size="sm"
               aria-disabled={disabled || undefined}
               onClick={decide({ outcome: "approved", scope: "once" })}
@@ -213,6 +220,7 @@ export function ToolApproval({
               {labels.approve}
             </Button>
             <Button
+              type="button"
               size="sm"
               variant="outline"
               aria-disabled={disabled || undefined}
@@ -222,6 +230,7 @@ export function ToolApproval({
               {labels.approveAlways}
             </Button>
             <Button
+              type="button"
               size="sm"
               variant="outline"
               aria-disabled={disabled || undefined}

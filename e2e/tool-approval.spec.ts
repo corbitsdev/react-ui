@@ -74,15 +74,23 @@ test("in a group, keyboard decisions keep focus inside it", async ({
       () => (window as Window & { bodyFrames?: number }).bodyFrames,
     );
 
-  await page.keyboard.press("Enter");
+  // A held Enter: the first press decides, the repeat lands on what has focus.
+  await page.keyboard.down("Enter");
   await expect(page.getByRole("status", { name: "Events" })).toHaveText(
     "mail__send:approved:once",
   );
   await expect(waiting).toHaveCount(1);
   await expect(
-    waiting.getByRole("button", { name: "Approve", exact: true }),
+    page.getByRole("region", { name: "Needs your approval calendar__invite" }),
   ).toBeFocused();
+  await page.keyboard.down("Enter");
+  await page.keyboard.up("Enter");
+  await expect(waiting).toHaveCount(1);
+  await expect(page.getByRole("status", { name: "Events" })).toHaveText(
+    "mail__send:approved:once",
+  );
 
+  await waiting.getByRole("button", { name: "Approve", exact: true }).focus();
   await page.keyboard.press("Enter");
   await expect(waiting).toHaveCount(0);
   const header = page.locator("[data-slot='tool-group-header']");

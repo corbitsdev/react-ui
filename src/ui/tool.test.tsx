@@ -448,6 +448,14 @@ describe("ToolGroup", () => {
       act(() => approve.click());
     }
 
+    function cardOf(container: HTMLElement, name: string): Element {
+      const card = [
+        ...container.querySelectorAll("[data-slot='tool-approval-card']"),
+      ].find((element) => element.textContent?.includes(name));
+      if (card === undefined) throw new Error(`expected ${name}'s card`);
+      return card;
+    }
+
     function resolvedLine(container: HTMLElement, name: string): Element {
       const line = [
         ...container.querySelectorAll("[data-slot='tool-approval']"),
@@ -477,15 +485,15 @@ describe("ToolGroup", () => {
       mounted.unmount();
     });
 
-    test("with another call waiting, focus moves to that call's first button", () => {
+    test("with another call waiting, focus moves to that call's card, not a button", () => {
       const mounted = mount(
         <Host initial={batch([waitingCall("a"), waitingCall("c")])} />,
       );
       decideByKeyboard(approveIn(mounted.container, "mail__a"));
       expect(mounted.container.textContent).toContain("Approved once");
-      expect(document.activeElement).toBe(
-        approveIn(mounted.container, "mail__c"),
-      );
+      // A held Enter repeats onto the focused element; on the card it decides nothing.
+      expect(document.activeElement).toBe(cardOf(mounted.container, "mail__c"));
+      expect(document.activeElement?.tagName).not.toBe("BUTTON");
       mounted.unmount();
     });
 
@@ -500,9 +508,7 @@ describe("ToolGroup", () => {
         />,
       );
       decideByKeyboard(approveIn(mounted.container, "mail__b"));
-      expect(document.activeElement).toBe(
-        approveIn(mounted.container, "mail__c"),
-      );
+      expect(document.activeElement).toBe(cardOf(mounted.container, "mail__c"));
       mounted.unmount();
     });
 
