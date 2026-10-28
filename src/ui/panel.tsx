@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import {
   createContext,
+  forwardRef,
   useCallback,
   useContext,
   useEffect,
@@ -86,22 +87,25 @@ export type PanelProps = React.ComponentProps<"aside"> & {
  * itself goes back to what the overlay took it from.
  *
  * However it closes, focus that was inside the panel goes back to whatever
- * had it before the panel opened.
+ * had it before the panel opened. `ref` reaches the `aside` on React 18 and
+ * 19.
  */
-export function Panel({
-  width,
-  defaultWidth,
-  onWidthChange,
-  minWidth = DEFAULT_MIN_WIDTH_PX,
-  mainMinWidth = DEFAULT_MAIN_MIN_WIDTH_PX,
-  id,
+export const Panel = forwardRef<HTMLElement, PanelProps>(function Panel(
+  {
+    width,
+    defaultWidth,
+    onWidthChange,
+    minWidth = DEFAULT_MIN_WIDTH_PX,
+    mainMinWidth = DEFAULT_MAIN_MIN_WIDTH_PX,
+    id,
+    style,
+    className,
+    children,
+    onFocus,
+    ...props
+  },
   ref,
-  style,
-  className,
-  children,
-  onFocus,
-  ...props
-}: PanelProps) {
+) {
   const generatedId = useId();
   const panelId = id ?? generatedId;
   const { panelRef, handleProps } = useResizable({
@@ -230,7 +234,7 @@ export function Panel({
       </aside>
     </PanelContext.Provider>
   );
-}
+});
 
 export type PanelHandleProps = Omit<
   React.ComponentProps<"div">,

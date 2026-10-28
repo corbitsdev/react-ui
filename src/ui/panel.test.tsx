@@ -1,4 +1,4 @@
-import { act, StrictMode, useState } from "react";
+import { act, createRef, StrictMode, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
@@ -89,6 +89,14 @@ describe("Panel", () => {
     expect(first.value).toBe("half a reply");
     expect(pane(mounted.container, "a")?.dataset["state"]).toBe("active");
     mounted.unmount();
+  });
+
+  test("a ref reaches the panel element", () => {
+    const ref = createRef<HTMLElement>();
+    const mounted = mount(<Panel ref={ref} aria-label="Details" />);
+    expect(ref.current).toBe(mounted.container.querySelector("aside"));
+    mounted.unmount();
+    expect(ref.current).toBeNull();
   });
 
   test("the handle is a named separator that controls the panel", () => {
