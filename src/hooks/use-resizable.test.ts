@@ -1,4 +1,4 @@
-import { act, createElement } from "react";
+import { act, createElement, startTransition, Suspense, use } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
@@ -259,6 +259,70 @@ describe("useResizable", () => {
     mounted.rerender({ width: 716 });
     expect(shownWidth(mounted)).toBe(716);
     mounted.unmount();
+  });
+
+  test("a render React throws away leaves the committed width in charge", async () => {
+    // A transition that suspends renders the hook with the new width, then
+    // drops that render and keeps the committed one on screen.
+    const never = new Promise<never>(() => {});
+    const changes: (number | null)[] = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    function Suspending({
+      width,
+      pending,
+    }: {
+      readonly width: number;
+      readonly pending: boolean;
+    }) {
+      const resizable = useResizable({
+        width,
+        minWidth: MIN,
+        mainMinWidth: MAIN_MIN,
+        onWidthChange: (next) => changes.push(next),
+      });
+      if (pending) use(never);
+      return createElement(
+        "div",
+        { "data-row": "" },
+        createElement(
+          "aside",
+          { ref: resizable.panelRef },
+          createElement("div", {
+            "data-handle": "",
+            "aria-label": "Resize",
+            ...resizable.handleProps,
+          }),
+        ),
+      );
+    }
+    const tree = (width: number, pending: boolean) =>
+      createElement(
+        Suspense,
+        { fallback: null },
+        createElement(Suspending, { width, pending }),
+      );
+    let root!: Root;
+    act(() => {
+      root = createRoot(container);
+      root.render(tree(700, false));
+    });
+    await act(async () => {
+      startTransition(() => root.render(tree(900, true)));
+    });
+    const panel = find(container, "aside");
+    expect(panel.getBoundingClientRect().width).toBe(700);
+
+    // The parent keeps 700, so the element has to stay at 700.
+    act(() => {
+      find(container, "[data-handle]").dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }),
+      );
+    });
+    expect(changes).toEqual([716]);
+    expect(panel.style.getPropertyValue(RESIZABLE_WIDTH_VAR)).toBe("700px");
+    act(() => root.unmount());
+    container.remove();
   });
 
   test("ignores keys it does not handle", () => {

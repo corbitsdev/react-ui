@@ -143,10 +143,10 @@ export function useResizable(options: UseResizableOptions): UseResizableResult {
 
   const elementRef = useRef<HTMLElement | null>(null);
   const observerRef = useRef<ResizeObserver | null>(null);
+  // The committed width and bounds, for handlers and the ref callback. Set
+  // in the layout effect below, so a render React discards never lands here.
   const widthRef = useRef(width);
-  widthRef.current = width;
   const boundsRef = useRef({ minWidth, mainMinWidth });
-  boundsRef.current = { minWidth, mainMinWidth };
   const draggingRef = useRef(false);
   const stopDragRef = useRef<(() => void) | null>(null);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -188,6 +188,8 @@ export function useResizable(options: UseResizableOptions): UseResizableResult {
   );
 
   useLayoutEffect(() => {
+    widthRef.current = width;
+    boundsRef.current = { minWidth, mainMinWidth };
     const element = elementRef.current;
     if (element === null) return;
     writeWidth(element, width);
