@@ -27,7 +27,9 @@ export type ConversationMapProps = Omit<
   ComponentProps<"nav">,
   "children" | "onSelect"
 > & {
-  /** Turns in document order. Each spans its items up to the next turn. */
+  /** Turns in document order. Each spans its items up to the next turn.
+   * Each turn's `ConversationItem` must be mounted: under a history window,
+   * pass the turns of the windowed items, not the whole conversation. */
   readonly turns: readonly ConversationMapTurn[];
   /** Called after a tick starts the jump to its turn. */
   readonly onSelect?: ((id: string) => void) | undefined;
@@ -77,6 +79,9 @@ function keepInView(
  * is a live region, and the rail must not scroll with it). It sits over the
  * content's left edge, so give the content column room, e.g.
  * `[&>[data-slot=conversation-column]]:pl-12` on `ConversationContent`.
+ *
+ * Map only mounted turns. A tick for a turn whose item is not mounted (a
+ * windowed or virtualised list) does not jump, even when `onSelect` mounts it.
  *
  * The rail is one tab stop; the arrow keys, Home and End move along it, and
  * Escape dismisses the preview. When the rail overflows, it scrolls to keep

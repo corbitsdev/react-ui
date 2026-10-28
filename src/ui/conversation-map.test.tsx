@@ -207,6 +207,32 @@ function placeAt(element: Element, top: number, height = 40) {
   });
 }
 
+const sleep = (ms: number) =>
+  act(() => new Promise((resolve) => setTimeout(resolve, ms)));
+
+/** A 600px view over 10_000px at `scrollTop`, with `q1` at 1_000 in scroll
+ * coordinates, so a jump to it glides for real. */
+function layOutFarFromQ1(container: HTMLElement, scrollTop: number) {
+  const log = scroller(container);
+  Object.defineProperty(log, "scrollHeight", {
+    configurable: true,
+    value: 10_000,
+  });
+  Object.defineProperty(log, "clientHeight", {
+    configurable: true,
+    value: 600,
+  });
+  placeAt(log, 0, 600);
+  log.scrollTop = scrollTop;
+  const q1 = log.querySelector("[data-item-id='q1']");
+  if (q1 === null) throw new Error("expected q1");
+  Object.defineProperty(q1, "getBoundingClientRect", {
+    configurable: true,
+    value: () => new DOMRect(0, 1_000 - log.scrollTop, 400, 40),
+  });
+  return log;
+}
+
 describe("ConversationMap", () => {
   test("renders one tick per turn, named by what was said", () => {
     const mounted = render(<Chat />);
@@ -623,6 +649,105 @@ describe("useReadingPosition", () => {
     await nextFrame();
     expect(states(mounted.container)[0]).toBe("faint");
     expect(states(mounted.container)[3]).toBe("current");
+    mounted.unmount();
+  });
+
+  /** Jumps to q1 from far below it, after `before`, and runs `interrupt`
+   * mid-glide. */
+  async function jumpCutShort(
+    interrupt: (log: HTMLElement) => void,
+    before: (log: HTMLElement) => void = () => {},
+  ) {
+    const mounted = render(<Chat />);
+    const log = layOutFarFromQ1(mounted.container, 5_000);
+    act(() => onlyObserver().report(["q4", "q4-reply"]));
+    await nextFrame();
+    act(() => before(log));
+    await nextFrame();
+    act(() => tick(mounted.container, "First question").click());
+    await nextFrame();
+    await nextFrame();
+    expect(states(mounted.container)[0]).toBe("current");
+    act(() => interrupt(log));
+    const stoppedAt = log.scrollTop;
+    await sleep(900);
+    expect(log.scrollTop).toBe(stoppedAt);
+    expect(stoppedAt).toBeGreaterThan(1_500);
+    act(() => onlyObserver().report(["q3-reply", "q4"]));
+    await nextFrame();
+    return mounted;
+  }
+
+  test("a jump cut short by momentum before q1 is seen ends", async () => {
+    const mounted = await jumpCutShort(
+      (log) => {
+        // A momentum frame: no input of its own.
+        log.scrollTop += 60;
+        log.dispatchEvent(new Event("scroll"));
+      },
+      (log) => {
+        // A flick, lifted just before the click.
+        log.dispatchEvent(new Event("touchstart"));
+        log.dispatchEvent(new Event("touchmove"));
+        log.scrollTop = 5_100;
+        log.dispatchEvent(new Event("scroll"));
+        log.dispatchEvent(new Event("touchend"));
+      },
+    );
+    expect(states(mounted.container)[0]).toBe("faint");
+    expect(states(mounted.container)[3]).toBe("current");
+    mounted.unmount();
+  });
+
+  test("a jump stopped by a wheel that moves nothing ends", async () => {
+    const mounted = await jumpCutShort((log) => {
+      log.dispatchEvent(new WheelEvent("wheel"));
+    });
+    expect(states(mounted.container)[0]).toBe("faint");
+    expect(states(mounted.container)[3]).toBe("current");
+    mounted.unmount();
+  });
+
+  test("a jump stopped by a tap on a message ends", async () => {
+    const mounted = await jumpCutShort((log) => {
+      const q4 = log.querySelector("[data-item-id='q4']");
+      q4?.dispatchEvent(new Event("touchstart", { bubbles: true }));
+      q4?.dispatchEvent(new Event("touchend", { bubbles: true }));
+    });
+    expect(states(mounted.container)[0]).toBe("faint");
+    expect(states(mounted.container)[3]).toBe("current");
+    mounted.unmount();
+  });
+
+  test("clicking the same tick mid-glide keeps the jump", async () => {
+    const mounted = render(<Chat />);
+    const log = layOutFarFromQ1(mounted.container, 5_000);
+    act(() => onlyObserver().report(["q4", "q4-reply"]));
+    await nextFrame();
+    act(() => tick(mounted.container, "First question").click());
+    await nextFrame();
+    await nextFrame();
+    // The second click replaces the glide in flight with its own.
+    act(() => tick(mounted.container, "First question").click());
+    await nextFrame();
+    expect(states(mounted.container)[0]).toBe("current");
+    await sleep(900);
+    expect(log.scrollTop).toBe(1_000);
+    expect(states(mounted.container)[0]).toBe("current");
+    mounted.unmount();
+  });
+
+  test("a jump left alone lands on its turn and keeps it current", async () => {
+    const mounted = render(<Chat />);
+    const log = layOutFarFromQ1(mounted.container, 5_000);
+    act(() => onlyObserver().report(["q4", "q4-reply"]));
+    await nextFrame();
+    act(() => tick(mounted.container, "First question").click());
+    await sleep(900);
+    expect(log.scrollTop).toBe(1_000);
+    act(() => onlyObserver().report(["q1", "q1-reply"]));
+    await nextFrame();
+    expect(states(mounted.container)[0]).toBe("current");
     mounted.unmount();
   });
 

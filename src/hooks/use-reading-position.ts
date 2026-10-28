@@ -23,7 +23,8 @@ export type ReadingPosition = {
   /**
    * Glides to a turn, like `scrollToItem`, and keeps it current until the
    * reader scrolls the view or it leaves the view, even where the view cannot
-   * bring it to the top.
+   * bring it to the top. A glide cut short before the turn came on screen
+   * ends the jump. Only a mounted turn can be jumped to.
    */
   readonly jumpTo: (id: string) => void;
 };
@@ -216,9 +217,20 @@ export function useReadingPosition(
 
   const jumpTo = useCallback(
     (id: string) => {
-      pinRef.current =
+      const pin: Pin | null =
         items.get(id) === undefined ? null : { id, seen: false, armed: false };
-      scrollToItem(id);
+      pinRef.current = pin;
+      scrollToItem(id, {
+        // Cut short (the reader's input or momentum, another glide) before
+        // the turn came on screen: nothing keeps it current any more.
+        onEnd: (arrived) => {
+          if (arrived || pin === null || pinRef.current !== pin || pin.seen) {
+            return;
+          }
+          pinRef.current = null;
+          measureRef.current?.();
+        },
+      });
       measureRef.current?.();
     },
     [items, scrollToItem],
