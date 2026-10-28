@@ -638,7 +638,9 @@ function createConversationEngine() {
       window.addEventListener("pointerup", onPointerUp);
       window.addEventListener("pointercancel", onPointerUp);
       updateReserve();
-      if (following) write(endTop());
+      // A remounted log opens where the last one left the reader: at the end
+      // while following, otherwise with the anchored items where they were.
+      restore();
       capture();
       notifiedTop = null;
       scrolled = true;

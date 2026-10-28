@@ -1072,6 +1072,49 @@ describe("a scroll right after a resize", () => {
   });
 });
 
+describe("a remounted log", () => {
+  /** Lays the items out as soon as the log mounts, before it attaches. */
+  const layOutTen = (node: HTMLDivElement | null) => {
+    if (node !== null) layOut(node, TEN);
+  };
+  const tree = (policy: ConversationScrollPolicy, mount: number) => (
+    <Conversation scrollPolicy={policy}>
+      <ConversationContent key={mount} ref={layOutTen}>
+        {TEN.map((id) => (
+          <ConversationItem key={id} itemId={id}>
+            {id}
+          </ConversationItem>
+        ))}
+      </ConversationContent>
+    </Conversation>
+  );
+
+  for (const policy of ["settle", "stick"] as const) {
+    test(`opens where the reader was, not at the top (${policy})`, async () => {
+      const mounted = render(tree(policy, 0));
+      const before = scroller(mounted.container);
+      await nextFrame();
+      expect(before.scrollTop).toBe(9_500);
+      wheel(before, 6_000);
+      await nextFrame();
+
+      mounted.rerender(tree(policy, 1));
+      const after = scroller(mounted.container);
+      expect(after === before).toBe(false);
+      expect(after.scrollTop).toBe(6_000);
+      mounted.unmount();
+    });
+  }
+
+  test("opens at the end while it follows", async () => {
+    const mounted = render(tree("stick", 0));
+    await nextFrame();
+    mounted.rerender(tree("stick", 1));
+    expect(scroller(mounted.container).scrollTop).toBe(9_500);
+    mounted.unmount();
+  });
+});
+
 describe("sentId", () => {
   test("the value at mount is history: nothing settles, the view follows", async () => {
     const { mounted, element, current, spacer, update } = mountConversation(

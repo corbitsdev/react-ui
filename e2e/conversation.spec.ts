@@ -166,7 +166,7 @@ test.describe("settle", () => {
     );
   });
 
-  test("a remounted log keeps the reserve, so the end is the content's end", async ({
+  test("a remounted log keeps the reader's place and the reserve", async ({
     page,
   }) => {
     await open(page, "conversation-settle");
@@ -178,9 +178,17 @@ test.describe("settle", () => {
         .evaluate((element) => element.getBoundingClientRect().height);
     const held = await reserve();
     expect(held).toBeGreaterThan(0);
+    // Up from the settled item, far enough that the end leaves the view.
+    await wheel(page, -600);
+    const reading = await firstVisible(page);
+    const before = await offsetOf(page, reading);
 
     await page.getByRole("button", { name: "Remount" }).click();
     await write(page, 0);
+    expect(await firstVisible(page)).toBe(reading);
+    expect(
+      Math.abs((await offsetOf(page, reading)) - before),
+    ).toBeLessThanOrEqual(1);
     expect(Math.abs((await reserve()) - held)).toBeLessThanOrEqual(1);
 
     await page.getByRole("button", { name: "Scroll to latest" }).click();
