@@ -1,4 +1,4 @@
-import { act, StrictMode, useState } from "react";
+import { act, createRef, StrictMode, useState } from "react";
 import type * as React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, test } from "bun:test";
@@ -179,6 +179,16 @@ describe("MediaViewer", () => {
     expect(document.activeElement?.getAttribute("aria-label")).toBe("Close");
     act(() => viewer.close());
     expect(document.activeElement).toBe(tile);
+  });
+
+  test("passes its ref to the dialog", () => {
+    const ref = createRef<HTMLDialogElement>();
+    function WithRef() {
+      const viewer = useMediaViewer({ items: ITEMS, defaultIndex: 0 });
+      return <MediaViewer ref={ref} viewer={viewer} />;
+    }
+    render(<WithRef />);
+    expect(ref.current).toBe(dialog()!);
   });
 
   test("holds the page still while open, then restores its overflow", () => {

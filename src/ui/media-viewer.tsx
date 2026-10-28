@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Download, X } from "lucide-react";
-import { useCallback, useLayoutEffect, useRef } from "react";
+import { forwardRef, useCallback, useLayoutEffect, useRef } from "react";
 import type * as React from "react";
 
 import type { MediaViewerState } from "../hooks/use-media-viewer.js";
@@ -29,7 +29,7 @@ export type MediaViewerItem = {
 };
 
 export type MediaViewerProps = Omit<
-  React.ComponentProps<"dialog">,
+  React.ComponentPropsWithoutRef<"dialog">,
   "children" | "open"
 > & {
   /** From `useMediaViewer`: which item is open, and how to step and close. */
@@ -50,21 +50,30 @@ const CONTROL =
  * opened. Escape pressed inside a PDF goes to the browser's PDF viewer, not
  * the dialog; Tab leaves the PDF and reaches Close.
  *
- * Renders nothing while `viewer` is closed.
+ * Renders nothing while `viewer` is closed. A `ref` gets the `<dialog>`
+ * while it is open.
  */
-export function MediaViewer({ viewer, ...props }: MediaViewerProps) {
-  const { item, index } = viewer;
-  if (item === null || index === null) return null;
-  return (
-    <MediaViewerDialog viewer={viewer} item={item} index={index} {...props} />
-  );
-}
+export const MediaViewer = forwardRef<HTMLDialogElement, MediaViewerProps>(
+  function MediaViewer({ viewer, ...props }, ref) {
+    const { item, index } = viewer;
+    if (item === null || index === null) return null;
+    return (
+      <MediaViewerDialog
+        viewer={viewer}
+        item={item}
+        index={index}
+        forwardedRef={ref}
+        {...props}
+      />
+    );
+  },
+);
 
 function MediaViewerDialog({
   viewer,
   item,
   index,
-  ref,
+  forwardedRef,
   className,
   onCancel,
   onClick,
@@ -73,6 +82,7 @@ function MediaViewerDialog({
 }: MediaViewerProps & {
   readonly item: MediaViewerItem;
   readonly index: number;
+  readonly forwardedRef: React.ForwardedRef<HTMLDialogElement>;
 }) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -81,10 +91,10 @@ function MediaViewerDialog({
   const setDialog = useCallback(
     (element: HTMLDialogElement | null) => {
       dialogRef.current = element;
-      if (typeof ref === "function") ref(element);
-      else if (ref !== null && ref !== undefined) ref.current = element;
+      if (typeof forwardedRef === "function") forwardedRef(element);
+      else if (forwardedRef !== null) forwardedRef.current = element;
     },
-    [ref],
+    [forwardedRef],
   );
 
   useLayoutEffect(() => {
