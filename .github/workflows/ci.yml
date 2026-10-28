@@ -29,12 +29,27 @@ jobs:
           mkdir -p "$RUNNER_TEMP/c" && cd "$RUNNER_TEMP/c"
           npm init -y >/dev/null && npm pkg set type=module >/dev/null
           npm install "$TARBALL"
-          # One component per chat module, so a dropped `export *` line in
-          # src/index.ts fails here and not in a consumer's build.
+          # One runtime export from each module the chat family puts in
+          # src/index.ts, so a dropped `export *` line fails here and not in a
+          # consumer's build. lib/conversation.js is types only and has none.
+          # A forwardRef component is an object, so presence is the check.
           node --input-type=module -e '
             const m = await import("@corbits/react-ui");
-            const names = ["Button", "Badge", "Conversation", "ConversationThread", "ConversationMap", "Message", "Activity", "Reasoning", "Tool", "ToolApproval", "ToolGroup", "PromptInput", "Panel", "Attachments", "MediaViewer"];
-            const missing = names.filter((n) => typeof m[n] !== "function");
+            const names = [
+              "Button", "Badge",
+              "usePromptInput", "useResizable", "useTabs", "useTabDrag", "useCopy",
+              "useHistoryWindow", "useReadingPosition", "useAttachments",
+              "useFileDrop", "useMediaViewer",
+              "groupActivity", "mediaKindOf", "checkAttachments", "matchPromptTokens",
+              "Conversation", "ConversationDivider", "ConversationEarlier",
+              "ConversationMap", "ConversationThread",
+              "PromptInput", "PromptInputToolbar", "Panel", "PanelTabs",
+              "Tool", "ToolApproval", "ToolGroup", "Reasoning", "Activity",
+              "Message", "MessageFold", "MessageActions", "MessageReactions",
+              "MessageReplies", "Attachments", "AttachmentDropZone",
+              "GeneratedImages", "Sources", "MediaViewer",
+            ];
+            const missing = names.filter((n) => m[n] === undefined);
             if (missing.length) throw new Error("missing exports: " + missing.join(", "));
           '
 
