@@ -1002,8 +1002,11 @@ describe("scrollToItem's onEnd", () => {
     layOut(element, ids);
     await nextFrame();
     let arrived: boolean | undefined;
-    if (api === null) throw new Error("expected the conversation API");
-    api.scrollToItem("b", {
+    // The probe assigns `api` from a child, which control-flow analysis
+    // does not see, so a null check would narrow it to `never`.
+    const conversation = api as ConversationContextValue | null;
+    if (conversation === null) throw new Error("expected the conversation API");
+    conversation.scrollToItem("b", {
       onEnd: (value) => {
         arrived = value;
       },
