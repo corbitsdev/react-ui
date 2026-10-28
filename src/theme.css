@@ -281,6 +281,14 @@
   );
 }
 
+/* The ground under something waiting on the person, such as a tool call
+   asking for approval. Derived from --primary like the sidebar wash above, so
+   every theme and mode follows its own orange; 12% reads as a tint on both the
+   light and the dark ground. */
+:root {
+  --attention-wash: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -309,6 +317,7 @@
   --color-ring: var(--ring);
   --color-ok: var(--ok);
   --color-warn: var(--warn);
+  --color-attention-wash: var(--attention-wash);
   --shadow-surface: var(--shadow);
 
   /* The brand faces are named directly and are not bundled — the package ships
