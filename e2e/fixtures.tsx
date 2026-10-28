@@ -69,6 +69,7 @@ import {
   Attachment,
   AttachmentDropZone,
   AttachmentInfo,
+  FileInput,
   AttachmentMore,
   AttachmentPreview,
   AttachmentRemove,
@@ -1391,6 +1392,11 @@ function AttachmentsScenario() {
   });
   const folded = !expanded && attachments.length > 5;
   const shown = folded ? attachments.slice(0, 4) : attachments;
+  const take = (files: Iterable<File> | ArrayLike<File>) => {
+    const { accepted, rejected } = add(files);
+    setAttachments((previous) => [...previous, ...accepted]);
+    setRefused(refusals(rejected));
+  };
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <div data-testid="outside" style={{ height: 80 }}>
@@ -1399,9 +1405,7 @@ function AttachmentsScenario() {
       <AttachmentDropZone
         data-testid="zone"
         onFiles={(files, details) => {
-          const { accepted, rejected } = add(files);
-          setAttachments((previous) => [...previous, ...accepted]);
-          setRefused(refusals(rejected));
+          take(files);
           setFolders(details.folders.join(","));
         }}
         style={{ padding: "96px 16px 16px", width: 640 }}
@@ -1444,6 +1448,7 @@ function AttachmentsScenario() {
           </Button>
         ) : null}
         <textarea ref={message} aria-label="Message" />
+        <FileInput multiple onFiles={take} />
       </AttachmentDropZone>
       <output aria-label="Count">{attachments.length}</output>
       <output aria-label="Refused">{refused}</output>

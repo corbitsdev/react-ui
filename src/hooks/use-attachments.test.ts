@@ -178,6 +178,24 @@ describe("useAttachments", () => {
     host.unmount();
   });
 
+  test("a nameless file is checked as the Untitled it is held as", () => {
+    const host = mountHost();
+    const [item] = host.drop([file("")]).accepted;
+    if (item === undefined) throw new Error("missing");
+    expect(item.name).toBe("Untitled");
+
+    const nameless = file("");
+    const named = file("Untitled");
+    expect(host.drop([nameless]).rejected).toEqual([
+      { file: nameless, reason: "duplicate" },
+    ]);
+    expect(host.drop([named]).rejected).toEqual([
+      { file: named, reason: "duplicate" },
+    ]);
+    expect(host.list).toEqual([item]);
+    host.unmount();
+  });
+
   test("two adds before the list updates still respect the limits", () => {
     const host = mountHost({ maxFiles: 2 });
     let second: ReturnType<UseAttachmentsResult["add"]> | undefined;
@@ -242,6 +260,17 @@ describe("useAttachments", () => {
   // StrictMode replays effects only at mount, before any URL is made, so
   // the replay here comes after: the effects are torn down and set up again
   // while the previews are on screen.
+  // A drop still being read, or any other late caller.
+  test("an add after unmounting makes no preview URL", async () => {
+    const host = mountHost();
+    host.unmount();
+    await microtasks();
+    const [item] = host.add([file("a.txt")]).accepted;
+    expect(item?.url).toBeUndefined();
+    expect(item?.file).toBeInstanceOf(File);
+    expect(created).toEqual([]);
+  });
+
   test("an effect replay while previews are held revokes nothing", async () => {
     const host = mountHost({ strict: true });
     host.drop([file("a.txt"), file("b.txt")]);

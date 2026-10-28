@@ -45,6 +45,11 @@ export type UseAttachmentsResult = {
 
 let lastAttachmentId = 0;
 
+/** The name a file is held under. */
+function nameOf(file: File): string {
+  return file.name === "" ? "Untitled" : file.name;
+}
+
 function nextAttachmentId(): string {
   lastAttachmentId += 1;
   return `attachment-${lastAttachmentId}`;
@@ -62,7 +67,7 @@ function nextAttachmentId(): string {
  * Every URL the hook makes is revoked at the first commit whose list does
  * not hold its attachment: once the host removes it, however it does, or
  * right away if the host never appended it. The rest go when the hook
- * unmounts. Only
+ * unmounts, and an `add` after that makes no URL. Only
  * URLs the hook made are revoked; the host's own are left alone. To keep an
  * attachment on screen after it leaves the list (sending moves it into a
  * message), `release` it first.
@@ -86,7 +91,9 @@ export function useAttachments({
   const pending = useRef<AttachmentItem[]>([]);
   const latest = useRef({ attachments, maxFiles, maxFileBytes });
   latest.current = { attachments, maxFiles, maxFileBytes };
-  const mounted = useRef(false);
+  // True until the hook unmounts, so an `add` before its effects run still
+  // makes a URL.
+  const mounted = useRef(true);
 
   // After every commit, not only when the list changes: an accepted file the
   // host did not append must neither keep its URL nor count as a duplicate
@@ -124,26 +131,40 @@ export function useAttachments({
       ...(max === undefined ? {} : { maxFiles: max }),
       ...(maxBytes === undefined ? {} : { maxFileBytes: maxBytes }),
     };
+    // Checked under the name each file will be held under, so a nameless
+    // file is a duplicate of the "Untitled" one already held.
     const { accepted, rejected } = checkAttachments(
       [...held, ...pending.current],
-      Array.from(files),
+      Array.from(files, (file) => ({
+        name: nameOf(file),
+        size: file.size,
+        file,
+      })),
       limits,
     );
-    const items = accepted.map((file): AttachmentItem => {
+    const items = accepted.map(({ name, file }): AttachmentItem => {
       const id = nextAttachmentId();
-      const url = URL.createObjectURL(file);
-      urls.current.set(id, url);
-      return {
+      const item = {
         id,
-        name: file.name === "" ? "Untitled" : file.name,
+        name,
         mediaType: file.type === "" ? "application/octet-stream" : file.type,
         size: file.size,
-        url,
         file,
       };
+      // Past unmount nothing would revoke it.
+      if (!mounted.current) return item;
+      const url = URL.createObjectURL(file);
+      urls.current.set(id, url);
+      return { ...item, url };
     });
     pending.current = [...pending.current, ...items];
-    return { accepted: items, rejected };
+    return {
+      accepted: items,
+      rejected: rejected.map(({ file, reason }) => ({
+        file: file.file,
+        reason,
+      })),
+    };
   }, []);
 
   const release = useCallback((ids: Iterable<string>) => {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { DragEvent as ReactDragEvent } from "react";
 
 /**
@@ -230,7 +230,10 @@ export type UseFileDropOptions = ReadDroppedFilesOptions & {
    * what it held. A drop of only empty folders calls it with no files.
    */
   readonly onFiles: (files: readonly File[], details: FileDropDetails) => void;
-  /** While true, drags are ignored and the browser's default stands. */
+  /**
+   * While true, drags are ignored and the browser's default stands. A drop
+   * still being read when it turns true is dropped, errors and all.
+   */
   readonly disabled?: boolean;
   /**
    * Called when a drop could not be read in full: a folder that could not
@@ -262,7 +265,10 @@ function report(error: unknown) {
 
 /**
  * Makes an element a target for dropped files and folders. Only drags that
- * carry files are taken; text and links dragged over it behave as usual.
+ * carry files are taken; text and links dragged over it behave as usual. A
+ * drop that a child handles itself (calls `preventDefault`), as `FileInput`
+ * does, is left to the child. A drop still being read when the target
+ * unmounts is dropped.
  *
  * `over` is true while files are held over the target, including over its
  * children. It turns false when the drag leaves the target, is dropped, or
@@ -278,8 +284,18 @@ export function useFileDrop<T extends Element = HTMLElement>({
   onError,
 }: UseFileDropOptions): UseFileDropResult<T> {
   const [over, setOver] = useState(false);
-  const latest = useRef({ onFiles, onError, maxFolderEntries });
-  latest.current = { onFiles, onError, maxFolderEntries };
+  // The latest options, for a drop still being read under an earlier render.
+  const latest = useRef({ onFiles, onError, maxFolderEntries, disabled });
+  useLayoutEffect(() => {
+    latest.current = { onFiles, onError, maxFolderEntries, disabled };
+  });
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   // Counted rather than read from `relatedTarget`, which WebKit leaves null:
   // moving between two children enters one before leaving the other, so the
   // count only reaches zero once the drag has left the target.
@@ -343,22 +359,29 @@ export function useFileDrop<T extends Element = HTMLElement>({
       },
       onDrop: (event) => {
         if (!takes(event)) return;
-        event.preventDefault();
         depth.current = 0;
         setOver(false);
+        // A child that takes its own drops, such as `FileInput`, took it.
+        if (event.isDefaultPrevented()) return;
+        event.preventDefault();
         const options = latest.current.maxFolderEntries;
+        // Disabled or unmounted while the drop was being read.
+        const stale = () => latest.current.disabled || !mounted.current;
         readDroppedFiles(
           event.dataTransfer,
           options === undefined ? {} : { maxFolderEntries: options },
         ).then(
           ({ files, ...details }) => {
+            if (stale()) return;
             const { onFiles: deliver, onError: fail } = latest.current;
             for (const error of details.errors) (fail ?? report)(error);
             if (files.length > 0 || details.folders.length > 0) {
               deliver(files, details);
             }
           },
-          (error: unknown) => (latest.current.onError ?? report)(error),
+          (error: unknown) => {
+            if (!stale()) (latest.current.onError ?? report)(error);
+          },
         );
       },
     },

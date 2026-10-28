@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { act, createElement, useState } from "react";
+import type { DragEvent as ReactDragEvent } from "react";
 import { createRoot } from "react-dom/client";
 
 import {
@@ -57,6 +58,27 @@ function folderEntry(
       };
     },
   };
+}
+
+/** A folder whose listing waits until `release` is called. */
+function heldFolder(name: string, entries: readonly DroppedEntry[]) {
+  let release = () => {};
+  const listed = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const folder = folderEntry(name, entries);
+  const entry: DroppedEntry = {
+    ...folder,
+    createReader: () => {
+      const reader = folder.createReader?.();
+      return {
+        readEntries: (success, failure) => {
+          void listed.then(() => reader?.readEntries(success, failure));
+        },
+      };
+    },
+  };
+  return { entry, release };
 }
 
 function source(
@@ -195,7 +217,8 @@ type Received = { files: readonly File[]; details: FileDropDetails };
 function mountTarget({
   guard = true,
   disabled: initiallyDisabled = false,
-}: { guard?: boolean; disabled?: boolean } = {}) {
+  childTakesDrops = false,
+}: { guard?: boolean; disabled?: boolean; childTakesDrops?: boolean } = {}) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -215,7 +238,13 @@ function mountTarget({
     return createElement(
       "div",
       { "data-testid": "zone", ...drop.dropProps },
-      createElement("span", null, "Drop here"),
+      createElement(
+        "span",
+        childTakesDrops
+          ? { onDrop: (event: ReactDragEvent) => event.preventDefault() }
+          : null,
+        "Drop here",
+      ),
     );
   }
 
@@ -383,6 +412,41 @@ describe("useFileDrop", () => {
     target.fire(target.zone, dragEvent("dragleave", files));
     expect(target.over).toBe(false);
     target.unmount();
+  });
+
+  // A picker such as FileInput inside the zone reads its own drops.
+  test("a drop a child took itself is left to it", async () => {
+    const target = mountTarget({ childTakesDrops: true });
+    const files = source([new File(["a"], "a.txt")]);
+    target.fire(target.child, dragEvent("dragenter", files));
+    expect(target.over).toBe(true);
+    const drop = target.fire(target.child, dragEvent("drop", files));
+    expect(drop.defaultPrevented).toBe(true);
+    expect(target.over).toBe(false);
+    await settle();
+    expect(target.received).toEqual([]);
+    target.unmount();
+  });
+
+  test("a drop still being read when the target is disabled is dropped", async () => {
+    const target = mountTarget();
+    const folder = heldFolder("photos", [fileEntry("a.jpg")]);
+    target.fire(target.zone, dragEvent("drop", source([folder.entry])));
+    target.disable();
+    folder.release();
+    await settle();
+    expect(target.received).toEqual([]);
+    target.unmount();
+  });
+
+  test("a drop still being read when the target unmounts is dropped", async () => {
+    const target = mountTarget();
+    const folder = heldFolder("photos", [fileEntry("a.jpg")]);
+    target.fire(target.zone, dragEvent("drop", source([folder.entry])));
+    target.unmount();
+    folder.release();
+    await settle();
+    expect(target.received).toEqual([]);
   });
 
   test("a drag without files is left alone", async () => {

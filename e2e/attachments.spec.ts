@@ -262,6 +262,28 @@ test("a dropped folder is walked to the files inside it", async ({ page }) => {
   }
 });
 
+test("a drop on the picker inside the zone is taken once", async ({ page }) => {
+  await page.goto("/attachments");
+  await page.locator("[data-testid=zone] label").evaluate((picker) => {
+    const data = new DataTransfer();
+    data.items.add(new File(["hi"], "notes.txt", { type: "text/plain" }));
+    for (const type of ["dragenter", "dragover", "drop"]) {
+      picker.dispatchEvent(
+        new DragEvent(type, {
+          dataTransfer: data,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    }
+  });
+  await expect(count(page)).toHaveText("1");
+  await expect(page.getByRole("status", { name: "Refused" })).toHaveText("");
+  await expect(
+    page.locator("[data-slot=attachment-drop-zone-overlay]"),
+  ).toHaveCount(0);
+});
+
 test("files dropped outside the zone do not open in place of the page", async ({
   page,
 }) => {
