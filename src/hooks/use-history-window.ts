@@ -43,8 +43,9 @@ export type UseHistoryWindowOptions<T extends { readonly id: string }> = {
    * Called when the reader nears the start of `items` and `hasEarlier` is
    * true: prepend the next page to `items`. Called once until the returned
    * promise settles. A load that settles without a new first item (an empty
-   * page, or a rejection) leaves the window `stalled`; report failures from
-   * here, the hook only stops asking.
+   * page, a rejection or a throw) leaves the window `stalled`. A synchronous
+   * throw is reported through `reportError`; report a rejection from here,
+   * the hook only stops asking.
    */
   readonly onLoadEarlier?: (() => Promise<void> | void) | undefined;
 };
