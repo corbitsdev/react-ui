@@ -83,6 +83,10 @@ import {
   useMediaViewer,
   type ConversationImage,
   type PartImage,
+  ConversationThread,
+  MessageReplies,
+  type ConversationMessage,
+  type ConversationParticipant,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
@@ -1536,6 +1540,156 @@ function MediaViewerChatScenario() {
   );
 }
 
+const THREAD_AGENT: ConversationParticipant = {
+  id: "agent",
+  kind: "agent",
+  name: "Agent",
+};
+
+const THREAD_READER: ConversationParticipant = {
+  id: "reader",
+  kind: "person",
+  name: "Reader",
+};
+
+function threadMessage(
+  id: string,
+  author: ConversationParticipant,
+  text: string,
+): ConversationMessage {
+  return {
+    id,
+    author,
+    at: "2026-03-04T11:00:00.000Z",
+    status: "sent",
+    parts: [{ kind: "text", text }],
+  };
+}
+
+const THREAD_PARENT: ConversationMessage = {
+  ...threadMessage("parent", THREAD_AGENT, "The weekly report is ready."),
+  replies: { count: 12, lastAt: "2026-03-04T11:30:00.000Z" },
+};
+
+const THREAD_REPLIES = Array.from({ length: 12 }, (_, index) =>
+  threadMessage(
+    `reply-${index + 1}`,
+    index % 2 === 0 ? THREAD_READER : THREAD_AGENT,
+    `Reply ${index + 1}: a note on the report, long enough to wrap onto a second line in the panel.`,
+  ),
+);
+
+function ThreadMessage({ message }: { message: ConversationMessage }) {
+  const own = message.author.id === THREAD_READER.id;
+  return (
+    <Message
+      from={own ? "own" : "agent"}
+      aria-label={`${message.author.name} ${message.id}`}
+    >
+      <MessageContent
+        text={message.parts
+          .map((part) => (part.kind === "text" ? part.text : ""))
+          .join("")}
+      />
+    </Message>
+  );
+}
+
+const renderThreadMessage = (message: ConversationMessage) => (
+  <ThreadMessage message={message} />
+);
+
+// A thread's tab keeps its draft and replies in its own state, so they last
+// exactly as long as the pane stays mounted.
+function ThreadPaneScenario() {
+  const [replies, setReplies] = useState(THREAD_REPLIES);
+  const [draft, setDraft] = useState("");
+  const [sentId, setSentId] = useState<string>();
+  const [sends, setSends] = useState(0);
+  return (
+    <ConversationThread
+      parent={THREAD_PARENT}
+      replies={replies}
+      renderMessage={renderThreadMessage}
+      sentId={sentId}
+    >
+      <PromptInput
+        value={draft}
+        onValueChange={setDraft}
+        onSubmit={() => {
+          const count = sends + 1;
+          setSends(count);
+          setReplies((current) => [
+            ...current,
+            threadMessage(`sent-${count}`, THREAD_READER, draft),
+            threadMessage(`answer-${count}`, THREAD_AGENT, "Noted."),
+          ]);
+          setSentId(`sent-${count}`);
+          setDraft("");
+        }}
+      >
+        <PromptInputTextarea aria-label="Reply" />
+        <PromptInputSubmit />
+      </PromptInput>
+    </ConversationThread>
+  );
+}
+
+type ThreadScenarioTab = { value: string; title: string };
+
+function ConversationThreadScenario() {
+  const { tabs, value, open, tabsProps, paneProps } =
+    useTabs<ThreadScenarioTab>({
+      defaultTabs: [{ value: "notes", title: "Notes" }],
+    });
+  return (
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        height: 600,
+        width: 1200,
+        containerType: "inline-size",
+      }}
+    >
+      <main style={{ flex: 1, minWidth: 0 }}>
+        <ThreadMessage message={THREAD_PARENT} />
+        {THREAD_PARENT.replies === undefined ? null : (
+          <MessageReplies
+            replies={THREAD_PARENT.replies}
+            now={Date.parse("2026-03-04T12:00:00.000Z")}
+            onClick={() => open({ value: "thread", title: "Thread" })}
+          />
+        )}
+      </main>
+      {value === null ? null : (
+        <Panel aria-label="Side panel">
+          <PanelHeader className="items-end bg-muted pt-1.5 pb-0">
+            <PanelTabs label="Open items" {...tabsProps}>
+              {tabs.map((tab) => (
+                <PanelTab key={tab.value} value={tab.value}>
+                  {tab.title}
+                </PanelTab>
+              ))}
+            </PanelTabs>
+          </PanelHeader>
+          <PanelContent value={value} keepMounted>
+            {tabs.map((tab) => (
+              <PanelPane
+                key={tab.value}
+                value={tab.value}
+                {...paneProps(tab.value)}
+              >
+                {tab.value === "thread" ? <ThreadPaneScenario /> : "Notes pane"}
+              </PanelPane>
+            ))}
+          </PanelContent>
+        </Panel>
+      )}
+    </div>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -1608,4 +1762,5 @@ export const scenarios: Record<string, () => ReactNode> = {
   attachments: () => <AttachmentsScenario />,
   "media-viewer": () => <MediaViewerScenario />,
   "media-viewer-chat": () => <MediaViewerChatScenario />,
+  "conversation-thread": () => <ConversationThreadScenario />,
 };
