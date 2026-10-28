@@ -102,6 +102,22 @@ test("a refused file is read out from a status line already in place", async ({
   await expect(status).toHaveText("export.bin is over 5 MB");
 });
 
+test("two files of one name both go with the message", async ({ page }) => {
+  await open(page, "settle");
+  await page.locator("input[type='file']").setInputFiles([
+    { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("a") },
+    { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("bb") },
+  ]);
+  const send = page
+    .getByRole("main")
+    .getByRole("button", { name: "Send", exact: true });
+  await send.click();
+  const sent = page
+    .getByRole("log", { name: "Conversation" })
+    .locator("[data-item-id='sent-1']");
+  await expect(sent.locator("[data-slot='attachment']")).toHaveCount(2);
+});
+
 test("a send takes the attached file into the message and clears the box", async ({
   page,
 }) => {

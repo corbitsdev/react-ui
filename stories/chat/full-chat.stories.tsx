@@ -507,8 +507,8 @@ function MessageParts({ message }: { readonly message: ConversationMessage }) {
       })}
       {files.length === 0 ? null : (
         <Attachments variant="tiles" total={files.length}>
-          {files.map((file) => (
-            <Attachment key={file.name} data={file}>
+          {files.map((file, position) => (
+            <Attachment key={`${position}-${file.name}`} data={file}>
               <AttachmentPreview />
               <AttachmentInfo />
             </Attachment>
