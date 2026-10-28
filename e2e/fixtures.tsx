@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState, Profiler } from "react";
 import type { ReactNode } from "react";
 
 import {
@@ -28,6 +28,13 @@ import {
   PromptInputTextarea,
   type PromptInputStatus,
   type PromptToken,
+  Panel,
+  PanelActions,
+  PanelClose,
+  PanelContent,
+  PanelHandle,
+  PanelHeader,
+  PanelPane,
 } from "@corbits/react-ui";
 import {
   CommandPalette,
@@ -609,6 +616,73 @@ function PromptWithAttachment() {
   );
 }
 
+/** Counts React commits on `<body data-commits>` without rendering anything. */
+function countCommit() {
+  const body = document.body;
+  body.dataset["commits"] = String(Number(body.dataset["commits"] ?? 0) + 1);
+}
+
+/** A tall filler, so each pane scrolls. */
+function Filler({ label }: { label: string }) {
+  return (
+    <ol>
+      {Array.from({ length: 60 }, (_, index) => (
+        <li key={index} style={{ padding: 8 }}>
+          {label} line {index + 1}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function PanelScenario() {
+  const [open, setOpen] = useState(true);
+  const [shown, setShown] = useState("notes");
+  const [width, setWidth] = useState<number | null>(null);
+  return (
+    <Profiler id="panel" onRender={countCommit}>
+      <div
+        data-testid="row"
+        style={{
+          position: "relative",
+          display: "flex",
+          height: 600,
+          containerType: "inline-size",
+        }}
+      >
+        <main data-testid="main" style={{ flex: 1, minWidth: 0 }}>
+          <Button onClick={() => setOpen(true)}>Open panel</Button>
+          <Button onClick={() => setShown("notes")}>Show notes</Button>
+          <Button onClick={() => setShown("draft")}>Show draft</Button>
+          <output aria-label="Width">
+            {width === null ? "default" : String(width)}
+          </output>
+        </main>
+        {open ? (
+          <Panel aria-label="Side panel" width={width} onWidthChange={setWidth}>
+            <PanelHandle />
+            <PanelHeader>
+              <PanelActions>
+                <PanelClose onClick={() => setOpen(false)} />
+              </PanelActions>
+            </PanelHeader>
+            <PanelContent value={shown} keepMounted>
+              <PanelPane value="notes" data-testid="notes-pane">
+                <input aria-label="Notes field" />
+                <Filler label="Notes" />
+              </PanelPane>
+              <PanelPane value="draft" data-testid="draft-pane">
+                <textarea aria-label="Draft field" />
+                <Filler label="Draft" />
+              </PanelPane>
+            </PanelContent>
+          </Panel>
+        ) : null}
+      </div>
+    </Profiler>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -647,4 +721,5 @@ export const scenarios: Record<string, () => ReactNode> = {
   "prompt-input-dialog": () => <PromptInDialog />,
   "prompt-input-chat": () => <PromptChat stoppable />,
   "prompt-input-chat-no-stop": () => <PromptChat stoppable={false} />,
+  panel: () => <PanelScenario />,
 };
