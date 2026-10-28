@@ -1,7 +1,14 @@
 "use client";
 
 import { Check, ChevronDown, Plus, Reply, X } from "lucide-react";
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import type * as React from "react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";
@@ -234,18 +241,23 @@ export type PromptInputAddMenuProps = Omit<
  * elsewhere in the enclosing `PromptInput` (the textarea, beside a menu the
  * host opened).
  */
-export function PromptInputAddMenu({
-  items,
-  disabled: disabledProp,
-  label = "Add",
-  align = "start",
-  open: openProp,
-  defaultOpen = false,
-  onOpenChange,
-  className,
+export const PromptInputAddMenu = forwardRef<
+  HTMLDivElement,
+  PromptInputAddMenuProps
+>(function PromptInputAddMenu(
+  {
+    items,
+    disabled: disabledProp,
+    label = "Add",
+    align = "start",
+    open: openProp,
+    defaultOpen = false,
+    onOpenChange,
+    className,
+    ...props
+  },
   ref,
-  ...props
-}: PromptInputAddMenuProps) {
+) {
   const popover = useDismissablePopover<HTMLDivElement, HTMLButtonElement>({
     open: openProp,
     defaultOpen,
@@ -406,7 +418,7 @@ export function PromptInputAddMenu({
       ) : null}
     </div>
   );
-}
+});
 
 /** An option as the shared select draws it. */
 type SelectOption = {
@@ -474,22 +486,24 @@ type OptionSelectProps = SelectStateProps & {
  * `PromptInput` (the textarea, beside a list the host opened) closes it too
  * and leaves focus where it is.
  */
-function OptionSelect({
-  slot,
-  label,
-  options,
-  value: valueProp,
-  defaultValue,
-  onValueChange,
-  open: openProp,
-  defaultOpen = false,
-  onOpenChange,
-  disabled: disabledProp,
-  align = "start",
-  className,
-  ref,
-  ...props
-}: OptionSelectProps) {
+const OptionSelect = forwardRef(function OptionSelect(
+  {
+    slot,
+    label,
+    options,
+    value: valueProp,
+    defaultValue,
+    onValueChange,
+    open: openProp,
+    defaultOpen = false,
+    onOpenChange,
+    disabled: disabledProp,
+    align = "start",
+    className,
+    ...props
+  }: Omit<OptionSelectProps, "ref">,
+  ref: React.ForwardedRef<HTMLDivElement>,
+) {
   // Undefined until something is chosen: the first option then stands in,
   // read from the current list so options that load late still get it.
   const [picked, setPicked] = useControllableState<string | undefined>({
@@ -702,7 +716,7 @@ function OptionSelect({
       ) : null}
     </div>
   );
-}
+});
 
 /** A model to choose from in `PromptInputModelSelect`. */
 export type PromptInputModelOption = {
@@ -728,15 +742,17 @@ export type PromptInputModelSelectProps = SelectStateProps & {
  * reasoning level, is a separate control, so `onValueChange` stays a single
  * model id.
  */
-export function PromptInputModelSelect({
-  models,
-  label = "Model",
-  align = "end",
-  ...props
-}: PromptInputModelSelectProps) {
+export const PromptInputModelSelect = forwardRef<
+  HTMLDivElement,
+  PromptInputModelSelectProps
+>(function PromptInputModelSelect(
+  { models, label = "Model", align = "end", ...props },
+  ref,
+) {
   return (
     <OptionSelect
       {...props}
+      ref={ref}
       slot="prompt-input-model-select"
       label={label}
       align={align}
@@ -749,7 +765,7 @@ export function PromptInputModelSelect({
       }))}
     />
   );
-}
+});
 
 /** A way of working, offered by `PromptInputModeSelect`. */
 export type PromptInputModeOption = {
@@ -766,14 +782,14 @@ export type PromptInputModeSelectProps = SelectStateProps & {
 
 /** How the agent works this turn. The modes' labels and details are the
  * host's own strings; the trigger shows the chosen mode's label. */
-export function PromptInputModeSelect({
-  modes,
-  label = "Mode",
-  ...props
-}: PromptInputModeSelectProps) {
+export const PromptInputModeSelect = forwardRef<
+  HTMLDivElement,
+  PromptInputModeSelectProps
+>(function PromptInputModeSelect({ modes, label = "Mode", ...props }, ref) {
   return (
     <OptionSelect
       {...props}
+      ref={ref}
       slot="prompt-input-mode-select"
       label={label}
       options={modes.map((mode) => ({
@@ -784,7 +800,7 @@ export function PromptInputModeSelect({
       }))}
     />
   );
-}
+});
 
 export type PromptInputFloatProps = React.ComponentProps<"div">;
 

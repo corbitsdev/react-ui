@@ -1,5 +1,5 @@
 import { describe, expect, spyOn, test } from "bun:test";
-import { act, type ReactNode, useState } from "react";
+import { act, createRef, type ReactNode, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
 import type { PromptToken } from "../lib/prompt-tokens.js";
@@ -610,6 +610,32 @@ describe("PromptInputButton", () => {
     click(button);
     expect(submits).toEqual([]);
     view.unmount();
+  });
+});
+
+describe("refs", () => {
+  test("the add menu and both selects hand their root to a ref", () => {
+    const add = createRef<HTMLDivElement>();
+    const model = createRef<HTMLDivElement>();
+    const mode = createRef<HTMLDivElement>();
+    const view = mount(
+      <>
+        <PromptInputAddMenu ref={add} items={menuItems([])} />
+        <PromptInputModelSelect ref={model} models={MODELS} />
+        <PromptInputModeSelect ref={mode} modes={MODES} />
+      </>,
+    );
+    expect(add.current).toBe(
+      view.query<HTMLDivElement>("[data-slot='prompt-input-add-menu']"),
+    );
+    expect(model.current).toBe(
+      view.query<HTMLDivElement>("[data-slot='prompt-input-model-select']"),
+    );
+    expect(mode.current).toBe(
+      view.query<HTMLDivElement>("[data-slot='prompt-input-mode-select']"),
+    );
+    view.unmount();
+    expect(add.current).toBeNull();
   });
 });
 
