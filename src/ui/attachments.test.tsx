@@ -277,6 +277,39 @@ describe("a preview held across a hidden Activity", () => {
     expect([...live]).toEqual([]);
   });
 
+  // Such as one `useAttachments` accepted after its host was hidden.
+  test("with no URL, is shown from its file", () => {
+    const shot = new File(["x"], "shot.png", { type: "image/png" });
+    const notes = new File(["x"], "notes.txt", { type: "text/plain" });
+    const { container, unmount } = mount(
+      <Attachments variant="tiles">
+        <Attachment
+          data={{ name: "shot.png", mediaType: "image/png", file: shot }}
+        >
+          <AttachmentPreview />
+        </Attachment>
+        <Attachment
+          data={{ name: "notes.txt", mediaType: "text/plain", file: notes }}
+        >
+          <AttachmentPreview />
+        </Attachment>
+      </Attachments>,
+    );
+    const picture = () => container.querySelector("img");
+    const made = picture()?.getAttribute("src") ?? "";
+    expect(live.has(made)).toBe(true);
+    // Only the picture needs a URL.
+    expect([...live]).toEqual([made]);
+
+    act(() => {
+      picture()?.dispatchEvent(new Event("error"));
+    });
+    expect(picture()).toBeNull();
+    expect(container.textContent).toContain("PNG");
+    unmount();
+    expect([...live]).toEqual([]);
+  });
+
   test("falls back to the type when the rebuilt URL fails too", () => {
     const shot = new File(["x"], "shot.png", { type: "image/png" });
     const { container, unmount } = mount(

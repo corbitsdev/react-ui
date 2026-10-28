@@ -35,9 +35,9 @@ export type AttachmentData = {
   /** Where to show or open it from. */
   readonly url?: string;
   /**
-   * The local file, when there is one. A picture whose `url` no longer
-   * loads, such as a preview `useAttachments` revoked while it was hidden,
-   * is rebuilt from it.
+   * The local file, when there is one. A picture with no `url`, or whose
+   * `url` no longer loads (such as a preview `useAttachments` revoked while
+   * it was hidden), is shown from it.
    */
   readonly file?: File;
 };
@@ -307,10 +307,10 @@ export type AttachmentProps = React.ComponentProps<"li"> & {
 };
 
 /**
- * Where a picture loads from: `url`, or, once that fails to load and the
- * file is at hand, a URL made from the file. A URL made here is revoked
- * when the attachment unmounts or is hidden, and made again when it shows.
- * A rebuilt URL that fails too leaves no picture.
+ * Where a picture loads from: `url`, or, when there is none or it fails to
+ * load and the file is at hand, a URL made from the file. A URL made here
+ * is revoked when the attachment unmounts or is hidden, and made again when
+ * it shows. A URL made here that fails too leaves no picture.
  */
 function usePictureSource(
   url: string | undefined,
@@ -321,8 +321,11 @@ function usePictureSource(
     readonly rebuilt: boolean;
   } | null>(null);
   const failedHere = failed !== null && failed.url === url;
+  const usesUrl = url !== undefined && !failedHere;
   const source =
-    failedHere && !failed.rebuilt && file !== undefined ? file : undefined;
+    !usesUrl && !(failedHere && failed.rebuilt) && file !== undefined
+      ? file
+      : undefined;
   const [rebuilt, setRebuilt] = useState<{
     readonly file: File;
     readonly url: string;
@@ -336,14 +339,14 @@ function usePictureSource(
     return () => URL.revokeObjectURL(made);
   }, [source]);
 
-  const src = !failedHere
+  const src = usesUrl
     ? url
     : source !== undefined && rebuilt?.file === source
       ? rebuilt.url
       : undefined;
   const setBroken = useCallback(
-    () => setFailed({ url, rebuilt: failedHere }),
-    [url, failedHere],
+    () => setFailed({ url, rebuilt: !usesUrl }),
+    [url, usesUrl],
   );
   return { src, setBroken };
 }
@@ -359,8 +362,13 @@ export function Attachment({
   const { variant, expanded, focusAfterRemove } =
     useAttachmentsContext("Attachment");
   const kind = mediaKindOf(data.name, data.mediaType);
-  const { src, setBroken } = usePictureSource(data.url, data.file);
-  const pictured = (kind === "image" || kind === "video") && src !== undefined;
+  const picturable = kind === "image" || kind === "video";
+  // Only a picture is shown from its file; nothing else needs a URL made.
+  const { src, setBroken } = usePictureSource(
+    data.url,
+    picturable ? data.file : undefined,
+  );
+  const pictured = picturable && src !== undefined;
   const elementRef = useRef<HTMLLIElement | null>(null);
 
   const setElement = useCallback(
@@ -447,8 +455,9 @@ export type AttachmentPreviewProps = Omit<
 
 /**
  * The file at a glance: the picture, a video's first frame, or for anything
- * else its type. A picture that fails to load is rebuilt from `data.file`
- * when there is one, and otherwise falls back to the type.
+ * else its type. A picture with no `data.url`, or one that fails to load, is
+ * shown from `data.file` when there is one, and otherwise falls back to the
+ * type.
  *
  * Host props reach the element either way; its own role, name and click
  * stay its own. Name it with `label`.

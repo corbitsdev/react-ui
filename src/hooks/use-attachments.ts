@@ -67,10 +67,10 @@ function nextAttachmentId(): string {
  * Every URL the hook makes is revoked at the first commit whose list does
  * not hold its attachment: once the host removes it, however it does, or
  * right away if the host never appended it. The rest go when the hook
- * unmounts, and an `add` after that makes no URL. Only
- * URLs the hook made are revoked; the host's own are left alone. To keep an
- * attachment on screen after it leaves the list (sending moves it into a
- * message), `release` it first.
+ * unmounts, and an `add` after that makes no URL; `Attachment` shows such an
+ * item's picture from its `file`. Only URLs the hook made are revoked; the
+ * host's own are left alone. To keep an attachment on screen after it leaves
+ * the list (sending moves it into a message), `release` it first.
  *
  * The unmount revoke waits a microtask and is called off if the hook mounts
  * again, which is what StrictMode's simulated remount does within one
