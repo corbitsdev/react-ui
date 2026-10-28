@@ -201,10 +201,16 @@ describe("PanelTabs", () => {
     expect(document.activeElement).toBe(tab(host, "Draft"));
   });
 
-  test("host props cannot unlink a tab, and ref lands on its root", () => {
+  test("host props cannot unlink a tab, and refs land on the row and the tab's root", () => {
+    const rowRef = createRef<HTMLDivElement>();
     const rootRef = createRef<HTMLDivElement>();
     const host = mount(
-      <PanelTabs label="Open items" value="a" onValueChange={() => {}}>
+      <PanelTabs
+        ref={rowRef}
+        label="Open items"
+        value="a"
+        onValueChange={() => {}}
+      >
         <PanelTab
           value="a"
           ref={rootRef}
@@ -220,6 +226,7 @@ describe("PanelTabs", () => {
     expect(button.getAttribute("aria-selected")).toBe("true");
     expect(button.parentElement).toBe(rootRef.current);
     expect(button.parentElement?.dataset["slot"]).toBe("panel-tab");
+    expect(rowRef.current).toBe(host.querySelector("[role='tablist']"));
   });
 
   test("closing the last tab sends focus to the +", () => {
