@@ -17,6 +17,14 @@ describe("mediaKindOf", () => {
     expect(mediaKindOf("clip.pdf", "video/webm")).toBe("video");
   });
 
+  test("a transport stream media type defers to the extension", () => {
+    expect(mediaKindOf("index.ts", "video/mp2t")).toBe("text");
+    expect(mediaKindOf("index.ts", "Video/MP2T; x=1")).toBe("text");
+    expect(mediaKindOf("index.ts", "video/vnd.dlna.mpeg-tts")).toBe("text");
+    expect(mediaKindOf("capture", "video/mp2t")).toBe("video");
+    expect(mediaKindOf("capture.m2ts", "video/mp2t")).toBe("video");
+  });
+
   test("ignores media type parameters and case", () => {
     expect(mediaKindOf("a", "Text/Plain; charset=utf-8")).toBe("text");
   });

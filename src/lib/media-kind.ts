@@ -74,6 +74,15 @@ const TEXT_MEDIA_TYPES: ReadonlySet<string> = new Set([
   "application/yaml",
 ]);
 
+/**
+ * MPEG transport stream types. They share `.ts` with TypeScript, and servers
+ * and desktop browsers report them for a TypeScript file, so the name decides.
+ */
+const TRANSPORT_STREAM_TYPES: ReadonlySet<string> = new Set([
+  "video/mp2t",
+  "video/vnd.dlna.mpeg-tts",
+]);
+
 function table(
   kind: MediaKind,
   extensions: readonly string[],
@@ -81,8 +90,11 @@ function table(
   return extensions.map((extension) => [extension, kind] as const);
 }
 
-function kindOfMediaType(mediaType: string): MediaKind | null {
-  const essence = mediaType.split(";")[0]?.trim().toLowerCase() ?? "";
+function essenceOf(mediaType: string): string {
+  return mediaType.split(";")[0]?.trim().toLowerCase() ?? "";
+}
+
+function kindOfMediaType(essence: string): MediaKind | null {
   if (essence.startsWith("image/")) return "image";
   if (essence.startsWith("video/")) return "video";
   if (essence.startsWith("audio/")) return "audio";
@@ -103,9 +115,13 @@ function kindOfName(name: string): MediaKind | null {
 /**
  * A file's kind from its name and media type. A media type that names a kind
  * wins; a blank or generic one (`application/octet-stream`) defers to the
- * name's extension, matched case-insensitively. Anything unrecognised is
- * `other`.
+ * name's extension, matched case-insensitively. An MPEG transport stream
+ * type (`video/mp2t`) also defers to the extension, since a TypeScript file
+ * shares `.ts` and often arrives with it, and is `video` when the extension
+ * says nothing. Anything unrecognised is `other`.
  */
 export function mediaKindOf(name: string, mediaType: string): MediaKind {
-  return kindOfMediaType(mediaType) ?? kindOfName(name) ?? "other";
+  const essence = essenceOf(mediaType);
+  if (TRANSPORT_STREAM_TYPES.has(essence)) return kindOfName(name) ?? "video";
+  return kindOfMediaType(essence) ?? kindOfName(name) ?? "other";
 }
