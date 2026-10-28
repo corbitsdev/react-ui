@@ -96,7 +96,8 @@ export type ConversationContextValue = {
   /** The end of the content is in view (within a few pixels). */
   readonly atBottom: boolean;
   readonly items: ConversationItems;
-  /** Glides an item's top to the top of the view. */
+  /** Glides an item's top to the top of the view. An id with no mounted item
+   * changes nothing: a follow and any glide in flight carry on. */
   readonly scrollToItem: (
     id: string,
     options?: ConversationScrollToItemOptions,
@@ -703,6 +704,11 @@ function createConversationEngine() {
       glide(() => itemTarget(id));
     },
     scrollToItem(id: string, options?: ConversationScrollToItemOptions) {
+      // No such item, no jump: the follow and any glide in flight carry on.
+      if (registry.get(id) === undefined) {
+        options?.onEnd?.(false);
+        return;
+      }
       following = false;
       glide(() => itemTarget(id), options?.onEnd);
     },

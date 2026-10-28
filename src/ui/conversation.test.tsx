@@ -977,6 +977,41 @@ describe("scrollToItem's onEnd", () => {
     expect(ends).toHaveLength(4);
     mounted.unmount();
   });
+
+  test("an id with nothing mounted keeps the follow and the glide in flight", async () => {
+    const { mounted, element, current } = mountConversation(
+      { scrollPolicy: "stick" },
+      TEN,
+    );
+    const { layout } = layOut(element, TEN);
+    current().restoreAnchor();
+    await nextFrame();
+    expect(element.scrollTop).toBe(9_500);
+    let arrived: boolean | undefined;
+    current().scrollToItem("elsewhere", {
+      onEnd: (value) => {
+        arrived = value;
+      },
+    });
+    expect(arrived).toBe(false);
+
+    // A reply streams on: the view still follows it.
+    layout(10_200);
+    current().restoreAnchor();
+    expect(element.scrollTop).toBe(9_700);
+
+    // A glide in flight carries on to its item.
+    const ends: string[] = [];
+    current().scrollToItem("b", {
+      onEnd: (value) => ends.push(`b:${value}`),
+    });
+    await nextFrame();
+    current().scrollToItem("elsewhere");
+    await sleep(900);
+    expect(ends).toEqual(["b:true"]);
+    expect(element.scrollTop).toBe(1_000);
+    mounted.unmount();
+  });
 });
 
 describe("a scroll right after a resize", () => {
