@@ -835,10 +835,7 @@ function Composer({
           </div>
         </PromptInputToolbar>
       </PromptInput>
-      <p
-        role="status"
-        className="min-h-4 text-xs text-muted-foreground empty:hidden"
-      >
+      <p role="status" className="min-h-4 text-xs text-muted-foreground">
         {notice}
       </p>
       <PromptInputNote>

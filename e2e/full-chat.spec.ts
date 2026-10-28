@@ -70,6 +70,23 @@ test("an answer's sources show as links under it", async ({ page }) => {
   await expect(sources.locator("[data-slot='source']")).toHaveCount(2);
 });
 
+test("a refused file is read out from a status line already in place", async ({
+  page,
+}) => {
+  await open(page, "settle");
+  const box = page.locator("[data-slot='attachment-drop-zone']");
+  // The box's own line, not the form's: in the accessibility tree while
+  // empty, so filling it is announced.
+  const status = box.getByRole("status").and(box.locator("p"));
+  await expect(status).toHaveText("");
+  await page.locator("input[type='file']").setInputFiles({
+    name: "export.bin",
+    mimeType: "application/octet-stream",
+    buffer: Buffer.alloc(6 * 1024 * 1024),
+  });
+  await expect(status).toHaveText("export.bin is over 5 MB");
+});
+
 test("a send takes the attached file into the message and clears the box", async ({
   page,
 }) => {
