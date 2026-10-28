@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { Activity, StrictMode, act, createElement, useState } from "react";
+import {
+  Activity,
+  StrictMode,
+  Suspense,
+  act,
+  createElement,
+  startTransition,
+  use,
+  useState,
+} from "react";
 import { createRoot } from "react-dom/client";
 
 import type { PartFile } from "../lib/chat-parts.js";
@@ -209,6 +218,53 @@ describe("useAttachments", () => {
       "too-many",
     ]);
     host.unmount();
+  });
+
+  // A transition that suspends renders the new list but keeps the old one
+  // on screen until it resolves, here never.
+  test("a list rendered but not yet committed is not checked against", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    const never = new Promise<never>(() => {});
+    let hook: UseAttachmentsResult | undefined;
+    let show: (list: readonly AttachmentItem[]) => void = () => {};
+
+    function Stall(): null {
+      use(never);
+      return null;
+    }
+
+    function Host() {
+      const [shown, setShown] = useState<{
+        readonly list: readonly AttachmentItem[];
+        readonly stall: boolean;
+      }>({ list: [], stall: false });
+      show = (list) => setShown({ list, stall: true });
+      hook = useAttachments({ attachments: shown.list, maxFiles: 1 });
+      return shown.stall ? createElement(Stall) : null;
+    }
+
+    act(() => {
+      root.render(
+        createElement(Suspense, { fallback: null }, createElement(Host)),
+      );
+    });
+    const held: AttachmentItem = {
+      id: "held-1",
+      name: "a.txt",
+      mediaType: "text/plain",
+      size: 4,
+    };
+    await act(async () => {
+      startTransition(() => show([held]));
+    });
+
+    const { accepted, rejected } = hook?.add([file("a.txt")]) ?? {};
+    expect(rejected).toEqual([]);
+    expect(accepted?.map((item) => item.name)).toEqual(["a.txt"]);
+    act(() => root.unmount());
+    container.remove();
   });
 
   test("removing an attachment revokes its preview URL and only its", () => {

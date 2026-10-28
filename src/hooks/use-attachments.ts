@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 
 import {
   checkAttachments,
@@ -89,8 +89,12 @@ export function useAttachments({
 }: UseAttachmentsOptions): UseAttachmentsResult {
   const urls = useRef(new Map<string, string>());
   const pending = useRef<AttachmentItem[]>([]);
+  // The committed list and limits, for `add`: a render that never commits,
+  // such as a transition that suspends, must not leave its list here.
   const latest = useRef({ attachments, maxFiles, maxFileBytes });
-  latest.current = { attachments, maxFiles, maxFileBytes };
+  useLayoutEffect(() => {
+    latest.current = { attachments, maxFiles, maxFileBytes };
+  });
   // True until the hook unmounts, so an `add` before its effects run still
   // makes a URL.
   const mounted = useRef(true);
