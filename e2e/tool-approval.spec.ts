@@ -84,10 +84,12 @@ test("in a batch, a keyboard decision moves to the next waiting call, then to th
   await page.keyboard.press("Enter");
   await expect(waiting).toHaveCount(1);
   await expect(waiting).toContainText("send__calendar");
+  // The next call's card, not its Approve: Enter on it decides nothing.
   await expect(
-    waiting.getByRole("button", { name: "Approve", exact: true }),
+    page.getByRole("region", { name: "Needs your approval send__calendar" }),
   ).toBeFocused();
 
+  await waiting.getByRole("button", { name: "Approve", exact: true }).focus();
   await page.keyboard.press("Enter");
   await expect(waiting).toHaveCount(0);
   await expect(
@@ -211,7 +213,7 @@ test("in a batch, calls that time out under focus hand it on, then to the run", 
   await lapse(page, "notice", "timeout");
   await expect(waiting).toHaveCount(1);
   await expect(
-    waiting.getByRole("button", { name: "Approve", exact: true }),
+    page.getByRole("region", { name: "Needs your approval send__calendar" }),
   ).toBeFocused();
 
   await lapse(page, "calendar", "expired");

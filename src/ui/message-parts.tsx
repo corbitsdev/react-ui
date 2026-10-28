@@ -7,6 +7,7 @@ import {
   groupActivity,
   isAwaitingApproval,
   type ActivityStep,
+  type ConversationPartGroup,
 } from "../lib/conversation-activity.js";
 import type {
   ConversationPart,
@@ -78,9 +79,20 @@ function groupParts(parts: readonly ConversationPart[]): readonly PartsGroup[] {
     files = null;
     if (group.kind === "activity") groups.push(group);
     else if (group.part.kind !== "file")
-      groups.push({ kind: "part", key: group.key, part: group.part });
+      groups.push({ kind: "part", key: partKey(group), part: group.part });
   }
   return groups;
+}
+
+/**
+ * A waiting call is keyed by its id, not by where it stands, so a part
+ * dropped before it does not remount its buttons and drop focus with them.
+ */
+function partKey(group: ConversationPartGroup & { kind: "part" }): string {
+  const { part } = group;
+  if (part.kind === "tool-trace") return `tool-trace-${part.toolCallId}`;
+  if (part.kind === "tool-batch") return `tool-batch-${part.id}`;
+  return group.key;
 }
 
 function toolsOf(part: ConversationPart): readonly PartTool[] {
@@ -166,30 +178,46 @@ function waitingCallAt(
 }
 
 /**
+ * The ids of the calls up to and including `toolCallId` in the batch that
+ * held it in `groups`: the ones the next waiting call does not come from.
+ */
+function callsThrough(
+  groups: readonly PartsGroup[],
+  toolCallId: string,
+): ReadonlySet<string> {
+  const group = placeOf(groups, toolCallId)?.group;
+  if (group?.kind !== "part") return new Set();
+  const ids = toolsOf(group.part).map((tool) => tool.toolCallId);
+  return new Set(ids.slice(0, ids.indexOf(toolCallId) + 1));
+}
+
+/**
  * Where focus goes once a call has stopped waiting: in a batch that still
- * has calls waiting, the next one after it (or the first); otherwise the run
- * it folded into, by its trigger. With no group, the first control in
- * `element`.
+ * has calls waiting, the card of the first one not in `passed` (or else of
+ * the first one); otherwise the run it folded into, by its trigger. With no
+ * group, the first control in `element`.
+ *
+ * The card, not its Approve button, as `ToolGroup` does: a held Enter
+ * repeats onto whatever has focus, and would decide a call the person never
+ * chose. A host's card without the slot gets its first button.
  */
 function focusTarget(
   element: Element,
   group: PartsGroup | undefined,
-  toolCallId: string,
+  passed: ReadonlySet<string>,
 ): HTMLElement | null {
   if (group?.kind === "part" && group.part.kind === "tool-batch") {
-    const { tools } = group.part;
-    const decided = tools.findIndex((tool) => tool.toolCallId === toolCallId);
-    const waiting = tools.flatMap((tool, index) =>
-      isAwaitingApproval(tool) ? [index] : [],
-    );
+    const waiting = group.part.tools.filter(isAwaitingApproval);
     const next = Math.max(
       0,
-      waiting.findIndex((index) => index > decided),
+      waiting.findIndex((tool) => !passed.has(tool.toolCallId)),
     );
     const cards = element.querySelectorAll(WAITING);
     const card = cards[next] ?? cards[0];
-    const button = card?.querySelector<HTMLElement>("button");
-    if (button !== null && button !== undefined) return button;
+    const target =
+      card?.querySelector<HTMLElement>("[data-slot='tool-approval-card']") ??
+      card?.querySelector<HTMLElement>("button");
+    if (target !== null && target !== undefined) return target;
   }
   return element.querySelector<HTMLElement>(
     "[data-slot='activity-trigger'], [data-slot='tool-group-header'], button",
@@ -208,12 +236,15 @@ function handoffTarget(
   leaving: Leaving,
 ): HTMLElement | null {
   const { toolCallId } = leaving;
+  // Taken from where the call last stood, as a dropped call is gone from
+  // `groups`.
+  const passed = callsThrough(leaving.groups, toolCallId);
   const inGroup = (group: PartsGroup | undefined): HTMLElement | null => {
-    const element =
-      group === undefined
-        ? null
-        : root.querySelector(`[data-part-key='${group.key}']`);
-    return element === null ? null : focusTarget(element, group, toolCallId);
+    // Matched by attribute, not a selector: a key holds a host's call id.
+    const element = [...root.children].find(
+      (child) => child.getAttribute("data-part-key") === group?.key,
+    );
+    return element === undefined ? null : focusTarget(element, group, passed);
   };
   const here = placeOf(groups, toolCallId);
   if (here !== undefined) return inGroup(here.group);
@@ -223,7 +254,7 @@ function handoffTarget(
       ? undefined
       : (groups.find((group) => group.key === was.group.key) ??
         groupAt(groups, was.index - 1));
-  return inGroup(near) ?? focusTarget(root, undefined, toolCallId);
+  return inGroup(near) ?? focusTarget(root, undefined, passed);
 }
 
 /** Records a decision on one call: the call, then the person's answer. */
@@ -299,8 +330,9 @@ export type MessagePartsProps = Omit<
    * moves. The handoff finds the waiting calls by their cards: render each
    * as a `[data-slot='tool-approval'][data-status='pending']` element, in
    * order, with a `<button>` inside (as `ToolApproval` does). Focus then
-   * moves to the first `<button>` of the next card; once none is left, to
-   * the batch's first `[data-slot='tool-group-header']` or `<button>`.
+   * moves to the next card's `[data-slot='tool-approval-card']`, or its
+   * first `<button>` without one; once none is left, to the batch's first
+   * `[data-slot='tool-group-header']` or `<button>`.
    */
   readonly renderBatch?:
     | ((part: PartToolBatch, decide: MessagePartsDecide) => ReactNode)
@@ -333,7 +365,7 @@ export type MessagePartsProps = Omit<
  *
  * Deciding a call folds it into the run before it, so its buttons go away.
  * When that leaves focus on the page, focus moves to the run's trigger, or,
- * in a batch with calls still waiting, to the next one's buttons. A host's
+ * in a batch with calls still waiting, to the next one's card. A host's
  * own `renderApproval` or `renderBatch` gets the same through its `decide`.
  * The same happens when a call with focus on its buttons stops waiting with
  * no decision (it timed out or expired). A call the host drops from `parts`

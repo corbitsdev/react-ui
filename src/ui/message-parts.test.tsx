@@ -3,6 +3,8 @@ import type { ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, test } from "bun:test";
 
+import { isAwaitingApproval } from "../lib/conversation-activity.js";
+
 import type {
   ConversationMessageStatus,
   ConversationPart,
@@ -400,7 +402,7 @@ describe("MessageParts focus after a decision", () => {
     press(button(container, "Deny"));
     expect(cards()).toHaveLength(1);
     const next = document.activeElement as HTMLElement | null;
-    expect(next?.textContent).toBe("Approve");
+    expect(next?.dataset["slot"]).toBe("tool-approval-card");
     expect(cards()[0]?.contains(next)).toBe(true);
 
     press(button(container, "Approve"));
@@ -422,12 +424,47 @@ describe("MessageParts focus after a decision", () => {
     if (last === undefined) throw new Error("expected two cards");
     press(button(last, "Approve"));
     const active = document.activeElement as HTMLElement | null;
-    expect(active?.textContent).toBe("Approve");
+    expect(active?.dataset["slot"]).toBe("tool-approval-card");
     expect(
       container
         .querySelector("[data-slot='tool-approval'][data-status='pending']")
         ?.contains(active),
     ).toBe(true);
+  });
+
+  test("a host's batch card without the card slot gets its first button", () => {
+    const batch: PartToolBatch = {
+      kind: "tool-batch",
+      id: "batch-1",
+      tools: [waiting("one"), waiting("two")],
+    };
+    const { container } = mount(
+      <Host
+        initial={[call("draft"), batch]}
+        renderBatch={(part, decide) => (
+          <ol>
+            {part.tools.filter(isAwaitingApproval).map((tool) => (
+              <li
+                key={tool.toolCallId}
+                data-slot="tool-approval"
+                data-status="pending"
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    decide(tool, { outcome: "approved", scope: "once" })
+                  }
+                >
+                  {`Run ${tool.name}`}
+                </button>
+              </li>
+            ))}
+          </ol>
+        )}
+      />,
+    );
+    press(button(container, "Run tool__one"));
+    expect(document.activeElement).toBe(button(container, "Run tool__two"));
   });
 
   test("a decision the host records later moves focus once it shows", () => {
@@ -520,7 +557,7 @@ describe("MessageParts focus when a call stops waiting with no decision", () => 
     const first = lapseIn(initial, "one", "timeout");
     render(props(first));
     const next = document.activeElement as HTMLElement | null;
-    expect(next?.textContent).toBe("Approve");
+    expect(next?.dataset["slot"]).toBe("tool-approval-card");
     expect(
       container
         .querySelector("[data-slot='tool-approval'][data-status='pending']")
@@ -556,15 +593,51 @@ describe("MessageParts focus when a call stops waiting with no decision", () => 
   });
 });
 
+describe("MessageParts focus while a call waits", () => {
+  const props = (parts: readonly ConversationPart[]) =>
+    inMessage({ parts, onDecide: () => {} });
+
+  test("a waiting call keeps focus when the host drops a part before it", () => {
+    const initial: readonly ConversationPart[] = [
+      { kind: "text", text: "Sending now." },
+      waiting("send"),
+    ];
+    const { container, render } = mount(props(initial));
+    const approve = button(container, "Approve");
+    act(() => approve.focus());
+    render(props(initial.slice(1)));
+    expect(document.activeElement).toBe(approve);
+  });
+
+  test("a waiting batch keeps focus when the host drops a part before it", () => {
+    const batch: PartToolBatch = {
+      kind: "tool-batch",
+      id: "batch-1",
+      tools: [waiting("one"), waiting("two")],
+    };
+    const initial: readonly ConversationPart[] = [
+      { kind: "event", event: "Agent joined" },
+      batch,
+    ];
+    const { container, render } = mount(props(initial));
+    const deny = button(container, "Deny");
+    act(() => deny.focus());
+    render(props(initial.slice(1)));
+    expect(document.activeElement).toBe(deny);
+  });
+});
+
 describe("MessageParts focus when the host drops the decided call", () => {
   /** A host that records a decision by removing the call from `parts`. */
   function Dropper({
     initial,
-  }: {
+    ...props
+  }: Omit<MessagePartsProps, "parts" | "onDecide"> & {
     readonly initial: readonly ConversationPart[];
   }) {
     const [parts, setParts] = useState(initial);
     return inMessage({
+      ...props,
       parts,
       onDecide: (tool) =>
         setParts((current) => dropCall(current, tool.toolCallId)),
@@ -590,12 +663,49 @@ describe("MessageParts focus when the host drops the decided call", () => {
     const { container } = mount(<Dropper initial={[call("draft"), batch]} />);
     press(button(container, "Approve"));
     const active = document.activeElement as HTMLElement | null;
-    expect(active?.textContent).toBe("Approve");
+    expect(active?.dataset["slot"]).toBe("tool-approval-card");
     expect(
       container
         .querySelector("[data-slot='tool-approval'][data-status='pending']")
         ?.contains(active),
     ).toBe(true);
+  });
+
+  test("in a host's renderBatch, focus moves to the call that waited after the dropped one", () => {
+    const batch: PartToolBatch = {
+      kind: "tool-batch",
+      id: "batch-1",
+      tools: [waiting("one"), waiting("two"), waiting("three")],
+    };
+    const { container } = mount(
+      <Dropper
+        initial={[call("draft"), batch]}
+        renderBatch={(part, decide) => (
+          <ol>
+            {part.tools.map((tool) => (
+              <li key={tool.toolCallId}>
+                <ToolApproval
+                  part={tool}
+                  onDecide={(decision) => decide(tool, decision)}
+                />
+              </li>
+            ))}
+          </ol>
+        )}
+      />,
+    );
+    const cards = () => [
+      ...container.querySelectorAll(
+        "[data-slot='tool-approval'][data-status='pending']",
+      ),
+    ];
+    const middle = cards()[1];
+    if (middle === undefined) throw new Error("expected three cards");
+    press(button(middle, "Approve"));
+    const active = document.activeElement as HTMLElement | null;
+    expect(active?.dataset["slot"]).toBe("tool-approval-card");
+    expect(cards()[1]?.contains(active)).toBe(true);
+    expect(cards()[1]?.textContent).toContain("tool__three");
   });
 
   test("with nothing before it, focus goes to the message's first control", () => {
