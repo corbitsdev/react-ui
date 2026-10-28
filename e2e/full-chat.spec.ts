@@ -70,6 +70,21 @@ test("an answer's sources show as links under it", async ({ page }) => {
   await expect(sources.locator("[data-slot='source']")).toHaveCount(2);
 });
 
+test("every message reads as sent before now, in order", async ({ page }) => {
+  await open(page, "settle");
+  const times = await page
+    .getByRole("log", { name: "Conversation" })
+    .locator("time[datetime]")
+    .evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute("datetime") ?? ""),
+    );
+  expect(times.length).toBeGreaterThan(0);
+  const stamps = times.map((time) => Date.parse(time));
+  // The story's now is where the test clock starts.
+  expect(stamps.filter((stamp) => !(stamp < CLOCK_START))).toEqual([]);
+  expect(stamps).toEqual([...stamps].sort((a, b) => a - b));
+});
+
 test("a refused file is read out from a status line already in place", async ({
   page,
 }) => {

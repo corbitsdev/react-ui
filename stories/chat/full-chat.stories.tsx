@@ -128,25 +128,23 @@ export default { title: "Chat / Full chat" };
 
 const NOW = Date.parse(SAMPLE_NOW);
 
-/** How far apart the recent messages sit once they share one timeline. */
-const RECENT_STEP_MS = 30_000;
-
 function stampedAt(ms: number): string {
   return new Date(ms).toISOString();
 }
 
 /**
  * The samples each keep their own clock, so laid end to end their times
- * would jump back. Respaced evenly after `startMs`, they read in order after
- * the long history.
+ * would jump back. Respaced evenly between `startMs` and `NOW`, they read in
+ * order after the long history, and none reads as later than now.
  */
 function restamp(
   messages: readonly ConversationMessage[],
   startMs: number,
 ): readonly ConversationMessage[] {
+  const step = Math.floor((NOW - startMs) / (messages.length + 1));
   return messages.map((message, index) => ({
     ...message,
-    at: stampedAt(startMs + (index + 1) * RECENT_STEP_MS),
+    at: stampedAt(startMs + (index + 1) * step),
   }));
 }
 
