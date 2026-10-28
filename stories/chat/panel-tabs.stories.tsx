@@ -1,5 +1,5 @@
 import { FileText, MessageSquare, Table2, X } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { ReactNode } from "react";
 
 import { useTabs } from "../../src/hooks/use-tabs.js";
@@ -83,6 +83,10 @@ function Pane({ item }: { readonly item: Item }) {
  * arrows, Home and End move; Delete or Backspace closes; Ctrl/Cmd+Shift+Arrow moves the
  * tab. Closing the last tab closes the panel.
  *
+ * The button that opens and closes the panel stays in the main area while
+ * the panel is open, so the panel records it as the opener and gives it focus
+ * back however the panel closes.
+ *
  * The tab's × is hidden from assistive technology, so the header also has a
  * named "Close tab" button for the selected tab: the close a touch
  * screen-reader user can reach.
@@ -98,6 +102,7 @@ function TabbedPanel({
     defaultTabs: initial,
     defaultValue,
   });
+  const panelId = useId();
   const [added, setAdded] = useState(0);
   const [closed, setClosed] = useState(false);
   const shown = closed ? null : value;
@@ -108,22 +113,25 @@ function TabbedPanel({
         <p className="text-sm text-muted-foreground">
           {tabs.length} open {tabs.length === 1 ? "tab" : "tabs"}.
         </p>
-        {shown !== null ? null : (
-          <Button
-            variant="outline"
-            className="self-start"
-            onClick={() => {
-              setClosed(false);
-              if (tabs.length === 0 && initial[0] !== undefined)
-                open(initial[0]);
-            }}
-          >
-            Open panel
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          className="self-start"
+          aria-expanded={shown !== null}
+          aria-controls={shown === null ? undefined : panelId}
+          onClick={() => {
+            if (shown !== null) {
+              setClosed(true);
+              return;
+            }
+            setClosed(false);
+            if (tabs.length === 0 && initial[0] !== undefined) open(initial[0]);
+          }}
+        >
+          Side panel
+        </Button>
       </main>
       {shown !== null ? (
-        <Panel aria-label="Side panel">
+        <Panel id={panelId} aria-label="Side panel">
           <PanelHandle />
           <PanelHeader className={panelTabsHeaderClassName}>
             <PanelTabs label="Open items" {...tabsProps}>
