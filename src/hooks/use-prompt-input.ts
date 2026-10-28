@@ -1,4 +1,11 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type {
   ChangeEvent,
   KeyboardEvent as ReactKeyboardEvent,
@@ -79,7 +86,7 @@ function keyOf(token: ActivePromptToken): string {
  *
  * Keys: while suggestions show, ArrowDown and ArrowUp move through them and
  * wrap, Enter or Tab picks the current one and Escape closes the list until
- * the token changes. Otherwise Enter submits and Shift+Enter inserts a
+ * the token changes or the caret leaves it. Otherwise Enter submits and Shift+Enter inserts a
  * newline. Nothing happens during IME composition, where Enter commits a
  * candidate rather than the message.
  *
@@ -123,6 +130,18 @@ export function usePromptInput({
     suggestions.find((token) => token.id === requestedId) ?? suggestions[0];
   const listOpen = activeSuggestion !== undefined;
 
+  // What Escape closed and which row the arrows chose belong to the token
+  // they were pressed in. Once the caret is in no token, drop both, so the
+  // next token, even the same text at the same place in a new draft, opens
+  // with its first suggestion current.
+  const placeCaret = useCallback((text: string, at: number | null) => {
+    setCaret(at);
+    if (at === null || findActivePromptToken(text, at) === null) {
+      setDismissedKey(null);
+      setRequestedId(undefined);
+    }
+  }, []);
+
   // A Radix dialog or popover around the prompt dismisses on an Escape it
   // sees in the document's capture phase, before React's handlers run,
   // unless the event is already marked handled. While the list is open, mark
@@ -161,11 +180,11 @@ export function usePromptInput({
     if (element === null) return;
     if (pending !== null && pending.value === value) {
       element.setSelectionRange(pending.caret, pending.caret);
-      setCaret(pending.caret);
+      placeCaret(value, pending.caret);
     } else if (element.ownerDocument.activeElement === element) {
-      setCaret(caretOf(element));
+      placeCaret(value, caretOf(element));
     }
-  }, [value, textareaRef]);
+  }, [value, textareaRef, placeCaret]);
 
   const canSubmit = !disabled && !busy && hasSomethingToSend;
   const submit = () => {
@@ -191,7 +210,7 @@ export function usePromptInput({
         // The browser leaves the caret after the inserted text, which is
         // still inside the token when a following space was reused.
         element.setSelectionRange(next.caret, next.caret);
-        setCaret(next.caret);
+        placeCaret(next.value, next.caret);
         return;
       }
     }
@@ -252,12 +271,13 @@ export function usePromptInput({
     submit,
     textareaProps: {
       onChange: (event) => {
-        setCaret(caretOf(event.currentTarget));
+        placeCaret(event.currentTarget.value, caretOf(event.currentTarget));
         onValueChange(event.currentTarget.value);
       },
-      onSelect: (event) => setCaret(caretOf(event.currentTarget)),
+      onSelect: (event) =>
+        placeCaret(event.currentTarget.value, caretOf(event.currentTarget)),
       onKeyDown,
-      onBlur: () => setCaret(null),
+      onBlur: () => placeCaret(value, null),
     },
   };
 }

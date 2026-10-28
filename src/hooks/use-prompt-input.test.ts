@@ -250,6 +250,38 @@ describe("usePromptInput", () => {
     view.unmount();
   });
 
+  test("Escape holds only for the token it closed", () => {
+    const view = mountPrompt();
+    view.type("@a");
+    view.press("Escape");
+    view.type("@");
+    view.type("");
+    view.type("@");
+    view.type("@a");
+    expect(ids(view.prompt.suggestions)).toEqual(["ada", "adam", "alan"]);
+
+    // With the list closed, Enter sends; the host then clears the draft.
+    view.press("Escape");
+    view.press("Enter");
+    expect(view.submitted).toEqual(["@a"]);
+    view.hostSet("");
+    view.type("@a");
+    expect(ids(view.prompt.suggestions)).toEqual(["ada", "adam", "alan"]);
+    view.unmount();
+  });
+
+  test("the row the arrows chose does not carry into a later token", () => {
+    const view = mountPrompt();
+    view.type("@a");
+    view.press("ArrowDown");
+    view.press("ArrowDown");
+    expect(view.prompt.activeSuggestion?.id).toBe("alan");
+    view.type("@a ");
+    view.type("@a hi @a");
+    expect(view.prompt.activeSuggestion?.id).toBe("ada");
+    view.unmount();
+  });
+
   test("an open list marks Escape handled before a Radix layer sees it", () => {
     // Radix dialogs and popovers listen here and dismiss unless the Escape
     // is already marked handled.
