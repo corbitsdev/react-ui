@@ -375,9 +375,9 @@ Removed exports and what replaces them:
 - Install from npm. Git installs (`github:corbitsdev/react-ui#<sha>`) no longer build `dist/`.
 - Per-module subpaths are gone: import from `@corbits/react-ui` (`import { Button } from "@corbits/react-ui"`).
 - `ui/dialog`, `ui/command-palette`, `ui/sidebar-search`, `ui/mic-permission-dialog`, `ui/menu`, `ui/tooltip` and `ui/toast` are subpath-only, and their peers are optional: `import { Toaster, toast } from "@corbits/react-ui/ui/toast"`. Install the peer for each subpath you keep.
-- `lib/csv`, `lib/url`, `lib/utils`, `lib/workflow-registry` and `ui/chat-dock-timing` are internal. Replace `cn` with `twMerge(clsx(...))`.
+- `lib/csv`, `lib/url`, `lib/utils`, `lib/workflow-registry` and `ui/chat-dock-timing` (removed in 0.4) are internal. Replace `cn` with `twMerge(clsx(...))`.
 - Stateful components ship `"use client"`. Client wrappers you wrote for them still work, and can go.
-- 84 unused modules are removed, `ui/command` is removed, `ActivityBlock` is renamed `ReasoningBlock`, and `AuthLayout` no longer renders `DitherCanvas` by default.
+- 84 unused modules are removed, `ui/command` is removed, `ActivityBlock` is renamed `ReasoningBlock` (removed in 0.4; use `Reasoning`, see [Upgrading from 0.3](#upgrading-from-03)), and `AuthLayout` no longer renders `DitherCanvas` by default.
 - With neither `.dark` nor `.light` on the root, the theme follows the OS. Hosts that toggle `.dark` must add `.light` for an explicit light choice, or mount `ThemeProvider`.
 
 ## License
