@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { act, type ReactNode, useState } from "react";
+import { act, createRef, type ReactNode, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
 import type { PromptToken } from "../lib/prompt-tokens.js";
@@ -127,6 +127,30 @@ describe("PromptInput", () => {
     expect(marks).toEqual(["/brief", "@Ada"]);
     expect(mirror?.textContent).toBe("/brief for @Ada and @Adam" + "\u200B");
     view.unmount();
+  });
+
+  test("the textarea forwards a host ref", () => {
+    // React 18 drops `ref` from a function component's props: only a
+    // forwardRef component receives it there.
+    expect(PromptInputTextarea.$$typeof).toBe(Symbol.for("react.forward_ref"));
+    const ref = createRef<HTMLTextAreaElement>();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    act(() => {
+      root.render(
+        <PromptInput
+          value=""
+          onValueChange={() => undefined}
+          onSubmit={() => undefined}
+        >
+          <PromptInputTextarea ref={ref} />
+        </PromptInput>,
+      );
+    });
+    expect(ref.current).toBe(container.querySelector("textarea"));
+    act(() => root.unmount());
+    container.remove();
   });
 
   test("Send is aria-disabled until there is text, then submits", () => {

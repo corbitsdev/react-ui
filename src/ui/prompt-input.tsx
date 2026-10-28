@@ -3,6 +3,7 @@
 import { ArrowUp, Square } from "lucide-react";
 import {
   createContext,
+  forwardRef,
   Fragment,
   useCallback,
   useContext,
@@ -240,18 +241,23 @@ export type PromptInputTextareaProps = Omit<
  * In forced-colors mode the browser paints the textarea's own text, so the
  * mirror steps aside rather than doubling every letter.
  */
-export function PromptInputTextarea({
-  className,
+export const PromptInputTextarea = forwardRef<
+  HTMLTextAreaElement,
+  PromptInputTextareaProps
+>(function PromptInputTextarea(
+  {
+    className,
+    placeholder = "Send a message…",
+    "aria-label": ariaLabel = "Message",
+    rows = 1,
+    onKeyDown,
+    onSelect,
+    onBlur,
+    onScroll,
+    ...props
+  },
   ref,
-  placeholder = "Send a message…",
-  "aria-label": ariaLabel = "Message",
-  rows = 1,
-  onKeyDown,
-  onSelect,
-  onBlur,
-  onScroll,
-  ...props
-}: PromptInputTextareaProps) {
+) {
   const { value, disabled, tokens, textareaRef, listId, prompt, suggest } =
     usePromptInputContext("PromptInputTextarea");
   const mirrorTextRef = useRef<HTMLDivElement>(null);
@@ -359,7 +365,7 @@ export function PromptInputTextarea({
       />
     </div>
   );
-}
+});
 
 const SuggestionScrollContext =
   createContext<React.RefObject<HTMLLIElement | null> | null>(null);
