@@ -876,7 +876,8 @@ export type ConversationContentProps = ComponentProps<"div">;
  * Children render in a content column inside it (`data-slot`
  * `conversation-column`, `flex flex-col gap-4 p-4`). Restyle the column from
  * this part's `className` through its slot, e.g.
- * `[&>[data-slot=conversation-column]]:gap-6`.
+ * `[&>[data-slot=conversation-column]]:gap-6`. While the column holds a
+ * `ConversationEmptyState`, it fills the view so the empty state centres.
  *
  * The container is focusable so the keyboard can scroll it, turns off the
  * browser's scroll anchoring (the conversation anchors for itself), and keeps
@@ -935,7 +936,7 @@ export const ConversationContent = forwardRef<
       <div
         ref={columnRef}
         data-slot="conversation-column"
-        className="flex flex-col gap-4 p-4"
+        className="flex flex-col gap-4 p-4 has-[>[data-slot=conversation-empty-state]]:min-h-full"
       >
         {children}
       </div>
@@ -1055,7 +1056,10 @@ export type ConversationEmptyStateProps = ComponentProps<"div"> & {
   readonly icon?: ReactNode;
 };
 
-/** No items yet. Children replace the default title, description and icon. */
+/**
+ * No items yet. Children replace the default title, description and icon.
+ * Render it inside `ConversationContent`, where it centres in the view.
+ */
 export function ConversationEmptyState({
   title = "No messages yet",
   description,

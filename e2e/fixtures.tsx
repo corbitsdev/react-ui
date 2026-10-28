@@ -8,6 +8,7 @@ import {
   ChatThread,
   Conversation,
   ConversationContent,
+  ConversationEmptyState,
   ConversationItem,
   ConversationScrollButton,
   DictationStatusLine,
@@ -438,6 +439,26 @@ function ConversationGlideScenario() {
   );
 }
 
+/** A conversation with nothing in it yet. */
+function ConversationEmptyScenario() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: 400,
+        width: 600,
+      }}
+    >
+      <Conversation>
+        <ConversationContent>
+          <ConversationEmptyState description="Send a message to start." />
+        </ConversationContent>
+      </Conversation>
+    </div>
+  );
+}
+
 export const scenarios: Record<string, () => ReactNode> = {
   smoke: () => <Button>Ready</Button>,
   "approval-card": () => <Approval state="idle" />,
@@ -470,4 +491,5 @@ export const scenarios: Record<string, () => ReactNode> = {
   "conversation-settle": () => <ConversationScenario policy="settle" />,
   "conversation-stick": () => <ConversationScenario policy="stick" />,
   "conversation-glide": () => <ConversationGlideScenario />,
+  "conversation-empty": () => <ConversationEmptyScenario />,
 };

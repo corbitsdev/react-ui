@@ -385,3 +385,17 @@ test.describe("a glide over content that moves above it", () => {
     await atEnd(page);
   });
 });
+
+test("the empty state centres in the log", async ({ page }) => {
+  await page.goto("/conversation-empty");
+  const empty = page.locator("[data-slot='empty-state']");
+  await expect(empty).toBeVisible();
+  const log = await container(page).boundingBox();
+  const box = await empty.boundingBox();
+  if (log === null || box === null) throw new Error("expected both on screen");
+  expect(
+    Math.abs(box.y + box.height / 2 - (log.y + log.height / 2)),
+  ).toBeLessThanOrEqual(1);
+  // Centring fills the view, never overflows it.
+  expect((await view(page)).distanceFromEnd).toBe(0);
+});
