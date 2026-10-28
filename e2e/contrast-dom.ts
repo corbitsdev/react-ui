@@ -108,9 +108,11 @@ export async function contrastSamples(
       const paintOf = (element: Element): PaintEntry["paint"] => {
         if (transparent(element)) return "none";
         const style = getComputedStyle(element);
+        // An inset shadow paints over the colour, so the colour is not the ground.
         if (
           resolve(style.backgroundColor)[3] === 1 &&
           style.backgroundClip === "border-box" &&
+          !style.boxShadow.includes("inset") &&
           unfaded(element)
         )
           return "solid";
@@ -380,8 +382,11 @@ export async function contrastSamples(
           const style = getComputedStyle(node);
           if (style.filter !== "none" || style.mixBlendMode !== "normal")
             return null;
-          // A node's image paints over its colour; its backdrop filter works
-          // on what is behind it; its opacity fades all of it.
+          // A node's inset shadow paints over its image, and its image over
+          // its colour; its backdrop filter works on what is behind it; its
+          // opacity fades all of it.
+          if (style.boxShadow.includes("inset"))
+            layers.push({ kind: "unresolved", box });
           if (!(node === element && clip !== undefined)) {
             if (style.backgroundImage !== "none")
               layers.push({ kind: "unresolved", box });

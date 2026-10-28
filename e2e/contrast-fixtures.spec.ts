@@ -101,6 +101,20 @@ for (const [name, html] of NOT_VOUCHED)
     expect(verdict).not.toMatchObject({ kind: "measured", pass: true });
   });
 
+// The inset shadow paints #000 over the white the text would be judged on.
+// Axe settles this page itself, so only the fallback's verdict is pinned.
+test("the contrast fallback does not pass text on an opaque ground under an inset shadow", async ({
+  page: tab,
+}) => {
+  const { verdict } = await verdictFor(
+    tab,
+    page(
+      `<p id="t" style="color:#333;background:#fff;box-shadow:inset 0 0 0 80px #000;padding:8px">Pending approval</p>`,
+    ),
+  );
+  expect(verdict).not.toMatchObject({ kind: "measured", pass: true });
+});
+
 // Controls: the same shapes with legible text still measure, so the
 // fixtures above fail for the reason they name.
 const VOUCHED = [
