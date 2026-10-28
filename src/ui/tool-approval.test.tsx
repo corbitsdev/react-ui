@@ -1,4 +1,4 @@
-import { act } from "react";
+import { act, createRef } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
@@ -106,6 +106,19 @@ describe("ToolApproval", () => {
     expect(mounted.container.textContent).toContain('"to": "team"');
     expect(mounted.container.textContent).toContain(
       "Send the renewal summary to the team.",
+    );
+    mounted.unmount();
+  });
+
+  test("a ref reaches the root", () => {
+    const ref = createRef<HTMLDivElement>();
+    const mounted = mount(
+      <ToolApproval ref={ref} part={tool()} onDecide={() => {}} />,
+    );
+    expect(ref.current).toBe(
+      mounted.container.querySelector<HTMLDivElement>(
+        "[data-slot='tool-approval']",
+      ),
     );
     mounted.unmount();
   });

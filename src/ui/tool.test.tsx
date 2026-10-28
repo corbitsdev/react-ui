@@ -1,4 +1,4 @@
-import { act, useState } from "react";
+import { act, createRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, test } from "bun:test";
 
@@ -283,6 +283,17 @@ describe("ToolGroup", () => {
     expect(
       mounted.container.querySelectorAll("[data-slot='tool']").length,
     ).toBe(3);
+    mounted.unmount();
+  });
+
+  test("a ref reaches the group's root", () => {
+    const ref = createRef<HTMLDivElement>();
+    const mounted = mount(<ToolGroup ref={ref} part={finished} />);
+    expect(ref.current).toBe(
+      mounted.container.querySelector<HTMLDivElement>(
+        "[data-slot='tool-group']",
+      ),
+    );
     mounted.unmount();
   });
 

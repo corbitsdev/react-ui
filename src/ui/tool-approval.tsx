@@ -9,7 +9,7 @@ import {
   TimerOff,
   X,
 } from "lucide-react";
-import { useCallback, useId, useLayoutEffect, useRef } from "react";
+import { forwardRef, useCallback, useId, useLayoutEffect, useRef } from "react";
 import type { ComponentProps, ReactNode } from "react";
 
 import { isAwaitingApproval } from "../lib/conversation-activity.js";
@@ -91,167 +91,172 @@ export type ToolApprovalProps = Omit<
  * When the record settles while focus was inside and nothing else has taken
  * it, focus moves to the resolved line instead of dropping to the page.
  */
-export function ToolApproval({
-  part,
-  onDecide,
-  renderInput,
-  disabled = false,
-  error,
-  labels: labelOverrides,
-  children,
-  ref,
-  className,
-  onFocus,
-  onBlur,
-  ...props
-}: ToolApprovalProps) {
-  const labels = { ...LABELS, ...labelOverrides };
-  const titleId = useId();
-  const nameId = useId();
-  const inputTitleId = useId();
-  const outcomeId = useId();
-  const awaiting = isAwaitingApproval(part);
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  const focusInside = useRef(false);
-  const wasAwaiting = useRef(awaiting);
-
-  useLayoutEffect(() => {
-    if (wasAwaiting.current && !awaiting && focusInside.current) {
-      const active = document.activeElement;
-      if (active === null || active === document.body) rootRef.current?.focus();
-    }
-    wasAwaiting.current = awaiting;
-  }, [awaiting]);
-
-  const setRoot = useCallback(
-    (element: HTMLDivElement | null) => {
-      rootRef.current = element;
-      if (typeof ref === "function") ref(element);
-      else if (ref !== null && ref !== undefined) ref.current = element;
+export const ToolApproval = forwardRef<HTMLDivElement, ToolApprovalProps>(
+  function ToolApproval(
+    {
+      part,
+      onDecide,
+      renderInput,
+      disabled = false,
+      error,
+      labels: labelOverrides,
+      children,
+      className,
+      onFocus,
+      onBlur,
+      ...props
     },
-    [ref],
-  );
+    ref,
+  ) {
+    const labels = { ...LABELS, ...labelOverrides };
+    const titleId = useId();
+    const nameId = useId();
+    const inputTitleId = useId();
+    const outcomeId = useId();
+    const awaiting = isAwaitingApproval(part);
+    const rootRef = useRef<HTMLDivElement | null>(null);
+    const focusInside = useRef(false);
+    const wasAwaiting = useRef(awaiting);
 
-  if (!awaiting && part.approval === undefined) return null;
+    useLayoutEffect(() => {
+      if (wasAwaiting.current && !awaiting && focusInside.current) {
+        const active = document.activeElement;
+        if (active === null || active === document.body)
+          rootRef.current?.focus();
+      }
+      wasAwaiting.current = awaiting;
+    }, [awaiting]);
 
-  const decide = (decision: ToolApprovalDecision) => () => {
-    if (!disabled) onDecide(decision);
-  };
+    const setRoot = useCallback(
+      (element: HTMLDivElement | null) => {
+        rootRef.current = element;
+        if (typeof ref === "function") ref(element);
+        else if (ref !== null && ref !== undefined) ref.current = element;
+      },
+      [ref],
+    );
 
-  return (
-    <div
-      ref={setRoot}
-      data-slot="tool-approval"
-      data-status={awaiting ? "pending" : part.approval?.status}
-      // Settled, the line is where focus lands, so it is named by what it says.
-      role={awaiting ? undefined : "group"}
-      aria-labelledby={awaiting ? undefined : outcomeId}
-      tabIndex={-1}
-      onFocus={(event) => {
-        focusInside.current = true;
-        onFocus?.(event);
-      }}
-      onBlur={(event) => {
-        // Focus leaving the card, to another element or to nothing (a click
-        // on blank page), ends "inside". The decided button going away with
-        // the record does not reach here: React ignores blur while it
-        // commits, so the flag survives until the layout effect reads it.
-        const next = event.relatedTarget;
-        if (next === null || !event.currentTarget.contains(next))
-          focusInside.current = false;
-        onBlur?.(event);
-      }}
-      className={cn("min-w-0 text-sm outline-offset-2", className)}
-      {...props}
-    >
-      {awaiting ? (
-        <section
-          data-slot="tool-approval-card"
-          aria-labelledby={`${titleId} ${nameId}`}
-          tabIndex={-1}
-          className="flex flex-col gap-3 rounded-lg border border-primary-emphasis bg-attention-wash p-4 text-foreground"
-        >
-          <header className="flex min-w-0 flex-wrap items-center gap-2">
-            <ShieldAlert
-              aria-hidden
-              className="size-4 shrink-0 text-primary-emphasis"
-            />
-            <p id={titleId} className="font-semibold">
-              {labels.title}
-            </p>
-            <code
-              id={nameId}
-              className="ms-auto min-w-0 truncate font-mono text-xs"
-            >
-              {part.name}
-            </code>
-          </header>
-          {children}
-          {part.input === undefined ? null : (
-            <div className="flex flex-col gap-1">
-              <p id={inputTitleId} className="text-xs font-medium">
-                {labels.input}
+    if (!awaiting && part.approval === undefined) return null;
+
+    const decide = (decision: ToolApprovalDecision) => () => {
+      if (!disabled) onDecide(decision);
+    };
+
+    return (
+      <div
+        ref={setRoot}
+        data-slot="tool-approval"
+        data-status={awaiting ? "pending" : part.approval?.status}
+        // Settled, the line is where focus lands, so it is named by what it says.
+        role={awaiting ? undefined : "group"}
+        aria-labelledby={awaiting ? undefined : outcomeId}
+        tabIndex={-1}
+        onFocus={(event) => {
+          focusInside.current = true;
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          // Focus leaving the card, to another element or to nothing (a click
+          // on blank page), ends "inside". The decided button going away with
+          // the record does not reach here: React ignores blur while it
+          // commits, so the flag survives until the layout effect reads it.
+          const next = event.relatedTarget;
+          if (next === null || !event.currentTarget.contains(next))
+            focusInside.current = false;
+          onBlur?.(event);
+        }}
+        className={cn("min-w-0 text-sm outline-offset-2", className)}
+        {...props}
+      >
+        {awaiting ? (
+          <section
+            data-slot="tool-approval-card"
+            aria-labelledby={`${titleId} ${nameId}`}
+            tabIndex={-1}
+            className="flex flex-col gap-3 rounded-lg border border-primary-emphasis bg-attention-wash p-4 text-foreground"
+          >
+            <header className="flex min-w-0 flex-wrap items-center gap-2">
+              <ShieldAlert
+                aria-hidden
+                className="size-4 shrink-0 text-primary-emphasis"
+              />
+              <p id={titleId} className="font-semibold">
+                {labels.title}
               </p>
-              <div
-                role="group"
-                aria-labelledby={inputTitleId}
-                tabIndex={0}
-                className="max-h-48 overflow-auto rounded-md bg-background p-2 font-mono text-xs break-words whitespace-pre-wrap"
+              <code
+                id={nameId}
+                className="ms-auto min-w-0 truncate font-mono text-xs"
               >
-                {renderInput === undefined
-                  ? formatToolValue(part.input)
-                  : renderInput(part.input)}
+                {part.name}
+              </code>
+            </header>
+            {children}
+            {part.input === undefined ? null : (
+              <div className="flex flex-col gap-1">
+                <p id={inputTitleId} className="text-xs font-medium">
+                  {labels.input}
+                </p>
+                <div
+                  role="group"
+                  aria-labelledby={inputTitleId}
+                  tabIndex={0}
+                  className="max-h-48 overflow-auto rounded-md bg-background p-2 font-mono text-xs break-words whitespace-pre-wrap"
+                >
+                  {renderInput === undefined
+                    ? formatToolValue(part.input)
+                    : renderInput(part.input)}
+                </div>
               </div>
+            )}
+            {error === undefined || error === null ? null : (
+              <p role="alert" className="text-destructive">
+                {error}
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                aria-disabled={disabled || undefined}
+                onClick={decide({ outcome: "approved", scope: "once" })}
+                className="aria-disabled:opacity-50"
+              >
+                {labels.approve}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                aria-disabled={disabled || undefined}
+                onClick={decide({ outcome: "approved", scope: "always" })}
+                className="bg-background aria-disabled:opacity-50"
+              >
+                {labels.approveAlways}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                aria-disabled={disabled || undefined}
+                onClick={decide({ outcome: "rejected", scope: "once" })}
+                className="bg-background text-destructive aria-disabled:opacity-50 sm:ms-auto"
+              >
+                {labels.deny}
+              </Button>
             </div>
-          )}
-          {error === undefined || error === null ? null : (
-            <p role="alert" className="text-destructive">
-              {error}
-            </p>
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              aria-disabled={disabled || undefined}
-              onClick={decide({ outcome: "approved", scope: "once" })}
-              className="aria-disabled:opacity-50"
-            >
-              {labels.approve}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              aria-disabled={disabled || undefined}
-              onClick={decide({ outcome: "approved", scope: "always" })}
-              className="bg-background aria-disabled:opacity-50"
-            >
-              {labels.approveAlways}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              aria-disabled={disabled || undefined}
-              onClick={decide({ outcome: "rejected", scope: "once" })}
-              className="bg-background text-destructive aria-disabled:opacity-50 sm:ms-auto"
-            >
-              {labels.deny}
-            </Button>
-          </div>
-        </section>
-      ) : part.approval === undefined ? null : (
-        <ResolvedLine
-          id={outcomeId}
-          record={part.approval}
-          name={part.name}
-          labels={labels}
-        />
-      )}
-    </div>
-  );
-}
+          </section>
+        ) : part.approval === undefined ? null : (
+          <ResolvedLine
+            id={outcomeId}
+            record={part.approval}
+            name={part.name}
+            labels={labels}
+          />
+        )}
+      </div>
+    );
+  },
+);
 
 function ResolvedLine({
   id,
