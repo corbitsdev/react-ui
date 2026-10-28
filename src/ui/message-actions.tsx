@@ -62,7 +62,9 @@ export type MessageActionProps = Omit<
 /**
  * One action: an icon button in `MessageActions`, or an item (icon and
  * label) inside a `MessageActionMenu`. Pass `aria-pressed` for an action that
- * toggles, such as a vote.
+ * toggles, such as a vote: pressed, the button is filled and outlined (hover
+ * only fills it); in the menu the item is a checked `menuitemcheckbox` in
+ * bold.
  */
 export function MessageAction({
   label,
@@ -102,6 +104,8 @@ export function MessageAction({
     );
   }
   return (
+  // Pressed shares hover's fill, so an outline in the control-boundary
+  // colour marks it apart from hover by shape, not colour alone.
     <button
       type="button"
       aria-label={label}
@@ -109,7 +113,7 @@ export function MessageAction({
       aria-pressed={pressed}
       data-slot="message-action"
       className={cn(
-        "inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50 aria-pressed:bg-muted aria-pressed:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground [&_svg]:size-4 [&_svg]:shrink-0",
+        "inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50 aria-pressed:bg-muted aria-pressed:text-foreground aria-pressed:inset-ring aria-pressed:inset-ring-input aria-expanded:bg-muted aria-expanded:text-foreground [&_svg]:size-4 [&_svg]:shrink-0",
         className,
       )}
       onClick={onClick}

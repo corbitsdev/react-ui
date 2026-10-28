@@ -104,6 +104,21 @@ const menu = (scope: Locator) =>
 const item = (scope: Locator, name: string) =>
   scope.getByRole("menuitem", { name });
 
+test("a pressed action differs from a hovered one by more than colour", async ({
+  page,
+}) => {
+  await page.goto("/message-actions");
+  const top = row(page, "top");
+  const pressed = top.getByRole("button", { name: "Good response" });
+  const hovered = top.getByRole("button", { name: "Bad response" });
+  await hovered.hover();
+  const shadow = (button: Locator) =>
+    button.evaluate((element) => getComputedStyle(element).boxShadow);
+  // The pressed action carries an inset outline that hover does not draw.
+  expect(await shadow(pressed)).toContain("inset");
+  expect(await shadow(hovered)).not.toContain("inset");
+});
+
 test("the overflow menu works from the keyboard and returns focus", async ({
   page,
 }) => {

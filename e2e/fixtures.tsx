@@ -1153,6 +1153,8 @@ function ActionRow({ record }: { record: (event: string) => void }) {
   return (
     <MessageActions>
       <MessageAction label="Copy" onClick={() => record("copy")} />
+      <MessageAction label="Good response" aria-pressed />
+      <MessageAction label="Bad response" aria-pressed={false} />
       <MessageActionMenu>
         <MessageAction label="Pin" onClick={() => record("pin")} />
         <MessageAction label="Copy link" onClick={() => record("link")} />
