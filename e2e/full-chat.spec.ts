@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { watchFocusOnBody } from "./focus.js";
+
 // The whole-chat composition lives in the story, so the spec drives the
 // static Storybook build the accessibility sweep also serves.
 const STORIES = "http://localhost:61000";
@@ -41,10 +43,16 @@ for (const [story, decision, outcome] of [
     );
     await expect(approval).toBeVisible();
     await approval.getByRole("button", { name: decision, exact: true }).focus();
+    const stop = await watchFocusOnBody(page);
     await page.keyboard.press("Enter");
 
     // The call folds into the run before it, and its buttons go with it.
     await expect(approval).toHaveCount(0);
+    await expect
+      .poll(async () => (await focused(page)).slot)
+      .toBe("activity-trigger");
+    // Not for a single frame did focus fall to the page.
+    expect(await stop()).toBe(0);
     const active = await focused(page);
     expect(active.body).toBe(false);
     expect(active.slot).toBe("activity-trigger");
