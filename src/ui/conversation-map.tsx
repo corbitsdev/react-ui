@@ -161,6 +161,18 @@ export function ConversationMap({
     (stop ?? scrollContainer())?.focus({ preventScroll: true });
   }, [focusedId, turnIds, scrollContainer]);
 
+  // Escape dismisses a preview wherever focus is: one the mouse opened
+  // covers the content while focus stays in the composer or the log.
+  const previewing = preview !== null;
+  useEffect(() => {
+    if (!previewing) return;
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setPreview(null);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [previewing]);
+
   // A rail that shrinks (the host's layout, the window) can clip the current
   // tick: bring it back at once.
   useEffect(() => {

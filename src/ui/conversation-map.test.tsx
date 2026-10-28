@@ -465,6 +465,34 @@ describe("ConversationMap", () => {
     mounted.unmount();
   });
 
+  test("Escape dismisses a preview the mouse opened while focus is elsewhere", () => {
+    const mounted = render(<Chat />);
+    const input = document.createElement("input");
+    document.body.appendChild(input);
+    input.focus();
+    act(() => {
+      tick(mounted.container, "Second question").dispatchEvent(
+        new PointerEvent("pointerover", {
+          bubbles: true,
+          pointerType: "mouse",
+        }),
+      );
+    });
+    expect(
+      mounted.container.querySelector("[role='tooltip']")?.textContent,
+    ).toBe("Second questionSecond answer");
+
+    act(() => {
+      input.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+      );
+    });
+    expect(mounted.container.querySelector("[role='tooltip']")).toBeNull();
+    expect(document.activeElement).toBe(input);
+    input.remove();
+    mounted.unmount();
+  });
+
   test("a focused tick whose turn goes keeps focus on the rail", () => {
     const mounted = render(<Chat />);
     act(() => tick(mounted.container, "First question").focus());
