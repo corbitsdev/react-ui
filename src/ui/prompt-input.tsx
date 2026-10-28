@@ -54,6 +54,13 @@ function usePromptInputContext(part: string): PromptInputContextValue {
   return context;
 }
 
+/** Whether the enclosing `PromptInput` is `disabled`; `false` outside one.
+ * The toolbar parts default their own `disabled` to it, and a part the host
+ * builds can do the same. */
+export function usePromptInputDisabled(): boolean {
+  return useContext(PromptInputContext)?.disabled ?? false;
+}
+
 function optionId(listId: string, token: PromptToken): string {
   return `${listId}-${token.id}`;
 }
@@ -79,6 +86,8 @@ export type PromptInputProps = Omit<
   readonly tokens?: readonly PromptToken[];
   /** While not `ready`, neither Enter nor the send button submits. */
   readonly status?: PromptInputStatus;
+  /** Disables the textarea and sending, and the toolbar parts inside that do
+   * not set their own `disabled`. */
   readonly disabled?: boolean;
 };
 
@@ -147,6 +156,8 @@ export function PromptInput({
         data-disabled={disabled ? "" : undefined}
         className={cn(
           "relative flex items-end gap-2 rounded-lg border border-input bg-background p-1.5",
+          // A `PromptInputToolbar` placed last takes a row of its own.
+          "has-[>[data-slot=prompt-input-toolbar]]:flex-wrap",
           // The textarea gives up its own outline for one round the box.
           "has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-2 has-[textarea:focus-visible]:outline-ring",
           className,

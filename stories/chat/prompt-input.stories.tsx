@@ -1,3 +1,4 @@
+import { AtSign, AudioLines, Paperclip, SquareSlash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -9,6 +10,18 @@ import {
   PromptInputTextarea,
   type PromptInputStatus,
 } from "../../src/ui/prompt-input.js";
+import {
+  PromptInputAddMenu,
+  PromptInputButton,
+  PromptInputContext,
+  PromptInputFloat,
+  PromptInputModeSelect,
+  PromptInputModelSelect,
+  PromptInputNote,
+  PromptInputToolbar,
+  type PromptInputModelOption,
+  type PromptInputModeOption,
+} from "../../src/ui/prompt-input-toolbar.js";
 
 export default { title: "Chat / Prompt input" };
 
@@ -115,3 +128,194 @@ export const Replying = () => (
 export const LongDraft = () => <Prompt initial={LONG_DRAFT} />;
 
 export const Disabled = () => <Prompt initial="Waiting for access" disabled />;
+
+const MODELS: readonly PromptInputModelOption[] = [
+  {
+    id: "swift",
+    name: "Swift 2",
+    short: "Swift",
+    detail: "Quick answers",
+    group: "Fast",
+  },
+  {
+    id: "lite",
+    name: "Lite 1",
+    short: "Lite",
+    detail: "Lowest cost",
+    group: "Fast",
+  },
+  {
+    id: "deep",
+    name: "Deep 4",
+    short: "Deep",
+    detail: "Careful, slower reasoning",
+    group: "Thorough",
+  },
+];
+
+const MODES: readonly PromptInputModeOption[] = [
+  { id: "ask", label: "Ask", detail: "Answers without taking action" },
+  { id: "plan", label: "Plan", detail: "Drafts steps for you to approve" },
+  { id: "agent", label: "Agent", detail: "Acts on your behalf" },
+];
+
+type ToolbarPromptProps = {
+  readonly addMenu?: boolean;
+  readonly mode?: boolean;
+  readonly model?: boolean;
+  readonly voice?: boolean;
+  readonly replying?: boolean;
+  readonly note?: boolean;
+  readonly openPicker?: "model" | "mode" | "add";
+  readonly disabled?: boolean;
+};
+
+/** A prompt with whichever toolbar parts are switched on. */
+function ToolbarPrompt({
+  addMenu = false,
+  mode = false,
+  model = false,
+  voice = false,
+  replying = false,
+  note = false,
+  openPicker,
+  disabled = false,
+}: ToolbarPromptProps) {
+  const [value, setValue] = useState("");
+  const [modelId, setModelId] = useState("deep");
+  const [modeId, setModeId] = useState("agent");
+  const [context, setContext] = useState(replying);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const startToken = (prefix: string) => {
+    setValue(
+      (draft) =>
+        (draft === "" || draft.endsWith(" ") ? draft : `${draft} `) + prefix,
+    );
+    textareaRef.current?.focus();
+  };
+  const toolbar = addMenu || mode || model || voice;
+  return (
+    <Frame>
+      <PromptInput
+        value={value}
+        onValueChange={setValue}
+        onSubmit={() => setValue("")}
+        tokens={TOKENS}
+        disabled={disabled}
+      >
+        {context ? (
+          <PromptInputFloat>
+            <PromptInputContext
+              label="Replying to"
+              detail="Researcher: the Q3 summary"
+              clearLabel="Stop replying"
+              onClear={() => setContext(false)}
+            />
+          </PromptInputFloat>
+        ) : null}
+        <PromptInputSuggestions />
+        <PromptInputTextarea
+          ref={textareaRef}
+          placeholder={
+            mode && modeId === "plan"
+              ? "Describe the goal to plan…"
+              : "Ask an agent… (@ to mention, / for commands)"
+          }
+        />
+        {toolbar ? (
+          <PromptInputToolbar>
+            {addMenu ? (
+              <PromptInputAddMenu
+                defaultOpen={openPicker === "add"}
+                items={[
+                  {
+                    id: "files",
+                    label: "Add files or photos",
+                    icon: <Paperclip />,
+                    onSelect: () => undefined,
+                  },
+                  {
+                    id: "mention",
+                    label: "Mention an agent",
+                    icon: <AtSign />,
+                    onSelect: () => startToken("@"),
+                  },
+                  {
+                    id: "command",
+                    label: "Use a command",
+                    icon: <SquareSlash />,
+                    onSelect: () => startToken("/"),
+                  },
+                ]}
+              />
+            ) : null}
+            {mode ? (
+              <PromptInputModeSelect
+                modes={MODES}
+                value={modeId}
+                onValueChange={setModeId}
+                defaultOpen={openPicker === "mode"}
+              />
+            ) : null}
+            <div className="ms-auto flex items-center gap-1">
+              {model ? (
+                <PromptInputModelSelect
+                  models={MODELS}
+                  value={modelId}
+                  onValueChange={setModelId}
+                  defaultOpen={openPicker === "model"}
+                />
+              ) : null}
+              {voice ? (
+                <PromptInputButton aria-label="Voice mode">
+                  <AudioLines className="size-4" aria-hidden />
+                </PromptInputButton>
+              ) : null}
+              <PromptInputSubmit onStop={() => undefined} />
+            </div>
+          </PromptInputToolbar>
+        ) : (
+          <PromptInputSubmit onStop={() => undefined} />
+        )}
+      </PromptInput>
+      {note ? (
+        <PromptInputNote>
+          Agents can make mistakes. Check important work.
+        </PromptInputNote>
+      ) : null}
+    </Frame>
+  );
+}
+
+/** Every optional part on: add menu, mode and model pickers, voice, the
+ * reply chip floating above and the note below. */
+export const EverythingOn = () => (
+  <ToolbarPrompt addMenu mode model voice replying note />
+);
+
+/** The model picker open, grouped, with the chosen model checked. */
+export const ModelPickerOpen = () => (
+  <ToolbarPrompt addMenu mode model openPicker="model" />
+);
+
+/** The mode picker open on the current mode. */
+export const ModePickerOpen = () => (
+  <ToolbarPrompt addMenu mode model openPicker="mode" />
+);
+
+/** The `+` menu open: files, a mention, a command. */
+export const AddMenuOpen = () => (
+  <ToolbarPrompt addMenu model openPicker="add" />
+);
+
+/** Small print under the box; nothing else added. */
+export const WithNote = () => <ToolbarPrompt note />;
+
+/** The chip says what the next message answers; its button clears it. */
+export const ReplyingChip = () => <ToolbarPrompt replying />;
+
+/** Disabled: the toolbar parts follow the prompt's `disabled`; none is
+ * passed its own. */
+export const ToolbarDisabled = () => (
+  <ToolbarPrompt addMenu mode model voice disabled />
+);
