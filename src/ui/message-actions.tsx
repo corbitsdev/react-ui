@@ -67,63 +67,63 @@ export type MessageActionProps = Omit<
  * only fills it); in the menu the item is a checked `menuitemcheckbox` in
  * bold.
  */
-export function MessageAction({
-  label,
-  className,
-  children,
-  onClick,
-  "aria-pressed": pressed,
-  ...props
-}: MessageActionProps) {
-  const menu = useContext(MenuContext);
-  if (menu !== null) {
-    // A toggle in a menu is a checkbox item: menus have no pressed state.
-    const toggle = pressed !== undefined;
-    const checked = pressed === true || pressed === "true";
+export const MessageAction = forwardRef<HTMLButtonElement, MessageActionProps>(
+  function MessageAction(
+    { label, className, children, onClick, "aria-pressed": pressed, ...props },
+    ref,
+  ) {
+    const menu = useContext(MenuContext);
+    if (menu !== null) {
+      // A toggle in a menu is a checkbox item: menus have no pressed state.
+      const toggle = pressed !== undefined;
+      const checked = pressed === true || pressed === "true";
+      return (
+        <button
+          type="button"
+          role={toggle ? "menuitemcheckbox" : "menuitem"}
+          aria-checked={toggle ? checked : undefined}
+          tabIndex={-1}
+          data-slot="message-action"
+          className={cn(
+            "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm whitespace-nowrap text-popover-foreground transition-colors outline-none hover:bg-muted focus-visible:bg-muted disabled:pointer-events-none disabled:opacity-50 aria-checked:font-semibold [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground",
+            className,
+          )}
+          {...props}
+          ref={ref}
+          onClick={(event) => {
+            // Close (and refocus the trigger) first, so an action that moves
+            // focus itself, such as opening a dialog, keeps it.
+            menu.close();
+            onClick?.(event);
+          }}
+        >
+          {children}
+          {label}
+        </button>
+      );
+    }
+    // Pressed shares hover's fill, so an outline in the control-boundary
+    // colour marks it apart from hover by shape, not colour alone.
     return (
       <button
         type="button"
-        role={toggle ? "menuitemcheckbox" : "menuitem"}
-        aria-checked={toggle ? checked : undefined}
-        tabIndex={-1}
+        aria-label={label}
+        title={label}
+        aria-pressed={pressed}
         data-slot="message-action"
         className={cn(
-          "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm whitespace-nowrap text-popover-foreground transition-colors outline-none hover:bg-muted focus-visible:bg-muted disabled:pointer-events-none disabled:opacity-50 aria-checked:font-semibold [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground",
+          "inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50 aria-pressed:bg-muted aria-pressed:text-foreground aria-pressed:inset-ring aria-pressed:inset-ring-input aria-expanded:bg-muted aria-expanded:text-foreground [&_svg]:size-4 [&_svg]:shrink-0",
           className,
         )}
+        onClick={onClick}
         {...props}
-        onClick={(event) => {
-          // Close (and refocus the trigger) first, so an action that moves
-          // focus itself, such as opening a dialog, keeps it.
-          menu.close();
-          onClick?.(event);
-        }}
+        ref={ref}
       >
         {children}
-        {label}
       </button>
     );
-  }
-  // Pressed shares hover's fill, so an outline in the control-boundary
-  // colour marks it apart from hover by shape, not colour alone.
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      aria-pressed={pressed}
-      data-slot="message-action"
-      className={cn(
-        "inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50 aria-pressed:bg-muted aria-pressed:text-foreground aria-pressed:inset-ring aria-pressed:inset-ring-input aria-expanded:bg-muted aria-expanded:text-foreground [&_svg]:size-4 [&_svg]:shrink-0",
-        className,
-      )}
-      onClick={onClick}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-}
+  },
+);
 
 export type MessageActionMenuProps = Omit<ComponentProps<"div">, "children"> & {
   /** The trigger's accessible name and the menu's. Default "More actions". */
