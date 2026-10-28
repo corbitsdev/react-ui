@@ -3,6 +3,7 @@
 import { Ellipsis } from "lucide-react";
 import {
   createContext,
+  forwardRef,
   useCallback,
   useContext,
   useEffect,
@@ -103,9 +104,9 @@ export function MessageAction({
       </button>
     );
   }
-  return (
   // Pressed shares hover's fill, so an outline in the control-boundary
   // colour marks it apart from hover by shape, not colour alone.
+  return (
     <button
       type="button"
       aria-label={label}
@@ -178,18 +179,23 @@ function clipBounds(element: HTMLElement): { top: number; bottom: number } {
  * It opens on `side` unless that side would clip it and the other has more
  * room.
  */
-export function MessageActionMenu({
-  label = "More actions",
-  icon,
-  side = "bottom",
-  align = "start",
-  open: openProp,
-  onOpenChange,
-  className,
-  children,
+export const MessageActionMenu = forwardRef<
+  HTMLDivElement,
+  MessageActionMenuProps
+>(function MessageActionMenu(
+  {
+    label = "More actions",
+    icon,
+    side = "bottom",
+    align = "start",
+    open: openProp,
+    onOpenChange,
+    className,
+    children,
+    ...props
+  },
   ref,
-  ...props
-}: MessageActionMenuProps) {
+) {
   const { open, setOpen, rootRef, triggerRef, close } = useDismissablePopover<
     HTMLDivElement,
     HTMLButtonElement
@@ -337,4 +343,4 @@ export function MessageActionMenu({
       ) : null}
     </div>
   );
-}
+});
