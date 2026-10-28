@@ -63,9 +63,10 @@ export type ToolGroupProps = Omit<
  *
  * When a decision settles a call while focus was inside and nothing else has
  * taken it, focus moves to the next waiting call's card, else to the decided
- * call's outcome, else to the group's row, instead of dropping to the page.
- * The card, not its Approve button: a held Enter repeats onto whatever has
- * focus, and would decide a call the person never chose.
+ * call's outcome, else to the call's row in the list (or, if the host dropped
+ * it, the row now in its place), instead of dropping to the page. Never to a
+ * button: a held Enter repeats onto whatever has focus, and would decide a
+ * call the person never chose or fold the group.
  */
 export function ToolGroup({
   part,
@@ -137,7 +138,9 @@ export function ToolGroup({
     const root = rootRef.current;
     if (root === null) return;
     const items = [
-      ...(root.querySelector("[data-slot='tool-group-list']")?.children ?? []),
+      ...root.querySelectorAll<HTMLElement>(
+        "[data-slot='tool-group-list'] > li",
+      ),
     ];
     const focused = focusedCall.current;
     const at = focused === null ? -1 : calls.indexOf(focused);
@@ -150,9 +153,13 @@ export function ToolGroup({
         .find((id) => calls.includes(id));
       start = follower === undefined ? calls.length : calls.indexOf(follower);
     }
+    // The header is a button, so it is the target only with no row left.
     const target =
       nextWaiting(items, start) ??
       items[at]?.querySelector<HTMLElement>("[data-slot='tool-approval']") ??
+      items[at] ??
+      items[start] ??
+      items[items.length - 1] ??
       root.querySelector<HTMLElement>("[data-slot='tool-group-header']");
     target?.focus();
   });
@@ -238,7 +245,8 @@ export function ToolGroup({
           {part.tools.map((tool) => (
             <li
               key={tool.toolCallId}
-              className="min-w-0"
+              tabIndex={-1}
+              className="min-w-0 rounded-md"
               onFocus={() => {
                 focusedCall.current = tool.toolCallId;
               }}

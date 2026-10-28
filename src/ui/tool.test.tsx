@@ -567,6 +567,41 @@ describe("ToolGroup", () => {
       mounted.unmount();
     });
 
+    test("with no outcome to show, focus moves to the decided call's row, not a button", () => {
+      const render = (part: PartToolBatch) => (
+        <ToolGroup part={part} onDecide={() => {}} />
+      );
+      // No approval record: the host says only that the call now runs.
+      const a = tool({
+        toolCallId: "a",
+        name: "mail__a",
+        status: "approval-requested",
+      });
+      const done = tool({ toolCallId: "r" });
+      const mounted = mount(render(batch([done, a])));
+      act(() => approveIn(mounted.container, "mail__a").focus());
+      mounted.render(render(batch([done, { ...a, status: "running" }])));
+      const active = document.activeElement;
+      // A held Enter repeats onto the focused element; on the row it folds nothing.
+      expect(active?.tagName).toBe("LI");
+      expect(active?.textContent).toContain("mail__a");
+      mounted.unmount();
+    });
+
+    test("a dropped call with nothing left waiting hands focus to a row", () => {
+      const render = (part: PartToolBatch) => (
+        <ToolGroup part={part} onDecide={() => {}} />
+      );
+      const done = tool({ toolCallId: "r", name: "files__r" });
+      const mounted = mount(render(batch([done, waitingCall("a")])));
+      act(() => approveIn(mounted.container, "mail__a").focus());
+      mounted.render(render(batch([done])));
+      const active = document.activeElement;
+      expect(active?.tagName).toBe("LI");
+      expect(active?.textContent).toContain("files__r");
+      mounted.unmount();
+    });
+
     test("in a group a person opened, focus does not fall to the page", () => {
       const mounted = mount(
         <Host
