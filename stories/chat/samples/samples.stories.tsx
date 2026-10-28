@@ -17,8 +17,8 @@ export const Sizes = () => (
   <div className="max-w-2xl">
     <Table>
       <TableCaption>
-        Sample conversations. Frames counts the steps a streaming story plays
-        for the sample's last message.
+        Sample conversations. Frames is how many steps <code>turnFrames</code>{" "}
+        gives for the sample's last message.
       </TableCaption>
       <TableHeader>
         <TableRow>
