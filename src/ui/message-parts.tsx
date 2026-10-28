@@ -156,6 +156,15 @@ type Leaving = {
   readonly groups: readonly PartsGroup[];
 };
 
+/**
+ * Focus inside a waiting batch, but not on a waiting card. `key` is the
+ * group's, so a fold that re-keys the run is visible. `toolCallId` locates
+ * that run the same way a lapsed call does.
+ */
+type FoldingBatch = Leaving & {
+  readonly key: string;
+};
+
 const WAITING = "[data-slot='tool-approval'][data-status='pending']";
 
 /**
@@ -175,6 +184,27 @@ function waitingCallAt(
   const card = element.closest(WAITING);
   if (card === null) return undefined;
   return waiting[[...holder.querySelectorAll(WAITING)].indexOf(card)];
+}
+
+/**
+ * A waiting tool batch that `element` is inside, other than on a waiting
+ * card (`waitingCallAt` watches those). The header and the rows are real
+ * controls and sit outside that card; when the last waiting call folds the
+ * batch into a run, they unmount with it.
+ */
+function foldingBatchAt(
+  element: Element,
+  groups: readonly PartsGroup[],
+): FoldingBatch | null {
+  if (element.closest(WAITING) !== null) return null;
+  const holder = element.closest("[data-part-key]");
+  if (holder === null) return null;
+  const key = holder.getAttribute("data-part-key");
+  const group = groups.find((candidate) => candidate.key === key);
+  if (group?.kind !== "part" || group.part.kind !== "tool-batch") return null;
+  const tool = group.part.tools.find(isAwaitingApproval);
+  if (tool === undefined) return null;
+  return { key: group.key, toolCallId: tool.toolCallId, groups };
 }
 
 /**
@@ -368,8 +398,11 @@ export type MessagePartsProps = Omit<
  * in a batch with calls still waiting, to the next one's card. A host's
  * own `renderApproval` or `renderBatch` gets the same through its `decide`.
  * The same happens when a call with focus on its buttons stops waiting with
- * no decision (it timed out or expired). A call the host drops from `parts`
- * hands focus to the run it sat under, or else to the first control here.
+ * no decision (it timed out or expired). Focus on a waiting batch's header
+ * or one of its rows is watched too: when that batch folds into a run and
+ * focus would otherwise fall to the page, it moves to the run's trigger.
+ * A call the host drops from `parts` hands focus to the run it sat under,
+ * or else to the first control here.
  */
 export function MessageParts({
   parts,
@@ -400,6 +433,10 @@ export function MessageParts({
   const decided = useRef<Leaving | null>(null);
   // The waiting call whose card holds focus, while it does.
   const focused = useRef<Leaving | null>(null);
+  // A waiting batch whose header or a row holds focus. The batch unmounts
+  // when its last waiting call folds it into a run, and that takes the
+  // focused control with it.
+  const batchFocused = useRef<FoldingBatch | null>(null);
 
   useLayoutEffect(() => {
     // Each watch ends with its own call, as the two can name different
@@ -419,11 +456,23 @@ export function MessageParts({
       watch.current = null;
       leaving ??= call;
     }
-    if (leaving === null) return;
-    const active = document.activeElement;
-    if (active !== null && active !== document.body) return;
-    if (root.current === null) return;
-    handoffTarget(root.current, groups, leaving)?.focus();
+    const move = (call: Leaving) => {
+      const active = document.activeElement;
+      if (active !== null && active !== document.body) return;
+      if (root.current === null) return;
+      handoffTarget(root.current, groups, call)?.focus();
+    };
+    if (leaving !== null) move(leaving);
+
+    // A batch that focus was in has folded away (its key is gone) and its
+    // header or row went with it. Same handoff as a card: the run's trigger,
+    // and only when focus would otherwise sit on the page. Read after the
+    // call handoff, which may have moved focus and updated this watch.
+    const batch = batchFocused.current;
+    if (batch === null || groups.some((group) => group.key === batch.key))
+      return;
+    batchFocused.current = null;
+    move(batch);
   });
 
   const decide: MessagePartsDecide = (tool, decision) => {
@@ -435,16 +484,20 @@ export function MessageParts({
     const tool = waitingCallAt(event.target, groups);
     focused.current =
       tool === undefined ? null : { toolCallId: tool.toolCallId, groups };
+    batchFocused.current = foldingBatchAt(event.target, groups);
     onFocus?.(event);
   };
 
   const untrackFocus = (event: FocusEvent<HTMLDivElement>) => {
-    // Focus leaving for the page or outside ends the watch. A card's
-    // buttons going away with its call does not reach here: React ignores
-    // blur while it commits, so the watch survives until the effect reads it.
+    // Focus leaving for the page or outside ends both watches. A card's
+    // buttons, or a batch's header, going away with the call does not reach
+    // here: React ignores blur while it commits, so the watch survives until
+    // the effect reads it. A decision stays watched until `parts` shows it.
     const next = event.relatedTarget;
-    if (next === null || !event.currentTarget.contains(next))
+    if (next === null || !event.currentTarget.contains(next)) {
       focused.current = null;
+      batchFocused.current = null;
+    }
     onBlur?.(event);
   };
 

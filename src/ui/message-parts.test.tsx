@@ -571,6 +571,30 @@ describe("MessageParts focus when a call stops waiting with no decision", () => 
     );
   });
 
+  test("a batch that times out with focus on its header hands focus to the run", () => {
+    const batch: PartToolBatch = {
+      kind: "tool-batch",
+      id: "batch-1",
+      tools: [call("one"), waiting("two")],
+    };
+    const initial: readonly ConversationPart[] = [call("draft"), batch];
+    const { container, render } = mount(props(initial));
+    const header = container.querySelector<HTMLElement>(
+      "[data-slot='tool-group-header']",
+    );
+    if (header === null) throw new Error("expected a tool group header");
+    act(() => header.focus());
+    expect(document.activeElement).toBe(header);
+
+    render(props(lapseIn(initial, "two", "timeout")));
+    expect(container.querySelector("[data-slot='tool-group']")).toBeNull();
+    expect(activeSlot()).toBe("activity-trigger");
+    expect(document.activeElement).not.toBe(document.body);
+    expect(document.activeElement?.textContent).toContain(
+      "Worked through 3 steps",
+    );
+  });
+
   test("after a decision in a batch, the next call lapsing under focus hands focus to the run", () => {
     const batch: PartToolBatch = {
       kind: "tool-batch",
