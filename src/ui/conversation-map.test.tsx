@@ -510,6 +510,53 @@ describe("ConversationMap", () => {
     mounted.unmount();
   });
 
+  test("a preview the map hid with does not come back with a second turn", () => {
+    const mounted = render(<Chat />);
+    act(() => {
+      tick(mounted.container, "Second question").dispatchEvent(
+        new PointerEvent("pointerover", {
+          bubbles: true,
+          pointerType: "mouse",
+        }),
+      );
+    });
+    expect(mounted.container.querySelector("[role='tooltip']")).not.toBeNull();
+    mounted.rerender(
+      <Chat turns={TURNS.slice(1, 2)} items={["q2", "q2-reply"]} />,
+    );
+    expect(
+      mounted.container.querySelector("[data-slot='conversation-map']"),
+    ).toBeNull();
+    mounted.rerender(
+      <Chat turns={TURNS.slice(1, 3)} items={["q2", "q2-reply", "q3"]} />,
+    );
+    expect(
+      mounted.container.querySelector("[data-slot='conversation-map']"),
+    ).not.toBeNull();
+    expect(mounted.container.querySelector("[role='tooltip']")).toBeNull();
+    mounted.unmount();
+  });
+
+  test("a preview whose turn goes does not come back with it", () => {
+    const mounted = render(<Chat />);
+    act(() => {
+      tick(mounted.container, "Second question").dispatchEvent(
+        new PointerEvent("pointerover", {
+          bubbles: true,
+          pointerType: "mouse",
+        }),
+      );
+    });
+    expect(mounted.container.querySelector("[role='tooltip']")).not.toBeNull();
+    const rest = TURNS.filter((turn) => turn.id !== "q2");
+    mounted.rerender(
+      <Chat turns={rest} items={ITEMS.filter((id) => !id.startsWith("q2"))} />,
+    );
+    mounted.rerender(<Chat />);
+    expect(mounted.container.querySelector("[role='tooltip']")).toBeNull();
+    mounted.unmount();
+  });
+
   test("a focused tick whose turn goes keeps focus on the rail", () => {
     const mounted = render(<Chat />);
     act(() => tick(mounted.container, "First question").focus());
@@ -526,6 +573,17 @@ describe("ConversationMap", () => {
   test("a focused tick whose rail goes hands focus to the log", () => {
     const mounted = render(<Chat />);
     act(() => tick(mounted.container, "First question").focus());
+    mounted.rerender(<Chat turns={TURNS.slice(3)} items={["q4"]} />);
+    expect(
+      mounted.container.querySelector("[data-slot='conversation-map']"),
+    ).toBeNull();
+    expect(document.activeElement).toBe(scroller(mounted.container));
+    mounted.unmount();
+  });
+
+  test("a focused tick whose rail goes with its turn kept hands focus to the log", () => {
+    const mounted = render(<Chat />);
+    act(() => tick(mounted.container, "Fourth question").focus());
     mounted.rerender(<Chat turns={TURNS.slice(3)} items={["q4"]} />);
     expect(
       mounted.container.querySelector("[data-slot='conversation-map']"),

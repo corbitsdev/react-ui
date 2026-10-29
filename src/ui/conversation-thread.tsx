@@ -117,7 +117,9 @@ export function ConversationThread({
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
-      {children === undefined || children === null ? null : (
+      {children === undefined ||
+      children === null ||
+      typeof children === "boolean" ? null : (
         <div data-slot="conversation-thread-input" className="px-4 pb-4">
           {children}
         </div>
