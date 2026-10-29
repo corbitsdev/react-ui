@@ -1,6 +1,6 @@
 # @corbits/react-ui
 
-React components for agent products: conversations with reasoning, tool calls and approvals, run status, artifacts and charts, styled by one Tailwind v4 token theme. The UI package of Corbits: it renders data a host web app loads from Interchange, and works in any React 18 or 19 app without Interchange.
+React components for agent products: conversations with reasoning, tool calls and approvals, run status, artifacts and charts, styled by one Tailwind v4 token theme. The UI package of Corbits: it renders data a host web app loads from Interchange, and works in any React 19 app without Interchange.
 
 ## Why @corbits/react-ui?
 
@@ -15,7 +15,7 @@ React components for agent products: conversations with reasoning, tool calls an
 bun add @corbits/react-ui react react-dom lucide-react @radix-ui/react-slot
 ```
 
-Requires Node 24 or later. Tested on React 19; the peer range also accepts React 18.2+.
+Requires Node 24 or later and React 19.
 
 Optional peers are needed only by the modules that import them. Those modules are not in the root entry, so import them by subpath:
 
