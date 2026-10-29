@@ -63,12 +63,21 @@ function mount(node: ReactNode) {
   };
 }
 
-function press(target: Element, key: string): KeyboardEvent {
+/** `keyCode` is set on the event itself: `KeyboardEventInit` drops it. */
+function press(
+  target: Element,
+  key: string,
+  { keyCode, ...init }: KeyboardEventInit & { keyCode?: number } = {},
+): KeyboardEvent {
   const event = new KeyboardEvent("keydown", {
+    ...init,
     key,
     bubbles: true,
     cancelable: true,
   });
+  if (keyCode !== undefined) {
+    Object.defineProperty(event, "keyCode", { value: keyCode });
+  }
   act(() => {
     target.dispatchEvent(event);
   });
@@ -115,7 +124,8 @@ describe("PromptInputModelSelect", () => {
   test("shows the first model's short name by default and lists models by group", () => {
     const view = mount(<PromptInputModelSelect models={MODELS} />);
     const trigger = view.query("[role='combobox']");
-    expect(trigger.getAttribute("aria-label")).toBe("Model");
+    // Named for the field and the choice, as a closed picker is heard.
+    expect(trigger.getAttribute("aria-label")).toBe("Model, Swift");
     expect(trigger.textContent).toBe("Swift");
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(trigger.hasAttribute("aria-controls")).toBe(false);
@@ -255,7 +265,9 @@ describe("PromptInputModelSelect", () => {
         onValueChange={() => undefined}
       />,
     );
-    expect(view.query("[role='combobox']").textContent).toBe("Model");
+    const trigger = view.query("[role='combobox']");
+    expect(trigger.textContent).toBe("Model");
+    expect(trigger.getAttribute("aria-label")).toBe("Model");
     view.unmount();
   });
 
@@ -369,7 +381,7 @@ describe("PromptInputModeSelect", () => {
     const events: string[] = [];
     const view = mount(<Host events={events} />);
     const trigger = view.query<HTMLButtonElement>("[role='combobox']");
-    expect(trigger.getAttribute("aria-label")).toBe("Mode");
+    expect(trigger.getAttribute("aria-label")).toBe("Mode, Agent");
     expect(trigger.textContent).toBe("Agent");
 
     act(() => trigger.focus());
@@ -381,6 +393,7 @@ describe("PromptInputModeSelect", () => {
     press(trigger, " ");
     expect(events).toEqual(["ask"]);
     expect(trigger.textContent).toBe("Ask");
+    expect(trigger.getAttribute("aria-label")).toBe("Mode, Ask");
     view.unmount();
   });
 
@@ -588,6 +601,66 @@ describe("PromptInputAddMenu", () => {
       removed.mockRestore();
     }
   });
+});
+
+describe("a popup whose options run out", () => {
+  /** Each popup with or without its options, open state owned by the host
+   * when `controlled`. */
+  const POPUP_PARTS = {
+    add: {
+      popup: "[role='menu']",
+      render: (empty: boolean, state: PopupState) => (
+        <PromptInputAddMenu items={empty ? [] : menuItems([])} {...state} />
+      ),
+    },
+    model: {
+      popup: "[role='listbox']",
+      render: (empty: boolean, state: PopupState) => (
+        <PromptInputModelSelect models={empty ? [] : MODELS} {...state} />
+      ),
+    },
+    mode: {
+      popup: "[role='listbox']",
+      render: (empty: boolean, state: PopupState) => (
+        <PromptInputModeSelect modes={empty ? [] : MODES} {...state} />
+      ),
+    },
+  } as const;
+  type PopupState = {
+    readonly open?: boolean;
+    readonly defaultOpen?: boolean;
+    readonly onOpenChange: (open: boolean) => void;
+  };
+
+  for (const which of ["add", "model", "mode"] as const) {
+    for (const controlled of [false, true]) {
+      test(`the ${controlled ? "host-owned" : "own"} ${which} popup closes once and stays closed when they return`, () => {
+        const { popup, render } = POPUP_PARTS[which];
+        const changes: boolean[] = [];
+        function Host({ empty }: { readonly empty: boolean }) {
+          const [open, setOpen] = useState(true);
+          const onOpenChange = (next: boolean) => {
+            changes.push(next);
+            setOpen(next);
+          };
+          return render(
+            empty,
+            controlled
+              ? { open, onOpenChange }
+              : { defaultOpen: true, onOpenChange },
+          );
+        }
+        const view = mount(<Host empty={false} />);
+        expect(shown(view, popup)).toBe(true);
+        view.rerender(<Host empty />);
+        expect(changes).toEqual([false]);
+        view.rerender(<Host empty={false} />);
+        expect(shown(view, popup)).toBe(false);
+        expect(changes).toEqual([false]);
+        view.unmount();
+      });
+    }
+  }
 });
 
 describe("PromptInputButton", () => {
@@ -860,6 +933,27 @@ describe("toolbar parts inside PromptInput", () => {
       expect(document.activeElement).toBe(textarea);
       view.unmount();
     });
+  }
+
+  // Safari sends the key that ends a composition with `isComposing` already
+  // false and `keyCode` 229.
+  for (const [how, init] of [
+    ["isComposing", { isComposing: true }],
+    ["keyCode 229", { isComposing: false, keyCode: 229 }],
+  ] as const) {
+    for (const which of ["add", "model"] as const) {
+      test(`an Escape that ends an IME composition (${how}) leaves the host-opened ${which} popup open`, () => {
+        const events: string[] = [];
+        const view = mount(<Prompt open={which} events={events} />);
+        const textarea = view.query<HTMLTextAreaElement>("textarea");
+        act(() => textarea.focus());
+        const event = press(textarea, "Escape", init);
+        expect(event.defaultPrevented).toBe(false);
+        expect(events).toEqual([]);
+        expect(shown(view, POPUPS[which].popup)).toBe(true);
+        view.unmount();
+      });
+    }
   }
 
   test("with the suggestion list open too, the first Escape closes only the list", () => {

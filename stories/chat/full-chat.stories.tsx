@@ -574,11 +574,13 @@ function Composer({
     setAttachments((current) => [...current, ...accepted]);
     setNotice(rejected.map(refusal).join("; "));
   };
-  const startToken = (prefix: string) => {
+  const startToken = (prefix: "@" | "/") => {
+    // A mention starts a word and a command a line, or the prompt would not
+    // take it for one and offer its suggestions.
+    const [fresh, gap] = prefix === "/" ? [/(^|\n)$/, "\n"] : [/(^|\s)$/, " "];
     setDraft(
       (current) =>
-        (current === "" || current.endsWith(" ") ? current : `${current} `) +
-        prefix,
+        (fresh.test(current) ? current : `${current}${gap}`) + prefix,
     );
     textarea.current?.focus();
   };
