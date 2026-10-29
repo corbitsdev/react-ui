@@ -65,6 +65,38 @@ describe("useMediaViewer", () => {
     hook.unmount();
   });
 
+  test("an item falling off a shortened list closes it for good", () => {
+    let items: readonly string[] = ITEMS;
+    const hook = renderHook(() =>
+      useMediaViewer<string>({ items, defaultIndex: 2 }),
+    );
+    items = ["a"];
+    hook.rerender();
+    expect(hook.result.current.index).toBe(null);
+    items = ITEMS;
+    hook.rerender();
+    expect(hook.result.current.index).toBe(null);
+    hook.unmount();
+  });
+
+  test("controlled, an item falling off the list reports one close", () => {
+    let items: readonly string[] = ITEMS;
+    const changes: (number | null)[] = [];
+    const hook = renderHook(() =>
+      useMediaViewer<string>({
+        items,
+        index: 2,
+        onIndexChange: (index) => changes.push(index),
+      }),
+    );
+    items = ["a"];
+    hook.rerender();
+    hook.rerender();
+    expect(hook.result.current.index).toBe(null);
+    expect(changes).toEqual([null]);
+    hook.unmount();
+  });
+
   test("controlled, it reports changes and follows the value it is given", () => {
     const changes: (number | null)[] = [];
     const hook = viewer({
