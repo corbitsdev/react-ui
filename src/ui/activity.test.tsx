@@ -97,6 +97,21 @@ describe("Activity", () => {
     mounted.unmount();
   });
 
+  test("a focused step sliding out of the latest ten hands focus to the control", () => {
+    const steps = Array.from({ length: 10 }, (_, index) => call(index));
+    const mounted = mount(<Activity steps={steps} defaultOpen streaming />);
+    const oldest = mounted.container.querySelector("li[data-step] button");
+    if (!(oldest instanceof HTMLButtonElement))
+      throw new Error("expected a control in the oldest step");
+    act(() => oldest.focus());
+    mounted.render(
+      <Activity steps={[...steps, call(10)]} defaultOpen streaming />,
+    );
+    expect(shownSteps(mounted.container)).not.toContain("files__read_0");
+    expect(document.activeElement?.textContent).toBe("Show 1 earlier step");
+    mounted.unmount();
+  });
+
   test("ten or fewer steps need no control", () => {
     const steps = Array.from({ length: 10 }, (_, index) => call(index));
     const mounted = mount(<Activity steps={steps} defaultOpen />);

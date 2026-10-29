@@ -253,7 +253,8 @@ function stepKey(step: ActivityStep, index: number): string {
 /**
  * The run's steps, while open: the latest ten, with a control for the rest.
  * A finished thought with no text is left out, as `Reasoning` shows nothing
- * for it.
+ * for it. When a new step pushes the step holding focus behind the control,
+ * focus moves to the control.
  */
 export function ActivityContent({
   renderStep,
@@ -300,7 +301,10 @@ function ActivitySteps({
 }) {
   const [showAll, setShowAll] = useState(false);
   const listRef = useRef<HTMLOListElement | null>(null);
+  const showEarlierRef = useRef<HTMLButtonElement | null>(null);
   const revealed = useRef(false);
+  // The key of the step holding focus, while focus is in the list.
+  const focusedStep = useRef<string | null>(null);
   const hidden = showAll ? 0 : Math.max(0, steps.length - SHOWN_STEPS);
 
   // The control disappears once pressed, so focus moves to the first step
@@ -311,6 +315,21 @@ function ActivitySteps({
     listRef.current?.querySelector<HTMLElement>("li[data-step]")?.focus();
   }, [showAll]);
 
+  // A new step slides the oldest shown one behind the control. If focus
+  // went with it, it moves to the control, which now counts that step.
+  useLayoutEffect(() => {
+    const key = focusedStep.current;
+    if (key === null) return;
+    const active = document.activeElement;
+    if (active !== null && active !== document.body) return;
+    const behind = steps
+      .slice(0, hidden)
+      .some(({ step, index }) => stepKey(step, index) === key);
+    if (!behind) return;
+    focusedStep.current = null;
+    showEarlierRef.current?.focus();
+  });
+
   return (
     <ol
       ref={listRef}
@@ -320,10 +339,24 @@ function ActivitySteps({
         "ms-1 mt-1 flex flex-col gap-1 border-s-2 border-border ps-3",
         className,
       )}
+      onFocus={(event) => {
+        focusedStep.current =
+          event.target
+            .closest("li[data-step]")
+            ?.getAttribute("data-step-key") ?? null;
+      }}
+      onBlur={(event) => {
+        // A step going away with focus in it does not reach here: React
+        // ignores blur while it commits, so the effect still sees the key.
+        const next = event.relatedTarget;
+        if (next === null || !event.currentTarget.contains(next))
+          focusedStep.current = null;
+      }}
     >
       {hidden > 0 ? (
         <li>
           <button
+            ref={showEarlierRef}
             type="button"
             onClick={() => {
               revealed.current = true;
@@ -339,6 +372,7 @@ function ActivitySteps({
         <li
           key={stepKey(step, index)}
           data-step={step.kind}
+          data-step-key={stepKey(step, index)}
           tabIndex={-1}
           className="min-w-0 rounded-md"
         >
