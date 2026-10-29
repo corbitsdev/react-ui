@@ -36,6 +36,8 @@ const REQUIRED = [
   "primary-foreground",
   "primary-active",
   "primary-emphasis",
+  "primary-tint",
+  "primary-tint-foreground",
   "secondary",
   "secondary-foreground",
   "muted",
