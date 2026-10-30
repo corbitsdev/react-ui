@@ -213,9 +213,6 @@ export function useResizable(options: UseResizableOptions): UseResizableResult {
         );
         resolved = clamped === measureDefault(element) ? null : clamped;
       }
-      // Drop any drag-time override first: if the parent keeps its width,
-      // nothing else would put the element back.
-      writeWidth(element, widthRef.current);
       if (resolved !== widthRef.current) setWidth(resolved);
       measure();
     },
@@ -286,6 +283,10 @@ export function useResizable(options: UseResizableOptions): UseResizableResult {
       // React only rewrites the attribute when its value changes, so put
       // back what it last rendered.
       if (startValue !== null) handle.setAttribute("aria-valuenow", startValue);
+      // Drop the preview, whatever ends the drag: a release commits it next,
+      // and a parent that keeps its width would leave nothing else to put
+      // the element back.
+      writeWidth(element, widthRef.current);
       draggingRef.current = false;
       stopDragRef.current = null;
     };
