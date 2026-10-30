@@ -129,4 +129,18 @@ describe("splitPromptSegments", () => {
     expect(splitPromptSegments("hello", TOKENS)).toEqual([{ text: "hello" }]);
     expect(splitPromptSegments("", TOKENS)).toEqual([]);
   });
+
+  test("an empty token is skipped rather than matched forever", () => {
+    const empty: PromptToken[] = [
+      { id: "empty-mention", kind: "mention", token: "" },
+      { id: "empty-command", kind: "command", token: "" },
+    ];
+    expect(
+      splitPromptSegments(" @Ada  and\n\n", [...empty, ...TOKENS]),
+    ).toEqual([
+      { text: " " },
+      { text: "@Ada", token: ADA },
+      { text: "  and\n\n" },
+    ]);
+  });
 });

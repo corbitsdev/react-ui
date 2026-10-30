@@ -257,3 +257,25 @@ test("a reply in the thread tab adds to the count under its parent", async ({
   ).toBeVisible();
   await expect(log.getByRole("button", { name: /4 replies/ })).toBeVisible();
 });
+
+for (const [item, list, draft, typed] of [
+  ["Mention an agent", "Mentions", "", "@"],
+  ["Mention an agent", "Mentions", "Check this", "Check this @"],
+  ["Use a command", "Commands", "", "/"],
+  // A command starts a line, so it goes on a new one.
+  ["Use a command", "Commands", "Check this", "Check this\n/"],
+] as const) {
+  test(`"${item}" in the Add menu opens the ${list.toLowerCase()} at once, after "${draft}"`, async ({
+    page,
+  }) => {
+    await open(page, "settle");
+    const main = page.getByRole("main");
+    const message = main.getByRole("textbox", { name: "Message" });
+    await message.fill(draft);
+    await main.getByRole("button", { name: "Add", exact: true }).click();
+    await page.getByRole("menuitem", { name: item }).click();
+    await expect(message).toBeFocused();
+    await expect(message).toHaveValue(typed);
+    await expect(main.getByRole("listbox", { name: list })).toBeVisible();
+  });
+}
