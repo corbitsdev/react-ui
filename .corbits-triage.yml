@@ -16,6 +16,7 @@ rules:
       - maintainer-stated
   - check: focused
     text: Check the change is focused on one thing.
+    onFail: label
     reason: A change that does several things is harder to review and to revert.
     evidence:
       - maintainer-stated
