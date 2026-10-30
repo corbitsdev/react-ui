@@ -502,6 +502,42 @@ describe("MessageParts focus after a decision", () => {
     outside.remove();
   });
 
+  test("focus that left for the page before the decision shows stays there", () => {
+    const decisions: ToolApprovalDecision[] = [];
+    const props = (parts: readonly ConversationPart[]) =>
+      inMessage({ parts, onDecide: (_, decision) => decisions.push(decision) });
+    const { container, render } = mount(props(RUN_THEN_WAIT));
+    press(button(container, "Approve"));
+    // A click on blank page: focus leaves to nothing.
+    act(() => (document.activeElement as HTMLElement).blur());
+    const [decision] = decisions;
+    if (decision === undefined) throw new Error("expected a decision");
+    render(props(decideIn(RUN_THEN_WAIT, "send", decision)));
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  test("a decision recorded while the window is away still moves focus", () => {
+    const decisions: ToolApprovalDecision[] = [];
+    const props = (parts: readonly ConversationPart[]) =>
+      inMessage({ parts, onDecide: (_, decision) => decisions.push(decision) });
+    const { container, render } = mount(props(RUN_THEN_WAIT));
+    press(button(container, "Approve"));
+    // Another tab or window takes focus: the button blurs to nothing.
+    const hasFocus = document.hasFocus;
+    document.hasFocus = () => false;
+    try {
+      act(() => (document.activeElement as HTMLElement).blur());
+      const [decision] = decisions;
+      if (decision === undefined) throw new Error("expected a decision");
+      render(props(decideIn(RUN_THEN_WAIT, "send", decision)));
+    } finally {
+      document.hasFocus = hasFocus;
+    }
+    expect(
+      (document.activeElement as HTMLElement | null)?.dataset["slot"],
+    ).toBe("activity-trigger");
+  });
+
   test("a host's renderApproval gets the handoff through decide", () => {
     const { container } = mount(
       <Host

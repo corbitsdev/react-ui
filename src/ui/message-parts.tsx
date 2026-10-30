@@ -489,13 +489,16 @@ export function MessageParts({
   };
 
   const untrackFocus = (event: FocusEvent<HTMLDivElement>) => {
-    // Focus leaving for the page or outside ends both watches. A card's
-    // buttons, or a batch's header, going away with the call does not reach
-    // here: React ignores blur while it commits, so the watch survives until
-    // the effect reads it. A decision stays watched until `parts` shows it.
+    // Focus leaving for the page or outside ends every watch, a decision
+    // `parts` does not show yet included, unless the window lost focus to
+    // another tab or window: the person has not left the buttons then. A
+    // card's buttons, or a batch's header, going away with the call does not
+    // reach here: React ignores blur while it commits, so the watch survives
+    // until the effect reads it.
     const next = event.relatedTarget;
     if (next === null || !event.currentTarget.contains(next)) {
       focused.current = null;
+      if (document.hasFocus()) decided.current = null;
       batchFocused.current = null;
     }
     onBlur?.(event);
