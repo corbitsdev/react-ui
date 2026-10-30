@@ -344,8 +344,7 @@ export type PanelContentProps = React.ComponentProps<"div"> & {
   /**
    * Keep every pane mounted, hiding all but the shown one, so a pane keeps
    * its scroll position and anything typed in it while another is in front.
-   * Focus in a pane as it is hidden moves to the panel. Without it only the
-   * shown pane is mounted.
+   * Without it only the shown pane is mounted.
    */
   readonly keepMounted?: boolean;
 };
@@ -384,16 +383,6 @@ export function PanelContent({
         "PanelContent: `value` names none of its panes, so the panel body is empty.",
       );
   });
-
-  // A pane hidden with focus inside it would drop that focus to the page
-  // once the browser applies `inert`, which happens at the next frame, not
-  // yet here. The panel takes it instead.
-  useLayoutEffect(() => {
-    const pane = document.activeElement?.closest(
-      '[data-slot="panel-pane"][inert]',
-    );
-    pane?.closest<HTMLElement>('[data-slot="panel"]')?.focus();
-  }, [value]);
 
   return (
     <PanelPanesContext.Provider value={{ value, keepMounted, register }}>

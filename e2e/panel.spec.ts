@@ -158,22 +158,6 @@ test("a hidden pane keeps its typed text and scroll position", async ({
   ).toBeLessThanOrEqual(1);
 });
 
-test("switching away from the pane with focus keeps focus in the panel", async ({
-  page,
-}) => {
-  await page.goto("/panel");
-  await page.getByRole("button", { name: "Open draft" }).click();
-  await expect(page.getByTestId("draft-pane")).toHaveAttribute(
-    "data-state",
-    "active",
-  );
-  await nextFrames(page);
-
-  await expect(
-    page.getByRole("complementary", { name: "Side panel" }),
-  ).toBeFocused();
-});
-
 test("a narrow row gets an overlay that returns focus on close", async ({
   page,
 }) => {

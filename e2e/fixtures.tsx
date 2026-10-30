@@ -668,7 +668,6 @@ function PanelScenario() {
             <PanelContent value={shown} keepMounted>
               <PanelPane value="notes" data-testid="notes-pane">
                 <input aria-label="Notes field" />
-                <Button onClick={() => setShown("draft")}>Open draft</Button>
                 <Filler label="Notes" />
               </PanelPane>
               <PanelPane value="draft" data-testid="draft-pane">
