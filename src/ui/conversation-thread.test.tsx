@@ -172,6 +172,26 @@ describe("ConversationThread", () => {
     mounted.unmount();
   });
 
+  test("leaves out the input slot for boolean children", () => {
+    for (const show of [false, true]) {
+      const mounted = render(
+        <ConversationThread
+          parent={parent}
+          replies={replies}
+          renderMessage={renderMessage}
+        >
+          {show}
+        </ConversationThread>,
+      );
+      expect(
+        mounted.container.querySelector(
+          "[data-slot='conversation-thread-input']",
+        ),
+      ).toBeNull();
+      mounted.unmount();
+    }
+  });
+
   test("gives the root its ref, props and classes, and the policy to the conversation", () => {
     const ref = createRef<HTMLDivElement>();
     const mounted = render(
