@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import type { RefObject } from "react";
 
 import { useControllableState } from "./use-controllable-state.js";
@@ -37,9 +37,9 @@ export type MediaViewerState<T> = {
 
 /**
  * Which item of a set is open in a viewer. Stepping stops at either end
- * rather than wrapping, and an index outside `items` closes the viewer, so a
+ * rather than wrapping, and an index outside `items` reads as closed, so a
  * list that shrinks under an open viewer closes it rather than showing
- * nothing, and growing back does not reopen it.
+ * nothing.
  */
 export function useMediaViewer<T>({
   items,
@@ -62,13 +62,6 @@ export function useMediaViewer<T>({
     rawIndex < count
       ? rawIndex
       : null;
-  const outOfRange = rawIndex !== null && index === null;
-
-  // Commits the close an out-of-range index already reads as. Keyed on
-  // falling out alone, so a controlled caller hears it once.
-  useEffect(() => {
-    if (outOfRange) setIndex(null);
-  }, [outOfRange]);
 
   const open = useCallback(
     (next: number, element?: HTMLElement | null) => {
