@@ -16,8 +16,9 @@ export type MediaViewerItem = {
   readonly mediaType: string;
   /**
    * Where to load it from: `http:`, `https:`, `blob:`, or a `data:` image,
-   * video or audio. Leave it out for an item that cannot be loaded; the
-   * viewer then says there is no preview and offers no download.
+   * video or audio (shown, but not offered for download). Leave it out for
+   * an item that cannot be loaded; the viewer then says there is no preview
+   * and offers no download.
    */
   readonly src?: string;
   /** What an image shows. Defaults to `name`. */
@@ -40,15 +41,15 @@ const CONTROL =
   "grid size-9 shrink-0 place-items-center rounded-full bg-popover text-popover-foreground shadow-sm transition-colors hover:bg-muted [&_svg]:size-4";
 
 /**
- * Pictures, video, audio, PDFs and text full size, over everything, on the
+ * Pictures, video, audio and text full size, over everything, on the
  * native modal `<dialog>`: it holds focus and closes on Escape, and a click
  * outside the media closes it too. The page behind it does not scroll. With
  * more than one item, the arrow keys and the Previous and Next buttons step
  * through them, stopping at either end. Download opens a new tab where the
  * browser will not download the file. On close, focus goes back to the
  * element given to `viewer.open`, or else to whatever had it when the viewer
- * opened. Escape pressed inside a PDF goes to the browser's PDF viewer, not
- * the dialog; Tab leaves the PDF and reaches Close.
+ * opened. A PDF has no preview, only Download: Chrome will not show one in
+ * a sandboxed frame, and an unsandboxed frame runs whatever its URL serves.
  *
  * Renders nothing while `viewer` is closed. A `ref` gets the `<dialog>`
  * while it is open.
@@ -142,7 +143,7 @@ function MediaViewerDialog({
   const count = viewer.items.length;
   const many = count > 1;
   const position = many ? `${index + 1} of ${count}` : null;
-  const download = safeItemSrc(item, "media");
+  const download = safeItemSrc(item, "link");
 
   return (
     <dialog
@@ -341,18 +342,6 @@ function MediaViewerContent({ item }: { readonly item: MediaViewerItem }) {
         data-slot="media-viewer-audio"
         // 120 steps (480px) is wide enough to scrub without stretching.
         className="w-[min(var(--spacing)*120,calc(100vw-var(--spacing)*8))]"
-      />
-    );
-  }
-  const page = safeItemSrc(item, "frame");
-  if (kind === "pdf" && page !== undefined) {
-    return (
-      <iframe
-        key={page}
-        src={page}
-        title={item.name}
-        data-slot="media-viewer-page"
-        className={PAGE_FRAME}
       />
     );
   }
