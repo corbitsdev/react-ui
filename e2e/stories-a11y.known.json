@@ -1,20 +1,8 @@
-[
-  "chat-prompt-input--command-suggestions (dark): color-contrast-unmeasured",
-  "chat-prompt-input--command-suggestions (light): color-contrast-unmeasured",
-  "chat-prompt-input--disabled (dark): color-contrast-unmeasured",
-  "chat-prompt-input--disabled (light): color-contrast-unmeasured",
-  "chat-prompt-input--long-draft (dark): color-contrast-unmeasured",
-  "chat-prompt-input--long-draft (light): color-contrast-unmeasured",
-  "chat-prompt-input--replying (dark): color-contrast-unmeasured",
-  "chat-prompt-input--replying (light): color-contrast-unmeasured",
-  "chat-prompt-input--suggestions-open (dark): color-contrast-unmeasured",
-  "chat-prompt-input--suggestions-open (light): color-contrast-unmeasured",
-  "chat-prompt-input--with-tokens (dark): color-contrast-unmeasured",
-  "chat-prompt-input--with-tokens (light): color-contrast-unmeasured",
-  "primitives-avatar--orbit (dark): color-contrast-unmeasured",
-  "primitives-avatar--orbit (light): color-contrast-unmeasured",
-  "primitives-avatar--stack-with-status (dark): color-contrast-unmeasured",
-  "primitives-avatar--stack-with-status (light): color-contrast-unmeasured",
-  "primitives-sidebar-panel--channels-panel (dark): color-contrast-measured",
-  "primitives-sidebar-panel--channels-panel (light): color-contrast-measured"
-]
+{
+  "chat-prompt-input--disabled (dark): color-contrast-measured": "The mirror that shows a disabled field's words is faded to half opacity; text in an inactive control is exempt from WCAG 1.4.3.",
+  "chat-prompt-input--disabled (light): color-contrast-measured": "The mirror that shows a disabled field's words is faded to half opacity; text in an inactive control is exempt from WCAG 1.4.3.",
+  "primitives-avatar--orbit (dark): color-contrast-unmeasured": "The orbit ring is positioned over the initials and hollowed by a mask; hit-testing finds its whole box and the sampler takes a mask as opaque, so the ground under the initials cannot be read.",
+  "primitives-avatar--orbit (light): color-contrast-unmeasured": "The orbit ring is positioned over the initials and hollowed by a mask; hit-testing finds its whole box and the sampler takes a mask as opaque, so the ground under the initials cannot be read.",
+  "primitives-avatar--stack-with-status (dark): color-contrast-unmeasured": "The orbit ring is positioned over the initials and hollowed by a mask; hit-testing finds its whole box and the sampler takes a mask as opaque, so the ground under the initials cannot be read.",
+  "primitives-avatar--stack-with-status (light): color-contrast-unmeasured": "The orbit ring is positioned over the initials and hollowed by a mask; hit-testing finds its whole box and the sampler takes a mask as opaque, so the ground under the initials cannot be read."
+}
