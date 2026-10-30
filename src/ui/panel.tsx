@@ -87,8 +87,7 @@ export type PanelProps = React.ComponentProps<"aside"> & {
  * itself goes back to what the overlay took it from.
  *
  * However it closes, focus that was inside the panel goes back to whatever
- * had it before the panel opened. `ref` reaches the `aside` on React 18 and
- * 19.
+ * had it before the panel opened. `ref` reaches the `aside`.
  */
 export const Panel = forwardRef<HTMLElement, PanelProps>(function Panel(
   {
