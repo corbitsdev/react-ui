@@ -316,6 +316,47 @@ describe("ToolGroup", () => {
     mounted.unmount();
   });
 
+  test("a failed call is counted as failed, not also as done", () => {
+    const running = mount(
+      <ToolGroup
+        part={batch([
+          tool({ toolCallId: "a" }),
+          tool({ toolCallId: "b", status: "error" }),
+          tool({ toolCallId: "c", status: "running" }),
+        ])}
+      />,
+    );
+    expect(
+      running.container.querySelector("[data-slot='tool-group-header']")
+        ?.textContent,
+    ).toBe("Running 3 at once · 1 done · 1 failed");
+    running.unmount();
+
+    const held = mount(
+      <ToolGroup
+        part={batch([
+          tool({ toolCallId: "a" }),
+          tool({ toolCallId: "b", status: "error" }),
+          tool({
+            toolCallId: "c",
+            status: "approval-requested",
+            approval: {
+              id: "x",
+              status: "pending",
+              scope: null,
+              timeoutAt: null,
+            },
+          }),
+        ])}
+      />,
+    );
+    expect(
+      held.container.querySelector("[data-slot='tool-group-header']")
+        ?.textContent,
+    ).toBe("3 at once · 1 done · 1 waiting for approval · 1 failed");
+    held.unmount();
+  });
+
   test("a call waiting on a person is not counted as done", () => {
     const pending = {
       id: "x",

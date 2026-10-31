@@ -22,7 +22,10 @@ import { ToolApproval, type ToolApprovalDecision } from "./tool-approval.js";
 export type ToolGroupLabels = {
   /** Every call has finished. */
   readonly ran: (count: number) => string;
-  /** Some calls are still queued or running. */
+  /**
+   * Some calls are still queued or running. `done` here and in `held`
+   * leaves out failed calls, which `failed` counts.
+   */
   readonly running: (count: number, done: number) => string;
   /** None is queued or running, but some wait on a person. */
   readonly held: (count: number, done: number) => string;
@@ -124,6 +127,8 @@ export const ToolGroup = forwardRef<HTMLDivElement, ToolGroupProps>(
     ).length;
     const failed = countFailedTools(part.tools);
     const count = part.tools.length;
+    // Finished without failing, so each call counts once in the header.
+    const done = count - active - waiting - failed;
 
     const rootRef = useRef<HTMLDivElement | null>(null);
     const focusInside = useRef(false);
@@ -229,9 +234,9 @@ export const ToolGroup = forwardRef<HTMLDivElement, ToolGroupProps>(
           />
           <span className="min-w-0 flex-1 truncate">
             {active > 0
-              ? labels.running(count, count - active - waiting)
+              ? labels.running(count, done)
               : waiting > 0
-                ? labels.held(count, count - waiting)
+                ? labels.held(count, done)
                 : labels.ran(count)}
             {waiting > 0 ? <> · {labels.waiting(waiting)}</> : null}
             {failed > 0 ? (
