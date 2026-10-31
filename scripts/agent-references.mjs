@@ -50,6 +50,7 @@ const GROUPS = {
     title: "buttons, inputs, filters, dialogs, menus and toasts",
     modules: [
       "blocks/login/login-form",
+      "ui/action-bar",
       "ui/bulk-action-bar",
       "ui/button",
       "ui/checkbox",
