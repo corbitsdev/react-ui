@@ -44,6 +44,7 @@ export * from "./lib/conversation-activity.js";
 export * from "./lib/media-kind.js";
 export * from "./lib/attachment-limits.js";
 export * from "./lib/prompt-tokens.js";
+export * from "./ui/action-bar.js";
 export * from "./ui/animated-number.js";
 export * from "./ui/artifact-body.js";
 export * from "./ui/artifact-notice.js";
