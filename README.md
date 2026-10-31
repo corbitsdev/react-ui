@@ -304,6 +304,7 @@ Everything imports from `@corbits/react-ui`, except rows marked "optional peer",
 | `FilterBar`         | Row of filters with an active-filter summary                    |
 | `FilterChip`        | One toggleable filter                                           |
 | `KindCardGrid`      | Selectable card grid                                            |
+| `ActionBar`         | Grouped view controls, inline or floating                       |
 | `BulkActionBar`     | Actions for a multi-row selection                               |
 | `Table`             | Table primitives                                                |
 | `SortableTable`     | Table with sortable columns                                     |
