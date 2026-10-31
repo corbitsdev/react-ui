@@ -241,7 +241,7 @@ export function ActionBar({
       return (
         <span
           role="status"
-          aria-label={action.label}
+          aria-label={words === null ? action.label : undefined}
           title={action.label}
           className="inline-flex items-center gap-1 px-2 text-xs font-medium whitespace-nowrap text-muted-foreground"
         >
