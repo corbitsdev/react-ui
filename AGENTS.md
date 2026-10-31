@@ -20,7 +20,11 @@ arrives as props.
 - `src/theme.css`, `src/styles.css`: tokens and keyframes; the prebuilt sheet
   entry.
 - `stories/`: Storybook stories, kept out of `src/` so they never ship in `dist/`.
-- `scripts/dep-guard.mjs`, `scripts/contrast-test.mjs`: the CI gates.
+- `scripts/dep-guard.mjs`, `scripts/contrast-test.mjs`, `scripts/agent-references.mjs`:
+  the CI gates; the last is the build step that generates
+  `skills/react-ui/references/` and fails on a public module no group lists.
+- `skills/react-ui/`: the agent skill that ships in the package. `SKILL.md` and
+  `AGENTS.md` are hand-written; `references/` is generated and git-ignored.
 - `scripts/test-dom-setup.ts`: happy-dom preload for unit tests (`bunfig.toml`).
 - `e2e/`: checks against the built package.
 

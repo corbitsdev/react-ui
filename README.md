@@ -320,6 +320,10 @@ Everything imports from `@corbits/react-ui`, except rows marked "optional peer",
 | `ThemeProvider`     | Persists light, dark or system mode and presets                 |
 | `ThemeToggle`       | Light, dark or system switch                                    |
 
+## For coding agents
+
+The package ships an agent skill: a short guide, usage rules and a props reference for every component. Point your agent at `node_modules/@corbits/react-ui/skills/react-ui` (start with `SKILL.md`), or copy that folder into your agent's skills directory.
+
 ## Using with Interchange
 
 The host app owns the connection to the hub; components only take props.
