@@ -475,7 +475,5 @@ for (const group of Object.keys(GROUPS)) {
     );
     process.exit(1);
   }
-  const path = join(OUT, `${group}.md`);
-  writeFileSync(path, content);
-  console.log(`${path}: ${content.length} characters`);
+  writeFileSync(join(OUT, `${group}.md`), content);
 }
