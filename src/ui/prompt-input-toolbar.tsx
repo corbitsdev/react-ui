@@ -67,8 +67,9 @@ const OPEN_POPUP = [
  * say, beside a popup the host opened) closes the popup here and leaves
  * focus where it is. Left alone are an Escape from outside the
  * `PromptInput`, which belongs to whatever layer it was pressed in, one
- * inside another open toolbar popup, which that popup closes, and any while
- * the `PromptInput`'s suggestion list is showing, which the list takes.
+ * inside another open toolbar popup, which that popup closes, any while
+ * the `PromptInput`'s suggestion list is showing, which the list takes, and
+ * any that ends an IME composition, which is the IME's.
  */
 function useClaimEscape(
   open: boolean,
@@ -82,6 +83,10 @@ function useClaimEscape(
       const { target } = event;
       if (
         event.key !== "Escape" ||
+        // 229 is what Safari reports for the key that ends a composition,
+        // after `isComposing` has already turned false.
+        event.isComposing ||
+        event.keyCode === 229 ||
         event.defaultPrevented ||
         root === null ||
         !(target instanceof Element)
@@ -111,14 +116,14 @@ function useClaimEscape(
 }
 
 /**
- * What a popup shows of its `open` state: closed while `disabled`, whatever
- * its owner holds, so a disabled part offers nothing to choose. Turning
- * disabled while open closes it for the owner too, so it stays closed once
- * the part is enabled again.
+ * What a popup shows of its `open` state: closed while `unavailable`
+ * (disabled, or out of options), whatever its owner holds, so such a part
+ * offers nothing to choose. Turning unavailable while open closes it for the
+ * owner too, so it stays closed once the part is available again.
  */
-function useClosedWhileDisabled(
+function useClosedWhileUnavailable(
   open: boolean,
-  disabled: boolean,
+  unavailable: boolean,
   setOpen: (open: boolean) => void,
 ): boolean {
   // The latest `setOpen`, which is new on every render of a popup the owner
@@ -128,9 +133,9 @@ function useClosedWhileDisabled(
     setOpenRef.current = setOpen;
   });
   useEffect(() => {
-    if (disabled && open) setOpenRef.current(false);
-  }, [disabled, open]);
-  return open && !disabled;
+    if (unavailable && open) setOpenRef.current(false);
+  }, [unavailable, open]);
+  return open && !unavailable;
 }
 
 /** Open state a parent may own, as on every popup here. */
@@ -267,7 +272,11 @@ export const PromptInputAddMenu = forwardRef<
   const { setOpen, rootRef, triggerRef, close } = popover;
   const boxDisabled = usePromptInputDisabled();
   const disabled = disabledProp ?? boxDisabled;
-  const open = useClosedWhileDisabled(popover.open, disabled, setOpen);
+  const open = useClosedWhileUnavailable(
+    popover.open,
+    disabled || items.length === 0,
+    setOpen,
+  );
   useClaimEscape(open, rootRef, setOpen);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -470,8 +479,8 @@ type SelectStateProps = Omit<
 
 type OptionSelectProps = SelectStateProps & {
   readonly slot: string;
-  /** The trigger's and the list's accessible name; also what the trigger
-   * shows while the value matches no option. */
+  /** The list's accessible name, and the trigger's ahead of the chosen
+   * option; also what the trigger shows while the value matches no option. */
   readonly label: string;
   readonly options: readonly SelectOption[];
 };
@@ -526,7 +535,11 @@ const OptionSelect = forwardRef(function OptionSelect(
   const { setOpen, rootRef, triggerRef, close } = popover;
   const boxDisabled = usePromptInputDisabled();
   const disabled = disabledProp ?? boxDisabled;
-  const open = useClosedWhileDisabled(popover.open, disabled, setOpen);
+  const open = useClosedWhileUnavailable(
+    popover.open,
+    disabled || options.length === 0,
+    setOpen,
+  );
   useClaimEscape(open, rootRef, setOpen);
   const listId = useId();
   const [activeId, setActiveId] = useState<string | undefined>(undefined);
@@ -620,7 +633,9 @@ const OptionSelect = forwardRef(function OptionSelect(
         ref={triggerRef}
         type="button"
         role="combobox"
-        aria-label={label}
+        // The field and the choice, "Model, Swift", since the label alone
+        // would hide what the trigger shows.
+        aria-label={chosen === undefined ? label : `${label}, ${chosen.short}`}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
@@ -732,7 +747,8 @@ export type PromptInputModelOption = {
 
 export type PromptInputModelSelectProps = SelectStateProps & {
   readonly models: readonly PromptInputModelOption[];
-  /** The accessible name; also shown when `value` matches no model. */
+  /** The field's accessible name, which the trigger follows with the chosen
+   * model; also shown when `value` matches no model. */
   readonly label?: string;
 };
 
@@ -776,7 +792,8 @@ export type PromptInputModeOption = {
 
 export type PromptInputModeSelectProps = SelectStateProps & {
   readonly modes: readonly PromptInputModeOption[];
-  /** The accessible name; also shown when `value` matches no mode. */
+  /** The field's accessible name, which the trigger follows with the chosen
+   * mode; also shown when `value` matches no mode. */
   readonly label?: string;
 };
 

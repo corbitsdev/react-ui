@@ -2,9 +2,9 @@ import { expect, test, type Page } from "@playwright/test";
 
 const events = (page: Page) => page.getByRole("status", { name: "Events" });
 const message = (page: Page) => page.getByRole("textbox", { name: "Message" });
-const model = (page: Page) => page.getByRole("combobox", { name: "Model" });
-const mode = (page: Page) =>
-  page.getByRole("combobox", { name: "Mode", exact: true });
+// A closed picker is named for its field and its choice: "Model, Deep".
+const model = (page: Page) => page.getByRole("combobox", { name: /^Model, / });
+const mode = (page: Page) => page.getByRole("combobox", { name: /^Mode, / });
 const add = (page: Page) =>
   page.getByRole("button", { name: "Add", exact: true });
 
@@ -22,6 +22,7 @@ test.beforeEach(async ({ page }) => {
 test("the model picker opens, moves and chooses by keyboard, keeping focus on its trigger", async ({
   page,
 }) => {
+  await expect(model(page)).toHaveAccessibleName("Model, Deep");
   await model(page).focus();
   await page.keyboard.press("Enter");
   const list = page.getByRole("listbox", { name: "Model" });
@@ -41,7 +42,7 @@ test("the model picker opens, moves and chooses by keyboard, keeping focus on it
   await page.keyboard.press("Enter");
   await expect(list).toBeHidden();
   await expect(events(page)).toHaveText("model:lite");
-  await expect(model(page)).toHaveText("Lite");
+  await expect(model(page)).toHaveAccessibleName("Model, Lite");
   await expect(model(page)).toBeFocused();
 });
 
@@ -59,7 +60,7 @@ test("Escape closes a picker without choosing and leaves focus on its trigger", 
     page.getByRole("listbox", { name: "Mode", exact: true }),
   ).toBeHidden();
   await expect(mode(page)).toBeFocused();
-  await expect(mode(page)).toHaveText("Ask");
+  await expect(mode(page)).toHaveAccessibleName("Mode, Ask");
   await expect(events(page)).toHaveText("");
 
   // Space opens and chooses too.
@@ -67,6 +68,7 @@ test("Escape closes a picker without choosing and leaves focus on its trigger", 
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press(" ");
   await expect(events(page)).toHaveText("mode:plan");
+  await expect(mode(page)).toHaveAccessibleName("Mode, Plan");
   await expect(
     page.getByRole("listbox", { name: "Mode", exact: true }),
   ).toBeHidden();
@@ -79,7 +81,7 @@ test("a picker chooses by pointer and closes on a press outside", async ({
   await model(page).click();
   await page.getByRole("option", { name: "Swift 2" }).click();
   await expect(events(page)).toHaveText("model:swift");
-  await expect(model(page)).toHaveText("Swift");
+  await expect(model(page)).toHaveAccessibleName("Model, Swift");
 
   await model(page).click();
   await expect(page.getByRole("listbox", { name: "Model" })).toBeVisible();

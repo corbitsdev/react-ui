@@ -112,15 +112,15 @@ export function insertPromptToken(
  * Splits prompt text into plain runs and known tokens. A token counts only as
  * a whole word where its kind may start (see `findActivePromptToken`): "@Ada"
  * in "@Ada, can you", not in "@Adam" or "x@Ada". Longer tokens win, so
- * "@Ada Lovelace" is found before "@Ada".
+ * "@Ada Lovelace" is found before "@Ada". An empty token matches nothing.
  */
 export function splitPromptSegments(
   value: string,
   tokens: readonly PromptToken[],
 ): readonly PromptSegment[] {
-  const longestFirst = [...tokens].sort(
-    (a, b) => b.token.length - a.token.length,
-  );
+  const longestFirst = tokens
+    .filter((token) => token.token !== "")
+    .sort((a, b) => b.token.length - a.token.length);
   const segments: PromptSegment[] = [];
   let runStart = 0;
   let index = 0;
