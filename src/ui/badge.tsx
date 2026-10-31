@@ -6,7 +6,9 @@ import { cn } from "../lib/utils.js";
 // A compact label chip. Tones are semantic, not decorative: `accent` is the one
 // orange tone and — like the primary button — should stay rare on a screen.
 // Orange here is `primary-emphasis`, the orange that clears text contrast on the
-// page and card grounds; the fill orange does not.
+// page and card grounds; the fill orange does not. The chip's ground is the
+// opaque `primary-tint`, so a badge on a tinted ground (a selected row) keeps
+// its contrast.
 const badgeVariants = cva(
   "inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] uppercase",
   {
@@ -14,16 +16,16 @@ const badgeVariants = cva(
       tone: {
         neutral: "border-border bg-muted text-muted-foreground",
         accent:
-          "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
+          "border-primary-emphasis/40 bg-primary-tint text-primary-tint-foreground",
         info: "border-accent bg-accent text-accent-foreground",
         success: "border-success bg-success text-success-foreground",
         // Warning reuses accent amber until a dedicated warning pair lands in theme.
         warning:
-          "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
+          "border-primary-emphasis/40 bg-primary-tint text-primary-tint-foreground",
         danger: "border-destructive bg-destructive text-destructive-foreground",
         shared: "border-accent bg-accent text-accent-foreground",
         access:
-          "border-primary-emphasis/40 bg-primary/10 text-primary-emphasis",
+          "border-primary-emphasis/40 bg-primary-tint text-primary-tint-foreground",
       },
     },
     defaultVariants: { tone: "neutral" },

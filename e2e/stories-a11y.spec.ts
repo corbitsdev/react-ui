@@ -7,9 +7,9 @@ import known from "./stories-a11y.known.json" with { type: "json" };
 
 const STORIES = "http://localhost:61000";
 
-// Existing violations recorded as a baseline to fix later; only a violation
-// not listed here fails.
-const KNOWN = new Set<string>(known);
+// Violations accepted, each keyed by story, theme and rule, with why; only a
+// violation not listed here fails.
+const KNOWN = new Set(Object.keys(known));
 
 test("every story is free of serious and critical axe violations", async ({
   page,

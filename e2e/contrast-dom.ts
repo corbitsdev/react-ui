@@ -15,10 +15,13 @@ import type {
  * resolved by the browser, with the hit-test stack at points across the
  * text so paint outside those layers is found, and so each point is
  * measured only on the boxes under it. `judged` lists the selectors of every
- * node axe's color-contrast rule judged on the page. `null` where an element or
- * ancestor paints in a way the layers cannot follow: a filter, a blend mode,
- * or a clipped background that is not one plain gradient. A mask is not
- * followed: like axe, the layers take it as fully opaque.
+ * node axe's color-contrast rule judged on the page. Where transparent glyphs
+ * lie over other elements' words (a mirror painting a field's text), the
+ * samples of those elements that axe did not judge follow the targets'.
+ * `null` where an element or ancestor paints in a way the layers cannot
+ * follow: a filter, a blend mode, or a clipped background that is not one
+ * plain gradient. A mask is not followed: like axe, the layers take it as
+ * fully opaque.
  */
 export async function contrastSamples(
   page: Page,
@@ -104,6 +107,36 @@ export async function contrastSamples(
           (child) =>
             child.nodeType === Node.TEXT_NODE && glyphs(child.textContent),
         );
+      // A text field paints its box like any element, and its glyphs only
+      // where it shows them: the value in its fill colour, or the
+      // placeholder while it is empty, plus a selection's highlight. Other
+      // fields draw a native widget. The caret is ignored: a hairline that
+      // blinks.
+      const TEXT_INPUTS = new Set(["text", "search", "email", "url", "tel"]);
+      const textField = (
+        element: Element,
+      ): element is HTMLInputElement | HTMLTextAreaElement =>
+        element instanceof HTMLTextAreaElement ||
+        (element instanceof HTMLInputElement && TEXT_INPUTS.has(element.type));
+      const fieldGlyphs = (field: HTMLInputElement | HTMLTextAreaElement) => {
+        if (
+          document.activeElement === field &&
+          field.selectionStart !== field.selectionEnd
+        )
+          return true;
+        if (field.value === "")
+          return (
+            glyphs(field.placeholder) &&
+            resolve(getComputedStyle(field, "::placeholder").color)[3] > 0
+          );
+        const style = getComputedStyle(field);
+        return (
+          glyphs(field.value) &&
+          resolve(
+            style.getPropertyValue("-webkit-text-fill-color") || style.color,
+          )[3] > 0
+        );
+      };
       // An element's own box at a hit point, its pseudo-elements aside.
       const paintOf = (element: Element): PaintEntry["paint"] => {
         if (transparent(element)) return "none";
@@ -119,8 +152,9 @@ export async function contrastSamples(
         const sides = ["top", "right", "bottom", "left"] as const;
         const paints =
           element instanceof SVGElement ||
-          REPLACED.has(element.tagName) ||
-          ownGlyphs(element) ||
+          (textField(element)
+            ? fieldGlyphs(element)
+            : REPLACED.has(element.tagName) || ownGlyphs(element)) ||
           resolve(style.backgroundColor)[3] > 0 ||
           style.backgroundImage !== "none" ||
           style.backdropFilter !== "none" ||
@@ -183,7 +217,8 @@ export async function contrastSamples(
       pseudoOnly.textContent =
         "* { pointer-events: none !important; } *::before, *::after { pointer-events: auto !important; }";
 
-      // Elements whose text axe's color-contrast judges in its own right.
+      // Elements whose text is judged in its own right: by axe's
+      // color-contrast, or here, as a drawer queued below.
       const judgedElements = new Set(
         judgedSelectors.flatMap((selector) => {
           const element = document.querySelector(selector);
@@ -272,7 +307,7 @@ export async function contrastSamples(
             for (const node of stack.slice(textAt + 1))
               if (
                 !node.contains(element) &&
-                ownGlyphs(node) &&
+                (textField(node) ? fieldGlyphs(node) : ownGlyphs(node)) &&
                 !transparent(node)
               )
                 drawers.add(node);
@@ -339,9 +374,9 @@ export async function contrastSamples(
         return { points, drawers };
       };
 
-      return targets.map((selector) => {
-        const element = document.querySelector(selector);
-        if (element === null) return null;
+      // Drawers under transparent glyphs that nothing judged yet.
+      const queued: Element[] = [];
+      const sample = (element: Element): ContrastSample | null => {
         // How many ancestors out from the text each element is: its `box`.
         const depth = new Map<Element, number>();
         for (
@@ -423,20 +458,33 @@ export async function contrastSamples(
           ),
         };
         const { points, drawers } = pointsOf(element, depth);
+        // Glyphs painting nothing show the drawers' words instead, so each
+        // drawer gets a verdict of its own.
+        if (fill[3] === 0 && clip === undefined)
+          for (const drawer of drawers)
+            if (!judgedElements.has(drawer)) {
+              judgedElements.add(drawer);
+              queued.push(drawer);
+            }
         return {
           text,
           fill,
           stroke,
           ...(clip === undefined ? {} : { clip }),
-          mirrored:
-            drawers.size > 0 &&
-            [...drawers].every((drawer) => judgedElements.has(drawer)),
+          mirrored: drawers.size > 0,
           layers,
           points,
           fontSizePx: Number.parseFloat(own.fontSize),
           fontWeight: Number(own.fontWeight),
         };
+      };
+
+      const samples = targets.map((selector) => {
+        const element = document.querySelector(selector);
+        return element === null ? null : sample(element);
       });
+      for (const drawer of queued) samples.push(sample(drawer));
+      return samples;
     },
     [selectors, judged] as const,
   );

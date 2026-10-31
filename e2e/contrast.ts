@@ -95,8 +95,9 @@ export type ContrastSample = {
   readonly stroke?: { readonly width: number; readonly color: RGBA };
   readonly clip?: ClippedBackground;
   /**
-   * For a field whose own glyphs are transparent: every element drawing
-   * glyphs under it (a mirror painting the words) is one axe judges itself.
+   * For a field whose own glyphs are transparent: elements draw glyphs
+   * under it (a mirror painting the words), and each is judged in its own
+   * right, by axe or by the fallback sampling the ones axe skips.
    */
   readonly mirrored?: boolean;
   /** The element's and every ancestor's layers, from the element out to the root. */

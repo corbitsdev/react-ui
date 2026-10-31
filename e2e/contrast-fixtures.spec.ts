@@ -38,6 +38,18 @@ const placed = (markup: string) =>
     ],
   ] as const;
 
+// Words with a textarea laid over them, the textarea styled by `style` and
+// holding `value`: the shape of a field over the mirror showing its text.
+const underField = (
+  color: string,
+  style: string,
+  value: string,
+  attributes = "",
+) =>
+  page(
+    `<div style="position:relative;width:320px;background:#fff"><div id="t" style="color:${color};padding:4px">Ask the agent</div><textarea ${attributes} style="position:absolute;inset:0;margin:0;padding:4px;border:0;background:transparent;resize:none;font:inherit;${style}">${value}</textarea></div>`,
+  );
+
 // A chip with its own white ground, rotated, whose later lines spill onto
 // black: client rects bound the turned chip from outside.
 const chip = (degrees: number, align: string) =>
@@ -86,6 +98,11 @@ const NOT_VOUCHED = [
       `<div style="position:relative;width:300px;height:60px"><img src="${DARK}" style="position:absolute;inset:0;width:100%;height:100%"><div style="position:absolute;inset:0;background:rgba(255,255,255,.5);pointer-events:none"></div><span id="t" style="position:relative;color:#767676">Caption</span></div>`,
     ),
   ],
+  // #ccc on white is ~1.6:1; the field's own glyphs paint nothing.
+  [
+    "a faint mirror under a field with transparent text",
+    underField("#ccc", "color:transparent", "Ask the agent"),
+  ],
   [
     "an ancestor ::before painting an image",
     page(
@@ -131,6 +148,10 @@ const VOUCHED = [
     ),
   ],
   [
+    "a mirror under a field with transparent text",
+    underField("#333", "color:transparent", "Ask the agent"),
+  ],
+  [
     "text under an empty stretched button",
     page(
       `<div style="position:relative;width:200px;background:#fff"><span id="t" style="color:#555">quarter-plan.pdf</span><button aria-label="Open" style="position:absolute;inset:0;background:none;border:0"></button></div>`,
@@ -143,6 +164,40 @@ for (const [name, html] of VOUCHED)
     const { verdict } = await verdictFor(tab, html);
     expect(verdict).toMatchObject({ kind: "measured", pass: true });
   });
+
+// Axe settles these pages itself, ignoring the field over the words, so
+// only the fallback's verdict is pinned: a field painting its own value or
+// placeholder over other text leaves that text unmeasured.
+const FIELD_OVER_TEXT = [
+  ["its value", underField("#333", "color:#000", "Typed over")],
+  ["its placeholder", underField("#333", "", "", 'placeholder="Typed over"')],
+] as const;
+
+for (const [name, html] of FIELD_OVER_TEXT)
+  test(`the contrast fallback does not measure text under a field showing ${name}`, async ({
+    page: tab,
+  }) => {
+    const { verdict } = await verdictFor(tab, html);
+    expect(verdict).toEqual({ kind: "unmeasured" });
+  });
+
+// A field's own glyphs paint nothing, so its words are the mirror's: the
+// fallback samples the mirror too when axe gave it no verdict.
+test("the contrast fallback measures the mirror under a transparent field", async ({
+  page: tab,
+}) => {
+  await tab.setContent(
+    underField("#ccc", "color:transparent", "Ask the agent", 'id="f"'),
+  );
+  const [fieldSample = null, mirrorSample = null, ...rest] =
+    await contrastSamples(tab, ["#f"], []);
+  expect(judgeContrast(fieldSample)).toEqual({ kind: "mirrored" });
+  expect(judgeContrast(mirrorSample)).toMatchObject({
+    kind: "measured",
+    pass: false,
+  });
+  expect(rest).toEqual([]);
+});
 
 // The verdict does not depend on where the text starts: every geometry read
 // happens where the sampler scrolled it to.
