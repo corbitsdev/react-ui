@@ -10,7 +10,12 @@ import {
   useRef,
   useState,
 } from "react";
-import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
+import type {
+  KeyboardEvent,
+  MouseEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from "react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";
 import { useCopy } from "../hooks/use-copy.js";
@@ -52,6 +57,7 @@ export type CsvTableLabels = {
   readonly selectAll: string;
   readonly nameBox: string;
   readonly cellContents: string;
+  readonly resizeHint: string;
   readonly count: (rows: number, columns: number) => string;
   readonly filteredCount: (
     matching: number,
@@ -87,6 +93,8 @@ const LABELS: CsvTableLabels = {
   selectAll: "Select all",
   nameBox: "Selected cell",
   cellContents: "Cell contents",
+  resizeHint:
+    "Alt+Left and Alt+Right resize the column, Alt+Enter fits it to its contents",
   count: (rows, columns) =>
     `${counted(rows, "row", "rows")} · ${counted(columns, "column", "columns")}`,
   filteredCount: (matching, total, columns) =>
@@ -319,6 +327,26 @@ type Range = {
   /** Picked by row numbers or column letters, and addressed as such: `3:5`, `B:D`. */
   readonly whole?: "rows" | "columns";
 };
+type TextStyle = {
+  readonly font: string;
+  /** One figure's width with tabular figures on. */
+  readonly figure: number;
+  readonly padding: number;
+};
+type Metrics = {
+  readonly head: TextStyle;
+  readonly cell: TextStyle;
+  readonly gutter: TextStyle;
+  /** The sort icon and its gap beside a header's text. */
+  readonly headChrome: number;
+};
+
+const COLUMN_MIN_PX = 32;
+/** The widest a column starts; a long note column would push the rest off-screen. */
+const COLUMN_START_MAX_PX = 320;
+const COLUMN_MAX_PX = 960;
+const RESIZE_STEP_PX = 16;
+const RESIZE_KEYS = "Alt+ArrowLeft Alt+ArrowRight Alt+Enter";
 
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
@@ -343,6 +371,59 @@ const ARROWS: Record<string, Cell> = {
 const keepTextUnselected = (event: MouseEvent) => {
   if (event.shiftKey) event.preventDefault();
 };
+
+const padding = (style: CSSStyleDeclaration) =>
+  Number.parseFloat(style.paddingLeft) + Number.parseFloat(style.paddingRight);
+
+// Built from the longhands: the computed `font` shorthand is empty in some
+// engines.
+const fontOf = (style: CSSStyleDeclaration) =>
+  `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+
+let canvas: CanvasRenderingContext2D | null | undefined;
+const textContext = () =>
+  canvas === undefined
+    ? (canvas = document.createElement("canvas").getContext("2d"))
+    : canvas;
+
+/** Canvas has no tabular figures, so one figure is measured in the DOM. */
+function tabularFigure(font: string) {
+  const probe = document.createElement("span");
+  probe.style.cssText =
+    "position:absolute;visibility:hidden;white-space:pre;font-variant-numeric:tabular-nums";
+  probe.style.font = font;
+  probe.textContent = "0123456789";
+  document.body.append(probe);
+  const width = probe.getBoundingClientRect().width / 10;
+  probe.remove();
+  return width;
+}
+
+function textStyle(element: Element): TextStyle {
+  const style = getComputedStyle(element);
+  const font = fontOf(style);
+  return { font, figure: tabularFigure(font), padding: padding(style) };
+}
+
+const FIGURES = /\d/g;
+
+function textWidth(
+  context: CanvasRenderingContext2D,
+  style: TextStyle,
+  text: string,
+  tabular: boolean,
+) {
+  context.font = style.font;
+  if (!tabular) return context.measureText(text).width;
+  const figures = text.match(FIGURES)?.length ?? 0;
+  return (
+    context.measureText(text.replace(FIGURES, "")).width +
+    figures * style.figure
+  );
+}
+
+// A pixel for the cell's border, and one for sub-pixel text rounding.
+const fitted = (width: number) => Math.ceil(width) + 2;
 
 /**
  * Selection positions index the sorted, filtered view, so a copy is what the
@@ -383,6 +464,8 @@ function CsvGrid({
   });
   const [range, setRange] = useState<Range | null>(null);
   const [active, setActive] = useState<Cell>({ row: -1, column: 0 });
+  const [widths, setWidths] = useState<readonly number[] | null>(null);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [failedCopy, setFailedCopy] = useState<Range | null>(null);
   const { copied, copy } = useCopy();
   const deferredQuery = useDeferredValue(query);
@@ -481,6 +564,58 @@ function CsvGrid({
     [],
   );
 
+  // Columns start at their content's width, measured as text rather than read
+  // from a first layout a narrow container would already have squeezed.
+  // Fixed widths then let a resize, a sort or a filter re-lay one <col>, not
+  // every cell. Without canvas text metrics the grid stays on automatic layout.
+  useLayoutEffect(() => {
+    const head = scroller.current?.querySelector('[data-cell="-1:0"]');
+    const gutter = scroller.current?.querySelector('[data-cell="-1:-1"]');
+    const context = textContext();
+    if (!head || !gutter || context === null) return;
+    const headStyle = getComputedStyle(head);
+    const measured: Metrics = {
+      head: textStyle(head),
+      cell: textStyle(
+        scroller.current?.querySelector('[data-cell="0:0"]') ?? gutter,
+      ),
+      // Selected row numbers are semibold, so the column fits the heavier weight.
+      gutter: { ...textStyle(gutter), font: fontOf(headStyle) },
+      headChrome:
+        (head.querySelector("svg")?.getBoundingClientRect().width ?? 0) +
+        Number.parseFloat(headStyle.columnGap || "0"),
+    };
+    setMetrics(measured);
+    setWidths(
+      (current) =>
+        current ??
+        sheet.columns.map((_, column) =>
+          clamp(
+            columnWidth(context, measured, column),
+            COLUMN_MIN_PX,
+            COLUMN_START_MAX_PX,
+          ),
+        ),
+    );
+  }, []);
+
+  const context = metrics === null ? null : textContext();
+  const gutterWidth =
+    metrics === null || context === null
+      ? null
+      : fitted(
+          textWidth(
+            context,
+            metrics.gutter,
+            (order.length + 1).toLocaleString(),
+            true,
+          ) + metrics.gutter.padding,
+        );
+  const dataWidth =
+    widths === null || gutterWidth === null
+      ? null
+      : gutterWidth + widths.reduce((sum, width) => sum + width, 0);
+
   // A filter that drops the focused row moves focus to the nearest row left,
   // in sheet order, rather than losing it to the page.
   const shownBefore = useRef(view);
@@ -530,7 +665,76 @@ function CsvGrid({
     box.style.top = `${start.top - origin.top}px`;
     box.style.width = `${end.right - start.left}px`;
     box.style.height = `${end.bottom - start.top}px`;
-  }, [rowFrom, rowTo, columnFrom, columnTo, lastShown, shown]);
+  }, [rowFrom, rowTo, columnFrom, columnTo, lastShown, widths, shown]);
+
+  const resizeColumn = useCallback((column: number, width: number) => {
+    setWidths(
+      (current) =>
+        current &&
+        current.map((previous, index) =>
+          index === column
+            ? clamp(Math.round(width), COLUMN_MIN_PX, COLUMN_MAX_PX)
+            : previous,
+        ),
+    );
+  }, []);
+
+  /** A column's content width: its header and every rendered cell. */
+  function columnWidth(
+    context: CanvasRenderingContext2D,
+    measured: Metrics,
+    column: number,
+  ) {
+    const numeric = sheet.columns[column]?.numeric ?? false;
+    let widest =
+      textWidth(
+        context,
+        measured.head,
+        columnTitle(sheet, column, wording),
+        false,
+      ) +
+      measured.headChrome +
+      measured.head.padding;
+    for (const index of shown) {
+      widest = Math.max(
+        widest,
+        textWidth(
+          context,
+          measured.cell,
+          sheet.rows[index]?.[column] ?? "",
+          numeric,
+        ) + measured.cell.padding,
+      );
+    }
+    return fitted(widest);
+  }
+
+  function autoFit(column: number) {
+    if (metrics === null || context === null) return;
+    resizeColumn(column, columnWidth(context, metrics, column));
+  }
+
+  function startResize(
+    column: number,
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) {
+    const from = widths?.[column];
+    if (from === undefined) return;
+    event.preventDefault();
+    const handle = event.currentTarget;
+    const start = event.clientX;
+    handle.setPointerCapture(event.pointerId);
+    const move = (next: PointerEvent) =>
+      resizeColumn(column, from + next.clientX - start);
+    const end = () => {
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", end);
+      handle.removeEventListener("pointercancel", end);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", end);
+    handle.addEventListener("pointercancel", end);
+  }
 
   const selectCell = useCallback(
     (cell: Cell, extend: boolean) => {
@@ -631,6 +835,20 @@ function CsvGrid({
     // Lowercased so Caps Lock or Shift does not turn Ctrl+C into a no-op.
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
 
+    if (event.altKey && at.column >= 0 && widths !== null) {
+      const width = widths[at.column] ?? COLUMN_MIN_PX;
+      const step = RESIZE_STEP_PX * (event.shiftKey ? 4 : 1);
+      if (key === "ArrowLeft" || key === "ArrowRight") {
+        event.preventDefault();
+        resizeColumn(at.column, width + (key === "ArrowLeft" ? -step : step));
+        return;
+      }
+      if (key === "Enter") {
+        event.preventDefault();
+        autoFit(at.column);
+        return;
+      }
+    }
     if (command && key === "a") {
       event.preventDefault();
       selectAll();
@@ -732,6 +950,7 @@ function CsvGrid({
           wording.cellCount(summary.count),
           ...(summary.numbers > 0 ? [wording.sum(summary.sum)] : []),
         ];
+  const frozen = widths !== null && gutterWidth !== null && dataWidth !== null;
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-2">
@@ -758,7 +977,11 @@ function CsvGrid({
               aria-label={caption}
               aria-multiselectable="true"
               aria-rowcount={view.length + 2}
-              className="min-w-full border-separate border-spacing-0 [&_td]:max-w-80"
+              className={cn(
+                "border-separate border-spacing-0",
+                frozen ? "table-fixed" : "min-w-full [&_td]:max-w-80",
+              )}
+              style={frozen ? { width: dataWidth } : undefined}
               onKeyDown={onKeyDown}
               onFocus={() => {
                 hadFocus.current = true;
@@ -769,6 +992,14 @@ function CsvGrid({
                 }
               }}
             >
+              {frozen ? (
+                <colgroup>
+                  <col style={{ width: gutterWidth }} />
+                  {widths.map((width, index) => (
+                    <col key={index} style={{ width }} />
+                  ))}
+                </colgroup>
+              ) : null}
               <thead className="sticky top-0 z-3">
                 <tr aria-rowindex={1}>
                   <th
@@ -823,7 +1054,7 @@ function CsvGrid({
                         key={index}
                         scope="col"
                         aria-sort={ariaSort(direction)}
-                        className="h-8 border-r border-b border-border bg-card p-0 text-left font-semibold"
+                        className="relative h-8 border-r border-b border-border bg-card p-0 text-left font-semibold"
                       >
                         <SortHeaderButton
                           direction={direction}
@@ -831,6 +1062,7 @@ function CsvGrid({
                           tabIndex={
                             at.row === -1 && at.column === index ? 0 : -1
                           }
+                          aria-keyshortcuts={RESIZE_KEYS}
                           onFocus={() => setActive({ row: -1, column: index })}
                           onClick={() => setSort(nextSort(sort, index))}
                           className={cn(
@@ -842,6 +1074,13 @@ function CsvGrid({
                             {columnTitle(sheet, index, wording)}
                           </span>
                         </SortHeaderButton>
+                        <div
+                          aria-hidden
+                          title={wording.resizeHint}
+                          onPointerDown={(event) => startResize(index, event)}
+                          onDoubleClick={() => autoFit(index)}
+                          className="absolute inset-y-0 -right-1 z-1 w-2 cursor-col-resize touch-none hover:bg-ring/40"
+                        />
                       </th>
                     );
                   })}

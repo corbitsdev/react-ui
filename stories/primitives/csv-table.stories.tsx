@@ -61,6 +61,11 @@ export const Interactive = () => {
   );
 };
 
+const press = (target: Element, key: string, init: KeyboardEventInit = {}) =>
+  target.dispatchEvent(
+    new KeyboardEvent("keydown", { key, bubbles: true, ...init }),
+  );
+
 /** Clicks one cell, then shift-clicks another, as a person would. */
 function useStartSelected(from: string, to: string) {
   const host = useRef<HTMLDivElement>(null);
@@ -77,6 +82,45 @@ function useStartSelected(from: string, to: string) {
 
 export const Selection = () => {
   const host = useStartSelected("2:3", "7:4");
+  return (
+    <div ref={host}>
+      <CsvTable text={runs} caption="Workflow runs" interactive />
+    </div>
+  );
+};
+
+/** Notes fitted to its contents with Alt+Enter, then narrowed with Alt+Shift+Left. */
+export const ResizedColumn = () => {
+  const host = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const nextFrame = () =>
+      new Promise((resolve) => requestAnimationFrame(resolve));
+    // A frame between steps, as between a person's key presses: the grid
+    // measures its widths after the first, and each press reads the last one's
+    // result.
+    async function resize() {
+      await nextFrame();
+      const cell =
+        host.current?.querySelector<HTMLElement>('[data-cell="0:5"]');
+      if (cancelled || cell === null || cell === undefined) return;
+      cell.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      cell.focus();
+      for (const [key, shiftKey] of [
+        ["Enter", false],
+        ["ArrowLeft", true],
+        ["ArrowLeft", true],
+      ] as const) {
+        await nextFrame();
+        if (cancelled) return;
+        press(cell, key, { altKey: true, shiftKey });
+      }
+    }
+    void resize();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   return (
     <div ref={host}>
       <CsvTable text={runs} caption="Workflow runs" interactive />
