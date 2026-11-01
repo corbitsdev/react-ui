@@ -909,7 +909,9 @@ function CsvGrid({
   });
 
   // One outline around the whole range, drawn over the cells rather than as
-  // per-cell borders, which would also outline every inner edge.
+  // per-cell borders, which would also outline every inner edge. The box is
+  // invisible and only its four edge strips paint, so hit-testing the selected
+  // cells' text reaches the cells, not the box.
   useLayoutEffect(() => {
     const box = overlay.current;
     const frame = box?.parentElement;
@@ -1438,8 +1440,13 @@ function CsvGrid({
               ref={overlay}
               hidden
               aria-hidden
-              className="pointer-events-none absolute z-1 border-2 border-ring"
-            />
+              className="pointer-events-none invisible absolute z-1 *:visible *:absolute *:bg-ring"
+            >
+              <div className="inset-x-0 top-0 h-0.5" />
+              <div className="inset-y-0 right-0 w-0.5" />
+              <div className="inset-x-0 bottom-0 h-0.5" />
+              <div className="inset-y-0 left-0 w-0.5" />
+            </div>
           </div>
           {view.length === 0 ? (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
