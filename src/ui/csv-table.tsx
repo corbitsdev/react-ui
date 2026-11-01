@@ -327,6 +327,15 @@ type Range = {
   /** Picked by row numbers or column letters, and addressed as such: `3:5`, `B:D`. */
   readonly whole?: "rows" | "columns";
 };
+type Fill = {
+  readonly columns: number;
+  readonly rows: number;
+  /** The scroller's inner size, and the header and row heights, in px. */
+  readonly width: number;
+  readonly head: number;
+  readonly row: number;
+};
+const NO_FILL: Fill = { columns: 0, rows: 0, width: 0, head: 0, row: 0 };
 type TextStyle = {
   readonly font: string;
   /** One figure's width with tabular figures on. */
@@ -346,6 +355,10 @@ const COLUMN_MIN_PX = 32;
 const COLUMN_START_MAX_PX = 320;
 const COLUMN_MAX_PX = 960;
 const RESIZE_STEP_PX = 16;
+/** The width of the empty columns that run the grid out to its container's edge. */
+const FILL_COLUMN_PX = 64;
+const FILL_COLUMN_LINES =
+  "linear-gradient(to left, var(--border) 1px, transparent 1px)";
 const RESIZE_KEYS = "Alt+ArrowLeft Alt+ArrowRight Alt+Enter";
 
 const clamp = (value: number, min: number, max: number) =>
@@ -471,6 +484,7 @@ function CsvGrid({
   const deferredQuery = useDeferredValue(query);
   const scroller = useRef<HTMLDivElement>(null);
   const overlay = useRef<HTMLDivElement>(null);
+  const [fill, setFill] = useState<Fill>(NO_FILL);
   const hadFocus = useRef(false);
   const refocus = useRef(false);
 
@@ -607,7 +621,7 @@ function CsvGrid({
           textWidth(
             context,
             metrics.gutter,
-            (order.length + 1).toLocaleString(),
+            (order.length + 1 + fill.rows).toLocaleString(),
             true,
           ) + metrics.gutter.padding,
         );
@@ -615,6 +629,50 @@ function CsvGrid({
     widths === null || gutterWidth === null
       ? null
       : gutterWidth + widths.reduce((sum, width) => sum + width, 0);
+  const showsRows = view.length > 0;
+
+  // Empty gridlines out to the container's edges, as a spreadsheet draws
+  // them: only as many as the visible area holds, re-counted when it resizes.
+  useLayoutEffect(() => {
+    const box = scroller.current;
+    if (box === null || dataWidth === null) return;
+    function measure() {
+      if (box === null || dataWidth === null) return;
+      const head = box.querySelector("thead")?.offsetHeight ?? 0;
+      const row = box.querySelector<HTMLElement>("tbody th")?.offsetHeight ?? 0;
+      // Whole rows only, so a short sheet never scrolls; the last empty column
+      // takes what is left, so a wide one never does either.
+      const next: Fill = {
+        width: box.clientWidth,
+        head,
+        row,
+        columns: Math.max(
+          0,
+          Math.ceil((box.clientWidth - dataWidth) / FILL_COLUMN_PX),
+        ),
+        rows:
+          row === 0
+            ? 0
+            : Math.max(
+                0,
+                Math.floor((box.clientHeight - head) / row) - shown.length,
+              ),
+      };
+      setFill((current) =>
+        current.width === next.width &&
+        current.head === next.head &&
+        current.row === next.row &&
+        current.columns === next.columns &&
+        current.rows === next.rows
+          ? current
+          : next,
+      );
+    }
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [dataWidth, shown.length]);
 
   // A filter that drops the focused row moves focus to the nearest row left,
   // in sheet order, rather than losing it to the page.
@@ -665,7 +723,7 @@ function CsvGrid({
     box.style.top = `${start.top - origin.top}px`;
     box.style.width = `${end.right - start.left}px`;
     box.style.height = `${end.bottom - start.top}px`;
-  }, [rowFrom, rowTo, columnFrom, columnTo, lastShown, widths, shown]);
+  }, [rowFrom, rowTo, columnFrom, columnTo, lastShown, widths, shown, fill]);
 
   const resizeColumn = useCallback((column: number, width: number) => {
     setWidths(
@@ -951,6 +1009,7 @@ function CsvGrid({
           ...(summary.numbers > 0 ? [wording.sum(summary.sum)] : []),
         ];
   const frozen = widths !== null && gutterWidth !== null && dataWidth !== null;
+  const fillers = Array.from({ length: fill.columns }, (_, index) => index);
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-2">
@@ -972,6 +1031,18 @@ function CsvGrid({
         </div>
         <div ref={scroller} className="min-h-0 flex-[1_1_32rem] overflow-auto">
           <div className="relative isolate w-max min-w-full">
+            {frozen && fill.columns > 0 ? (
+              <div
+                aria-hidden
+                className="absolute inset-y-0 right-0 -z-1"
+                style={{
+                  left: dataWidth,
+                  backgroundImage: `${FILL_COLUMN_LINES}, linear-gradient(to top, var(--border) 1px, transparent 1px)`,
+                  backgroundSize: `${FILL_COLUMN_PX}px 100%, 100% ${fill.row}px`,
+                  backgroundPosition: `0 0, 0 ${fill.head}px`,
+                }}
+              />
+            ) : null}
             <table
               role="grid"
               aria-label={caption}
@@ -981,7 +1052,9 @@ function CsvGrid({
                 "border-separate border-spacing-0",
                 frozen ? "table-fixed" : "min-w-full [&_td]:max-w-80",
               )}
-              style={frozen ? { width: dataWidth } : undefined}
+              style={
+                frozen ? { width: Math.max(dataWidth, fill.width) } : undefined
+              }
               onKeyDown={onKeyDown}
               onFocus={() => {
                 hadFocus.current = true;
@@ -997,6 +1070,17 @@ function CsvGrid({
                   <col style={{ width: gutterWidth }} />
                   {widths.map((width, index) => (
                     <col key={index} style={{ width }} />
+                  ))}
+                  {fillers.map((index) => (
+                    <col
+                      key={`fill-${index}`}
+                      style={{
+                        width:
+                          index === fill.columns - 1
+                            ? undefined
+                            : FILL_COLUMN_PX,
+                      }}
+                    />
                   ))}
                 </colgroup>
               ) : null}
@@ -1033,6 +1117,15 @@ function CsvGrid({
                       )}
                     >
                       {columnLetter(index)}
+                    </th>
+                  ))}
+                  {fillers.map((index) => (
+                    <th
+                      key={`fill-${index}`}
+                      aria-hidden
+                      className="h-6 border-r border-b border-border bg-card px-1 text-center font-normal text-muted-foreground"
+                    >
+                      {columnLetter(columnCount + index)}
                     </th>
                   ))}
                 </tr>
@@ -1084,6 +1177,17 @@ function CsvGrid({
                       </th>
                     );
                   })}
+                  {fill.columns > 0 ? (
+                    <th
+                      aria-hidden
+                      colSpan={fill.columns}
+                      className="h-8 border-b border-border bg-background"
+                      style={{
+                        backgroundImage: FILL_COLUMN_LINES,
+                        backgroundSize: `${FILL_COLUMN_PX}px 100%`,
+                      }}
+                    />
+                  ) : null}
                 </tr>
               </thead>
               <tbody className="select-none">
@@ -1104,6 +1208,21 @@ function CsvGrid({
                     />
                   );
                 })}
+                {showsRows
+                  ? Array.from({ length: fill.rows }, (_, index) => (
+                      <tr key={`fill-${index}`} aria-hidden>
+                        <th className="sticky left-0 z-2 h-7 border-r border-b border-border bg-card px-2 text-right font-normal text-muted-foreground tabular-nums">
+                          {(order.length + 2 + index).toLocaleString()}
+                        </th>
+                        {sheet.columns.map((_, column) => (
+                          <td
+                            key={column}
+                            className="border-r border-b border-border"
+                          />
+                        ))}
+                      </tr>
+                    ))
+                  : null}
               </tbody>
             </table>
             <div
