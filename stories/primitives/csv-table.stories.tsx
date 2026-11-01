@@ -61,6 +61,13 @@ export const Interactive = () => {
   );
 };
 
+const budget = [
+  "Team,Q1,Q2,Q3,Q4",
+  "Platform,120,135,150,160",
+  "Billing,80,82,90,95",
+  "Growth,60,75,88,102",
+].join("\n");
+
 const press = (target: Element, key: string, init: KeyboardEventInit = {}) =>
   target.dispatchEvent(
     new KeyboardEvent("keydown", { key, bubbles: true, ...init }),
@@ -128,6 +135,23 @@ export const ResizedColumn = () => {
   );
 };
 
+export const Sheets = () => {
+  const host = useStartSelected("0:1", "2:4");
+  return (
+    <div ref={host}>
+      <CsvTable
+        caption="Workbook"
+        interactive
+        sheets={[
+          { name: "Budget", text: budget },
+          { name: "Runs", text: runs },
+          { name: "Notes", text: "Owner,Note\ngrowth,Plan Q4 review" },
+        ]}
+      />
+    </div>
+  );
+};
+
 /**
  * The grid has no controls of its own: the host renders search, filters and
  * copy in its bar and drives the grid; the sheet fills the pane, flush.
@@ -177,6 +201,58 @@ export const HostControlled = () => {
         >
           {copied ? "Copied" : "Copy"}
         </Button>
+      </div>
+    </div>
+  );
+};
+
+const workbook = [
+  { name: "Runs", text: runs },
+  { name: "Budget", text: budget },
+];
+
+/** Query and filters belong to the open sheet: the host resets them on a switch. */
+export const SheetsHostControlled = () => {
+  const [sheet, setSheet] = useState(0);
+  const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<CsvFilters>({});
+  const text = workbook[sheet]?.text ?? "";
+  const specs = useMemo(() => csvFilterSpecs(text, filters), [text, filters]);
+  return (
+    <div className="flex h-[40rem] flex-col gap-2">
+      <div className="min-h-0 flex-1">
+        <CsvTable
+          caption="Workbook"
+          interactive
+          sheets={workbook}
+          sheet={sheet}
+          onSheetChange={(next) => {
+            setSheet(next);
+            setQuery("");
+            setFilters({});
+          }}
+          query={query}
+          filters={filters}
+        />
+      </div>
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-2">
+        <Input
+          type="search"
+          className="h-9 w-48"
+          value={query}
+          placeholder="Search rows"
+          aria-label="Search rows"
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <FilterBar
+          filters={specs}
+          onChange={(id, value) =>
+            setFilters((current) => {
+              const { [id]: _, ...rest } = current;
+              return value === null ? rest : { ...rest, [id]: value };
+            })
+          }
+        />
       </div>
     </div>
   );

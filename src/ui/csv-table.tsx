@@ -5,6 +5,7 @@ import {
   useCallback,
   useDeferredValue,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -58,6 +59,7 @@ export type CsvTableLabels = {
   readonly nameBox: string;
   readonly cellContents: string;
   readonly resizeHint: string;
+  readonly sheets: string;
   readonly count: (rows: number, columns: number) => string;
   readonly filteredCount: (
     matching: number,
@@ -95,6 +97,7 @@ const LABELS: CsvTableLabels = {
   cellContents: "Cell contents",
   resizeHint:
     "Alt+Left and Alt+Right resize the column, Alt+Enter fits it to its contents",
+  sheets: "Sheets",
   count: (rows, columns) =>
     `${counted(rows, "row", "rows")} · ${counted(columns, "column", "columns")}`,
   filteredCount: (matching, total, columns) =>
@@ -126,8 +129,19 @@ export type CsvSelection = {
 /** Column filters keyed by the column's zero-based index, as `FilterSpec.id`. */
 export type CsvFilters = Readonly<Record<string, string>>;
 
-export type CsvTableProps = {
+export type CsvTableSheet = {
+  readonly name: string;
   readonly text: string;
+};
+
+export type CsvTableProps = (
+  | { readonly text: string; readonly sheets?: undefined }
+  | {
+      /** Several sheets of one workbook, switched by tabs under the grid. */
+      readonly sheets: readonly CsvTableSheet[];
+      readonly text?: undefined;
+    }
+) & {
   readonly caption?: string | undefined;
   /**
    * A compact spreadsheet grid that sorts, selects and copies, and applies the
@@ -144,11 +158,24 @@ export type CsvTableProps = {
   readonly filters?: CsvFilters | undefined;
   readonly sort?: CsvSort | null | undefined;
   readonly onSortChange?: ((sort: CsvSort | null) => void) | undefined;
+  /**
+   * The open sheet's index in `sheets`. Sort, query and filters belong to one
+   * sheet: the grid's own sort starts over on a switch, and a host that owns
+   * `query`, `filters` or `sort` resets them in `onSheetChange` and builds
+   * `csvFilterSpecs` from the open sheet's text.
+   */
+  readonly sheet?: number | undefined;
+  readonly onSheetChange?: ((sheet: number) => void) | undefined;
   readonly labels?: Partial<CsvTableLabels> | undefined;
   readonly onSelectionChange?:
     | ((selection: CsvSelection | null) => void)
     | undefined;
 };
+
+type ViewProps = Omit<
+  CsvTableProps,
+  "text" | "sheets" | "sheet" | "onSheetChange" | "labels"
+>;
 
 const NO_FILTERS: CsvFilters = {};
 
@@ -220,25 +247,188 @@ export function csvFilterSpecs(
  * freely and headers are routinely empty or repeated ("", two "Name" columns);
  * a content key would collide and drop data.
  */
-export function CsvTable({
+export function CsvTable(props: CsvTableProps) {
+  const { sheet, onSheetChange, labels, ...view } = props;
+  const wording = { ...LABELS, ...labels };
+  const [open, setOpen] = useControllableState({
+    value: sheet,
+    defaultValue: 0,
+    onChange: onSheetChange,
+    name: "CsvTable sheet",
+  });
+  const ids = useId();
+  // Column widths outlive a sheet switch, keyed by the sheet's text, so going
+  // back to a sheet finds its columns as they were left.
+  const widths = useRef(new Map<string, readonly number[]>());
+
+  if (props.sheets === undefined) {
+    return (
+      <CsvSheetView
+        {...view}
+        text={props.text}
+        wording={wording}
+        widthStore={widths.current}
+      />
+    );
+  }
+  const index = clamp(open, 0, props.sheets.length - 1);
+  const current = props.sheets[index];
+  if (current === undefined) {
+    return <Notice>{wording.empty}</Notice>;
+  }
+  // The tabs sit outside the keyed sheet, so switching keeps focus on the tab.
+  return (
+    <div className="flex h-full min-h-0 min-w-0 flex-col">
+      <div
+        role="tabpanel"
+        id={`${ids}-panel`}
+        aria-labelledby={`${ids}-tab-${index}`}
+        className="flex min-h-0 min-w-0 flex-1 flex-col"
+      >
+        <CsvSheetView
+          {...view}
+          key={index}
+          text={current.text}
+          wording={wording}
+          widthStore={widths.current}
+          tabbed
+        />
+      </div>
+      <SheetTabs
+        ids={ids}
+        names={props.sheets.map((entry) => entry.name)}
+        active={index}
+        onChange={setOpen}
+        label={wording.sheets}
+      />
+    </div>
+  );
+}
+
+function Notice({
+  children,
+  tabbed = false,
+}: {
+  readonly children: ReactNode;
+  readonly tabbed?: boolean;
+}) {
+  return (
+    <p
+      className={cn(
+        "rounded-md border border-border bg-muted px-4 py-6 text-center text-sm text-muted-foreground",
+        tabbed && "rounded-b-none",
+      )}
+    >
+      {children}
+    </p>
+  );
+}
+
+/**
+ * The tab pattern `Tabs` follows: one tab stop, arrows and Home and End move
+ * the selection and focus with it, and only the open sheet's panel exists.
+ */
+function SheetTabs({
+  ids,
+  names,
+  active,
+  onChange,
+  label,
+}: {
+  readonly ids: string;
+  readonly names: readonly string[];
+  readonly active: number;
+  readonly onChange: (sheet: number) => void;
+  readonly label: string;
+}) {
+  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+
+  function focusTab(index: number) {
+    onChange(index);
+    buttons.current[index]?.focus();
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const last = names.length - 1;
+    const targets: Record<string, number> = {
+      ArrowRight: active === last ? 0 : active + 1,
+      ArrowLeft: active === 0 ? last : active - 1,
+      Home: 0,
+      End: last,
+    };
+    const next = targets[event.key];
+    if (next === undefined) return;
+    event.preventDefault();
+    focusTab(next);
+  }
+
+  return (
+    <div
+      role="tablist"
+      aria-label={label}
+      onKeyDown={onKeyDown}
+      className="flex min-w-0 shrink-0 overflow-x-auto rounded-b-md border border-t-0 border-border bg-card px-2"
+    >
+      {names.map((name, index) => {
+        const selected = index === active;
+        return (
+          <button
+            key={index}
+            ref={(node) => {
+              buttons.current[index] = node;
+            }}
+            type="button"
+            role="tab"
+            id={`${ids}-tab-${index}`}
+            aria-selected={selected}
+            aria-controls={selected ? `${ids}-panel` : undefined}
+            tabIndex={selected ? 0 : -1}
+            onClick={() => onChange(index)}
+            className={cn(
+              "-mt-px h-8 shrink-0 border-x border-b-2 border-transparent px-4 text-xs whitespace-nowrap focus-visible:-outline-offset-2",
+              selected
+                ? "border-x-border border-b-ring bg-background font-semibold text-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            {name}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function CsvSheetView({
   text,
   caption = "CSV contents",
   interactive = false,
-  labels,
+  wording,
+  widthStore,
+  tabbed = false,
   ...grid
-}: CsvTableProps) {
+}: ViewProps & {
+  readonly text: string;
+  readonly wording: CsvTableLabels;
+  readonly widthStore: Map<string, readonly number[]>;
+  readonly tabbed?: boolean;
+}) {
   const parsed = useMemo(() => parseCsv(text), [text]);
-  const wording = { ...LABELS, ...labels };
 
   if (parsed === null) {
-    return <Notice>{wording.tooLarge}</Notice>;
+    return <Notice tabbed={tabbed}>{wording.tooLarge}</Notice>;
   }
 
   if (!isTabular(parsed)) {
     // Height-capped with its own scroll: a multi-thousand-line file as one
     // <pre> is the same DOM freeze the size guard exists to prevent.
     return (
-      <pre className="max-h-96 overflow-auto rounded-md border border-border bg-muted p-3 font-mono text-xs">
+      <pre
+        className={cn(
+          "max-h-96 overflow-auto rounded-md border border-border bg-muted p-3 font-mono text-xs",
+          tabbed && "rounded-b-none",
+        )}
+      >
         {text}
       </pre>
     );
@@ -246,7 +436,7 @@ export function CsvTable({
 
   if (interactive) {
     // Keyed on the text so a new file never inherits the old one's
-    // selection or, unless the host owns them, sort, filters and query.
+    // selection, widths or, unless the host owns them, sort, filters and query.
     return (
       <CsvGrid
         {...grid}
@@ -254,6 +444,9 @@ export function CsvTable({
         parsed={parsed}
         caption={caption}
         wording={wording}
+        tabbed={tabbed}
+        storedWidths={widthStore.get(text)}
+        onWidthsChange={(widths) => widthStore.set(text, widths)}
       />
     );
   }
@@ -269,7 +462,12 @@ export function CsvTable({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-col overflow-hidden rounded-md border border-border">
+      <div
+        className={cn(
+          "flex flex-col overflow-hidden rounded-md border border-border",
+          tabbed && "rounded-b-none",
+        )}
+      >
         {/* Focusable so the keyboard can scroll it. */}
         <div
           role="group"
@@ -307,14 +505,6 @@ export function CsvTable({
         </p>
       )}
     </div>
-  );
-}
-
-function Notice({ children }: { readonly children: ReactNode }) {
-  return (
-    <p className="rounded-md border border-border bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
-      {children}
-    </p>
   );
 }
 
@@ -453,15 +643,21 @@ function CsvGrid({
   parsed,
   caption,
   wording,
+  tabbed,
+  storedWidths,
+  onWidthsChange,
   query = "",
   filters = NO_FILTERS,
   sort: sortProp,
   onSortChange,
   onSelectionChange,
-}: Omit<CsvTableProps, "text" | "caption" | "interactive" | "labels"> & {
+}: Omit<ViewProps, "caption" | "interactive"> & {
   readonly parsed: ParsedCsv;
   readonly caption: string;
   readonly wording: CsvTableLabels;
+  readonly tabbed: boolean;
+  readonly storedWidths: readonly number[] | undefined;
+  readonly onWidthsChange: (widths: readonly number[]) => void;
 }) {
   const columnCount = Math.min(parsed.headers.length, CSV_COLUMN_CAP);
   const lastColumn = columnCount - 1;
@@ -477,7 +673,9 @@ function CsvGrid({
   });
   const [range, setRange] = useState<Range | null>(null);
   const [active, setActive] = useState<Cell>({ row: -1, column: 0 });
-  const [widths, setWidths] = useState<readonly number[] | null>(null);
+  const [widths, setWidths] = useState<readonly number[] | null>(
+    storedWidths ?? null,
+  );
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [failedCopy, setFailedCopy] = useState<Range | null>(null);
   const { copied, copy } = useCopy();
@@ -577,6 +775,12 @@ function CsvGrid({
     },
     [],
   );
+
+  const widthsChange = useRef(onWidthsChange);
+  widthsChange.current = onWidthsChange;
+  useEffect(() => {
+    if (widths !== null) widthsChange.current(widths);
+  }, [widths]);
 
   // Columns start at their content's width, measured as text rather than read
   // from a first layout a narrow container would already have squeezed.
@@ -1013,7 +1217,12 @@ function CsvGrid({
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-2">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col rounded-md border border-border bg-background text-xs">
+      <div
+        className={cn(
+          "flex min-h-0 min-w-0 flex-1 flex-col rounded-md border border-border bg-background text-xs",
+          tabbed && "rounded-b-none",
+        )}
+      >
         <div className="flex items-stretch overflow-hidden rounded-t-md border-b border-border">
           <input
             readOnly
@@ -1238,7 +1447,12 @@ function CsvGrid({
             </p>
           ) : null}
         </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-b-md border-t border-border bg-card px-2 py-1.5 text-muted-foreground">
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border bg-card px-2 py-1.5 text-muted-foreground",
+            !tabbed && "rounded-b-md",
+          )}
+        >
           <p role="status">{notes.join(" · ")}</p>
           <p role="status" className={cn(copyFailed && "text-destructive")}>
             {copyFailed ? wording.copyFailed : copied ? wording.copied : ""}
