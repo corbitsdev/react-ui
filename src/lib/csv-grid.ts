@@ -176,3 +176,12 @@ const tsvCell = (cell: string) =>
 export function toTsv(rows: readonly (readonly string[])[]): string {
   return rows.map((row) => row.map(tsvCell).join("\t")).join("\n");
 }
+
+/** A spreadsheet column letter for a zero-based index: 0 → A, 25 → Z, 26 → AA. */
+export function columnLetter(index: number): string {
+  let letters = "";
+  for (let rest = index + 1; rest > 0; rest = Math.floor((rest - 1) / 26)) {
+    letters = String.fromCharCode(65 + ((rest - 1) % 26)) + letters;
+  }
+  return letters;
+}

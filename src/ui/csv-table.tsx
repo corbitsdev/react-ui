@@ -17,6 +17,7 @@ import { useCopy } from "../hooks/use-copy.js";
 import {
   CSV_BLANK_FILTER,
   CSV_GRID_ROW_CAP,
+  columnLetter,
   filterRows,
   prepareSheet,
   sortRows,
@@ -47,7 +48,7 @@ export type CsvTableLabels = {
   readonly anyValue: string;
   readonly blank: string;
   readonly untitledColumn: (position: number) => string;
-  readonly rowNumber: string;
+  readonly selectAll: string;
   readonly count: (rows: number, columns: number) => string;
   readonly filteredCount: (
     matching: number,
@@ -77,7 +78,7 @@ const LABELS: CsvTableLabels = {
   anyValue: "Any",
   blank: "(blank)",
   untitledColumn: (position) => `Column ${position.toLocaleString()}`,
-  rowNumber: "Row",
+  selectAll: "Select all",
   count: (rows, columns) =>
     `${counted(rows, "row", "rows")} · ${counted(columns, "column", "columns")}`,
   filteredCount: (matching, total, columns) =>
@@ -298,7 +299,7 @@ function Notice({ children }: { readonly children: ReactNode }) {
   );
 }
 
-/** Row -1 is the CSV header row. */
+/** Row -1 is the CSV header row and column -1 the row numbers. */
 type Cell = { readonly row: number; readonly column: number };
 type Range = {
   readonly view: readonly number[];
@@ -335,6 +336,10 @@ const keepTextUnselected = (event: MouseEvent) => {
  * person sees, and it spans every matching row, including those past the
  * render cap. A selection remembers the view it was made in: once a new query,
  * filter or sort lands, it no longer applies.
+ *
+ * Rows are numbered as a spreadsheet numbers them: the header is row 1 and a
+ * sort renumbers, while a filter hides rows and leaves gaps, so a number is
+ * the row's place in the sorted, unfiltered sheet.
  */
 function CsvGrid({
   parsed,
@@ -401,7 +406,7 @@ function CsvGrid({
   const copyFailed = failedCopy !== null && failedCopy === selection;
   const at = {
     row: clamp(active.row, -1, lastShown),
-    column: clamp(active.column, 0, lastColumn),
+    column: clamp(active.column, -1, lastColumn),
   };
   const [rowFrom, rowTo] =
     selection === null
@@ -517,6 +522,35 @@ function CsvGrid({
     [view],
   );
 
+  const selectRow = useCallback(
+    (row: number, extend: boolean) => {
+      setActive({ row, column: -1 });
+      setRange((current) => ({
+        view,
+        anchor: {
+          row: extend && current?.view === view ? current.anchor.row : row,
+          column: 0,
+        },
+        focus: { row, column: lastColumn },
+      }));
+    },
+    [view, lastColumn],
+  );
+
+  function selectColumn(column: number, extend: boolean) {
+    if (view.length === 0) return;
+    setActive({ row: 0, column });
+    setRange((current) => ({
+      view,
+      anchor: {
+        row: 0,
+        column:
+          extend && current?.view === view ? current.anchor.column : column,
+      },
+      focus: { row: view.length - 1, column },
+    }));
+  }
+
   function selectAll() {
     if (view.length === 0) return;
     setRange({
@@ -529,19 +563,23 @@ function CsvGrid({
   function moveTo(cell: Cell, extend: boolean) {
     const target = {
       row: clamp(cell.row, -1, lastShown),
-      column: clamp(cell.column, 0, lastColumn),
+      column: clamp(cell.column, -1, lastColumn),
     };
+    const inBody = (cell: Cell) => cell.row >= 0 && cell.column >= 0;
     setActive(target);
     if (extend) {
-      const anchor = selection?.anchor ?? (at.row >= 0 ? at : null);
+      const anchor = selection?.anchor ?? (inBody(at) ? at : null);
       if (anchor !== null) {
         setRange({
           view,
           anchor,
-          focus: { row: Math.max(0, target.row), column: target.column },
+          focus: {
+            row: Math.max(0, target.row),
+            column: Math.max(0, target.column),
+          },
         });
       }
-    } else if (target.row >= 0) {
+    } else if (inBody(target)) {
       setRange({ view, anchor: target, focus: target });
     }
     scroller.current
@@ -579,9 +617,21 @@ function CsvGrid({
       void copyRange(selection);
       return;
     }
+    if (command && key === " " && at.column >= 0) {
+      event.preventDefault();
+      selectColumn(at.column, event.shiftKey);
+      return;
+    }
     if (key === "Escape" && selection !== null) {
       event.preventDefault();
       setRange(null);
+      return;
+    }
+    if ((key === " " || key === "Enter") && at.row >= 0) {
+      if (at.column === -1 || (key === " " && event.shiftKey)) {
+        event.preventDefault();
+        selectRow(at.row, at.column === -1 && event.shiftKey);
+      }
       return;
     }
 
@@ -612,6 +662,9 @@ function CsvGrid({
     moveTo(next, event.shiftKey);
   }
 
+  const rowLabel = (position: number) =>
+    position === -1 ? 1 : (rank[view[position] ?? 0] ?? 0) + 2;
+
   const notes = [
     view.length === sheet.rows.length
       ? wording.count(sheet.rows.length, parsed.headers.length)
@@ -638,7 +691,7 @@ function CsvGrid({
               role="grid"
               aria-label={caption}
               aria-multiselectable="true"
-              aria-rowcount={view.length + 1}
+              aria-rowcount={view.length + 2}
               className="min-w-full border-separate border-spacing-0 [&_td]:max-w-80"
               onKeyDown={onKeyDown}
               onFocus={() => {
@@ -654,9 +707,47 @@ function CsvGrid({
                 <tr aria-rowindex={1}>
                   <th
                     scope="col"
-                    className="sticky left-0 z-1 h-8 border-r border-b border-border bg-card px-2 text-right font-normal text-muted-foreground"
+                    className="sticky left-0 z-1 h-6 border-r border-b border-border bg-card p-0"
                   >
-                    {wording.rowNumber}
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      aria-label={wording.selectAll}
+                      onClick={selectAll}
+                      className="relative block size-full hover:bg-muted"
+                    >
+                      <span
+                        aria-hidden
+                        className="absolute right-1 bottom-1 size-2 bg-border-strong [clip-path:polygon(100%_0,100%_100%,0_100%)]"
+                      />
+                    </button>
+                  </th>
+                  {sheet.columns.map((_, index) => (
+                    <th
+                      key={index}
+                      scope="col"
+                      onMouseDown={keepTextUnselected}
+                      onClick={(event) => selectColumn(index, event.shiftKey)}
+                      className={cn(
+                        "h-6 cursor-default border-r border-b border-border bg-card px-1 text-center font-normal text-muted-foreground",
+                        index >= columnFrom &&
+                          index <= columnTo &&
+                          "bg-accent font-semibold text-accent-foreground shadow-[inset_0_-2px_0_var(--ring)]",
+                      )}
+                    >
+                      {columnLetter(index)}
+                    </th>
+                  ))}
+                </tr>
+                <tr aria-rowindex={2}>
+                  <th
+                    scope="row"
+                    data-cell="-1:-1"
+                    tabIndex={at.row === -1 && at.column === -1 ? 0 : -1}
+                    onFocus={() => setActive({ row: -1, column: -1 })}
+                    className="sticky left-0 z-1 h-8 border-r border-b border-border bg-card px-2 text-right font-normal text-muted-foreground tabular-nums focus-visible:-outline-offset-2"
+                  >
+                    1
                   </th>
                   {sheet.columns.map((column, index) => {
                     const direction =
@@ -697,13 +788,14 @@ function CsvGrid({
                     <GridRow
                       key={index}
                       position={position}
-                      label={index + 1}
+                      label={rowLabel(position)}
                       cells={sheet.rows[index] ?? []}
                       columns={sheet.columns}
                       selectedFrom={inRange ? columnFrom : -1}
                       selectedTo={inRange ? columnTo : -1}
-                      activeColumn={position === at.row ? at.column : -1}
+                      activeColumn={position === at.row ? at.column : -2}
                       onSelectCell={selectCell}
+                      onSelectRow={selectRow}
                     />
                   );
                 })}
@@ -747,6 +839,7 @@ const GridRow = memo(function GridRow({
   selectedTo,
   activeColumn,
   onSelectCell,
+  onSelectRow,
 }: {
   readonly position: number;
   readonly label: number;
@@ -756,12 +849,21 @@ const GridRow = memo(function GridRow({
   readonly selectedTo: number;
   readonly activeColumn: number;
   readonly onSelectCell: (cell: Cell, extend: boolean) => void;
+  readonly onSelectRow: (row: number, extend: boolean) => void;
 }) {
   return (
-    <tr aria-rowindex={position + 2}>
+    <tr aria-rowindex={position + 3}>
       <th
         scope="row"
-        className="sticky left-0 z-2 h-7 border-r border-b border-border bg-card px-2 text-right font-normal text-muted-foreground tabular-nums"
+        data-cell={`${position}:-1`}
+        tabIndex={activeColumn === -1 ? 0 : -1}
+        className={cn(
+          "sticky left-0 z-2 h-7 border-r border-b border-border bg-card px-2 text-right font-normal text-muted-foreground tabular-nums focus-visible:-outline-offset-2",
+          selectedFrom !== -1 &&
+            "bg-accent font-semibold text-accent-foreground shadow-[inset_-2px_0_0_var(--ring)]",
+        )}
+        onMouseDown={keepTextUnselected}
+        onClick={(event) => onSelectRow(position, event.shiftKey)}
       >
         {label.toLocaleString()}
       </th>

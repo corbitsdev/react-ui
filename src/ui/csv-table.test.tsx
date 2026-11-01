@@ -109,6 +109,22 @@ describe("CsvTable interactive", () => {
     unmount();
   });
 
+  test("rows number from the header as 1, a sort renumbers and a filter leaves gaps", () => {
+    const { container, unmount } = mount({
+      text: "name,amount,note\nc,3,keep\na,1,keep\nb,2,drop\nd,4,keep",
+      interactive: true,
+      query: "keep",
+    });
+    const numbers = () =>
+      [...container.querySelectorAll('[data-cell$=":-1"]')].map(
+        (cell) => cell.textContent,
+      );
+    expect(numbers()).toEqual(["1", "2", "3", "5"]);
+    click(header(container, "name"));
+    expect(numbers()).toEqual(["1", "2", "4", "5"]);
+    unmount();
+  });
+
   test("a failed copy is reported until the selection moves", async () => {
     const original = Object.getOwnPropertyDescriptor(navigator, "clipboard");
     Object.defineProperty(navigator, "clipboard", {
