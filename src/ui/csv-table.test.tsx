@@ -203,4 +203,27 @@ describe("CsvTable interactive", () => {
     expect(selections.at(-1)).toBeNull();
     unmount();
   });
+
+  test("arrow keys move between sheet tabs and open the sheet", () => {
+    const { container, firstColumn, unmount } = mount({
+      interactive: true,
+      sheets: [
+        { name: "One", text: "name,n\na,1\nb,2" },
+        { name: "Two", text: "name,n\nz,9\ny,8" },
+      ],
+    });
+    const tabs = () => [...container.querySelectorAll('[role="tab"]')];
+    act(() => {
+      tabs()[0]?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+      );
+    });
+    expect(tabs().map((tab) => tab.getAttribute("aria-selected"))).toEqual([
+      "false",
+      "true",
+    ]);
+    expect(document.activeElement).toBe(tabs()[1] ?? null);
+    expect(firstColumn()).toEqual(["z", "y"]);
+    unmount();
+  });
 });
