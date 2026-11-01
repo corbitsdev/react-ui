@@ -146,6 +146,7 @@ export const InteractiveRelabelled = () => (
     labels={{
       count: (rows, columns) =>
         `${rows.toLocaleString()} records, ${columns.toLocaleString()} fields`,
+      sum: (value) => `Total ${value.toLocaleString()}`,
     }}
   />
 );

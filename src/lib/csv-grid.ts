@@ -185,3 +185,43 @@ export function columnLetter(index: number): string {
   }
   return letters;
 }
+
+export type CsvRangeSummary = {
+  /** Non-blank cells, as a spreadsheet's status bar counts them. */
+  readonly count: number;
+  /** Cells that read as a number, whatever their column. */
+  readonly numbers: number;
+  readonly sum: number;
+};
+
+/**
+ * Count and sum over view positions `rows` and columns `columns`, both
+ * inclusive, as a spreadsheet's status bar does: every cell that reads as a
+ * number adds to the sum. Numeric columns reuse the values parsed once per
+ * file; only cells in the other columns are parsed here.
+ */
+export function summarizeRange(
+  sheet: CsvSheet,
+  view: readonly number[],
+  rows: readonly [number, number],
+  columns: readonly [number, number],
+): CsvRangeSummary {
+  let count = 0;
+  let numbers = 0;
+  let sum = 0;
+  for (const index of view.slice(rows[0], rows[1] + 1)) {
+    const row = sheet.rows[index] ?? [];
+    for (let column = columns[0]; column <= columns[1]; column += 1) {
+      const cell = row[column] ?? "";
+      if (isBlank(cell)) continue;
+      count += 1;
+      const parsed = sheet.columns[column]?.numbers;
+      const value = parsed ? (parsed[index] ?? null) : cellNumber(cell);
+      if (value !== null) {
+        numbers += 1;
+        sum += value;
+      }
+    }
+  }
+  return { count, numbers, sum };
+}

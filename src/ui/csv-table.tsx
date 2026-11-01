@@ -21,6 +21,7 @@ import {
   filterRows,
   prepareSheet,
   sortRows,
+  summarizeRange,
   toTsv,
 } from "../lib/csv-grid.js";
 import type { CsvColumn, CsvSheet, CsvSort } from "../lib/csv-grid.js";
@@ -49,6 +50,8 @@ export type CsvTableLabels = {
   readonly blank: string;
   readonly untitledColumn: (position: number) => string;
   readonly selectAll: string;
+  readonly nameBox: string;
+  readonly cellContents: string;
   readonly count: (rows: number, columns: number) => string;
   readonly filteredCount: (
     matching: number,
@@ -59,6 +62,9 @@ export type CsvTableLabels = {
   readonly empty: string;
   readonly noMatches: string;
   readonly selected: (rows: number, columns: number) => string;
+  readonly average: (value: number) => string;
+  readonly cellCount: (cells: number) => string;
+  readonly sum: (value: number) => string;
   readonly copied: string;
   readonly copyFailed: string;
 };
@@ -79,6 +85,8 @@ const LABELS: CsvTableLabels = {
   blank: "(blank)",
   untitledColumn: (position) => `Column ${position.toLocaleString()}`,
   selectAll: "Select all",
+  nameBox: "Selected cell",
+  cellContents: "Cell contents",
   count: (rows, columns) =>
     `${counted(rows, "row", "rows")} · ${counted(columns, "column", "columns")}`,
   filteredCount: (matching, total, columns) =>
@@ -88,6 +96,9 @@ const LABELS: CsvTableLabels = {
   noMatches: "No rows match.",
   selected: (rows, columns) =>
     `${counted(rows, "row", "rows")} × ${counted(columns, "column", "columns")} selected`,
+  average: (value) => `Average: ${value.toLocaleString()}`,
+  cellCount: (cells) => `Count: ${cells.toLocaleString()}`,
+  sum: (value) => `Sum: ${value.toLocaleString()}`,
   copied: "Copied",
   copyFailed: "Couldn't copy. Your browser blocked the clipboard.",
 };
@@ -305,6 +316,8 @@ type Range = {
   readonly view: readonly number[];
   readonly anchor: Cell;
   readonly focus: Cell;
+  /** Picked by row numbers or column letters, and addressed as such: `3:5`, `B:D`. */
+  readonly whole?: "rows" | "columns";
 };
 
 const clamp = (value: number, min: number, max: number) =>
@@ -339,7 +352,8 @@ const keepTextUnselected = (event: MouseEvent) => {
  *
  * Rows are numbered as a spreadsheet numbers them: the header is row 1 and a
  * sort renumbers, while a filter hides rows and leaves gaps, so a number is
- * the row's place in the sorted, unfiltered sheet.
+ * the row's place in the sorted, unfiltered sheet and an address names the
+ * same rectangle the person sees.
  */
 function CsvGrid({
   parsed,
@@ -428,6 +442,14 @@ function CsvGrid({
       );
     },
     [sheet, view],
+  );
+
+  const summary = useMemo(
+    () =>
+      rowFrom === -1
+        ? null
+        : summarizeRange(sheet, view, [rowFrom, rowTo], [columnFrom, columnTo]),
+    [sheet, view, rowFrom, rowTo, columnFrom, columnTo],
   );
 
   const reportRef = useRef(onSelectionChange);
@@ -532,6 +554,7 @@ function CsvGrid({
           column: 0,
         },
         focus: { row, column: lastColumn },
+        whole: "rows",
       }));
     },
     [view, lastColumn],
@@ -548,6 +571,7 @@ function CsvGrid({
           extend && current?.view === view ? current.anchor.column : column,
       },
       focus: { row: view.length - 1, column },
+      whole: "columns",
     }));
   }
 
@@ -664,6 +688,26 @@ function CsvGrid({
 
   const rowLabel = (position: number) =>
     position === -1 ? 1 : (rank[view[position] ?? 0] ?? 0) + 2;
+  const address = (cell: Cell) =>
+    `${columnLetter(cell.column)}${rowLabel(cell.row)}`;
+  const nameBox =
+    selection === null
+      ? at.column >= 0
+        ? address(at)
+        : ""
+      : selection.whole === "rows"
+        ? `${rowLabel(rowFrom)}:${rowLabel(rowTo)}`
+        : selection.whole === "columns"
+          ? `${columnLetter(columnFrom)}:${columnLetter(columnTo)}`
+          : rowFrom === rowTo && columnFrom === columnTo
+            ? address({ row: rowFrom, column: columnFrom })
+            : `${address({ row: rowFrom, column: columnFrom })}:${address({ row: rowTo, column: columnTo })}`;
+  const contents =
+    at.column < 0
+      ? ""
+      : at.row === -1
+        ? (sheet.headers[at.column] ?? "")
+        : (sheet.rows[view[at.row] ?? -1]?.[at.column] ?? "");
 
   const notes = [
     view.length === sheet.rows.length
@@ -678,14 +722,36 @@ function CsvGrid({
       ? [wording.columnsOf(columnCount, parsed.headers.length)]
       : []),
   ];
+  const totals =
+    summary === null
+      ? []
+      : [
+          ...(summary.numbers > 0
+            ? [wording.average(summary.sum / summary.numbers)]
+            : []),
+          wording.cellCount(summary.count),
+          ...(summary.numbers > 0 ? [wording.sum(summary.sum)] : []),
+        ];
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-2">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col rounded-md border border-border bg-background text-xs">
-        <div
-          ref={scroller}
-          className="min-h-0 flex-[1_1_32rem] overflow-auto rounded-t-md"
-        >
+        <div className="flex items-stretch overflow-hidden rounded-t-md border-b border-border">
+          <input
+            readOnly
+            value={nameBox}
+            aria-label={wording.nameBox}
+            className="h-8 w-24 shrink-0 border-r border-border bg-background px-2 tabular-nums focus-visible:-outline-offset-2"
+          />
+          <textarea
+            readOnly
+            rows={1}
+            value={contents}
+            aria-label={wording.cellContents}
+            className="field-sizing-content max-h-20 min-h-8 min-w-0 flex-1 resize-none bg-background px-2 py-2 leading-4 break-words focus-visible:-outline-offset-2"
+          />
+        </div>
+        <div ref={scroller} className="min-h-0 flex-[1_1_32rem] overflow-auto">
           <div className="relative isolate w-max min-w-full">
             <table
               role="grid"
@@ -819,9 +885,19 @@ function CsvGrid({
           <p role="status" className={cn(copyFailed && "text-destructive")}>
             {copyFailed ? wording.copyFailed : copied ? wording.copied : ""}
           </p>
-          {selection === null ? null : (
-            <p className="ms-auto tabular-nums">
-              {wording.selected(rowTo - rowFrom + 1, columnTo - columnFrom + 1)}
+          {summary === null ? null : (
+            <p className="ms-auto flex flex-wrap gap-x-4 tabular-nums">
+              <span className="sr-only">
+                {wording.selected(
+                  rowTo - rowFrom + 1,
+                  columnTo - columnFrom + 1,
+                )}
+              </span>
+              {totals.map((total) => (
+                <span key={total} data-total>
+                  {total}
+                </span>
+              ))}
             </p>
           )}
         </div>
