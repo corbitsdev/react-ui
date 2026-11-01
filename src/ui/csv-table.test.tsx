@@ -125,6 +125,28 @@ describe("CsvTable interactive", () => {
     unmount();
   });
 
+  test("the name box and status bar address and total the sorted, filtered range", () => {
+    const { container, unmount } = mount({
+      text: "name,amount,note\nc,3,keep\na,1,keep\nb,2,drop\nd,4,keep",
+      interactive: true,
+      query: "keep",
+    });
+    const nameBox = () =>
+      container.querySelector<HTMLInputElement>("input[readonly]")?.value;
+    const totals = () =>
+      [...container.querySelectorAll("[data-total]")].map(
+        (total) => total.textContent,
+      );
+    click(header(container, "name"));
+    click(container.querySelector('[data-cell="0:1"]'));
+    expect(nameBox()).toBe("B2");
+    expect(container.querySelector("textarea")?.value).toBe("1");
+    click(container.querySelector('[data-cell="2:1"]'), { shiftKey: true });
+    expect(nameBox()).toBe("B2:B5");
+    expect(totals()).toEqual(["Average: 2.667", "Count: 3", "Sum: 8"]);
+    unmount();
+  });
+
   test("a failed copy is reported until the selection moves", async () => {
     const original = Object.getOwnPropertyDescriptor(navigator, "clipboard");
     Object.defineProperty(navigator, "clipboard", {
