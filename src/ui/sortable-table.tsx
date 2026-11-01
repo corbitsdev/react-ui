@@ -1,11 +1,12 @@
 "use client";
 
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/utils.js";
 import { EmptyState } from "./empty-state.js";
+import { SortHeaderButton, ariaSort } from "./sort-header-button.js";
+import type { SortDirection } from "./sort-header-button.js";
 import {
   Table,
   TableBody,
@@ -15,7 +16,7 @@ import {
   TableRow,
 } from "./table.js";
 
-export type SortDirection = "asc" | "desc";
+export type { SortDirection } from "./sort-header-button.js";
 
 export type SortableColumn<T> = {
   /** Stable id — the React key and the sort key. */
@@ -109,49 +110,26 @@ export function SortableTable<T>({
       <TableHeader>
         <TableRow>
           {columns.map((column) => {
-            const active = sort?.key === column.key;
-            const sortable = column.sortValue !== undefined;
+            const direction = sort?.key === column.key ? sort.direction : null;
             return (
               <TableHead
                 key={column.key}
                 scope="col"
-                aria-sort={
-                  active
-                    ? sort.direction === "asc"
-                      ? "ascending"
-                      : "descending"
-                    : undefined
-                }
+                aria-sort={ariaSort(direction)}
                 className={cn(
                   column.align === "right" && "text-right",
                   column.className,
                 )}
               >
-                {sortable ? (
-                  <button
-                    type="button"
+                {column.sortValue === undefined ? (
+                  column.header
+                ) : (
+                  <SortHeaderButton
+                    direction={direction}
                     onClick={() => toggle(column.key)}
-                    className={cn(
-                      "inline-flex items-center gap-1 rounded-sm transition-colors hover:text-foreground",
-                      !active && "text-muted-foreground",
-                    )}
                   >
                     {column.header}
-                    {active ? (
-                      sort.direction === "asc" ? (
-                        <ChevronUp className="size-3.5" aria-hidden />
-                      ) : (
-                        <ChevronDown className="size-3.5" aria-hidden />
-                      )
-                    ) : (
-                      <ChevronsUpDown
-                        className="size-3.5 opacity-50"
-                        aria-hidden
-                      />
-                    )}
-                  </button>
-                ) : (
-                  column.header
+                  </SortHeaderButton>
                 )}
               </TableHead>
             );
