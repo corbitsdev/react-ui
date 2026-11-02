@@ -10,7 +10,7 @@ describe("safeMediaSrc", () => {
       "blob:https://example.com/0f6c1b52",
     ]) {
       expect(safeMediaSrc(src, "media")).toBe(src);
-      expect(safeMediaSrc(src, "frame")).toBe(src);
+      expect(safeMediaSrc(src, "link")).toBe(src);
     }
   });
 
@@ -25,16 +25,18 @@ describe("safeMediaSrc", () => {
     );
   });
 
-  test("a frame never takes a data: URL", () => {
-    expect(safeMediaSrc("data:image/png;base64,AAAA", "frame")).toBe(undefined);
-    expect(safeMediaSrc("data:application/pdf;base64,AAAA", "frame")).toBe(
+  test("a link never takes a data: URL", () => {
+    expect(safeMediaSrc("data:image/svg+xml;base64,PHN2Zy8+", "link")).toBe(
+      undefined,
+    );
+    expect(safeMediaSrc("data:application/pdf;base64,AAAA", "link")).toBe(
       undefined,
     );
   });
 
   test("script and relative URLs are refused", () => {
     expect(safeMediaSrc("javascript:alert(1)", "media")).toBe(undefined);
-    expect(safeMediaSrc("JavaScript:alert(1)", "frame")).toBe(undefined);
+    expect(safeMediaSrc("JavaScript:alert(1)", "link")).toBe(undefined);
     expect(safeMediaSrc("/files/a.png", "media")).toBe(undefined);
   });
 });
