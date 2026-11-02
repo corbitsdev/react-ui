@@ -164,7 +164,10 @@ export function usePromptInput({
       if (
         event.key === "Escape" &&
         event.target === element &&
-        !event.isComposing
+        // 229 is what Safari reports for the key that ends a composition,
+        // after `isComposing` has already turned false.
+        !event.isComposing &&
+        event.keyCode !== 229
       ) {
         event.preventDefault();
       }
