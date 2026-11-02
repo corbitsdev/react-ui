@@ -200,7 +200,7 @@ Everything imports from `@corbits/react-ui`, except rows marked "optional peer",
 | `ToolApproval`             | Approve, approve always or deny a tool call waiting on a person                                                     |
 | `GeneratedImages`          | Images an agent made, with placeholders while generating                                                            |
 | `Sources`                  | Numbered citations for an answer                                                                                    |
-| `MediaViewer`              | Pictures, video, audio, PDFs and text full size; `useMediaViewer`                                                   |
+| `MediaViewer`              | Pictures, video, audio and text full size; `useMediaViewer`                                                         |
 | `Attachments`              | Files as a stack, tiles or a list; `useAttachments`                                                                 |
 | `AttachmentDropZone`       | Area that takes dropped files and folders; `useFileDrop`                                                            |
 | `PromptInput`              | The message box: `PromptInputTextarea`, `PromptInputSubmit`, `PromptInputSuggestions`; `usePromptInput`             |
