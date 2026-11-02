@@ -554,8 +554,6 @@ describe("MessageActions", () => {
   });
 
   test("the overflow menu mounts its items only while open", () => {
-    // React 18 drops `ref` from a function component's props: only a
-    // forwardRef component receives it there.
     expect(MessageAction.$$typeof).toBe(Symbol.for("react.forward_ref"));
     const onPin = mock(() => {});
     const mounted = render(

@@ -27,12 +27,6 @@ const isProduction =
 const DEFAULT_MIN_WIDTH_PX = 320;
 const DEFAULT_MAIN_MIN_WIDTH_PX = 440;
 
-// React 18 does not know `inert` and drops a boolean for it, while React 19
-// reads it as a boolean. A non-empty string other than "true" or "false"
-// reaches the DOM on both without a warning; the record type is wider than
-// React 19's boolean-only `inert` to allow it.
-const HIDDEN_PANE_PROPS: Record<string, string> = { inert: "inert" };
-
 type PanelContextValue = {
   readonly panelId: string;
   readonly handleProps: ResizableHandleProps;
@@ -420,7 +414,7 @@ export function PanelPane({ value, className, ...props }: PanelPaneProps) {
     <div
       data-slot="panel-pane"
       data-state={shown ? "active" : "inactive"}
-      {...(shown ? null : HIDDEN_PANE_PROPS)}
+      inert={!shown}
       className={cn(
         "col-start-1 row-start-1 min-h-0 min-w-0 overflow-y-auto",
         !shown && "invisible",

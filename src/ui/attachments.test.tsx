@@ -134,9 +134,7 @@ describe("Attachments", () => {
     unmount();
   });
 
-  // React 18 hands a function component no `ref` unless it is wrapped in
-  // `forwardRef`; React 19, which these tests run on, hands it either way.
-  test("the list, an attachment and its preview take refs on React 18 too", () => {
+  test("the list, an attachment and its preview take refs", () => {
     for (const part of [Attachments, Attachment, AttachmentPreview]) {
       expect(part.$$typeof).toBe(Symbol.for("react.forward_ref"));
     }
