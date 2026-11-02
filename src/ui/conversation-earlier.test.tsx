@@ -213,4 +213,43 @@ describe("ConversationEarlier", () => {
       container.querySelector("[role='log']"),
     );
   });
+
+  test("a retry that ends the history leaves no focus to restore later", () => {
+    const { container, rerender } = render(
+      <Marker stalled onReachStart={() => {}} />,
+    );
+    const button = container.querySelector("button");
+    if (button === null) throw new Error("expected the retry button");
+    button.focus();
+    // The retry brings the last page in the same commit: the marker goes.
+    act(() => button.click());
+    rerender(<Marker hasEarlier={false} onReachStart={() => {}} />);
+    expect(marker(container)).toBeNull();
+    act(() => (document.activeElement as HTMLElement | null)?.blur());
+    expect(document.activeElement).toBe(document.body);
+
+    // Older items turn up again, and a later load stalls and recovers.
+    rerender(<Marker stalled onReachStart={() => {}} />);
+    rerender(<Marker loading onReachStart={() => {}} />);
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  test("a retry that ends the history while stalled leaves no focus to restore later", () => {
+    const { container, rerender } = render(
+      <Marker stalled onReachStart={() => {}} />,
+    );
+    const button = container.querySelector("button");
+    if (button === null) throw new Error("expected the retry button");
+    button.focus();
+    // Stalled throughout: only the marker's coming and going can reset it.
+    act(() => button.click());
+    rerender(<Marker stalled hasEarlier={false} onReachStart={() => {}} />);
+    expect(marker(container)).toBeNull();
+    act(() => (document.activeElement as HTMLElement | null)?.blur());
+    expect(document.activeElement).toBe(document.body);
+
+    rerender(<Marker stalled onReachStart={() => {}} />);
+    rerender(<Marker loading onReachStart={() => {}} />);
+    expect(document.activeElement).toBe(document.body);
+  });
 });

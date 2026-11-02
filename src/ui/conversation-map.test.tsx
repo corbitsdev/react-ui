@@ -534,6 +534,17 @@ describe("ConversationMap", () => {
     mounted.unmount();
   });
 
+  test("a focused tick whose rail goes with its turn kept hands focus to the log", () => {
+    const mounted = render(<Chat />);
+    act(() => tick(mounted.container, "Fourth question").focus());
+    mounted.rerender(<Chat turns={TURNS.slice(3)} items={["q4"]} />);
+    expect(
+      mounted.container.querySelector("[data-slot='conversation-map']"),
+    ).toBeNull();
+    expect(document.activeElement).toBe(scroller(mounted.container));
+    mounted.unmount();
+  });
+
   test("scrolling the rail measures the previewed tick in the handler, not in render", () => {
     const mounted = render(
       <StrictMode>

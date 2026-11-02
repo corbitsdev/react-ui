@@ -156,6 +156,44 @@ test.describe("conversation map", () => {
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
 
+  test("moving along the rail by keyboard scrolls only the rail", async ({
+    page,
+  }) => {
+    await page.goto("/conversation-map-tall-page");
+    await expect(current(page)).toHaveAccessibleName("Question 79");
+    await expect
+      .poll(() => railState(page))
+      .toEqual({ overflows: true, scrolled: true, showsCurrent: true });
+    // Focus the tab stop without scrolling, so the page is still at the top
+    // and the map below the fold.
+    await tick(page, "Question 79").evaluate((element) =>
+      (element as HTMLElement).focus({ preventScroll: true }),
+    );
+    /** Whether the rail shows the focused tick. */
+    const showsFocused = () =>
+      page
+        .locator("[data-slot='conversation-map-rail']")
+        .evaluate((element) => {
+          const view = element.getBoundingClientRect();
+          const box = document.activeElement?.getBoundingClientRect();
+          return (
+            box !== undefined &&
+            box.top >= view.top - 1 &&
+            box.bottom <= view.bottom + 1
+          );
+        });
+
+    await page.keyboard.press("Home");
+    await expect(tick(page, "Question 0")).toBeFocused();
+    await expect.poll(showsFocused).toBe(true);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+    await page.keyboard.press("End");
+    await expect(tick(page, "Question 79")).toBeFocused();
+    await expect.poll(showsFocused).toBe(true);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  });
+
   test("a rail that shrinks keeps the current tick in view", async ({
     page,
   }) => {

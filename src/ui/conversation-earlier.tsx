@@ -70,10 +70,14 @@ export const ConversationEarlier = forwardRef<
 
   // A retry swaps the button for the loading text: hold focus on the marker
   // rather than let it fall to the body, and hand it back to the button if
-  // the retry stalls again.
+  // the retry stalls again. A retry that ends the history takes the marker
+  // with it, leaving nothing to restore.
   useLayoutEffect(() => {
     const element = markerRef.current;
-    if (element === null) return;
+    if (element === null) {
+      retried.current = false;
+      return;
+    }
     if (stalled) {
       if (document.activeElement === element) {
         element.querySelector("button")?.focus();
@@ -86,7 +90,7 @@ export const ConversationEarlier = forwardRef<
     if (active === null || active === document.body) {
       element.focus({ preventScroll: true });
     }
-  }, [stalled]);
+  }, [stalled, hasEarlier]);
 
   // Once the last page has landed the marker goes away; if it held focus,
   // hand focus to the log so it doesn't fall to the body.
