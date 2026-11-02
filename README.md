@@ -289,37 +289,37 @@ Everything imports from `@corbits/react-ui`, except rows marked "optional peer",
 
 #### Controls
 
-| Component           | What it is                                                      |
-| ------------------- | --------------------------------------------------------------- |
-| `Button`            | Button with variants and sizes                                  |
-| `Input`             | Text input                                                      |
-| `Textarea`          | Multi-line input                                                |
-| `Select`            | Native select                                                   |
-| `Checkbox`          | Checkbox                                                        |
-| `SelectionCheckbox` | Row-selection checkbox                                          |
-| `Switch`            | On/off toggle                                                   |
-| `FileInput`         | File picker                                                     |
-| `Tabs`              | Tab strip                                                       |
-| `ViewToggle`        | Grid or rows segmented control                                  |
-| `FilterBar`         | Row of filters with an active-filter summary                    |
-| `FilterChip`        | One toggleable filter                                           |
-| `KindCardGrid`      | Selectable card grid                                            |
-| `ActionBar`         | Grouped view controls, inline or floating                       |
-| `BulkActionBar`     | Actions for a multi-row selection                               |
-| `Table`             | Table primitives                                                |
-| `SortableTable`     | Table with sortable columns                                     |
-| `Badge`             | Status label                                                    |
-| `StatusDot`         | Colored status dot                                              |
-| `Avatar`            | Initials or image avatar                                        |
-| `ProviderMark`      | Which service an action goes through                            |
-| `Skeleton`          | Loading placeholder                                             |
-| `Dialog`            | Modal dialog (optional peer, `ui/dialog`)                       |
-| `CommandPalette`    | Global search overlay (optional peer, `ui/command-palette`)     |
-| `Menu`              | Dropdown menu (optional peer, `ui/menu`)                        |
-| `InfoTooltip`       | Hover info tooltip (optional peer, `ui/tooltip`)                |
-| `Toaster`           | Toast host; call `toast()` anywhere (optional peer, `ui/toast`) |
-| `ThemeProvider`     | Persists light, dark or system mode and presets                 |
-| `ThemeToggle`       | Light, dark or system switch                                    |
+| Component                | What it is                                                                             |
+| ------------------------ | -------------------------------------------------------------------------------------- |
+| `Button`                 | Button with variants and sizes                                                         |
+| `Input`                  | Text input                                                                             |
+| `Textarea`               | Multi-line input                                                                       |
+| `Select`                 | Native select                                                                          |
+| `Checkbox`               | Checkbox                                                                               |
+| `SelectionCheckbox`      | Row-selection checkbox                                                                 |
+| `Switch`                 | On/off toggle                                                                          |
+| `FileInput`              | File picker                                                                            |
+| `Tabs`                   | Tab strip                                                                              |
+| `ViewToggle`             | Grid or rows segmented control                                                         |
+| `FilterBar`              | Row of filters with an active-filter summary                                           |
+| `FilterChip`             | One toggleable filter                                                                  |
+| `KindCardGrid`           | Selectable card grid                                                                   |
+| `ActionBar`              | Grouped view controls, inline or floating                                              |
+| `BulkActionBar`          | Actions for a multi-row selection                                                      |
+| `Table`                  | Table primitives                                                                       |
+| `SortableTable`          | Table with sortable columns                                                            |
+| `Badge`                  | Status label                                                                           |
+| `StatusDot`              | Colored status dot                                                                     |
+| `Avatar`                 | Initials or image avatar                                                               |
+| `ProviderMark`           | Which service an action goes through                                                   |
+| `Skeleton`               | Loading placeholder                                                                    |
+| `Dialog`                 | Modal dialog (optional peer, `ui/dialog`)                                              |
+| `CommandPalette`         | Global search overlay (optional peer, `ui/command-palette`)                            |
+| `Menu`                   | Dropdown menu (optional peer, `ui/menu`)                                               |
+| `Tooltip`, `InfoTooltip` | General tooltip around any trigger, and hover info glyph (optional peer, `ui/tooltip`) |
+| `Toaster`                | Toast host; call `toast()` anywhere (optional peer, `ui/toast`)                        |
+| `ThemeProvider`          | Persists light, dark or system mode and presets                                        |
+| `ThemeToggle`            | Light, dark or system switch                                                           |
 
 ## For coding agents
 
