@@ -154,8 +154,8 @@ export function usePromptInput({
   // sees in the document's capture phase, before React's handlers run,
   // unless the event is already marked handled. While the list is open, mark
   // a normal Escape from the window's capture phase and let it propagate so
-  // `onKeyDown` can close the list. Stop the composition-ending key instead,
-  // without preventDefault, so the dialog never sees it.
+  // `onKeyDown` can close the list. Stop a composing Escape instead, without
+  // preventDefault, so the dialog never sees it.
   useEffect(() => {
     const element = textareaRef.current;
     if (!listOpen || element === null) return;
@@ -165,11 +165,11 @@ export function usePromptInput({
       if (event.key !== "Escape" || event.target !== element) return;
       // 229 is what Safari reports for the key that ends a composition,
       // after `isComposing` has already turned false.
-      if (event.keyCode === 229) {
+      if (event.isComposing || event.keyCode === 229) {
         event.stopPropagation();
         return;
       }
-      if (!event.isComposing) event.preventDefault();
+      event.preventDefault();
     };
     view.addEventListener("keydown", claimEscape, { capture: true });
     return () =>

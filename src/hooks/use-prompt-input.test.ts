@@ -293,11 +293,15 @@ describe("usePromptInput", () => {
     const view = mountPrompt();
     try {
       view.type("@a");
-      view.press("Escape", { isComposing: true });
+      expect(view.press("Escape", { isComposing: true, keyCode: 27 })).toBe(
+        true,
+      );
+      expect(seen).toEqual([]);
+      expect(view.prompt.activeSuggestion?.id).toBe("ada");
       view.press("Escape");
       expect(view.prompt.suggestions).toEqual([]);
       view.press("Escape");
-      expect(seen).toEqual([false, true, false]);
+      expect(seen).toEqual([true, false]);
     } finally {
       view.unmount();
       document.removeEventListener("keydown", layer, { capture: true });
