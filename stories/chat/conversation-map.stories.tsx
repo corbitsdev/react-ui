@@ -77,10 +77,12 @@ function MappedConversation({
 }) {
   const turns = turnsOf(sample.messages);
   return (
-    <div className="flex h-[30rem] max-w-2xl flex-col overflow-hidden rounded-lg border border-border bg-background">
-      <Conversation>
+    // Drag the corner: the map shows only while the conversation scrolls, and
+    // the column makes room for it only then.
+    <div className="flex h-[30rem] min-h-40 max-w-2xl resize-y flex-col overflow-hidden rounded-lg border border-border bg-background">
+      <Conversation className="[&[data-overflowing]_[data-slot=conversation-column]]:pl-12">
         <ConversationMap turns={turns} />
-        <ConversationContent className="[&>[data-slot=conversation-column]]:pl-12">
+        <ConversationContent>
           {sample.messages.map((message) => (
             <ConversationItem key={message.id} itemId={message.id}>
               <Row message={message} />
@@ -93,7 +95,8 @@ function MappedConversation({
   );
 }
 
-/** Two turns: a tick each. Point at one to preview it, click to jump. */
+/** Two turns that fit: no map, since there is nowhere to jump to. Drag the
+ * pane shorter until they scroll and it appears, a tick each. */
 export const FewTurns = () => <MappedConversation sample={shortChat} />;
 
 /** 150 turns: the ticks squeeze, then the rail scrolls and keeps the current

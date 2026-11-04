@@ -6,6 +6,7 @@ import {
   captureAnchor,
   clampScrollTop,
   classifyScroll,
+  contentOverflows,
   distanceFromEnd,
   extendGesture,
   glideDuration,
@@ -184,6 +185,25 @@ describe("distanceFromEnd", () => {
         reserved: 300,
       }),
     ).toBe(-300);
+  });
+});
+
+describe("contentOverflows", () => {
+  test("only content taller than the view overflows, reserve excluded", () => {
+    expect(contentOverflows({ scrollHeight: 2000, clientHeight: 600 })).toBe(
+      true,
+    );
+    expect(contentOverflows({ scrollHeight: 400, clientHeight: 600 })).toBe(
+      false,
+    );
+    // Content that fits, padded out by the reserve a settled item needs.
+    expect(
+      contentOverflows({ scrollHeight: 900, clientHeight: 600, reserved: 500 }),
+    ).toBe(false);
+    // Subpixel rounding is not overflow.
+    expect(contentOverflows({ scrollHeight: 601, clientHeight: 600 })).toBe(
+      false,
+    );
   });
 });
 

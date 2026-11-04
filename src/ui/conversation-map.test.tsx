@@ -63,16 +63,40 @@ class FakeIntersectionObserver {
 
 const original = globalThis.IntersectionObserver;
 
+/** happy-dom does no layout, so every log would fit and hide the map: unless
+ * a test sets its own, each log is a 600px view over 10_000px of content. */
+const SIZES = { scrollHeight: 10_000, clientHeight: 600 } as const;
+const happyDomSizes = Object.keys(SIZES).map(
+  (name) =>
+    [
+      name,
+      Object.getOwnPropertyDescriptor(HTMLElement.prototype, name),
+    ] as const,
+);
+
 beforeEach(() => {
   FakeIntersectionObserver.live.clear();
   FakeIntersectionObserver.created = 0;
   // A stand-in with the members the hook calls.
   globalThis.IntersectionObserver =
     FakeIntersectionObserver as unknown as typeof IntersectionObserver;
+  for (const [name, size] of Object.entries(SIZES)) {
+    Object.defineProperty(HTMLElement.prototype, name, {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.getAttribute("role") === "log" ? size : 0;
+      },
+    });
+  }
 });
 
 afterEach(() => {
   globalThis.IntersectionObserver = original;
+  for (const [name, descriptor] of happyDomSizes) {
+    if (descriptor === undefined)
+      Reflect.deleteProperty(HTMLElement.prototype, name);
+    else Object.defineProperty(HTMLElement.prototype, name, descriptor);
+  }
 });
 
 function onlyObserver(): FakeIntersectionObserver {
@@ -871,6 +895,87 @@ describe("useReadingPosition", () => {
     act(() => onlyObserver().report(["q2", "q2-reply"]));
     await nextFrame();
     expect(states(mounted.container)[0]).toBe("faint");
+    mounted.unmount();
+  });
+});
+
+describe("ConversationMap and a conversation that fits", () => {
+  const OriginalResizeObserver = globalThis.ResizeObserver;
+  let resized: (() => void)[] = [];
+  beforeEach(() => {
+    resized = [];
+    globalThis.ResizeObserver = class {
+      constructor(callback: () => void) {
+        resized.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+  });
+  afterEach(() => {
+    globalThis.ResizeObserver = OriginalResizeObserver;
+  });
+  /** The log's content and view resize to these heights. */
+  const resize = (log: HTMLElement, content: number, view: number) =>
+    act(() => {
+      Object.defineProperty(log, "scrollHeight", {
+        configurable: true,
+        value: content,
+      });
+      Object.defineProperty(log, "clientHeight", {
+        configurable: true,
+        value: view,
+      });
+      for (const callback of resized) callback();
+    });
+  const map = (container: HTMLElement) => container.querySelector("nav");
+
+  test("shows only while the conversation is taller than its view", () => {
+    const mounted = render(<Chat />);
+    const log = scroller(mounted.container);
+    const root = mounted.container.querySelector("[data-slot='conversation']");
+
+    // Two short turns that fit: nowhere to jump to.
+    resize(log, 400, 600);
+    expect(map(mounted.container)).toBeNull();
+    expect(root?.hasAttribute("data-overflowing")).toBe(false);
+
+    // A reply grows past the view.
+    resize(log, 1_200, 600);
+    expect(map(mounted.container)).not.toBeNull();
+    expect(root?.hasAttribute("data-overflowing")).toBe(true);
+
+    // The window grows until it all fits again.
+    resize(log, 1_200, 1_400);
+    expect(map(mounted.container)).toBeNull();
+
+    // The content shrinks below a view that stays the same.
+    resize(log, 2_000, 1_400);
+    expect(map(mounted.container)).not.toBeNull();
+    resize(log, 900, 1_400);
+    expect(map(mounted.container)).toBeNull();
+    mounted.unmount();
+  });
+
+  test("a focused tick whose conversation comes to fit hands focus to the log", () => {
+    const mounted = render(<Chat />);
+    const log = scroller(mounted.container);
+    act(() => tick(mounted.container, "Second question").focus());
+    expect(
+      mounted.container.querySelector("[data-slot='conversation-map-preview']"),
+    ).not.toBeNull();
+
+    resize(log, 400, 600);
+    expect(map(mounted.container)).toBeNull();
+    expect(document.activeElement).toBe(log);
+
+    // Back again, the rail opens with no preview left over from before.
+    resize(log, 2_000, 600);
+    expect(map(mounted.container)).not.toBeNull();
+    expect(
+      mounted.container.querySelector("[data-slot='conversation-map-preview']"),
+    ).toBeNull();
     mounted.unmount();
   });
 });
