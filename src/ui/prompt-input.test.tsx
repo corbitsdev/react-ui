@@ -130,8 +130,6 @@ describe("PromptInput", () => {
   });
 
   test("the textarea forwards a host ref", () => {
-    // React 18 drops `ref` from a function component's props: only a
-    // forwardRef component receives it there.
     expect(PromptInputTextarea.$$typeof).toBe(Symbol.for("react.forward_ref"));
     const ref = createRef<HTMLTextAreaElement>();
     const container = document.createElement("div");
