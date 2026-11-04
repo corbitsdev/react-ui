@@ -250,13 +250,21 @@ describe("useResizable", () => {
     mounted.unmount();
   });
 
-  test("a controlled parent that ignores a change keeps its width", () => {
+  test("a controlled parent that ignores a change keeps its width", async () => {
     const mounted = mount({ width: 700 });
     expect(shownWidth(mounted)).toBe(700);
     mounted.press("ArrowLeft");
     expect(mounted.changes).toEqual([716]);
     expect(shownWidth(mounted)).toBe(700);
     mounted.rerender({ width: 716 });
+    expect(shownWidth(mounted)).toBe(716);
+
+    mounted.pointer("pointerdown", 500);
+    mounted.pointer("pointermove", 400);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(shownWidth(mounted)).toBe(816);
+    mounted.pointer("pointerup", 400);
+    expect(mounted.changes).toEqual([716, 816]);
     expect(shownWidth(mounted)).toBe(716);
     mounted.unmount();
   });
@@ -341,6 +349,25 @@ describe("useResizable", () => {
     expect(mounted.changes).toEqual([]);
     mounted.pointer("pointerup", 400);
     expect(mounted.changes).toEqual([744]);
+    mounted.unmount();
+  });
+
+  test("a drag cut short without a release puts the committed width back", async () => {
+    const mounted = mount({ defaultWidth: 600 });
+    mounted.pointer("pointerdown", 500);
+    mounted.pointer("pointermove", 400);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(mounted.panel.style.getPropertyValue(RESIZABLE_WIDTH_VAR)).toBe(
+      "700px",
+    );
+    // A new press abandons the drag in flight; it never moves, so it commits
+    // nothing either.
+    mounted.pointer("pointerdown", 400);
+    mounted.pointer("pointerup", 400);
+    expect(mounted.changes).toEqual([]);
+    expect(mounted.panel.style.getPropertyValue(RESIZABLE_WIDTH_VAR)).toBe(
+      "600px",
+    );
     mounted.unmount();
   });
 
