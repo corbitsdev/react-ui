@@ -120,14 +120,6 @@ export const ConversationMap = forwardRef<HTMLElement, ConversationMapProps>(
     const [focusedId, setFocusedId] = useState<string | null>(null);
     const previewTextId = useId();
 
-    // The map hid, or the previewed turn left `turns`: the tick unmounted
-    // with no blur or pointer leave to close its preview, which would come
-    // back with the turn. Set while rendering (react.dev, "Storing
-    // information from previous renders").
-    if (preview !== null && (hidden || !turnIds.includes(preview.id))) {
-      setPreview(null);
-    }
-
     // Clamped once the card has a height, so it stays beside the rail.
     useLayoutEffect(() => {
       const card = cardRef.current;
@@ -167,8 +159,12 @@ export const ConversationMap = forwardRef<HTMLElement, ConversationMapProps>(
     // The focused tick's turn left `turns` (a history window trimmed it, the
     // host deleted it), or the rail hid with it: its button is gone, focus fell
     // to the body, and React reports no blur for it. Hand focus to the rail's
-    // tab stop, or to the log once the rail itself is gone.
+    // tab stop, or to the log once the rail itself is gone. Clear a preview
+    // whose tick left the same way before moving focus.
     useLayoutEffect(() => {
+      if (preview !== null && (hidden || !turnIds.includes(preview.id))) {
+        setPreview(null);
+      }
       if (focusedId === null || (!hidden && turnIds.includes(focusedId))) {
         return;
       }
@@ -179,7 +175,7 @@ export const ConversationMap = forwardRef<HTMLElement, ConversationMapProps>(
         ...(railRef.current?.querySelectorAll<HTMLElement>(TICK) ?? []),
       ].find((tick) => tick.tabIndex === 0);
       (stop ?? scrollContainer())?.focus({ preventScroll: true });
-    }, [focusedId, hidden, turnIds, scrollContainer]);
+    }, [focusedId, hidden, preview, turnIds, scrollContainer]);
 
     // Escape dismisses a preview wherever focus is: one the mouse opened
     // covers the content while focus stays in the composer or the log.
