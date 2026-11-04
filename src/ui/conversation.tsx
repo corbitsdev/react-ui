@@ -24,6 +24,7 @@ import {
   captureAnchor,
   clampScrollTop,
   classifyScroll,
+  contentOverflows,
   distanceFromEnd,
   extendGesture,
   glideDuration,
@@ -95,6 +96,10 @@ export type ConversationScrollToItemOptions = {
 export type ConversationContextValue = {
   /** The end of the content is in view (within a few pixels). */
   readonly atBottom: boolean;
+  /** The content is taller than the view, so the reader can scroll it; the
+   * space `settle` reserves after the content does not count. `false` while
+   * no `ConversationContent` is mounted, and on the server. */
+  readonly overflowing: boolean;
   readonly items: ConversationItems;
   /** Glides an item's top to the top of the view. An id with no mounted item
    * changes nothing: a follow and any glide in flight carry on. */
@@ -274,6 +279,8 @@ function createConversationEngine() {
   let frame = 0;
   let atBottom = true;
   const atBottomListeners = new Set<() => void>();
+  let overflowing = false;
+  const overflowingListeners = new Set<() => void>();
   const scrollListeners = new Set<
     (snapshot: ConversationScrollSnapshot) => void
   >();
@@ -409,6 +416,25 @@ function createConversationEngine() {
     if (Math.abs(next - reserved) <= 0.5) return;
     reserved = next;
     spacer.style.height = `${next}px`;
+  };
+
+  const setOverflowing = (next: boolean) => {
+    if (next === overflowing) return;
+    overflowing = next;
+    notifyAll(overflowingListeners, (listener) => listener());
+  };
+
+  /** Read on resize, not per frame: only a change of size moves the content's
+   * height or the view's. */
+  const measureOverflow = () => {
+    if (scroller === null) return;
+    setOverflowing(
+      contentOverflows({
+        scrollHeight: scroller.scrollHeight,
+        clientHeight: scroller.clientHeight,
+        reserved,
+      }),
+    );
   };
 
   const notifyScroll = () => {
@@ -584,6 +610,7 @@ function createConversationEngine() {
     resizedAt = performance.now();
     updateReserve();
     restore();
+    measureOverflow();
     scheduleAtBottom();
   };
 
@@ -646,6 +673,7 @@ function createConversationEngine() {
       window.addEventListener("pointerup", onPointerUp);
       window.addEventListener("pointercancel", onPointerUp);
       updateReserve();
+      measureOverflow();
       // A remounted log opens where the last one left the reader: at the end
       // while following, otherwise with the anchored items where they were.
       restore();
@@ -676,6 +704,7 @@ function createConversationEngine() {
         scrolledByReader = false;
         scroller = null;
         spacer = null;
+        setOverflowing(false);
       };
     },
     setPolicy(next: ConversationScrollPolicy) {
@@ -734,6 +763,13 @@ function createConversationEngine() {
       };
     },
     getAtBottom: () => atBottom,
+    subscribeOverflowing(listener: () => void) {
+      overflowingListeners.add(listener);
+      return () => {
+        overflowingListeners.delete(listener);
+      };
+    },
+    getOverflowing: () => overflowing,
     scrollContainer: () => scroller,
     subscribeScroll(listener: (snapshot: ConversationScrollSnapshot) => void) {
       scrollListeners.add(listener);
@@ -772,11 +808,19 @@ function useMergedRef<T>(own: RefCallback<T>, theirs: Ref<T> | undefined) {
   );
 }
 
+function useOverflowing(engine: ConversationEngine): boolean {
+  return useSyncExternalStore(
+    engine.subscribeOverflowing,
+    engine.getOverflowing,
+    () => false,
+  );
+}
+
 /**
  * The scroll state shared under a `Conversation`. The functions and `items`
- * keep their identity for the conversation's lifetime; `atBottom` is the only
- * value that changes, and a component calling this re-renders only when it
- * flips, never per scroll.
+ * keep their identity for the conversation's lifetime; `atBottom` and
+ * `overflowing` are the only values that change, and a component calling this
+ * re-renders only when one flips, never per scroll.
  *
  * For per-scroll work without re-rendering (a reading position, a history
  * window that loads near the top and holds still while the reader is up):
@@ -798,9 +842,11 @@ export function useConversation(): ConversationContextValue {
     engine.getAtBottom,
     () => true,
   );
+  const overflowing = useOverflowing(engine);
   return useMemo(
     () => ({
       atBottom,
+      overflowing,
       items: engine.items,
       scrollToItem: engine.scrollToItem,
       scrollToEnd: engine.scrollToEnd,
@@ -809,7 +855,7 @@ export function useConversation(): ConversationContextValue {
       scrollContainer: engine.scrollContainer,
       subscribeScroll: engine.subscribeScroll,
     }),
-    [engine, atBottom],
+    [engine, atBottom, overflowing],
   );
 }
 
@@ -833,6 +879,10 @@ export type ConversationProps = ComponentProps<"div"> & {
  * `ConversationItem` around each thing the host renders, and a
  * `ConversationScrollButton` beside it.
  *
+ * While the content is taller than the view, the root carries
+ * `data-overflowing`, so the host can style around what only shows then (the
+ * room a `ConversationMap` needs, for one).
+ *
  * Only the reader's own scrolling (wheel, touch, scroll keys, the scrollbar),
  * or the page moving the view away from the end (focus, find in page), breaks
  * a follow; content resizing never scrolls what they are reading. Jumps are
@@ -847,6 +897,7 @@ export function Conversation({
 }: ConversationProps) {
   const [engine] = useState(createConversationEngine);
   const reducedMotion = usePrefersReducedMotion();
+  const overflowing = useOverflowing(engine);
 
   useLayoutEffect(() => {
     engine.setReducedMotion(reducedMotion);
@@ -863,6 +914,7 @@ export function Conversation({
       <div
         data-slot="conversation"
         data-scroll-policy={scrollPolicy}
+        data-overflowing={overflowing ? "" : undefined}
         className={cn("relative flex min-h-0 flex-1 flex-col", className)}
         {...props}
       >

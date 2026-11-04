@@ -82,8 +82,11 @@ function keepInView(
  *
  * Place it inside `Conversation` but outside `ConversationContent` (the log
  * is a live region, and the rail must not scroll with it). It sits over the
- * content's left edge, so give the content column room, e.g.
- * `[&>[data-slot=conversation-column]]:pl-12` on `ConversationContent`.
+ * content's left edge, so give the content column room while it can show:
+ * `Conversation` carries `data-overflowing` while the conversation scrolls,
+ * e.g.
+ * `[&[data-overflowing]_[data-slot=conversation-column]]:pl-12` on
+ * `Conversation`.
  *
  * Map only mounted turns. A tick for a turn whose item is not mounted (a
  * windowed or virtualised list) does not jump, even when `onSelect` mounts it.
@@ -91,7 +94,8 @@ function keepInView(
  * The rail is one tab stop; the arrow keys, Home and End move along it, and
  * Escape dismisses the preview. When the rail overflows, it scrolls to keep
  * the current tick in view; only the rail moves, never the page. Renders
- * nothing for fewer than two turns.
+ * nothing for fewer than two turns, or while the conversation fits its view
+ * and there is nowhere to jump to.
  */
 export const ConversationMap = forwardRef<HTMLElement, ConversationMapProps>(
   function ConversationMap(
@@ -109,12 +113,12 @@ export const ConversationMap = forwardRef<HTMLElement, ConversationMapProps>(
   ) {
     const turnIds = useMemo(() => turns.map((turn) => turn.id), [turns]);
     const { currentId, visibleIds, jumpTo } = useReadingPosition(turnIds);
-    const { scrollContainer } = useConversation();
+    const { scrollContainer, overflowing } = useConversation();
     const currentRef = useRef<HTMLButtonElement>(null);
     const railRef = useRef<HTMLDivElement>(null);
     const placedRef = useRef(false);
     const reducedMotion = usePrefersReducedMotion();
-    const hidden = turns.length < 2;
+    const hidden = turns.length < 2 || !overflowing;
     const cardRef = useRef<HTMLDivElement>(null);
     const [preview, setPreview] = useState<Preview | null>(null);
     const [focusedId, setFocusedId] = useState<string | null>(null);
@@ -157,11 +161,13 @@ export const ConversationMap = forwardRef<HTMLElement, ConversationMapProps>(
     }, [currentId, hidden, reducedMotion]);
 
     // The focused tick's turn left `turns` (a history window trimmed it, the
-    // host deleted it): its button is gone, focus fell to the body, and React
-    // reports no blur for it. Hand focus to the rail's tab stop, or to the log
-    // once the rail itself is gone.
+    // host deleted it), or the rail went (the conversation now fits): its
+    // button is gone, focus fell to the body, and React reports no blur for
+    // it. Hand focus to the rail's tab stop, or to the log once the rail
+    // itself is gone.
     useLayoutEffect(() => {
-      if (focusedId === null || turnIds.includes(focusedId)) return;
+      if (focusedId === null || (!hidden && turnIds.includes(focusedId)))
+        return;
       setFocusedId(null);
       const active = document.activeElement;
       if (active !== null && active !== document.body) return;
@@ -169,7 +175,13 @@ export const ConversationMap = forwardRef<HTMLElement, ConversationMapProps>(
         ...(railRef.current?.querySelectorAll<HTMLElement>(TICK) ?? []),
       ].find((tick) => tick.tabIndex === 0);
       (stop ?? scrollContainer())?.focus({ preventScroll: true });
-    }, [focusedId, turnIds, scrollContainer]);
+    }, [focusedId, hidden, turnIds, scrollContainer]);
+
+    // A preview open as the rail goes would come back with it, beside a tick
+    // nobody is pointing at.
+    useLayoutEffect(() => {
+      if (hidden) setPreview(null);
+    }, [hidden]);
 
     // Escape dismisses a preview wherever focus is: one the mouse opened
     // covers the content while focus stays in the composer or the log.

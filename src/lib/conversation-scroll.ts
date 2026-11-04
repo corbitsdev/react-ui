@@ -239,6 +239,21 @@ export function distanceFromEnd({
   return scrollHeight - reserved - scrollTop - clientHeight;
 }
 
+/** The content is taller than the view, so there is somewhere to scroll; the
+ * reserved space after the content does not count as content. A pixel of
+ * slack absorbs subpixel rounding between the two heights. */
+export function contentOverflows({
+  scrollHeight,
+  clientHeight,
+  reserved = 0,
+}: {
+  readonly scrollHeight: number;
+  readonly clientHeight: number;
+  readonly reserved?: number;
+}): boolean {
+  return scrollHeight - reserved > clientHeight + 1;
+}
+
 /** Clamps a `scrollTop` to what the container can actually reach. */
 export function clampScrollTop(
   value: number,

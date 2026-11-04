@@ -1352,3 +1352,156 @@ describe("ConversationDivider and ConversationNotice", () => {
     mounted.unmount();
   });
 });
+
+describe("overflowing", () => {
+  const OriginalResizeObserver = globalThis.ResizeObserver;
+  let resized: (() => void)[] = [];
+  beforeEach(() => {
+    resized = [];
+    globalThis.ResizeObserver = class {
+      constructor(callback: () => void) {
+        resized.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+  });
+  afterEach(() => {
+    globalThis.ResizeObserver = OriginalResizeObserver;
+  });
+  const fireResize = () =>
+    act(() => {
+      for (const callback of resized) callback();
+    });
+  const root = (container: HTMLElement) =>
+    container.querySelector<HTMLElement>("[data-slot='conversation']");
+
+  test("follows whether the content is taller than the view, both ways", () => {
+    const { mounted, element, current } = mountConversation();
+    expect(current().overflowing).toBe(false);
+    expect(root(mounted.container)?.hasAttribute("data-overflowing")).toBe(
+      false,
+    );
+
+    // A reply streams past the bottom of the view.
+    giveGeometry(element, 2_000, 600);
+    fireResize();
+    expect(current().overflowing).toBe(true);
+    expect(root(mounted.container)?.hasAttribute("data-overflowing")).toBe(
+      true,
+    );
+
+    // The window grows until it all fits.
+    giveGeometry(element, 2_000, 2_400);
+    fireResize();
+    expect(current().overflowing).toBe(false);
+
+    // The content grows again, then shrinks back (a block collapses).
+    giveGeometry(element, 3_000, 2_400);
+    fireResize();
+    expect(current().overflowing).toBe(true);
+    giveGeometry(element, 1_000, 2_400);
+    fireResize();
+    expect(current().overflowing).toBe(false);
+    expect(root(mounted.container)?.hasAttribute("data-overflowing")).toBe(
+      false,
+    );
+    mounted.unmount();
+  });
+
+  test("measures at mount, without waiting for a resize", () => {
+    const sizes = Object.entries({ scrollHeight: 2_000, clientHeight: 600 });
+    const saved = sizes.map(
+      ([name]) =>
+        [
+          name,
+          Object.getOwnPropertyDescriptor(HTMLElement.prototype, name),
+        ] as const,
+    );
+    for (const [name, size] of sizes) {
+      Object.defineProperty(HTMLElement.prototype, name, {
+        configurable: true,
+        get(this: HTMLElement) {
+          return this.getAttribute("role") === "log" ? size : 0;
+        },
+      });
+    }
+    try {
+      const { mounted, current } = mountConversation();
+      expect(current().overflowing).toBe(true);
+      mounted.unmount();
+    } finally {
+      for (const [name, descriptor] of saved) {
+        if (descriptor === undefined)
+          Reflect.deleteProperty(HTMLElement.prototype, name);
+        else Object.defineProperty(HTMLElement.prototype, name, descriptor);
+      }
+    }
+  });
+
+  test("the room reserved for a settled item is not overflow", () => {
+    const VIEW = 500;
+    const { mounted, element, current, spacer, update } = mountConversation(
+      {},
+      ["a", "b"],
+    );
+    // Two 200px items in a 500px view: the content fits. The container's
+    // height includes whatever the reserve holds, as a browser's would.
+    const reserve = () => Number.parseFloat(spacer().style.height || "0");
+    Object.defineProperty(element, "scrollHeight", {
+      configurable: true,
+      get: () => 400 + reserve(),
+    });
+    Object.defineProperty(element, "clientHeight", {
+      configurable: true,
+      value: VIEW,
+    });
+    element.getBoundingClientRect = () =>
+      ({ top: 0, bottom: VIEW, height: VIEW }) as DOMRect;
+    ["a", "b"].forEach((id, index) => {
+      const item = element.querySelector<HTMLElement>(`[data-item-id='${id}']`);
+      if (item === null) throw new Error(`expected item ${id}`);
+      item.getBoundingClientRect = () =>
+        ({
+          top: index * 200 - element.scrollTop,
+          bottom: (index + 1) * 200 - element.scrollTop,
+          height: 200,
+        }) as DOMRect;
+    });
+    spacer().getBoundingClientRect = () =>
+      ({ top: 400 - element.scrollTop, bottom: 400, height: 0 }) as DOMRect;
+    fireResize();
+    expect(current().overflowing).toBe(false);
+
+    // Sending `b` reserves room below it so it can reach the top of the view:
+    // the container now scrolls, but only into the reserve.
+    update({ sentId: "b" });
+    fireResize();
+    expect(reserve()).toBe(300);
+    expect(element.scrollHeight).toBeGreaterThan(VIEW);
+    expect(current().overflowing).toBe(false);
+    mounted.unmount();
+  });
+
+  test("is false once the log goes", () => {
+    let api: ConversationContextValue | null = null;
+    function Probe() {
+      api = useConversation();
+      return null;
+    }
+    const tree = (log: boolean) => (
+      <Conversation>
+        {log ? <ConversationContent /> : null}
+        <Probe />
+      </Conversation>
+    );
+    const mounted = render(tree(true));
+    giveGeometry(scroller(mounted.container), 2_000, 600);
+    fireResize();
+    expect(api!.overflowing).toBe(true);
+    mounted.rerender(tree(false));
+    expect(api!.overflowing).toBe(false);
+    mounted.unmount();
+  });
+});
