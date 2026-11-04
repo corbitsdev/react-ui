@@ -237,12 +237,14 @@ describe("MediaViewer", () => {
       download: true,
     },
     {
+      // Chrome shows no PDF in a sandboxed frame, and an unsandboxed one
+      // runs whatever the URL serves, so a PDF is a download only.
       item: {
         name: "report.pdf",
         mediaType: "application/pdf",
         src: "https://media.example.com/report.pdf",
       },
-      slot: "media-viewer-page",
+      slot: "media-viewer-empty",
       download: true,
     },
     {
@@ -256,13 +258,23 @@ describe("MediaViewer", () => {
       download: true,
     },
     {
-      // A data: document would run script in the frame.
+      // A data: document would run script when opened.
       item: {
         name: "inline.pdf",
         mediaType: "application/pdf",
         src: "data:application/pdf;base64,JVBERi0=",
       },
       slot: "media-viewer-empty",
+      download: false,
+    },
+    {
+      // Fine in an <img>, but as a link an SVG document runs script.
+      item: {
+        name: "inline.svg",
+        mediaType: "image/svg+xml",
+        src: "data:image/svg+xml;base64,PHN2Zy8+",
+      },
+      slot: "media-viewer-image",
       download: false,
     },
     {
