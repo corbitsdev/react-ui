@@ -69,10 +69,6 @@ export function Button({
   variant,
   size,
   asChild = false,
-  // A native button with no type submits its form; default to "button" so a
-  // Button never submits a host form unasked. A destructured default also
-  // covers a forwarded `type={undefined}`, which a spread would let through.
-  // A slotted child may not be a button, so it gets no type.
   type = asChild ? undefined : "button",
   ...props
 }: ButtonProps) {

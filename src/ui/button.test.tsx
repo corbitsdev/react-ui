@@ -22,12 +22,28 @@ function mountInForm(child: ReactElement) {
   };
 }
 
+function requireButton(container: ParentNode): HTMLButtonElement {
+  const button = container.querySelector("button");
+  if (!(button instanceof HTMLButtonElement)) {
+    throw new Error("expected a button");
+  }
+  return button;
+}
+
+function requireAnchor(container: ParentNode): HTMLAnchorElement {
+  const link = container.querySelector("a");
+  if (!(link instanceof HTMLAnchorElement)) {
+    throw new Error("expected an anchor");
+  }
+  return link;
+}
+
 describe("Button", () => {
   test("a bare Button inside a form does not submit it", () => {
     const { onSubmit, container, unmount } = mountInForm(
       createElement(Button, null, "Retry"),
     );
-    const button = container.querySelector("button") as HTMLButtonElement;
+    const button = requireButton(container);
 
     expect(button.getAttribute("type")).toBe("button");
     act(() => {
@@ -41,7 +57,7 @@ describe("Button", () => {
     const { onSubmit, container, unmount } = mountInForm(
       createElement(Button, { type: undefined }, "Retry"),
     );
-    const button = container.querySelector("button") as HTMLButtonElement;
+    const button = requireButton(container);
 
     expect(button.getAttribute("type")).toBe("button");
     act(() => {
@@ -55,7 +71,7 @@ describe("Button", () => {
     const { onSubmit, container, unmount } = mountInForm(
       createElement(Button, { type: "submit" }, "Sign in"),
     );
-    const button = container.querySelector("button") as HTMLButtonElement;
+    const button = requireButton(container);
 
     expect(button.getAttribute("type")).toBe("submit");
     act(() => {
@@ -73,7 +89,7 @@ describe("Button", () => {
         createElement("a", { href: "#docs" }, "Docs"),
       ),
     );
-    const link = container.querySelector("a") as HTMLAnchorElement;
+    const link = requireAnchor(container);
 
     expect(link.hasAttribute("type")).toBe(false);
     unmount();
