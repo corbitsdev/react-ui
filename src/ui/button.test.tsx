@@ -1,5 +1,10 @@
 import { describe, expect, mock, test } from "bun:test";
-import { act, createElement, type ReactElement } from "react";
+import {
+  act,
+  createElement,
+  type ComponentProps,
+  type ReactElement,
+} from "react";
 import { createRoot } from "react-dom/client";
 
 import { Button } from "./button.js";
@@ -92,6 +97,24 @@ describe("Button", () => {
     const link = requireAnchor(container);
 
     expect(link.hasAttribute("type")).toBe(false);
+    unmount();
+  });
+
+  test("asChild keeps a child type that is set before the spread", () => {
+    function Child(props: ComponentProps<"button">) {
+      return createElement("button", { type: "button", ...props }, "Child");
+    }
+
+    const { onSubmit, container, unmount } = mountInForm(
+      createElement(Button, { asChild: true }, createElement(Child)),
+    );
+    const button = requireButton(container);
+
+    expect(button.getAttribute("type")).toBe("button");
+    act(() => {
+      button.click();
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
     unmount();
   });
 });
