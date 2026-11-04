@@ -305,13 +305,26 @@ describe("usePromptInput", () => {
   });
 
   test("Safari's composition-ending Escape (keyCode 229) is left to the IME", () => {
+    const seen: boolean[] = [];
+    const layer = (event: KeyboardEvent) => {
+      if (event.key === "Escape") seen.push(event.defaultPrevented);
+    };
+    document.addEventListener("keydown", layer, { capture: true });
     const view = mountPrompt();
-    view.type("@a");
-    expect(view.press("Escape", { isComposing: false, keyCode: 229 })).toBe(
-      true,
-    );
-    expect(view.prompt.activeSuggestion?.id).toBe("ada");
-    view.unmount();
+    try {
+      view.type("@a");
+      expect(view.press("Escape", { isComposing: false, keyCode: 229 })).toBe(
+        true,
+      );
+      expect(seen).toEqual([]);
+      expect(view.prompt.activeSuggestion?.id).toBe("ada");
+      view.press("Escape");
+      expect(view.prompt.suggestions).toEqual([]);
+      expect(seen).toEqual([true]);
+    } finally {
+      view.unmount();
+      document.removeEventListener("keydown", layer, { capture: true });
+    }
   });
 
   test("Enter with no list submits and keeps the newline out", () => {

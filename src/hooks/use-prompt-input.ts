@@ -153,24 +153,23 @@ export function usePromptInput({
   // A Radix dialog or popover around the prompt dismisses on an Escape it
   // sees in the document's capture phase, before React's handlers run,
   // unless the event is already marked handled. While the list is open, mark
-  // it first from the window's capture phase; `onKeyDown` still closes the
-  // list, so propagation is left alone.
+  // a normal Escape from the window's capture phase and let it propagate so
+  // `onKeyDown` can close the list. Stop the composition-ending key instead,
+  // without preventDefault, so the dialog never sees it.
   useEffect(() => {
     const element = textareaRef.current;
     if (!listOpen || element === null) return;
     const view = element.ownerDocument.defaultView;
     if (view === null) return;
     const claimEscape = (event: KeyboardEvent) => {
-      if (
-        event.key === "Escape" &&
-        event.target === element &&
-        // 229 is what Safari reports for the key that ends a composition,
-        // after `isComposing` has already turned false.
-        !event.isComposing &&
-        event.keyCode !== 229
-      ) {
-        event.preventDefault();
+      if (event.key !== "Escape" || event.target !== element) return;
+      // 229 is what Safari reports for the key that ends a composition,
+      // after `isComposing` has already turned false.
+      if (event.keyCode === 229) {
+        event.stopPropagation();
+        return;
       }
+      if (!event.isComposing) event.preventDefault();
     };
     view.addEventListener("keydown", claimEscape, { capture: true });
     return () =>
