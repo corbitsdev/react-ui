@@ -510,6 +510,90 @@ describe("ConversationMap", () => {
     mounted.unmount();
   });
 
+  test("a preview the map hid with does not come back with a second turn", () => {
+    const add = document.addEventListener.bind(document);
+    const remove = document.removeEventListener.bind(document);
+    let keydowns = 0;
+    const watch =
+      (delta: number, call: typeof add) =>
+      (
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: boolean | AddEventListenerOptions,
+      ) => {
+        if (type === "keydown") keydowns += delta;
+        call(type, listener, options);
+      };
+    document.addEventListener = watch(
+      1,
+      add,
+    ) as typeof document.addEventListener;
+    document.removeEventListener = watch(
+      -1,
+      remove,
+    ) as typeof document.removeEventListener;
+    try {
+      const mounted = render(<Chat />);
+      const before = keydowns;
+      act(() => {
+        tick(mounted.container, "Second question").dispatchEvent(
+          new PointerEvent("pointerover", {
+            bubbles: true,
+            pointerType: "mouse",
+          }),
+        );
+      });
+      expect(
+        mounted.container.querySelector("[role='tooltip']"),
+      ).not.toBeNull();
+      expect(keydowns).toBe(before + 1);
+      mounted.rerender(
+        <Chat turns={TURNS.slice(1, 2)} items={["q2", "q2-reply"]} />,
+      );
+      expect(
+        mounted.container.querySelector("[data-slot='conversation-map']"),
+      ).toBeNull();
+      expect(keydowns).toBe(before);
+      act(() => {
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+        );
+      });
+      mounted.rerender(
+        <Chat turns={TURNS.slice(1, 3)} items={["q2", "q2-reply", "q3"]} />,
+      );
+      expect(
+        mounted.container.querySelector("[data-slot='conversation-map']"),
+      ).not.toBeNull();
+      expect(mounted.container.querySelector("[role='tooltip']")).toBeNull();
+      expect(keydowns).toBe(before);
+      mounted.unmount();
+    } finally {
+      document.addEventListener = add;
+      document.removeEventListener = remove;
+    }
+  });
+
+  test("a preview whose turn goes does not come back with it", () => {
+    const mounted = render(<Chat />);
+    act(() => {
+      tick(mounted.container, "Second question").dispatchEvent(
+        new PointerEvent("pointerover", {
+          bubbles: true,
+          pointerType: "mouse",
+        }),
+      );
+    });
+    expect(mounted.container.querySelector("[role='tooltip']")).not.toBeNull();
+    const rest = TURNS.filter((turn) => turn.id !== "q2");
+    mounted.rerender(
+      <Chat turns={rest} items={ITEMS.filter((id) => !id.startsWith("q2"))} />,
+    );
+    mounted.rerender(<Chat />);
+    expect(mounted.container.querySelector("[role='tooltip']")).toBeNull();
+    mounted.unmount();
+  });
+
   test("a focused tick whose turn goes keeps focus on the rail", () => {
     const mounted = render(<Chat />);
     act(() => tick(mounted.container, "First question").focus());
@@ -526,6 +610,17 @@ describe("ConversationMap", () => {
   test("a focused tick whose rail goes hands focus to the log", () => {
     const mounted = render(<Chat />);
     act(() => tick(mounted.container, "First question").focus());
+    mounted.rerender(<Chat turns={TURNS.slice(3)} items={["q4"]} />);
+    expect(
+      mounted.container.querySelector("[data-slot='conversation-map']"),
+    ).toBeNull();
+    expect(document.activeElement).toBe(scroller(mounted.container));
+    mounted.unmount();
+  });
+
+  test("a focused tick whose rail goes with its turn kept hands focus to the log", () => {
+    const mounted = render(<Chat />);
+    act(() => tick(mounted.container, "Fourth question").focus());
     mounted.rerender(<Chat turns={TURNS.slice(3)} items={["q4"]} />);
     expect(
       mounted.container.querySelector("[data-slot='conversation-map']"),

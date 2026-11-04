@@ -157,11 +157,17 @@ export const ConversationMap = forwardRef<HTMLElement, ConversationMapProps>(
     }, [currentId, hidden, reducedMotion]);
 
     // The focused tick's turn left `turns` (a history window trimmed it, the
-    // host deleted it): its button is gone, focus fell to the body, and React
-    // reports no blur for it. Hand focus to the rail's tab stop, or to the log
-    // once the rail itself is gone.
+    // host deleted it), or the rail hid with it: its button is gone, focus fell
+    // to the body, and React reports no blur for it. Hand focus to the rail's
+    // tab stop, or to the log once the rail itself is gone. Clear a preview
+    // whose tick left the same way before moving focus.
     useLayoutEffect(() => {
-      if (focusedId === null || turnIds.includes(focusedId)) return;
+      if (preview !== null && (hidden || !turnIds.includes(preview.id))) {
+        setPreview(null);
+      }
+      if (focusedId === null || (!hidden && turnIds.includes(focusedId))) {
+        return;
+      }
       setFocusedId(null);
       const active = document.activeElement;
       if (active !== null && active !== document.body) return;
@@ -169,7 +175,7 @@ export const ConversationMap = forwardRef<HTMLElement, ConversationMapProps>(
         ...(railRef.current?.querySelectorAll<HTMLElement>(TICK) ?? []),
       ].find((tick) => tick.tabIndex === 0);
       (stop ?? scrollContainer())?.focus({ preventScroll: true });
-    }, [focusedId, turnIds, scrollContainer]);
+    }, [focusedId, hidden, preview, turnIds, scrollContainer]);
 
     // Escape dismisses a preview wherever focus is: one the mouse opened
     // covers the content while focus stays in the composer or the log.
@@ -260,7 +266,12 @@ export const ConversationMap = forwardRef<HTMLElement, ConversationMapProps>(
             : index + (event.key === "ArrowDown" ? 1 : -1);
       // Also at either end, so the keys never scroll the rail or the page.
       event.preventDefault();
-      ticks[next]?.focus();
+      const rail = railRef.current;
+      const target = ticks[next];
+      if (rail === null || target === undefined) return;
+      // Focus alone would scroll every ancestor to reveal a clipped tick.
+      keepInView(rail, target, "auto");
+      target.focus({ preventScroll: true });
     };
 
     return (
