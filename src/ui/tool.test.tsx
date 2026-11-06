@@ -63,6 +63,7 @@ function click(element: Element | null) {
 const STATUSES: readonly [ToolTraceStatus, string, string][] = [
   ["pending", "Queued", "lucide-circle-dashed"],
   ["running", "Running", "lucide-loader-circle"],
+  ["waiting", "Waiting", "lucide-circle-pause"],
   ["output-available", "Done", "lucide-check"],
   ["error", "Failed", "lucide-circle-alert"],
   ["approval-requested", "Needs approval", "lucide-shield-alert"],
@@ -355,6 +356,22 @@ describe("ToolGroup", () => {
         ?.textContent,
     ).toBe("3 at once · 1 done · 1 waiting for approval · 1 failed");
     held.unmount();
+  });
+
+  test("a call held on other work is not counted as done", () => {
+    const mounted = mount(
+      <ToolGroup
+        part={batch([
+          tool({ toolCallId: "a" }),
+          tool({ toolCallId: "b", status: "waiting" }),
+        ])}
+      />,
+    );
+    expect(
+      mounted.container.querySelector("[data-slot='tool-group-header']")
+        ?.textContent,
+    ).toBe("2 at once · 1 done");
+    mounted.unmount();
   });
 
   test("a call waiting on a person is not counted as done", () => {

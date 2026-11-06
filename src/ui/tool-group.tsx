@@ -27,7 +27,7 @@ export type ToolGroupLabels = {
    * leaves out failed calls, which `failed` counts.
    */
   readonly running: (count: number, done: number) => string;
-  /** None is queued or running, but some wait on a person. */
+  /** None is queued or running, but some wait on a person or on other work. */
   readonly held: (count: number, done: number) => string;
   /** Follows `running` or `held` while calls wait on a person. */
   readonly waiting: (count: number) => string;
@@ -122,13 +122,14 @@ export const ToolGroup = forwardRef<HTMLDivElement, ToolGroupProps>(
     const active = statuses.filter(
       (status) => status === "pending" || status === "running",
     ).length;
-    const waiting = statuses.filter(
+    const asking = statuses.filter(
       (status) => status === "approval-requested",
     ).length;
+    const paused = statuses.filter((status) => status === "waiting").length;
     const failed = countFailedTools(part.tools);
     const count = part.tools.length;
     // Finished without failing, so each call counts once in the header.
-    const done = count - active - waiting - failed;
+    const done = count - active - asking - paused - failed;
 
     const rootRef = useRef<HTMLDivElement | null>(null);
     const focusInside = useRef(false);
@@ -235,10 +236,10 @@ export const ToolGroup = forwardRef<HTMLDivElement, ToolGroupProps>(
           <span className="min-w-0 flex-1 truncate">
             {active > 0
               ? labels.running(count, done)
-              : waiting > 0
+              : asking + paused > 0
                 ? labels.held(count, done)
                 : labels.ran(count)}
-            {waiting > 0 ? <> · {labels.waiting(waiting)}</> : null}
+            {asking > 0 ? <> · {labels.waiting(asking)}</> : null}
             {failed > 0 ? (
               <span className="text-destructive">
                 {" "}

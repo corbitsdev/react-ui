@@ -6,6 +6,7 @@ import {
   ChevronRight,
   CircleAlert,
   CircleDashed,
+  CirclePause,
   LoaderCircle,
   ShieldAlert,
 } from "lucide-react";
@@ -127,6 +128,7 @@ function ignoreDecision() {}
 const STATUS_LABEL: Record<ToolTraceStatus, string> = {
   pending: "Queued",
   running: "Running",
+  waiting: "Waiting",
   "output-available": "Done",
   error: "Failed",
   "approval-requested": "Needs approval",
@@ -151,6 +153,13 @@ function StatusIcon({ status }: { readonly status: ToolTraceStatus }) {
             className,
             "text-muted-foreground motion-safe:animate-spin",
           )}
+        />
+      );
+    case "waiting":
+      return (
+        <CirclePause
+          aria-hidden
+          className={cn(className, "text-muted-foreground")}
         />
       );
     case "output-available":

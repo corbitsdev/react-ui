@@ -28,13 +28,16 @@ export type PartReasoning = {
 };
 
 /**
- * A tool call's lifecycle. Six states, not three: a tool call is not only
+ * A tool call's lifecycle. Seven states, not three: a tool call is not only
  * running-or-finished, it can wait on human approval and that approval can be
- * refused — a state distinct from an execution error.
+ * refused — a state distinct from an execution error. `waiting` is a call
+ * held on something outside it, such as work it started that is itself
+ * waiting; unlike `approval-requested`, the call is not the question.
  */
 export type ToolTraceStatus =
   | "pending"
   | "running"
+  | "waiting"
   | "output-available"
   | "error"
   | "approval-requested"
@@ -132,7 +135,7 @@ export type ToolApprovalRecord = {
  * alone answers every approval question: a call whose record is `pending` is
  * waiting on a person whatever `status` says, and one whose record is settled
  * is not, even if `status` still reads `approval-requested`. Without a record,
- * `status === "approval-requested"` is the only sign of a wait.
+ * `status === "approval-requested"` is the only sign of a wait on a person.
  */
 export type PartTool = PartToolTrace & {
   readonly approval?: ToolApprovalRecord;

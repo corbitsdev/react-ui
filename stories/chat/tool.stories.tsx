@@ -42,6 +42,7 @@ function Column({ children }: { readonly children: React.ReactNode }) {
 const STATUSES: readonly ToolTraceStatus[] = [
   "pending",
   "running",
+  "waiting",
   "output-available",
   "error",
   "approval-requested",
