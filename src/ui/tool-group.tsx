@@ -16,6 +16,7 @@ import { isAwaitingApproval } from "../lib/conversation-activity.js";
 import type { PartTool, PartToolBatch } from "../lib/conversation.js";
 import { countFailedTools, displayedToolStatus } from "../lib/tool-display.js";
 import { cn } from "../lib/utils.js";
+import { ActivitySpinner } from "./activity-spinner.js";
 import { Tool } from "./tool.js";
 import { ToolApproval, type ToolApprovalDecision } from "./tool-approval.js";
 
@@ -226,12 +227,33 @@ export const ToolGroup = forwardRef<HTMLDivElement, ToolGroupProps>(
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
           onClick={() => setChosen(!open)}
-          className="flex w-full min-w-0 items-center gap-2 rounded-md px-1 py-1 text-start transition-colors hover:bg-muted"
+          className="group/calls flex w-full min-w-0 items-center gap-2.5 rounded-lg px-2 py-1.5 text-start transition-colors duration-150 hover:bg-muted/70"
         >
-          <Layers
-            aria-hidden
-            className="size-3.5 shrink-0 text-muted-foreground"
-          />
+          {/* One fixed slot: the calls' mark, or a chevron while pointed at. */}
+          <span className="grid size-4 shrink-0 place-items-center *:col-start-1 *:row-start-1">
+            <span
+              className={cn(
+                "grid place-items-center transition-opacity duration-150 group-hover/calls:opacity-0 pointer-coarse:opacity-100",
+                open && "opacity-0 pointer-coarse:opacity-0",
+              )}
+            >
+              {active > 0 ? (
+                <ActivitySpinner />
+              ) : (
+                <Layers
+                  aria-hidden
+                  className="size-3.5 text-muted-foreground"
+                />
+              )}
+            </span>
+            <ChevronRight
+              aria-hidden
+              className={cn(
+                "size-3.5 text-muted-foreground opacity-0 transition duration-150 ease-out group-hover/calls:opacity-100",
+                open && "rotate-90 opacity-100",
+              )}
+            />
+          </span>
           <span className="min-w-0 flex-1 truncate">
             {active > 0
               ? labels.running(count, done)
@@ -246,19 +268,12 @@ export const ToolGroup = forwardRef<HTMLDivElement, ToolGroupProps>(
               </span>
             ) : null}
           </span>
-          <ChevronRight
-            aria-hidden
-            className={cn(
-              "size-3.5 shrink-0 text-muted-foreground motion-safe:transition-transform motion-safe:duration-200",
-              open && "rotate-90",
-            )}
-          />
         </button>
         {open ? (
           <ol
             id={listId}
             data-slot="tool-group-list"
-            className="ms-3 flex flex-col gap-1 border-s border-dashed border-border-strong ps-3 pt-1"
+            className="ms-6.5 flex flex-col gap-0.5"
           >
             {part.tools.map((tool) => (
               <li

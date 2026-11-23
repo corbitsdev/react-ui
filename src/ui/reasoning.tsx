@@ -8,6 +8,7 @@ import { useControllableState } from "../hooks/use-controllable-state.js";
 import type { PartReasoning } from "../lib/conversation.js";
 import { summarizeActivity } from "../lib/conversation-activity.js";
 import { cn } from "../lib/utils.js";
+import { ActivitySpinner } from "./activity-spinner.js";
 
 type ReasoningContextValue = {
   readonly part: PartReasoning;
@@ -123,11 +124,17 @@ export function ReasoningTrigger({
       aria-controls={open ? contentId : undefined}
       onClick={toggle}
       className={cn(
-        "flex w-full min-w-0 items-center gap-2 rounded-md px-1 py-1 text-start text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+        "flex w-full min-w-0 items-center gap-2.5 rounded-lg px-2 py-1.5 text-start text-muted-foreground transition-colors duration-150 hover:bg-muted/70",
         className,
       )}
     >
-      <Brain aria-hidden className="size-3.5 shrink-0" />
+      <span className="grid size-4 shrink-0 place-items-center">
+        {streaming ? (
+          <ActivitySpinner />
+        ) : (
+          <Brain aria-hidden className="size-3.5" />
+        )}
+      </span>
       <span className="shrink-0 text-foreground">{summary}</span>
       {/* The preview is for the eye only, so the button's name stays the
           summary rather than the whole thought. */}
@@ -161,7 +168,7 @@ export function ReasoningContent({ render, className }: ReasoningContentProps) {
       // Focusable so the keyboard can scroll it.
       tabIndex={0}
       className={cn(
-        "ms-6 mt-1 max-h-80 overflow-auto rounded-md bg-muted px-3 py-2 leading-relaxed whitespace-pre-wrap text-muted-foreground",
+        "ms-8.5 me-2 mb-2 max-h-80 overflow-auto rounded-lg bg-muted/60 px-3 py-2 leading-relaxed text-pretty whitespace-pre-wrap text-muted-foreground",
         className,
       )}
     >

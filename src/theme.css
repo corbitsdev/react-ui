@@ -544,6 +544,15 @@
   }
 }
 
+/* A live line moving to its next words: the new line rises a little and
+   fades in, transform and opacity only. Used by ui/activity-agents. */
+@keyframes corbits-activity-roll {
+  from {
+    opacity: 0;
+    transform: translateY(0.5em);
+  }
+}
+
 /* ShimmerText's sweep: a `background-clip: text` gradient sliding across
    its own background-size, so the brighter band travels through the words.
    Used by ui/shimmer-text (and, through it, ui/thinking-label). */

@@ -27,6 +27,28 @@ export function countFailedTools(steps: readonly ActivityStep[]): number {
   }, 0);
 }
 
+/**
+ * A raw tool name as words: `calendar__create_event` reads as the action
+ * "Create event" from the source "Calendar". A name with no source is all
+ * action.
+ */
+export function toolTitle(name: string): {
+  readonly action: string;
+  readonly source: string | undefined;
+} {
+  const words = (text: string) => text.replace(/[_-]+/g, " ").trim();
+  const capital = (text: string) =>
+    text.charAt(0).toUpperCase() + text.slice(1);
+  const split = name.lastIndexOf("__");
+  const action = split > 0 ? words(name.slice(split + 2)) : "";
+  // No source, or nothing after it (`files__`): the whole name is the action.
+  if (action === "") return { action: capital(words(name)), source: undefined };
+  return {
+    action: capital(action),
+    source: capital(words(name.slice(0, split))),
+  };
+}
+
 /** Tool input or output as text: strings as they are, anything else as indented JSON. */
 export function formatToolValue(value: unknown): string {
   if (typeof value === "string") return value;

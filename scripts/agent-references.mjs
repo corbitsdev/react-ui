@@ -124,6 +124,7 @@ const GROUPS = {
     title: "messages, reasoning, activity and tool calls",
     modules: [
       "ui/activity",
+      "ui/activity-agents",
       "ui/message",
       "ui/message-actions",
       "ui/message-fold",
