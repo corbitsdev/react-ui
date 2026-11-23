@@ -17,8 +17,18 @@ import {
   type ActivityStep,
 } from "../lib/conversation-activity.js";
 import type { PartTool } from "../lib/conversation.js";
-import { countFailedTools, displayedToolStatus } from "../lib/tool-display.js";
+import {
+  countFailedTools,
+  displayedToolStatus,
+  toolTitle,
+} from "../lib/tool-display.js";
 import { cn } from "../lib/utils.js";
+import {
+  ActivityAgents,
+  type ActivityAgent,
+  type ActivityAgentsLabels,
+} from "./activity-agents.js";
+import { ActivitySpinner } from "./activity-spinner.js";
 import { Reasoning } from "./reasoning.js";
 import { Tool } from "./tool.js";
 import { ToolGroup } from "./tool-group.js";
@@ -45,13 +55,25 @@ function useActivityContext(part: string): ActivityContextValue {
 export type ActivityProps = ComponentProps<"div"> & {
   /** One run of thinking and tool work, e.g. an `activity` group from `groupActivity`. */
   readonly steps: readonly ActivityStep[];
-  /** The run is still going. */
+  /** The run is still going. While it is, the line shows a spinner, even before the first step. */
   readonly streaming?: boolean | undefined;
+  /** Agents the run handed work to, shown under its steps as `ActivityAgents`. */
+  readonly agents?: readonly ActivityAgent[] | undefined;
+  readonly agentLabels?: Partial<ActivityAgentsLabels> | undefined;
   /** Controlled open state. Pair with `onOpenChange`. */
   readonly open?: boolean | undefined;
   readonly defaultOpen?: boolean | undefined;
   readonly onOpenChange?: ((open: boolean) => void) | undefined;
 };
+
+/** An opened agent's own steps, drawn as an opened run of its own. */
+function agentSteps(agent: ActivityAgent): ReactNode {
+  return (
+    <Activity steps={agent.steps} streaming={agent.state === "working"} open>
+      <ActivityContent />
+    </Activity>
+  );
+}
 
 /**
  * A stretch of an agent's work, thinking and tool calls however many, as one
@@ -61,11 +83,17 @@ export type ActivityProps = ComponentProps<"div"> & {
  * with the rest behind a control. A finished thought with no text has
  * nothing to show and is left out.
  *
- * Without children it renders `ActivityTrigger` and `ActivityContent`.
- * Renders nothing for a run with no steps.
+ * Work it handed to other agents follows as `ActivityAgents`: a calm row
+ * per agent, opened to its own steps drawn the same way.
+ *
+ * Without children it renders `ActivityTrigger`, `ActivityContent` and,
+ * given agents, `ActivityAgents`. Renders nothing for a run with no steps,
+ * no agents and nothing streaming.
  */
 export function Activity({
   steps,
+  agents = [],
+  agentLabels,
   streaming = false,
   open: openProp,
   defaultOpen = false,
@@ -82,7 +110,7 @@ export function Activity({
     name: "Activity",
   });
 
-  if (steps.length === 0) return null;
+  if (steps.length === 0 && agents.length === 0 && !streaming) return null;
 
   return (
     <ActivityContext.Provider
@@ -102,8 +130,16 @@ export function Activity({
       >
         {children ?? (
           <>
-            <ActivityTrigger />
+            {steps.length > 0 || streaming ? <ActivityTrigger /> : null}
             <ActivityContent />
+            {agents.length > 0 ? (
+              <ActivityAgents
+                agents={agents}
+                labels={agentLabels}
+                renderSteps={agentSteps}
+                className="mt-2"
+              />
+            ) : null}
           </>
         )}
       </div>
@@ -155,8 +191,10 @@ function liveLine(
   const running = runningTools(steps);
   const [only] = running;
   if (running.length > 1) return `${labels.runningMany(running.length)}…`;
-  if (only !== undefined) return `${only.name}…`;
-  return steps.at(-1)?.kind === "reasoning"
+  if (only !== undefined) return `${toolTitle(only.name).action}…`;
+  // Before its first step, a run is thinking.
+  const last = steps.at(-1);
+  return last === undefined || last.kind === "reasoning"
     ? `${labels.thinking}…`
     : `${labels.working}…`;
 }
@@ -173,6 +211,22 @@ export function ActivityTrigger({
   const failed = countFailedTools(steps);
   const line =
     label ?? (streaming ? liveLine(steps, labels) : summarizeActivity(steps));
+  // Thinking before any step: nothing to open yet, so a status, not a button.
+  // With no steps and nothing running there is no line to show at all.
+  if (steps.length === 0)
+    return !streaming ? null : (
+      <span
+        role="status"
+        data-slot="activity-trigger"
+        className={cn(
+          "inline-flex max-w-full min-w-0 items-center gap-2 self-start px-1 py-1 text-foreground",
+          className,
+        )}
+      >
+        <ActivitySpinner />
+        <span className="min-w-0 truncate">{line}</span>
+      </span>
+    );
   return (
     <button
       type="button"
@@ -182,9 +236,11 @@ export function ActivityTrigger({
       onClick={toggle}
       className={cn(
         "inline-flex max-w-full min-w-0 items-center gap-1.5 self-start rounded-md px-1 py-1 text-start text-muted-foreground transition-colors hover:text-foreground",
+        streaming && "gap-2 text-foreground",
         className,
       )}
     >
+      {streaming ? <ActivitySpinner /> : null}
       <span className="min-w-0 truncate">{line}</span>
       {failed > 0 ? (
         <span className="shrink-0 text-destructive">
@@ -335,10 +391,7 @@ function ActivitySteps({
       ref={listRef}
       id={id}
       data-slot="activity-content"
-      className={cn(
-        "ms-1 mt-1 flex flex-col gap-1 border-s-2 border-border ps-3",
-        className,
-      )}
+      className={cn("-ms-1 mt-1 flex flex-col gap-0.5", className)}
       onFocus={(event) => {
         focusedStep.current =
           event.target

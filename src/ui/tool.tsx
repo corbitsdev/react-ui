@@ -6,7 +6,6 @@ import {
   ChevronRight,
   CircleAlert,
   CircleDashed,
-  LoaderCircle,
   ShieldAlert,
 } from "lucide-react";
 import { createContext, useContext, useId, useState } from "react";
@@ -15,8 +14,13 @@ import type { ComponentProps, ReactNode } from "react";
 import { useControllableState } from "../hooks/use-controllable-state.js";
 import { isAwaitingApproval } from "../lib/conversation-activity.js";
 import type { PartTool, ToolTraceStatus } from "../lib/conversation.js";
-import { displayedToolStatus, formatToolValue } from "../lib/tool-display.js";
+import {
+  displayedToolStatus,
+  formatToolValue,
+  toolTitle,
+} from "../lib/tool-display.js";
 import { cn } from "../lib/utils.js";
+import { ActivitySpinner } from "./activity-spinner.js";
 import { ToolApproval } from "./tool-approval.js";
 
 type ToolContextValue = {
@@ -110,7 +114,13 @@ export function Tool({
           <>
             <ToolHeader />
             {settled ? (
-              <ToolApproval part={part} onDecide={ignoreDecision} />
+              <ToolApproval
+                part={part}
+                onDecide={ignoreDecision}
+                // Under the row, at its text: the outcome alone, the call
+                // already named above it.
+                className="-mt-1 ps-8.5 pb-1.5 text-xs [&_[data-part=icon]]:hidden [&_[data-part=name]]:sr-only"
+              />
             ) : null}
             <ToolInput />
             <ToolOutput />
@@ -144,17 +154,11 @@ function StatusIcon({ status }: { readonly status: ToolTraceStatus }) {
         />
       );
     case "running":
-      return (
-        <LoaderCircle
-          aria-hidden
-          className={cn(
-            className,
-            "text-muted-foreground motion-safe:animate-spin",
-          )}
-        />
-      );
+      return <ActivitySpinner />;
     case "output-available":
-      return <Check aria-hidden className={cn(className, "text-ok")} />;
+      return (
+        <Check aria-hidden className={cn(className, "text-muted-foreground")} />
+      );
     case "error":
       return (
         <CircleAlert
@@ -204,33 +208,68 @@ export function ToolHeader({
     .filter((id) => id !== null)
     .join(" ");
   const statusText = statusLabels?.[status] ?? STATUS_LABEL[status];
+  // A call that went as expected says so with its mark alone; the word is
+  // still there for a screen reader. Anything else says it in words too.
+  // A settled approval says how it ended on the line under the row.
+  const settled = part.approval !== undefined && !isAwaitingApproval(part);
+  const quiet =
+    status === "output-available" || status === "running" || settled;
+  const title = toolTitle(part.name);
   const row = cn(
-    "flex w-full min-w-0 items-center gap-2 rounded-md px-1 py-1 text-start",
+    "group/tool flex w-full min-w-0 items-center gap-2.5 rounded-lg px-2 py-1.5 text-start",
     className,
   );
   const content = (
     <>
-      <StatusIcon status={status} />
-      <span className="min-w-0 flex-1 truncate">
-        {label === undefined ? null : <span className="me-1.5">{label}</span>}
-        <code className="font-mono text-xs text-muted-foreground">
-          {part.name}
-        </code>
+      {/* One fixed slot: the status, or a chevron while pointed at. */}
+      <span className="grid size-4 shrink-0 place-items-center *:col-start-1 *:row-start-1">
+        <span
+          className={cn(
+            "grid place-items-center",
+            hasDetail &&
+              "transition-opacity duration-150 group-hover/tool:opacity-0 pointer-coarse:opacity-100",
+            hasDetail && open && "opacity-0 pointer-coarse:opacity-0",
+          )}
+        >
+          <StatusIcon status={status} />
+        </span>
+        {hasDetail ? (
+          <ChevronRight
+            aria-hidden
+            className={cn(
+              "size-3.5 text-muted-foreground opacity-0 transition duration-150 ease-out group-hover/tool:opacity-100",
+              open && "rotate-90 opacity-100",
+            )}
+          />
+        ) : null}
       </span>
-      <span
-        className={cn(
-          "shrink-0 text-xs",
-          status === "error" ? "text-destructive" : "text-muted-foreground",
-        )}
-      >
-        {statusText}
+      {/* The name as words, its source quieter beside it; the status word
+          follows right after, so it reads with its call. */}
+      <span className="flex min-w-0 flex-1 items-baseline gap-2">
+        <span className="min-w-0 truncate text-foreground">
+          {label ?? title.action}
+        </span>
+        {label === undefined && title.source !== undefined ? (
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {title.source}
+          </span>
+        ) : null}
+        <span
+          className={cn(
+            "shrink-0 text-xs",
+            quiet && "sr-only",
+            status === "error" ? "text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {statusText}
+        </span>
       </span>
     </>
   );
 
   if (!hasDetail) {
     return (
-      <div data-slot="tool-header" className={row}>
+      <div data-slot="tool-header" data-name={part.name} className={row}>
         {content}
       </div>
     );
@@ -239,19 +278,13 @@ export function ToolHeader({
     <button
       type="button"
       data-slot="tool-header"
+      data-name={part.name}
       aria-expanded={open}
       aria-controls={open ? controls : undefined}
       onClick={toggle}
-      className={cn(row, "transition-colors hover:bg-muted")}
+      className={cn(row, "transition-colors duration-150 hover:bg-muted/70")}
     >
       {content}
-      <ChevronRight
-        aria-hidden
-        className={cn(
-          "size-3.5 shrink-0 text-muted-foreground motion-safe:transition-transform motion-safe:duration-200",
-          open && "rotate-90",
-        )}
-      />
     </button>
   );
 }
@@ -331,10 +364,7 @@ function ToolDetail({
     <div
       id={id}
       data-slot={slot}
-      className={cn(
-        "ms-3 flex flex-col gap-1 border-s border-border py-1 ps-4",
-        className,
-      )}
+      className={cn("flex flex-col gap-1 ps-8.5 pe-2 pt-0.5 pb-2", className)}
     >
       <p id={titleId} className="text-xs font-medium text-muted-foreground">
         {title}
@@ -345,7 +375,7 @@ function ToolDetail({
         role="group"
         aria-labelledby={titleId}
         tabIndex={0}
-        className="max-h-48 overflow-auto rounded-md bg-muted p-2 font-mono text-xs break-words whitespace-pre-wrap"
+        className="max-h-48 overflow-auto rounded-lg bg-muted/60 px-3 py-2 font-mono text-xs break-words whitespace-pre-wrap text-muted-foreground"
       >
         {children}
       </div>

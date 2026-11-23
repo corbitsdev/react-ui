@@ -134,6 +134,7 @@ export * from "./ui/tool-approval.js";
 export * from "./ui/tool-group.js";
 export * from "./ui/reasoning.js";
 export * from "./ui/activity.js";
+export * from "./ui/activity-agents.js";
 export * from "./ui/message.js";
 export * from "./ui/message-fold.js";
 export * from "./ui/message-actions.js";

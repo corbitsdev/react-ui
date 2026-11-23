@@ -277,7 +277,9 @@ function ResolvedLine({
     >
       {icon}
       <span className="shrink-0">{text}</span>{" "}
-      <code className="min-w-0 truncate font-mono text-xs">{name}</code>
+      <code data-part="name" className="min-w-0 truncate font-mono text-xs">
+        {name}
+      </code>
     </p>
   );
 }
@@ -291,31 +293,51 @@ function resolved(
     case "approved":
       if (record.scope === "always")
         return {
-          icon: <CheckCheck aria-hidden className={cn(icon, "text-ok")} />,
+          icon: (
+            <CheckCheck
+              aria-hidden
+              data-part="icon"
+              className={cn(icon, "text-ok")}
+            />
+          ),
           text: labels.approvedAlways,
         };
       return {
-        icon: <Check aria-hidden className={cn(icon, "text-ok")} />,
+        icon: (
+          <Check aria-hidden data-part="icon" className={cn(icon, "text-ok")} />
+        ),
         text: record.scope === "once" ? labels.approvedOnce : labels.approved,
       };
     case "rejected":
       if (record.scope === "always")
         return {
-          icon: <Ban aria-hidden className={cn(icon, "text-destructive")} />,
+          icon: (
+            <Ban
+              aria-hidden
+              data-part="icon"
+              className={cn(icon, "text-destructive")}
+            />
+          ),
           text: labels.deniedAlways,
         };
       return {
-        icon: <X aria-hidden className={cn(icon, "text-destructive")} />,
+        icon: (
+          <X
+            aria-hidden
+            data-part="icon"
+            className={cn(icon, "text-destructive")}
+          />
+        ),
         text: labels.denied,
       };
     case "timeout":
       return {
-        icon: <TimerOff aria-hidden className={icon} />,
+        icon: <TimerOff aria-hidden data-part="icon" className={icon} />,
         text: labels.timedOut,
       };
     case "expired":
       return {
-        icon: <Hourglass aria-hidden className={icon} />,
+        icon: <Hourglass aria-hidden data-part="icon" className={icon} />,
         text: labels.expired,
       };
     case "pending":

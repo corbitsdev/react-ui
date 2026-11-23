@@ -62,7 +62,7 @@ function click(element: Element | null) {
 
 const STATUSES: readonly [ToolTraceStatus, string, string][] = [
   ["pending", "Queued", "lucide-circle-dashed"],
-  ["running", "Running", "lucide-loader-circle"],
+  ["running", "Running", "[data-slot=activity-spinner]"],
   ["output-available", "Done", "lucide-check"],
   ["error", "Failed", "lucide-circle-alert"],
   ["approval-requested", "Needs approval", "lucide-shield-alert"],
@@ -78,8 +78,13 @@ describe("Tool", () => {
         mounted.container.firstElementChild?.getAttribute("data-status"),
       ).toBe(status);
       expect(row.textContent).toContain(label);
-      expect(row.textContent).toContain("files__read");
-      expect(row.querySelector(`svg.${icon}`)).not.toBeNull();
+      // The raw name reads as words, and stays on the row for code.
+      expect(row.textContent).toContain("Read");
+      expect(row.textContent).toContain("Files");
+      expect(row.getAttribute("data-name")).toBe("files__read");
+      expect(
+        row.querySelector(icon.startsWith("[") ? icon : `svg.${icon}`),
+      ).not.toBeNull();
       mounted.unmount();
     });
   }
@@ -639,7 +644,11 @@ describe("ToolGroup", () => {
       const active = document.activeElement;
       // A held Enter repeats onto the focused element; on the row it folds nothing.
       expect(active?.tagName).toBe("LI");
-      expect(active?.textContent).toContain("mail__a");
+      expect(
+        active
+          ?.querySelector("[data-slot='tool-header']")
+          ?.getAttribute("data-name"),
+      ).toBe("mail__a");
       mounted.unmount();
     });
 
@@ -653,7 +662,11 @@ describe("ToolGroup", () => {
       mounted.render(render(batch([done])));
       const active = document.activeElement;
       expect(active?.tagName).toBe("LI");
-      expect(active?.textContent).toContain("files__r");
+      expect(
+        active
+          ?.querySelector("[data-slot='tool-header']")
+          ?.getAttribute("data-name"),
+      ).toBe("files__r");
       mounted.unmount();
     });
 

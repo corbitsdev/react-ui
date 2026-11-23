@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 
 import {
   groupActivity,
@@ -7,14 +8,20 @@ import {
 import type {
   ConversationPart,
   PartReasoning,
-  PartTool,
-  ToolApprovalRecord,
 } from "../../src/lib/conversation.js";
 import { Activity } from "../../src/ui/activity.js";
+import type { ActivityAgent } from "../../src/ui/activity-agents.js";
 import { Button } from "../../src/ui/button.js";
 import { Message } from "../../src/ui/message.js";
 import { MessageParts } from "../../src/ui/message-parts.js";
 import { Reasoning } from "../../src/ui/reasoning.js";
+import {
+  designers,
+  designersAsking,
+  designersDone,
+  useLiveAgents,
+  writer,
+} from "./samples/agents.js";
 import { toolStorm } from "./samples/conversations.js";
 
 export default { title: "Chat / Activity" };
@@ -131,55 +138,94 @@ export const ReasoningStates = () => (
   </div>
 );
 
-/**
- * A call waiting on a person stands outside the fold. Once decided, it
- * joins the run before it, the run's steps show the outcome, and focus
- * moves to the run's trigger.
- */
-export const ApprovalFolds = () => {
-  const [approval, setApproval] = useState<ToolApprovalRecord>({
-    id: "approval-fold",
-    status: "pending",
-    scope: null,
-    timeoutAt: null,
-  });
-  const parts: readonly PartTool[] = [
-    {
-      kind: "tool-trace",
-      toolCallId: "draft",
-      name: "mail__draft",
-      status: "output-available",
-      input: { to: "team", subject: "Renewals this quarter" },
-      output: "Draft ready",
-    },
-    {
-      kind: "tool-trace",
-      toolCallId: "send",
-      name: "mail__send",
-      status:
-        approval.status === "pending"
-          ? "approval-requested"
-          : approval.status === "approved"
-            ? "output-available"
-            : "output-denied",
-      input: { to: "team", subject: "Renewals this quarter" },
-      approval,
-    },
-  ];
+// ---------------------------------------------------------------------------
+// Agents: work the main thread hands to other agents.
+
+/** The coordinator's own work before it hands off. */
+const coordinatorSteps: readonly ActivityStep[] = [
+  {
+    kind: "tool-trace",
+    toolCallId: "own-1",
+    name: "Read the product requirements",
+    status: "output-available",
+    output: "ok",
+  },
+  {
+    kind: "tool-trace",
+    toolCallId: "own-2",
+    name: "Chose how to do this",
+    status: "output-available",
+    output: "ok",
+  },
+];
+
+function Frame({ children }: { readonly children: ReactNode }) {
   return (
-    <div className="max-w-2xl p-4">
-      <Message from="agent" aria-label="Agent">
-        <MessageParts
-          parts={parts}
-          onDecide={(_, decision) =>
-            setApproval({
-              ...approval,
-              status: decision.outcome,
-              scope: decision.scope,
-            })
-          }
-        />
-      </Message>
+    <div className="flex max-w-[560px] flex-col gap-3 p-4">{children}</div>
+  );
+}
+
+function Live({ agents }: { readonly agents: readonly ActivityAgent[] }) {
+  const live = useLiveAgents(agents);
+  return <Activity steps={coordinatorSteps} agents={live} />;
+}
+
+/** Three designers at work, in real time: each row rolls to its next step; point at one for Watch and Stop, open it for its draft and steps. */
+export const AgentsWorking = () => (
+  <Frame>
+    <Live agents={designers()} />
+  </Frame>
+);
+
+/** One designer has stopped on a question: it comes first, answerable in one tap, in your own words, or left to it. */
+export const AgentsNeedYou = () => (
+  <Frame>
+    <Live agents={designersAsking()} />
+  </Frame>
+);
+
+/** The team finished: folded to one line, clocks stopped; open it for what each filed. */
+export const AgentsFinished = () => (
+  <Frame>
+    <Activity steps={coordinatorSteps} agents={designersDone()} />
+  </Frame>
+);
+
+function FiledDocument() {
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-border px-3.5 py-3 text-sm">
+      <p className="font-medium text-foreground">Personal calorie tracker</p>
+      <ul className="flex list-disc flex-col gap-1 ps-4 text-foreground/75">
+        <li>
+          Set a daily goal, log foods by meal, see today and earlier days.
+        </li>
+        <li>Leaves out barcode scanning, a food database and diet advice.</li>
+      </ul>
     </div>
   );
-};
+}
+
+/** One agent alone: its role and task as the row, then what it filed, its report and what it was asked. */
+export const OneAgent = () => (
+  <Frame>
+    <Activity
+      steps={coordinatorSteps}
+      agents={[
+        {
+          ...writer(),
+          result: {
+            title: "Personal calorie tracker v1",
+            content: <FiledDocument />,
+          },
+        },
+      ]}
+    />
+  </Frame>
+);
+
+/** The main thread thinking before its first step: the same spinner its agents use. */
+export const ThinkingNow = () => (
+  <Frame>
+    <Activity steps={[]} streaming />
+  </Frame>
+);

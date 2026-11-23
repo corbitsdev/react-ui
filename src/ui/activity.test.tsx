@@ -57,9 +57,9 @@ function trigger(container: HTMLElement): HTMLButtonElement {
 }
 
 function shownSteps(container: HTMLElement): readonly string[] {
-  return [...container.querySelectorAll("li[data-step] code")].map(
-    (code) => code.textContent ?? "",
-  );
+  return [
+    ...container.querySelectorAll("li[data-step] [data-slot='tool-header']"),
+  ].map((header) => header.getAttribute("data-name") ?? "");
 }
 
 describe("Activity", () => {
@@ -93,7 +93,11 @@ describe("Activity", () => {
     expect(shownSteps(mounted.container).length).toBe(14);
     expect(mounted.container.textContent).not.toContain("earlier steps");
     // Focus lands on the first step the control revealed.
-    expect(document.activeElement?.textContent).toContain("files__read_0");
+    expect(
+      document.activeElement
+        ?.querySelector("[data-slot='tool-header']")
+        ?.getAttribute("data-name"),
+    ).toBe("files__read_0");
     mounted.unmount();
   });
 
@@ -142,7 +146,7 @@ describe("Activity", () => {
     const one = mount(
       <Activity steps={[thought, call(1, { status: "running" })]} streaming />,
     );
-    expect(trigger(one.container).textContent).toContain("files__read_1…");
+    expect(trigger(one.container).textContent).toContain("Read 1…");
     one.unmount();
 
     const many = mount(
@@ -209,7 +213,11 @@ describe("Activity", () => {
       (button) => button.textContent === "Show 1 earlier step",
     );
     act(() => more?.click());
-    expect(document.activeElement?.textContent).toContain("files__read_0");
+    expect(
+      document.activeElement
+        ?.querySelector("[data-slot='tool-header']")
+        ?.getAttribute("data-name"),
+    ).toBe("files__read_0");
     mounted.unmount();
   });
 

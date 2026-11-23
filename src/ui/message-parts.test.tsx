@@ -331,7 +331,7 @@ describe("MessageParts", () => {
       [...container.querySelectorAll("[data-slot='activity-trigger']")].map(
         (element) => element.textContent,
       );
-    expect(triggers()).toEqual(["Worked through 1 step", "tool__fetch…"]);
+    expect(triggers()).toEqual(["Worked through 1 step", "Fetch…"]);
     render(inMessage({ parts, streaming: false }, "streaming"));
     expect(triggers()).toEqual([
       "Worked through 1 step",

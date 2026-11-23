@@ -5,6 +5,7 @@ import {
   countFailedTools,
   displayedToolStatus,
   formatToolValue,
+  toolTitle,
 } from "./tool-display.js";
 
 function tool(overrides: Partial<PartTool> = {}): PartTool {
@@ -83,5 +84,30 @@ describe("formatToolValue", () => {
     expect(formatToolValue(circular)).toBe("[object Object]");
     expect(formatToolValue(10n)).toBe("10");
     expect(formatToolValue(undefined)).toBe("undefined");
+  });
+});
+
+describe("toolTitle", () => {
+  test("reads a sourced name as an action from a source", () => {
+    expect(toolTitle("calendar__create_event")).toEqual({
+      action: "Create event",
+      source: "Calendar",
+    });
+    expect(toolTitle("a__b__c")).toEqual({ action: "C", source: "A b" });
+  });
+
+  test("a name with no source, or nothing after one, is all action", () => {
+    expect(toolTitle("web-search")).toEqual({
+      action: "Web search",
+      source: undefined,
+    });
+    expect(toolTitle("__private")).toEqual({
+      action: "Private",
+      source: undefined,
+    });
+    expect(toolTitle("files__")).toEqual({
+      action: "Files",
+      source: undefined,
+    });
   });
 });
